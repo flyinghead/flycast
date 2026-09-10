@@ -217,9 +217,9 @@ void IniFile::load(const std::string& data, bool cEscape)
 			}
 			std::string value = line.substr(pos + 1);
 			// Space characters before and after the equal sign are for readability, and not part of the entry name or value
-			if (value[0] == ' ')
+			if (!value.empty() && value[0] == ' ')
 				value = value.substr(1);
-			if (value[0] == '"')
+			if (!value.empty() && value[0] == '"')
 			{
 				// quoted value
 				size_t end = value.rfind('"');
