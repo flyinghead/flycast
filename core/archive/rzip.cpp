@@ -20,8 +20,10 @@
 #include <zlib.h>
 
 #include <cstring>
+#include <new>
 
 const u8 RZipHeader[8] = { '#', 'R', 'Z', 'I', 'P', 'v', 1, '#' };
+constexpr u32 MaxChunkSize = 64_MB;
 
 bool RZipFile::Open(hostfs::File *file, bool write)
 {
@@ -45,7 +47,17 @@ bool RZipFile::Open(hostfs::File *file, bool write)
 			size &= 0xffffffff;
 			file->seek(-4, SEEK_CUR);
 		}
-		chunk = new u8[maxChunkSize];
+		if (maxChunkSize == 0 || maxChunkSize > MaxChunkSize)
+		{
+			file->seek(startOffset, SEEK_SET);
+			return false;
+		}
+		try {
+			chunk = new u8[maxChunkSize];
+		} catch (const std::bad_alloc&) {
+			file->seek(startOffset, SEEK_SET);
+			return false;
+		}
 		chunkIndex = 0;
 		chunkSize = 0;
 	}
@@ -114,7 +126,16 @@ size_t RZipFile::Read(void *data, size_t length)
 				break;
 			if (zippedSize == 0)
 				continue;
-			u8 *zipped = new u8[zippedSize];
+			const u64 maxZippedSize = (u64)maxChunkSize
+					+ maxChunkSize / 1000 + 12;
+			if (zippedSize > maxZippedSize)
+				break;
+			u8 *zipped;
+			try {
+				zipped = new u8[zippedSize];
+			} catch (const std::bad_alloc&) {
+				break;
+			}
 			if (file->read(zipped, zippedSize, 1) != 1)
 			{
 				delete [] zipped;
