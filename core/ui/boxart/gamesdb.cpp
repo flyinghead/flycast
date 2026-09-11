@@ -76,13 +76,15 @@ json TheGamesDb::httpGet(const std::string& url)
 	std::vector<u8> receivedData;
 	int status = http::get(url, receivedData);
 	bool success = http::success(status);
-	if (status == 403)
-		// hit rate-limit cap
-		blackoutPeriod = getTimeMs() + 60 * 1000;
-	else if (!success)
+	if (status == 403 || status == 429) {
+		// monthly allowance reached
+		blackoutPeriod = getTimeMs() + 24 * 60 * 60 * 1000;
+		throw std::runtime_error("TheGamesDB monthly allowance reached. Pausing for 24 hours");
+	}
+	if (!success)
 		blackoutPeriod = getTimeMs() + 1000;
 	if (!success || receivedData.empty())
-		throw std::runtime_error("http error");
+		throw std::runtime_error(strprintf("http error %d", status));
 
 	std::string content((const char *)&receivedData[0], receivedData.size());
 	DEBUG_LOG(COMMON, "TheGameDb: received [%s]", content.c_str());

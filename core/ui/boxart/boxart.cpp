@@ -87,6 +87,8 @@ void Boxart::fetchBoxart()
 		return;
 	if (toFetch.empty())
 		return;
+	if (getTimeMs() < pauseUntil)
+		return;
 	fetching = std::async(std::launch::async, [this]() {
 		ThreadName _("BoxArt-scraper");
 		if (offlineScraper == nullptr)
@@ -119,7 +121,15 @@ void Boxart::fetchBoxart()
 			toFetch.erase(toFetch.begin(), toFetch.begin() + size);
 		}
 		DEBUG_LOG(COMMON, "Scraping %d games", (int)boxart.size());
-		offlineScraper->scrape(boxart);
+		for (GameBoxart& b : boxart)
+		{
+			if (b.parsed)
+				continue;
+			offlineScraper->scrape(b);
+			if (b.parsed)
+				databaseDirty = true;
+		}
+		if (databaseDirty)
 		{
 			std::lock_guard<std::mutex> guard(mutex);
 			for (GameBoxart& b : boxart)
@@ -128,7 +138,6 @@ void Boxart::fetchBoxart()
 					if (!config::FetchBoxart || b.scraped)
 						b.busy = false;
 					games[b.fileName] = b;
-					databaseDirty = true;
 				}
 		}
 		if (config::FetchBoxart)
@@ -147,7 +156,7 @@ void Boxart::fetchBoxart()
 				databaseDirty = true;
 			} catch (const std::runtime_error& e) {
 				if (*e.what() != '\0')
-					INFO_LOG(COMMON, "thegamesdb error: %s", e.what());
+					WARN_LOG(COMMON, "thegamesdb error: %s", e.what());
 				{
 					// put back failed items into toFetch array
 					std::lock_guard<std::mutex> guard(mutex);
@@ -165,6 +174,9 @@ void Boxart::fetchBoxart()
 				}
 			}
 		}
+		if (!databaseDirty)
+			// No progress so pause for 10 s
+			pauseUntil = getTimeMs() + 10 * 1000;
 		saveDatabase();
 	});
 }
