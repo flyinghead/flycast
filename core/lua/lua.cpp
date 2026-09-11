@@ -428,6 +428,26 @@ static void luaRegister(lua_State *L)
 	  		.beginNamespace("emulator")
 				.addFunction("startGame", gui_start_game)	// FIXME threading!
 				.addFunction("stopGame", std::function<void()>([]() { gui_stop_game(""); }))
+				.addFunction("openGdrom", std::function<void()>([]() {
+					bool restart = false;
+					if (gui_state == GuiState::Closed) {
+						gui_open_settings();
+						restart = true;
+					}
+					emu.openGdrom();
+					if (restart)
+						gui_open_settings();
+				}))
+				.addFunction("insertGdrom", std::function<void(const std::string&)>([](const std::string& path) {
+					bool restart = false;
+					if (gui_state == GuiState::Closed) {
+						gui_open_settings();
+						restart = true;
+					}
+					emu.insertGdrom(path);
+					if (restart)
+						gui_open_settings();
+				}))
 				.addFunction("pause", std::function<void()>([]() {
 					if (gui_state == GuiState::Closed)
 						gui_open_settings();
