@@ -149,6 +149,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = nullptr;
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
 		vkGetInstanceProcAddr = loadVulkanDriver();
+#elif defined(__APPLE__) && defined(USE_SDL)
+		vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(SDL_Vulkan_GetVkGetInstanceProcAddr());
 #else
 		static vk::detail::DynamicLoader dl;
 		vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");

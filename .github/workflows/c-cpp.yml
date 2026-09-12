@@ -21,13 +21,13 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON, destDir: osx, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo}
-          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
-          - {name: libretro-x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -G Ninja, buildType: Release}
+          - { name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release }
+          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB, destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
+          - { name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
+          - { name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release }
+          - { name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo, packagePath: artifact/flycast-x86_64-w64-mingw32.zip }
+          - { name: libretro-x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release }
+          - { name: libretro-x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -G Ninja, buildType: Release }
 
     steps:
       - name: Set up build environment (macOS)
@@ -37,12 +37,19 @@ jobs:
           brew update || :
           brew install libao ldid pulseaudio
           brew uninstall --ignore-dependencies zstd
-          VULKAN_VER=1.4.341.1 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkan_sdk.zip?Human=true -o vulkan_sdk.zip
-          unzip -q vulkan_sdk.zip
-          ./vulkansdk-macOS-$VULKAN_VER.app/Contents/MacOS/vulkansdk-macOS-$VULKAN_VER --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install copy_only=1
-          rm -f vulkan_sdk.zip
-          rm -rf ./vulkansdk-macOS-$VULKAN_VER.app
-          echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
+
+          moltenvk_tag="v1.4.2"
+          moltenvk_root="$RUNNER_TEMP/MoltenVK-$moltenvk_tag"
+          rm -rf "$moltenvk_root"
+          mkdir -p "$moltenvk_root"
+          aria2c "https://github.com/KhronosGroup/MoltenVK/releases/download/$moltenvk_tag/MoltenVK-macos.tar" -d "$RUNNER_TEMP" -o "MoltenVK-macos-$moltenvk_tag.tar"
+          tar -xf "$RUNNER_TEMP/MoltenVK-macos-$moltenvk_tag.tar" -C "$moltenvk_root"
+          moltenvk_dylib="$(find "$moltenvk_root" -type f -path '*/macOS/*' -name libMoltenVK.dylib | head -n 1)"
+          if [ -z "$moltenvk_dylib" ]; then
+            echo "MoltenVK $moltenvk_tag was downloaded, but macOS libMoltenVK.dylib was not found." >&2
+            exit 1
+          fi
+          echo "MOLTENVK_DYLIB=$moltenvk_dylib" >> $GITHUB_ENV
         if: runner.os == 'macOS'
 
       - name: Set up build environment (Linux)
@@ -146,24 +153,28 @@ jobs:
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - uses: actions/upload-artifact@v6
-        with:
-          name: flycast-${{ matrix.config.name }}
-          path: |
-            artifact/bin
-            artifact/lib/libretro
-
       - name: Package app (macos)
         run: |
           cd artifact/bin
+          codesign --verify --deep --strict --all-architectures --verbose=4 Flycast.app
           zip -rm flycast.app.zip Flycast.app
+          cp flycast.app.zip "../../${{ matrix.config.packagePath }}"
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
         run: |
           powershell Compress-Archive artifact/bin/flycast.exe artifact/bin/flycast.zip 
           rm artifact/bin/flycast.exe
+          cp artifact/bin/flycast.zip "${{ matrix.config.packagePath }}"
         if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flycast-${{ matrix.config.name }}
+          archive: ${{ !matrix.config.packagePath }}
+          path: |
+            ${{ matrix.config.packagePath || 'artifact/bin' }}
+            ${{ !matrix.config.packagePath && 'artifact/lib/libretro' || '' }}
 
       - name: Setup Rclone
         uses: AnimMouse/setup-rclone@v1
