@@ -330,7 +330,7 @@ public:
 			{
 				// force 60/50 FPS now
 				lastInterval = 1;
-				stability = std::max(stability, 10);
+				currentInterval = 1;
 				return;
 			}
 		}
@@ -338,37 +338,46 @@ public:
 			rendersFullSpeed = 0;
 		}
 
-		const float refreshRate = SPG_CONTROL.isPAL() ? 20_sh4ms : 16667_sh4us;
-		int interval = std::round(avgRenderInterval / refreshRate);
-		float frac = std::abs(avgRenderInterval / refreshRate - interval);
+		const float vblankPerRender = avgRenderInterval / (SPG_CONTROL.isPAL() ? 20_sh4ms : 16667_sh4us);
+		int interval = std::round(vblankPerRender);
+		float frac = std::abs(vblankPerRender - interval);
 
-		if (frac <= .05f || (interval == 1 && frac <= .2f))
+		if ((interval == 2 && frac <= .05f)
+				|| (interval == 1 && frac <= .2f))
 		{
-			if (lastInterval == (int)interval) {
-				stability++;
+			if (lastInterval == (int)interval)
+			{
+				if (++stable >= 10)
+					currentInterval = std::min(lastInterval, 2);
+				unstable = 0;
 			}
-			else {
-				stability = 0;
+			else
+			{
+				stable = 0;
 				lastInterval = interval;
+				unstable++;
 			}
 		}
 		else {
-			stability = 0;
+			stable = 0;
+			unstable++;
 		}
+		if (unstable >= 30 && vblankPerRender < 2.f)
+			// Force swap interval to 1 if the frame rate is off over 30 frames
+			// Helps with games that render slightly above 30 FPS (ECCO 33 FPS, Armada ~40 FPS)
+			currentInterval = 1;
 	}
 
-	int swapInterval()
-	{
-		if (stability < 10)
-			return -1;
-		else
-			return std::min(lastInterval, 2);
+	int swapInterval() const {
+		return currentInterval;
 	}
 
 	void reset()
 	{
 		lastInterval = 1;
-		stability = 0;
+		stable = 0;
+		unstable = 0;
+		currentInterval = 1;
 
 		lastRender = 0;
 		renderInterval = 0;
@@ -385,7 +394,9 @@ private:
 	}
 
 	int lastInterval;
-	int stability;
+	int stable;
+	int unstable;
+	int currentInterval;
 
 	u64 lastRender;
 	u64 renderInterval;
