@@ -749,6 +749,7 @@ static void gd_process_spi_cmd()
 		{
 #define readcmd packet_cmd.GDReadBlock
 
+			cdda.status = cdda_t::NoInfo;
 			u32 sector_type = 2048;
 			if (readcmd.head == 1 && readcmd.subh == 1 && readcmd.data == 1 && readcmd.expdtype == 3 && readcmd.other == 0)
 				sector_type = 2340;
