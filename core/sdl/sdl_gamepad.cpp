@@ -21,6 +21,15 @@
 #include <cmath>
 #include <map>
 #include <string>
+#ifdef FLYCAST_DUALSENSE_USB
+#include <atomic>
+static std::atomic<bool> drivingProfileRequested{false};
+
+void SDLGamepad::SetDrivingProfileActive(bool active)
+{
+	drivingProfileRequested.store(active, std::memory_order_relaxed);
+}
+#endif
 
 std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 
@@ -237,6 +246,20 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 	set_maple_port(maple_port);
 
 	rumbleEnabled = SDL_JoystickHasRumble(sdl_joystick);
+#ifdef FLYCAST_DUALSENSE_USB
+	const auto vendor = SDL_JoystickGetVendor(sdl_joystick);
+	const auto product = SDL_JoystickGetProduct(sdl_joystick);
+	if (vendor == 0x054c && (product == 0x0ce6 || product == 0x0df2)) {
+		dualSenseOutput = std::make_unique<DualSenseUSBOutput>();
+		if (dualSenseOutput->connect()) {
+			rumbleEnabled = true;
+			NOTICE_LOG(INPUT, "DualSense USB: driving triggers and rumble from Flycast");
+		} else {
+			dualSenseOutput.reset();
+			WARN_LOG(INPUT, "DualSense USB output unavailable; using SDL rumble");
+		}
+	}
+#endif
 
 	// Open the haptic interface
 	haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
@@ -367,6 +390,12 @@ void SDLGamepad::setSine(float power, float freq, u32 duration_ms)
 
 void SDLGamepad::rumble(float power, float inclination, u32 duration_ms)
 {
+#ifdef FLYCAST_DUALSENSE_USB
+	if (dualSenseOutput) {
+		dualSenseOutput->setRumble(getRumbleIntensity(power) >> 8, duration_ms);
+		return;
+	}
+#endif
 	if (rumbleEnabled)
 	{
 		vib_inclination = inclination * power;
@@ -377,6 +406,18 @@ void SDLGamepad::rumble(float power, float inclination, u32 duration_ms)
 
 void SDLGamepad::update_rumble()
 {
+#ifdef FLYCAST_DUALSENSE_USB
+	if (dualSenseOutput) {
+		const bool requested = drivingProfileRequested.load(std::memory_order_relaxed);
+		if (drivingProfileActive != requested) {
+			dualSenseOutput->setDrivingProfile(requested);
+			drivingProfileActive = requested;
+			NOTICE_LOG(INPUT, "DualSense driving trigger profile %s", requested ? "enabled" : "disabled");
+		}
+		dualSenseOutput->update();
+		return;
+	}
+#endif
 	if (!rumbleEnabled)
 		return;
 	if (vib_inclination > 0)
@@ -499,6 +540,9 @@ void SDLGamepad::setDamper(float param, float speed)
 void SDLGamepad::close()
 {
 	NOTICE_LOG(INPUT, "SDL: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
+#ifdef FLYCAST_DUALSENSE_USB
+	dualSenseOutput.reset();
+#endif
 	if (haptic != nullptr)
 	{
 		stopHaptic();

@@ -18,6 +18,9 @@
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
 #include "sdl.h"
+#ifdef FLYCAST_DUALSENSE_USB
+#include "dualsense_usb.h"
+#endif
 
 class SDLGamepad : public GamepadDevice
 {
@@ -65,6 +68,9 @@ public:
 		for (auto &[k, gamepad] : sdl_gamepads)
 			gamepad->update_rumble();
 	}
+#ifdef FLYCAST_DUALSENSE_USB
+	static void SetDrivingProfileActive(bool active);
+#endif
 
 	static void SetTorque(int port, float torque) {
 		applyToPort(port, &SDLGamepad::setTorque, torque);
@@ -98,6 +104,10 @@ private:
 	void doRumble(float power, u32 duration_ms);
 
 	SDL_Joystick* sdl_joystick;
+#ifdef FLYCAST_DUALSENSE_USB
+	std::unique_ptr<DualSenseUSBOutput> dualSenseOutput;
+	bool drivingProfileActive = false;
+#endif
 	float vib_inclination = 0;
 	SDL_GameController *sdl_controller = nullptr;
 	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> sdl_gamepads;
