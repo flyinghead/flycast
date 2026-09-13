@@ -199,7 +199,9 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 	switch (packet->type)
 	{
 	case SyncReq:
-		if (config::ActAsServer && !_startNow)
+		if (!config::ActAsServer)
+			break;
+		if (!_startNow)
 		{
 			Slave *slave = nullptr;
 			for (auto& s : slaves)
@@ -210,6 +212,13 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 				}
 			if (slave == nullptr)
 			{
+				if (maxSlots != 0 && slaves.size() >= (unsigned)maxSlots - 1)
+				{
+					INFO_LOG(NETWORK, "Server is full. Sending NAK");
+					Packet reply(NAck);
+					send(addr, &reply, reply.size());
+					break;
+				}
 				slaves.push_back(Slave());
 				slave = &slaves.back();
 				slave->state = 0; // unused
@@ -240,6 +249,12 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 				slave = &slaves[reply.sync.nodeId - 1];
 				send(&slave->addr, &reply, reply.size());
 			}
+		}
+		else
+		{
+			INFO_LOG(NETWORK, "Server has already started. Sending NAK");
+			Packet reply(NAck);
+			send(addr, &reply, reply.size());
 		}
 		break;
 
@@ -279,7 +294,7 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 
 	case NAck:
 		WARN_LOG(NETWORK, "NAK received");
-		throw Exception("NAK received");
+		throw Exception("Server has already started");
 		break;
 
 	default:
