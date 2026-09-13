@@ -12,6 +12,7 @@
 #include "input/maplelink.h"
 #include <zlib.h>
 #include <cerrno>
+#include <cstdio>
 #include <ctime>
 #include <thread>
 #include <chrono>
@@ -1121,6 +1122,9 @@ struct maple_sega_purupuru : maple_base
 					inclination = 0.0;
 				else
 					inclination = FREQ / (1000.0 * INC * std::max(POW_POS, POW_NEG));
+				static unsigned loggedRumbleCommands = 0;
+				if (power > 0.f && loggedRumbleCommands++ < 20)
+					fprintf(stderr, "[Flycast Vibration Pack] power=%.2f duration=%u ms\n", power, duration_ms);
 				config->SetVibration(power, inclination, duration_ms);
 
 				relayMapleLink();

@@ -1362,6 +1362,11 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 
+			target_sources(${PROJECT_NAME} PRIVATE core/sdl/dualsense_usb.cpp core/sdl/dualsense_usb.h)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE FLYCAST_DUALSENSE_USB)
+			find_library(IOKIT_LIBRARY IOKit)
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${IOKIT_LIBRARY})
+
 			add_subdirectory(core/deps/Syphon)
 			target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

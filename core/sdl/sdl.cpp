@@ -152,7 +152,19 @@ static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
+#ifdef FLYCAST_DUALSENSE_USB
+	case Event::Start: {
+		const std::string& gameId = settings.content.gameId;
+		SDLGamepad::SetDrivingProfileActive(gameId == "T19724M"
+			|| gameId == "MK-51037" || gameId == "MK-5103750"
+			|| gameId == "HDR-0106");
+		break;
+	}
+#endif
 	case Event::Terminate:
+#ifdef FLYCAST_DUALSENSE_USB
+		SDLGamepad::SetDrivingProfileActive(false);
+#endif
 		SDL_SetWindowTitle(window, "Flycast");
 		sdl_stopHaptic(0);
 		break;
@@ -246,6 +258,9 @@ void input_sdl_init()
 
 	// Event::Start is called on a background thread, so we can't use it to change the window title (macOS)
 	// However it's followed by Event::Resume which is fine.
+#ifdef FLYCAST_DUALSENSE_USB
+	EventManager::listen(Event::Start, emuEventCallback);
+#endif
 	EventManager::listen(Event::Terminate, emuEventCallback);
 	EventManager::listen(Event::Pause, emuEventCallback);
 	EventManager::listen(Event::Resume, emuEventCallback);
@@ -292,6 +307,9 @@ void input_sdl_init()
 
 void input_sdl_quit()
 {
+#ifdef FLYCAST_DUALSENSE_USB
+	EventManager::unlisten(Event::Start, emuEventCallback);
+#endif
 	EventManager::unlisten(Event::Terminate, emuEventCallback);
 	EventManager::unlisten(Event::Pause, emuEventCallback);
 	EventManager::unlisten(Event::Resume, emuEventCallback);
