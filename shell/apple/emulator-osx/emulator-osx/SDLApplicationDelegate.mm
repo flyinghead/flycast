@@ -159,6 +159,21 @@ static void installFunctionFullScreenShortcutGuard(NSMenuItem *menuItem)
 
 /* The main class of the application, the application's delegate */
 @implementation SDLApplicationDelegate
+{
+    BOOL emulatorReady;
+    NSString *pendingFile;
+}
+
+- (void)emulatorDidInitialize
+{
+    emulatorReady = YES;
+    if (pendingFile != nil)
+    {
+        settings.content.path = [pendingFile UTF8String];
+        [pendingFile release];
+        pendingFile = nil;
+    }
+}
 
 /* Set the working directory to the .app's parent directory */
 - (void) setupWorkingDirectory
@@ -375,7 +390,15 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
 	dispatch_async(dispatch_get_main_queue(), ^(){
-		gui_start_game([filename cStringUsingEncoding:NSUTF8StringEncoding]);
+        // AppKit can deliver a document before SDL_main initializes Flycast.
+        // Dispatching to the main queue alone does not wait for initialization.
+        if (!emulatorReady)
+        {
+            [pendingFile release];
+            pendingFile = [filename copy];
+        }
+        else
+            gui_start_game([filename cStringUsingEncoding:NSUTF8StringEncoding]);
 	});
 
     return TRUE;

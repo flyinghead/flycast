@@ -10,6 +10,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface SDLApplicationDelegate : NSObject <NSApplicationDelegate>
+- (void)emulatorDidInitialize;
 @end
 
 #define MENU_TAG_TOGGLE_MENU 501
