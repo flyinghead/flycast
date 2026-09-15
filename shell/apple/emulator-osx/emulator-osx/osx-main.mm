@@ -14,6 +14,7 @@
 
 #include "types.h"
 #include "cfg/option.h"
+#include "cfg/cfg.h"
 #include "log/LogManager.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
@@ -55,6 +56,21 @@ int darw_printf(const char* text, ...)
 
 void os_DoEvents() {
 #if defined(USE_SDL)
+#ifdef FLYCAST_MACOS_NATIVE_UI
+    static bool nativeLibraryVisible = false;
+    const bool shouldShowNativeLibrary = gui_state == GuiState::Main;
+    if (nativeLibraryVisible != shouldShowNativeLibrary) {
+        Class libraryClass = NSClassFromString(@"FlycastNativeLibrary");
+        if (libraryClass != Nil) {
+            SEL action = shouldShowNativeLibrary ? @selector(showLibrary) : @selector(hideLibrary);
+            [libraryClass performSelector:action];
+            sdl_set_native_library_visible(shouldShowNativeLibrary);
+            if (!shouldShowNativeLibrary && gui_state == GuiState::Loading)
+                sdl_set_game_fullscreen(config::loadBool("macos", "launch_fullscreen", true));
+            nativeLibraryVisible = shouldShowNativeLibrary;
+        }
+    }
+#endif
 	NSMenuItem *editMenuItem = [[NSApp mainMenu] itemAtIndex:1];
 	[editMenuItem setEnabled:SDL_IsTextInputActive()];
 
@@ -62,6 +78,9 @@ void os_DoEvents() {
 	if (toggleMenuItem) {
 		[toggleMenuItem setEnabled:emu.running() || gui_state == GuiState::Commands];
 	}
+	NSMenuItem *returnItem = [[[[NSApp mainMenu] itemAtIndex:0] submenu] itemWithTag:MENU_TAG_RETURN_TO_LIBRARY];
+	if (returnItem)
+		[returnItem setEnabled:emu.running()];
 #endif
 }
 

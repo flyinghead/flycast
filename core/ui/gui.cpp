@@ -89,6 +89,88 @@ static bool clearActiveIdNextFrame;
 GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 static Boxart boxart;
+
+#ifdef FLYCAST_MACOS_NATIVE_UI
+#include <cstdlib>
+
+extern "C" char *FlycastNativeGamesJSON()
+{
+    scanner.fetch_game_list();
+    nlohmann::json games = nlohmann::json::array();
+    std::lock_guard<std::mutex> lock(scanner.get_mutex());
+    for (const auto& game : scanner.get_game_list()) {
+        if (game.path.empty() || game.device)
+            continue;
+        const GameBoxart art = boxart.getBoxartAndLoad(game);
+        games.push_back({
+            {"name", get_file_basename(game.fileName)},
+            {"path", game.path},
+            {"artwork", art.boxartPath},
+            {"arcade", game.arcade}
+        });
+    }
+    return strdup(games.dump().c_str());
+}
+
+extern "C" char *FlycastNativeContentPathsJSON()
+{
+    nlohmann::json paths = config::ContentPath.get();
+    return strdup(paths.dump().c_str());
+}
+
+extern "C" void FlycastNativeFree(char *value) { free(value); }
+
+extern "C" void FlycastNativeLaunch(const char *path)
+{
+    if (path != nullptr)
+        gui_start_game(path);
+}
+
+extern "C" bool FlycastNativeLaunchFullscreen()
+{
+    return config::loadBool("macos", "launch_fullscreen", true);
+}
+
+extern "C" void FlycastNativeSetLaunchFullscreen(bool enabled)
+{
+    config::saveBool("macos", "launch_fullscreen", enabled);
+    SaveSettings();
+}
+
+extern "C" void FlycastNativeAddContentPath(const char *path)
+{
+    if (path == nullptr || *path == '\0')
+        return;
+    scanner.stop();
+    auto& paths = config::ContentPath.get();
+    if (std::find(paths.begin(), paths.end(), path) == paths.end()) {
+        paths.emplace_back(path);
+        SaveSettings();
+    }
+    scanner.refresh();
+}
+
+extern "C" bool FlycastNativeWidescreen() { return config::Widescreen; }
+extern "C" void FlycastNativeSetWidescreen(bool enabled)
+{
+    config::Widescreen = enabled;
+    SaveSettings();
+}
+extern "C" bool FlycastNativeWidescreenHacks() { return config::WidescreenGameHacks; }
+extern "C" void FlycastNativeSetWidescreenHacks(bool enabled)
+{
+    config::WidescreenGameHacks = enabled;
+    SaveSettings();
+}
+extern "C" int FlycastNativeResolution() { return config::RenderResolution; }
+extern "C" void FlycastNativeSetResolution(int height)
+{
+    config::RenderResolution = height;
+    SaveSettings();
+}
+extern "C" void FlycastNativeAdvancedSettings() { gui_setState(GuiState::Settings); }
+extern "C" void FlycastNativeQuit() { dc_exit(); }
+#endif
 static Chat chat;
 static std::recursive_mutex guiMutex;
 using LockGuard = std::lock_guard<std::recursive_mutex>;

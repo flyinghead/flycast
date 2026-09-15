@@ -49,6 +49,27 @@ static u32 windowFlags;
 static std::unordered_map<u32, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
+#ifdef FLYCAST_MACOS_NATIVE_UI
+void sdl_set_game_fullscreen(bool enabled)
+{
+    if (window == nullptr || window_fullscreen == enabled)
+        return;
+    if (SDL_SetWindowFullscreen(window, enabled ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) == 0)
+        window_fullscreen = enabled;
+}
+
+void sdl_set_native_library_visible(bool visible)
+{
+    if (window == nullptr)
+        return;
+    if (visible)
+        SDL_HideWindow(window);
+    else {
+        SDL_ShowWindow(window);
+        SDL_RaiseWindow(window);
+    }
+}
+#endif
 static bool window_maximized;
 static SDL_Rect windowPos { SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT };
 static bool gameRunning;
@@ -812,6 +833,10 @@ bool sdl_recreate_window(u32 flags)
 	windowPos.w = config::loadInt("window", "width", windowPos.w);
 	windowPos.h = config::loadInt("window", "height", windowPos.h);
 	window_fullscreen = config::loadBool("window", "fullscreen", window_fullscreen);
+#ifdef FLYCAST_MACOS_NATIVE_UI
+	// The native library is the initial window. Full screen is applied only when a game starts.
+	window_fullscreen = false;
+#endif
 	window_maximized = config::loadBool("window", "maximized", window_maximized);
 	if (window != nullptr)
 		get_window_state();
