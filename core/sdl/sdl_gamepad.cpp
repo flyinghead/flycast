@@ -250,13 +250,20 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 	const auto vendor = SDL_JoystickGetVendor(sdl_joystick);
 	const auto product = SDL_JoystickGetProduct(sdl_joystick);
 	if (vendor == 0x054c && (product == 0x0ce6 || product == 0x0df2)) {
-		dualSenseOutput = std::make_unique<DualSenseUSBOutput>();
-		if (dualSenseOutput->connect()) {
+		dualSenseGameControllerOutput = std::make_unique<DualSenseGameControllerOutput>();
+		if (dualSenseGameControllerOutput->connect()) {
 			rumbleEnabled = true;
-			NOTICE_LOG(INPUT, "DualSense USB: driving triggers and rumble from Flycast");
+			NOTICE_LOG(INPUT, "DualSense GameController output active");
 		} else {
-			dualSenseOutput.reset();
-			WARN_LOG(INPUT, "DualSense USB output unavailable; using SDL rumble");
+			dualSenseGameControllerOutput.reset();
+			dualSenseOutput = std::make_unique<DualSenseUSBOutput>();
+			if (dualSenseOutput->connect()) {
+				rumbleEnabled = true;
+				NOTICE_LOG(INPUT, "DualSense USB fallback output active");
+			} else {
+				dualSenseOutput.reset();
+				WARN_LOG(INPUT, "DualSense output unavailable; using SDL rumble");
+			}
 		}
 	}
 #endif
@@ -391,6 +398,9 @@ void SDLGamepad::setSine(float power, float freq, u32 duration_ms)
 void SDLGamepad::rumble(float power, float inclination, u32 duration_ms)
 {
 #ifdef FLYCAST_DUALSENSE_USB
+	if (dualSenseGameControllerOutput &&
+		dualSenseGameControllerOutput->setRumble(getRumbleIntensity(power) / 65535.f, duration_ms))
+		return;
 	if (dualSenseOutput) {
 		dualSenseOutput->setRumble(getRumbleIntensity(power) >> 8, duration_ms);
 		return;
@@ -407,15 +417,22 @@ void SDLGamepad::rumble(float power, float inclination, u32 duration_ms)
 void SDLGamepad::update_rumble()
 {
 #ifdef FLYCAST_DUALSENSE_USB
-	if (dualSenseOutput) {
+	if (dualSenseGameControllerOutput || dualSenseOutput) {
 		const bool requested = drivingProfileRequested.load(std::memory_order_relaxed);
 		if (drivingProfileActive != requested) {
-			dualSenseOutput->setDrivingProfile(requested);
+			if (dualSenseGameControllerOutput)
+				dualSenseGameControllerOutput->setDrivingProfile(requested);
+			else
+				dualSenseOutput->setDrivingProfile(requested);
 			drivingProfileActive = requested;
 			NOTICE_LOG(INPUT, "DualSense driving trigger profile %s", requested ? "enabled" : "disabled");
 		}
-		dualSenseOutput->update();
-		return;
+		if (dualSenseGameControllerOutput)
+			dualSenseGameControllerOutput->update();
+		else {
+			dualSenseOutput->update();
+			return;
+		}
 	}
 #endif
 	if (!rumbleEnabled)
@@ -541,6 +558,7 @@ void SDLGamepad::close()
 {
 	NOTICE_LOG(INPUT, "SDL: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
 #ifdef FLYCAST_DUALSENSE_USB
+	dualSenseGameControllerOutput.reset();
 	dualSenseOutput.reset();
 #endif
 	if (haptic != nullptr)

@@ -20,6 +20,7 @@
 #include "sdl.h"
 #ifdef FLYCAST_DUALSENSE_USB
 #include "dualsense_usb.h"
+#include "dualsense_gamecontroller.h"
 #endif
 
 class SDLGamepad : public GamepadDevice
@@ -106,6 +107,7 @@ private:
 	SDL_Joystick* sdl_joystick;
 #ifdef FLYCAST_DUALSENSE_USB
 	std::unique_ptr<DualSenseUSBOutput> dualSenseOutput;
+	std::unique_ptr<DualSenseGameControllerOutput> dualSenseGameControllerOutput;
 	bool drivingProfileActive = false;
 #endif
 	float vib_inclination = 0;

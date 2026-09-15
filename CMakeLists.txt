@@ -1409,10 +1409,17 @@ if(NOT LIBRETRO)
 				endforeach()
 			endif()
 
-			target_sources(${PROJECT_NAME} PRIVATE core/sdl/dualsense_usb.cpp core/sdl/dualsense_usb.h)
+			target_sources(${PROJECT_NAME} PRIVATE
+				core/sdl/dualsense_gamecontroller.mm core/sdl/dualsense_gamecontroller.h
+				core/sdl/dualsense_usb.cpp core/sdl/dualsense_usb.h)
+			set_source_files_properties(core/sdl/dualsense_gamecontroller.mm
+				PROPERTIES COMPILE_FLAGS "-fobjc-arc")
 			target_compile_definitions(${PROJECT_NAME} PRIVATE FLYCAST_DUALSENSE_USB)
+			find_library(GAMECONTROLLER_LIBRARY GameController)
+			find_library(COREHAPTICS_LIBRARY CoreHaptics)
 			find_library(IOKIT_LIBRARY IOKit)
-			target_link_libraries(${PROJECT_NAME} PRIVATE ${IOKIT_LIBRARY})
+			target_link_libraries(${PROJECT_NAME} PRIVATE
+				${GAMECONTROLLER_LIBRARY} ${COREHAPTICS_LIBRARY} ${IOKIT_LIBRARY})
 
 			add_subdirectory(core/deps/Syphon)
 			target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)

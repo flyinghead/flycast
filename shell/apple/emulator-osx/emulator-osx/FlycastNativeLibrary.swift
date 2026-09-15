@@ -11,7 +11,7 @@ private func L(_ key: String) -> String {
     NSLocalizedString(key, comment: "")
 }
 
-private struct LibraryGame: Decodable, Identifiable, Equatable {
+private struct LibraryGame: Decodable, Identifiable, Equatable, Sendable {
     let name: String
     let path: String
     let artwork: String
@@ -28,29 +28,40 @@ private final class LibraryModel: ObservableObject {
     @Published var widescreen = false
     @Published var widescreenHacks = false
     @Published var resolution = 480
-    private var refreshTimer: Timer?
+    private var refreshTask: Task<Void, Never>?
 
     func start() {
-        refresh()
-        refreshTimer?.invalidate()
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
+        guard refreshTask == nil else { return }
+        refreshSettings()
+        refreshTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                await loadGames()
+                try? await Task.sleep(for: .seconds(1.5))
+            }
         }
     }
 
     func stop() {
-        refreshTimer?.invalidate()
-        refreshTimer = nil
+        refreshTask?.cancel()
+        refreshTask = nil
     }
 
-    func refresh() {
-        if let pointer = FlycastNativeGamesJSON() {
+    private func loadGames() async {
+        // The scanner and cover-art database perform I/O. Keep that work away
+        // from AppKit's main thread and publish only changed snapshots here.
+        let snapshot = await Task.detached(priority: .utility) { () -> [LibraryGame] in
+            guard let pointer = FlycastNativeGamesJSON() else { return [] }
             let data = Data(String(cString: pointer).utf8)
             FlycastNativeFree(pointer)
-            if let decoded = try? JSONDecoder().decode([LibraryGame].self, from: data), decoded != games {
-                games = decoded
-            }
-        }
+            return (try? JSONDecoder().decode([LibraryGame].self, from: data)) ?? []
+        }.value
+        guard !Task.isCancelled else { return }
+        if snapshot != games { games = snapshot }
+        refreshSettings()
+    }
+
+    private func refreshSettings() {
         if let pointer = FlycastNativeContentPathsJSON() {
             let data = Data(String(cString: pointer).utf8)
             FlycastNativeFree(pointer)
@@ -72,7 +83,8 @@ private final class LibraryModel: ObservableObject {
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url {
             url.path.withCString { FlycastNativeAddContentPath($0) }
-            refresh()
+            refreshSettings()
+            Task { await loadGames() }
         }
     }
 
