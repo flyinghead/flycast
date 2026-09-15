@@ -5,6 +5,7 @@
 */
 #pragma once
 #include <cstdint>
+#include <chrono>
 
 // Output-only companion to SDL input. Uses Apple's controller APIs over USB or Bluetooth.
 class DualSenseGameControllerOutput {
@@ -14,8 +15,11 @@ public:
     bool connect();
     void setDrivingProfile(bool enabled);
     bool setRumble(float intensity, uint32_t durationMs);
-    void update();
+    // Returns true when a pending controller becomes available.
+    bool update();
+    bool isConnected() const { return native != nullptr; }
 
 private:
     void* native = nullptr;
+    std::chrono::steady_clock::time_point nextConnectAttempt{};
 };

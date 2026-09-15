@@ -255,7 +255,7 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 			rumbleEnabled = true;
 			NOTICE_LOG(INPUT, "DualSense GameController output active");
 		} else {
-			dualSenseGameControllerOutput.reset();
+			NOTICE_LOG(INPUT, "DualSense GameController discovery pending");
 			dualSenseOutput = std::make_unique<DualSenseUSBOutput>();
 			if (dualSenseOutput->connect()) {
 				rumbleEnabled = true;
@@ -427,9 +427,19 @@ void SDLGamepad::update_rumble()
 			drivingProfileActive = requested;
 			NOTICE_LOG(INPUT, "DualSense driving trigger profile %s", requested ? "enabled" : "disabled");
 		}
-		if (dualSenseGameControllerOutput)
-			dualSenseGameControllerOutput->update();
-		else {
+		if (dualSenseGameControllerOutput) {
+			if (dualSenseGameControllerOutput->update()) {
+				NOTICE_LOG(INPUT, "DualSense GameController output active after discovery");
+				// Stop writing USB reports before GameController configures the triggers.
+				dualSenseOutput.reset();
+				drivingProfileActive = !requested;
+			}
+			if (dualSenseGameControllerOutput->isConnected() && drivingProfileActive != requested) {
+				dualSenseGameControllerOutput->setDrivingProfile(requested);
+				drivingProfileActive = requested;
+			}
+		}
+		if (dualSenseOutput) {
 			dualSenseOutput->update();
 			return;
 		}

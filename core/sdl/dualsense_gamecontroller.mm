@@ -53,7 +53,7 @@
 {
     if (self.driving == enabled)
         return;
-    self.driving = enabled;
+    _driving = enabled;
     [self applyDrivingProfile];
 }
 
@@ -91,7 +91,7 @@
 
 - (void)close
 {
-    self.driving = NO;
+    _driving = NO;
     [self applyDrivingProfile];
     [self.player stopAtTime:0 error:nil];
     [self.engine stopWithCompletionHandler:nil];
@@ -111,6 +111,15 @@ DualSenseGameControllerOutput::~DualSenseGameControllerOutput()
 
 bool DualSenseGameControllerOutput::connect()
 {
+    if (native)
+        return true;
+    // SDL can report a Bluetooth joystick before GameController has finished
+    // wireless discovery. Kick that process off once, then retry from update().
+    static bool discoveryStarted = false;
+    if (!discoveryStarted) {
+        discoveryStarted = true;
+        [GCController startWirelessControllerDiscoveryWithCompletionHandler:nil];
+    }
     for (GCController *controller in [GCController controllers]) {
         if (![controller.extendedGamepad isKindOfClass:GCDualSenseGamepad.class])
             continue;
@@ -135,8 +144,15 @@ bool DualSenseGameControllerOutput::setRumble(float intensity, uint32_t duration
     return [(__bridge FlycastDualSenseNativeOutput *)native rumble:intensity duration:durationMs];
 }
 
-void DualSenseGameControllerOutput::update()
+bool DualSenseGameControllerOutput::update()
 {
-    if (native)
+    if (native) {
         [(__bridge FlycastDualSenseNativeOutput *)native update];
+        return false;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (now < nextConnectAttempt)
+        return false;
+    nextConnectAttempt = now + std::chrono::seconds(1);
+    return connect();
 }
