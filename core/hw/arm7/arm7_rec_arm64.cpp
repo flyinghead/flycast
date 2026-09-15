@@ -46,6 +46,10 @@ static Arm64UnwindInfo unwinder;
 #ifdef TARGET_IPHONE
 static void JITWriteProtect(bool enable)
 {
+#ifdef FEAT_NO_RWX_PAGES
+    if (recompiler::rx_offset != 0)
+    	return;
+#endif
     if (enable)
     	virtmem::region_set_exec(recompiler::ICache, recompiler::ICacheSize);
     else
