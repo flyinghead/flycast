@@ -535,8 +535,8 @@ u32 getVramOffset(void *addr)
 	else
 #endif
 	{
-		ptrdiff_t offset = (u8*)addr - &vram[0];
-		if (offset < 0 || offset >= VRAM_SIZE)
+		uintptr_t offset = virtmem::untag(addr) - virtmem::untag(&vram[0]);
+		if (offset >= VRAM_SIZE)
 			return -1;
 
 		return (u32)offset;

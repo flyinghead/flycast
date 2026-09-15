@@ -48,6 +48,17 @@ void release_jit_block(void *code_area, size_t size);
 // Release a jit block previously allocated by prepare_jit_block (with dual RW and RX areas)
 void release_jit_block(void *code_area1, void *code_area2, size_t size);
 
+// The address part of a host pointer. On arm64, Android may put a tag in the top
+// byte of heap pointers, and a signal handler receives fault addresses without it.
+static inline uintptr_t untag(const void *p)
+{
+#if HOST_CPU == CPU_ARM64 && defined(__ANDROID__)
+	return (uintptr_t)p & 0x00ffffffffffffffull;
+#else
+	return (uintptr_t)p;
+#endif
+}
+
 bool region_lock(void *start, std::size_t len);
 bool region_unlock(void *start, std::size_t len);
 bool region_set_exec(void *start, std::size_t len);
