@@ -159,21 +159,6 @@ static void installFunctionFullScreenShortcutGuard(NSMenuItem *menuItem)
 
 /* The main class of the application, the application's delegate */
 @implementation SDLApplicationDelegate
-{
-    BOOL emulatorReady;
-    NSString *pendingFile;
-}
-
-- (void)emulatorDidInitialize
-{
-    emulatorReady = YES;
-    if (pendingFile != nil)
-    {
-        settings.content.path = [pendingFile UTF8String];
-        [pendingFile release];
-        pendingFile = nil;
-    }
-}
 
 /* Set the working directory to the .app's parent directory */
 - (void) setupWorkingDirectory
@@ -372,38 +357,25 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
     return succeeded;
 }
 #endif
-/*
- * Catch document open requests...this lets us notice files when the app
- *  was launched by double-clicking a document, or when a document was
- *  dragged/dropped on the app's icon. You need to have a
- *  CFBundleDocumentsType section in your Info.plist to get this message,
- *  apparently.
- *
- * Files are added to gArgv, so to the app, they'll look like command line
- *  arguments. Previously, apps launched from the finder had nothing but
- *  an argv[0].
- *
- * This message may be received multiple times to open several docs on launch.
- *
- * This message is ignored once the app's mainline has been called.
- */
+// Queue document opens until the main loop can safely load the game.
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
-	dispatch_async(dispatch_get_main_queue(), ^(){
-        // AppKit can deliver a document before SDL_main initializes Flycast.
-        // Dispatching to the main queue alone does not wait for initialization.
-        if (!emulatorReady)
-        {
-            [pendingFile release];
-            pendingFile = [filename copy];
-        }
-        else
-            gui_start_game([filename cStringUsingEncoding:NSUTF8StringEncoding]);
-	});
+	// AppKit may deliver a document before SDL initializes the video subsystem.
+	if (SDL_WasInit(SDL_INIT_EVENTS) == 0 && SDL_InitSubSystem(SDL_INIT_EVENTS) != 0)
+		return NO;
 
-    return TRUE;
+	SDL_Event event = {};
+	event.type = SDL_DROPFILE;
+	event.drop.file = SDL_strdup([filename UTF8String]);
+	if (event.drop.file == nullptr)
+		return NO;
+	if (SDL_PushEvent(&event) != 1)
+	{
+		SDL_free(event.drop.file);
+		return NO;
+	}
+	return YES;
 }
-
 
 /* Called when the internal event loop has just started running */
 - (void) applicationDidFinishLaunching: (NSNotification *) note

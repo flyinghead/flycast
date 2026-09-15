@@ -117,8 +117,6 @@ extern "C" int SDL_main(int argc, char *argv[])
 	if (emu_flycast_init() != 0)
 		return 1;
 	
-	[(SDLApplicationDelegate *)[NSApp delegate] emulatorDidInitialize];
-
 	int boardId = config::loadInt("naomi", "BoardId");
 	if (boardId > 0)
 	{
