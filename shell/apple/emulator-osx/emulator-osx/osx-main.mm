@@ -146,10 +146,18 @@ static void stopContentWatcher()
 }
 #endif
 
+#ifdef FLYCAST_MACOS_NATIVE_UI
+static bool nativeLibraryVisible = false;
+
+extern "C" bool FlycastNativeLibraryVisible()
+{
+    return nativeLibraryVisible;
+}
+#endif
+
 void os_DoEvents() {
 #if defined(USE_SDL)
 #ifdef FLYCAST_MACOS_NATIVE_UI
-    static bool nativeLibraryVisible = false;
     const bool shouldShowNativeLibrary = gui_state == GuiState::Main;
     if (nativeLibraryVisible != shouldShowNativeLibrary) {
         Class libraryClass = NSClassFromString(@"FlycastNativeLibrary");
