@@ -169,6 +169,8 @@ void Boxart::fetchBoxart()
 			}
 		}
 		saveDatabase();
+		if (const auto callback = changeCallback.load())
+			callback();
 	});
 }
 

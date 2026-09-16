@@ -1396,6 +1396,8 @@ if(NOT LIBRETRO)
 		else()
 			if(FLYCAST_MACOS_NATIVE_UI AND CMAKE_GENERATOR STREQUAL "Xcode")
 				target_compile_definitions(${PROJECT_NAME} PRIVATE FLYCAST_MACOS_NATIVE_UI)
+				find_library(CORESERVICES_LIBRARY CoreServices REQUIRED)
+				target_link_libraries(${PROJECT_NAME} PRIVATE ${CORESERVICES_LIBRARY})
 				target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/emulator-osx/emulator-osx/FlycastNativeLibrary.swift
 					shell/apple/emulator-osx/emulator-osx/FlycastNativeBridge.h)

@@ -93,7 +93,16 @@ static Boxart boxart;
 #ifdef FLYCAST_MACOS_NATIVE_UI
 #include <cstdlib>
 
-extern "C" char *FlycastNativeGamesJSON()
+extern "C" void FlycastNativeScannerDidChange();
+extern "C" void FlycastNativeArtworkDidChange();
+
+extern "C" void FlycastNativeObserveLibrary(bool enabled)
+{
+    scanner.setChangeCallback(enabled ? FlycastNativeScannerDidChange : nullptr);
+    boxart.setChangeCallback(enabled ? FlycastNativeArtworkDidChange : nullptr);
+}
+
+extern "C" char *FlycastNativeGamesJSON(bool enqueueArtwork)
 {
     scanner.fetch_game_list();
     nlohmann::json games = nlohmann::json::array();
@@ -101,7 +110,7 @@ extern "C" char *FlycastNativeGamesJSON()
     for (const auto& game : scanner.get_game_list()) {
         if (game.path.empty() || game.device)
             continue;
-        const GameBoxart art = boxart.getBoxartAndLoad(game);
+        const GameBoxart art = enqueueArtwork ? boxart.getBoxartAndLoad(game) : boxart.getBoxart(game);
         games.push_back({
             {"name", get_file_basename(game.fileName)},
             {"path", game.path},
@@ -109,6 +118,8 @@ extern "C" char *FlycastNativeGamesJSON()
             {"arcade", game.arcade}
         });
     }
+    if (!enqueueArtwork)
+        boxart.continueFetch();
     return strdup(games.dump().c_str());
 }
 

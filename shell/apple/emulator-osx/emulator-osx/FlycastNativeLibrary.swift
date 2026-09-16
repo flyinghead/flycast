@@ -28,30 +28,61 @@ private final class LibraryModel: ObservableObject {
     @Published var widescreen = false
     @Published var widescreenHacks = false
     @Published var resolution = 480
+    private var observations: [AnyCancellable] = []
     private var refreshTask: Task<Void, Never>?
+    private var isObserving = false
+    private var pendingUpdate = false
+    private var pendingArtworkEnqueue = false
+    private var generation = 0
 
     func start() {
-        guard refreshTask == nil else { return }
+        guard !isObserving else { return }
+        isObserving = true
+        observations = [
+            NotificationCenter.default.publisher(for: Notification.Name("FlycastNativeScannerDidChange"))
+                .sink { [weak self] _ in self?.requestUpdate(enqueueArtwork: true) },
+            NotificationCenter.default.publisher(for: Notification.Name("FlycastNativeArtworkDidChange"))
+                .sink { [weak self] _ in self?.requestUpdate(enqueueArtwork: false) }
+        ]
+        FlycastNativeObserveLibrary(true)
         refreshSettings()
-        refreshTask = Task { [weak self] in
-            guard let self else { return }
-            while !Task.isCancelled {
-                await loadGames()
-                try? await Task.sleep(for: .seconds(1.5))
-            }
-        }
+        requestUpdate(enqueueArtwork: true)
     }
 
     func stop() {
+        isObserving = false
+        FlycastNativeObserveLibrary(false)
+        observations.removeAll()
+        generation += 1
         refreshTask?.cancel()
         refreshTask = nil
+        pendingUpdate = false
+        pendingArtworkEnqueue = false
     }
 
-    private func loadGames() async {
+    private func requestUpdate(enqueueArtwork: Bool) {
+        guard isObserving else { return }
+        pendingUpdate = true
+        pendingArtworkEnqueue = pendingArtworkEnqueue || enqueueArtwork
+        guard refreshTask == nil else { return }
+        let currentGeneration = generation
+        refreshTask = Task { [weak self] in
+            guard let self else { return }
+            while currentGeneration == generation && pendingUpdate && !Task.isCancelled {
+                pendingUpdate = false
+                let enqueueArtwork = pendingArtworkEnqueue
+                pendingArtworkEnqueue = false
+                await loadGames(enqueueArtwork: enqueueArtwork)
+            }
+            if currentGeneration == generation { refreshTask = nil }
+        }
+    }
+
+    private func loadGames(enqueueArtwork: Bool) async {
         // The scanner and cover-art database perform I/O. Keep that work away
         // from AppKit's main thread and publish only changed snapshots here.
         let snapshot = await Task.detached(priority: .utility) { () -> [LibraryGame] in
-            guard let pointer = FlycastNativeGamesJSON() else { return [] }
+            guard let pointer = FlycastNativeGamesJSON(enqueueArtwork) else { return [] }
             let data = Data(String(cString: pointer).utf8)
             FlycastNativeFree(pointer)
             return (try? JSONDecoder().decode([LibraryGame].self, from: data)) ?? []
@@ -67,6 +98,7 @@ private final class LibraryModel: ObservableObject {
             FlycastNativeFree(pointer)
             if let decoded = try? JSONDecoder().decode([String].self, from: data), decoded != folders {
                 folders = decoded
+                FlycastNativeWatchContentPaths()
             }
         }
         launchFullscreen = FlycastNativeLaunchFullscreen()
@@ -84,7 +116,7 @@ private final class LibraryModel: ObservableObject {
         if panel.runModal() == .OK, let url = panel.url {
             url.path.withCString { FlycastNativeAddContentPath($0) }
             refreshSettings()
-            Task { await loadGames() }
+            requestUpdate(enqueueArtwork: true)
         }
     }
 
@@ -249,7 +281,7 @@ private struct GameCard: View {
                             .foregroundStyle(.tint)
                     }
                 }
-                .aspectRatio(0.78, contentMode: .fit)
+                .aspectRatio(1, contentMode: .fit)
                 .overlay {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(.primary.opacity(0.08))

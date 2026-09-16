@@ -9,7 +9,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-char *FlycastNativeGamesJSON(void);
+void FlycastNativeObserveLibrary(bool enabled);
+void FlycastNativeWatchContentPaths(void);
+char *FlycastNativeGamesJSON(bool enqueueArtwork);
 char *FlycastNativeContentPathsJSON(void);
 void FlycastNativeFree(char *value);
 void FlycastNativeLaunch(const char *path);

@@ -25,6 +25,10 @@
 #include "emulator.h"
 #include "ui/mainui.h"
 #include "ui/gui.h"
+#ifdef FLYCAST_MACOS_NATIVE_UI
+#import <CoreServices/CoreServices.h>
+#include "ui/settings.h"
+#endif
 #include "SDLApplicationDelegate.h"
 #include <future>
 #include <exception>
@@ -53,6 +57,94 @@ int darw_printf(const char* text, ...)
 
     return 0;
 }
+
+#ifdef FLYCAST_MACOS_NATIVE_UI
+static void postNativeLibraryChange(NSString *name)
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:name object:nil];
+    });
+}
+
+extern "C" void FlycastNativeScannerDidChange()
+{
+    postNativeLibraryChange(@"FlycastNativeScannerDidChange");
+}
+
+extern "C" void FlycastNativeArtworkDidChange()
+{
+    postNativeLibraryChange(@"FlycastNativeArtworkDidChange");
+}
+
+// FSEvents observes each configured directory recursively. The stream and its
+// debounce state live on one serial queue; installing it never waits on SwiftUI.
+static dispatch_queue_t contentWatcherQueue()
+{
+    static dispatch_queue_t queue = dispatch_queue_create("flycast.content-watcher", DISPATCH_QUEUE_SERIAL);
+    return queue;
+}
+
+static FSEventStreamRef contentStream = nullptr;
+static uint64_t contentRevision = 0;
+
+static void stopContentWatcherOnQueue()
+{
+    ++contentRevision;
+    if (contentStream != nullptr) {
+        FSEventStreamStop(contentStream);
+        FSEventStreamInvalidate(contentStream);
+        FSEventStreamRelease(contentStream);
+        contentStream = nullptr;
+    }
+}
+
+static void contentPathsChanged(ConstFSEventStreamRef, void *, size_t,
+                                void *, const FSEventStreamEventFlags[],
+                                const FSEventStreamEventId[])
+{
+    const uint64_t revision = ++contentRevision;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 750 * NSEC_PER_MSEC),
+                   contentWatcherQueue(), ^{
+        if (contentStream == nullptr || revision != contentRevision)
+            return;
+        scanner.refresh();
+        scanner.fetch_game_list();
+    });
+}
+
+extern "C" void FlycastNativeWatchContentPaths()
+{
+    CFMutableArrayRef paths = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+    for (const auto& path : config::ContentPath.get()) {
+        CFStringRef name = CFStringCreateWithCString(kCFAllocatorDefault, path.c_str(), kCFStringEncodingUTF8);
+        if (name != nullptr) {
+            CFArrayAppendValue(paths, name);
+            CFRelease(name);
+        }
+    }
+    dispatch_async(contentWatcherQueue(), ^{
+        stopContentWatcherOnQueue();
+        if (CFArrayGetCount(paths) != 0) {
+            contentStream = FSEventStreamCreate(kCFAllocatorDefault, contentPathsChanged,
+                                                nullptr, paths, kFSEventStreamEventIdSinceNow,
+                                                0.5, kFSEventStreamCreateFlagFileEvents);
+            if (contentStream != nullptr) {
+                FSEventStreamSetDispatchQueue(contentStream, contentWatcherQueue());
+                if (!FSEventStreamStart(contentStream))
+                    stopContentWatcherOnQueue();
+            }
+        }
+        CFRelease(paths);
+    });
+}
+
+static void stopContentWatcher()
+{
+    dispatch_sync(contentWatcherQueue(), ^{
+        stopContentWatcherOnQueue();
+    });
+}
+#endif
 
 void os_DoEvents() {
 #if defined(USE_SDL)
@@ -88,6 +180,9 @@ static int emu_flycast_init();
 
 static void emu_flycast_term()
 {
+#ifdef FLYCAST_MACOS_NATIVE_UI
+    stopContentWatcher();
+#endif
 	flycast_term();
 	LogManager::Shutdown();
 }
