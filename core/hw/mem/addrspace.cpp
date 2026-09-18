@@ -407,7 +407,7 @@ void initMappings()
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
 	if (ram_base == nullptr)
 	{
-		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in");
+		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in)");
 
 		// Allocate it all and initialize it.
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
