@@ -202,7 +202,6 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 		else if (token == "PREGAP")
 		{
 			cuesheet >> token;
-			int indexFAD = 0;
 			int min = 0, sec = 0, frame = 0;
 			if (sscanf(token.c_str(), "%d:%d:%d", &min, &sec, &frame) == 3)
 				pregap = frame + 75 * (sec + 60 * min);
