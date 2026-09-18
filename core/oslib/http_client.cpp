@@ -63,7 +63,7 @@ void init()
 
 static bool crackUrl(const std::string& url, URL_COMPONENTS& components)
 {
-	static char scheme[16], host[256], path[256];
+	static char scheme[16], host[256], path[1024];
 	components = {};
 	components.dwStructSize = sizeof(components);
 	components.lpszScheme = scheme;

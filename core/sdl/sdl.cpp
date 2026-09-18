@@ -572,6 +572,7 @@ void input_sdl_handle()
 
 			case SDL_DROPFILE:
 				gui_start_game(event.drop.file);
+				SDL_free(event.drop.file);
 				break;
 
 			// Switch touchscreen support

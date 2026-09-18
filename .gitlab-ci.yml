@@ -37,6 +37,11 @@
     IOS_MINVER: 13.0
     MINVER: 13.0
 
+.core-defs-libnx:
+  extends: .core-defs
+  variables:
+    CORE_ARGS: -DLIBRETRO=ON -DUSE_OPENMP=OFF
+
 .core-defs-android:
   extends: .core-defs
   script:
@@ -80,8 +85,8 @@ include:
 
   ################################## CONSOLES ################################  
   # Nintendo Switch
-#  - project: 'libretro-infrastructure/ci-templates'
-#    file: '/libnx-static.yml'
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/libnx-static-cmake.yml'
 
   # tvOS arm64
   - project: 'libretro-infrastructure/ci-templates'
@@ -96,7 +101,7 @@ include:
 stages:
   - build-prepare
   - build-shared
-#  - build-static
+  - build-static
 
 ##############################################################################
 #################################### STAGES ##################################
@@ -182,10 +187,33 @@ libretro-build-ios-arm64:
 
 ################################### CONSOLES #################################
 # Nintendo Switch
-#libretro-build-libnx-aarch64:
-#  extends:
-#    - .libretro-libnx-static-retroarch-master
-#    - .core-defs
+libretro-build-libnx-aarch64:
+  extends:
+    - .libretro-libnx-static-cmake-retroarch-master
+    - .core-defs-libnx
+  # The libnx image ships CMake 3.18.4 and this tree asks for 3.22.1, so the
+  # job stops at configure. Put a newer one in front of it - in /tmp, since
+  # the job does not run as a user who can write /opt.
+  before_script:
+    - !reference [.libretro-libnx-static-cmake, before_script]
+    - |
+      CMAKE_VER=3.31.6
+      curl -sSL "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}-linux-x86_64.tar.gz" | tar -xz -C /tmp
+      export PATH="/tmp/cmake-${CMAKE_VER}-linux-x86_64/bin:$PATH"
+  # The template's script, with one word changed. It builds --target
+  # ${CORENAME}_libretro, and on Switch that target is flycast's own objects
+  # and nothing else. `combined` is the target CMakeLists.txt defines for
+  # exactly this case: it folds in xxhash, chdr, zip, elf and the resources,
+  # which is what RetroArch links against afterwards.
+  script:
+    - cmake $CORE_ARGS "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR -DCMAKE_BUILD_TYPE=Release -DLIBRETRO_STATIC=ON -DLIBRETRO_SUFFIX=_libnx -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DNSWITCH=ON -DCFLAGS=-DHAVE_LIBNX=1 -DCXXFLAGS=-DHAVE_LIBNX=1
+    - cmake --build $BUILD_DIR --target combined --config Release -- -j $NUMPROC
+    - mv $BUILD_DIR/$EXTRA_PATH/${CORENAME}_libretro_libnx.a retroarch-precompiled/libretro_libnx.a
+    - cd retroarch-precompiled/
+    - make -f Makefile.libnx -j10
+    - mv retroarch_switch.nro ../${CORENAME}_libretro_libnx.nro
+    - mv retroarch_switch.elf ../${CORENAME}_libretro_libnx.elf
+    - cd ../
 
 # tvOS arm64
 libretro-build-tvos-arm64:

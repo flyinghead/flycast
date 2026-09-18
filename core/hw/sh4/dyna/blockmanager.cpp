@@ -550,9 +550,10 @@ u32 bm_getRamOffset(void *p)
 	else
 #endif
 	{
-		if ((u8 *)p < &mem_b[0] || (u8 *)p >= &mem_b[RAM_SIZE])
+		uintptr_t offset = virtmem::untag(p) - virtmem::untag(&mem_b[0]);
+		if (offset >= RAM_SIZE)
 			return -1;
-		return (u32)((u8 *)p - &mem_b[0]);
+		return (u32)offset;
 	}
 }
 

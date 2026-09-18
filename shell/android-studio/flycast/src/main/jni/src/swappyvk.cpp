@@ -83,9 +83,9 @@ static void activate(bool enable)
 		SwappyVk_setAutoPipelineMode(false);
 		SwappyVk_setSwapIntervalNS((VkDevice)device, (VkSwapchainKHR)swapchain, SWAPPY_SWAP_60FPS);
 	}
-	else {
-		if (swapchain)
-			SwappyVk_destroySwapchain((VkDevice)device, (VkSwapchainKHR)swapchain);
+	else if (swapchain) {
+		SwappyVk_setWindow((VkDevice)device, (VkSwapchainKHR)swapchain, nullptr);
+		SwappyVk_destroySwapchain((VkDevice)device, (VkSwapchainKHR)swapchain);
 	}
 }
 

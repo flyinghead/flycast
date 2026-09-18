@@ -428,7 +428,8 @@ static void loadSpecialSettings()
 	}
 	else if (settings.platform.isArcade())
 	{
-		if (prod_id == "COSMIC SMASH IN JAPAN")
+		if (prod_id == "COSMIC SMASH IN JAPAN"
+				|| prod_id == "MONKEY BALL JAPAN VERSION")
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			config::TranslucentPolygonDepthMask.override(true);

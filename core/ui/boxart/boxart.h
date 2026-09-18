@@ -59,6 +59,7 @@ private:
 	std::unique_ptr<Scraper> arcadeScraper;
 	bool databaseLoaded = false;
 	bool databaseDirty = false;
+	u64 pauseUntil = 0;
 
 	std::vector<GameBoxart> toFetch;
 	std::future<void> fetching;

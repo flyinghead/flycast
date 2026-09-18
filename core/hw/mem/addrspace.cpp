@@ -407,7 +407,7 @@ void initMappings()
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
 	if (ram_base == nullptr)
 	{
-		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in");
+		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in)");
 
 		// Allocate it all and initialize it.
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
@@ -535,8 +535,8 @@ u32 getVramOffset(void *addr)
 	else
 #endif
 	{
-		ptrdiff_t offset = (u8*)addr - &vram[0];
-		if (offset < 0 || offset >= VRAM_SIZE)
+		uintptr_t offset = virtmem::untag(addr) - virtmem::untag(&vram[0]);
+		if (offset >= VRAM_SIZE)
 			return -1;
 
 		return (u32)offset;

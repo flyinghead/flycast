@@ -226,6 +226,9 @@ elseif(LIBRETRO)
 	endif()
 	if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3 HAVE_OPENGLES_3_1 HAVE_OIT)
+		if(ANDROID)
+			target_link_libraries(${PROJECT_NAME} PRIVATE android)
+		endif()
     elseif(IOS)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
 		find_library(OPENGLES OpenGLES)
@@ -1508,16 +1511,36 @@ endif()
 
 if(NINTENDO_SWITCH)
 	if(LIBRETRO)
+		# ar names a member after the basename of the object, so extracting every
+		# archive into one directory loses whatever two of them happen to share:
+		# zstd carries its own copy of xxhash.c, whose object lands on top of the
+		# real xxHash one and takes XXH32 with it. A directory per archive keeps
+		# them apart.
 		add_custom_target(combined ALL
-			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
-			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
-			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
-			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:elf>
-			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:flycast::res>
-			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.o
-			COMMAND rm *.o
+			COMMAND ${CMAKE_COMMAND} -E rm -rf combined-objs
+			COMMAND ${CMAKE_COMMAND} -E make_directory
+				combined-objs/xxhash combined-objs/chdr combined-objs/zip
+				combined-objs/zstd combined-objs/elf combined-objs/tinygettext
+				combined-objs/res
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/xxhash
+				${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/chdr
+				${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/zip
+				${CMAKE_AR} -x $<TARGET_FILE:zip>
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/zstd
+				${CMAKE_AR} -x $<TARGET_FILE:libzstd_static>
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/elf
+				${CMAKE_AR} -x $<TARGET_FILE:elf>
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/tinygettext
+				${CMAKE_AR} -x $<TARGET_FILE:tinygettext::tinygettext>
+			COMMAND ${CMAKE_COMMAND} -E chdir combined-objs/res
+				${CMAKE_AR} -x $<TARGET_FILE:flycast::res>
+			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a combined-objs/*/*.o
+			COMMAND ${CMAKE_COMMAND} -E rm -rf combined-objs
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
-			DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
+			DEPENDS xxHash::xxhash chdr-static zip libzstd_static
+				tinygettext::tinygettext ${PROJECT_NAME})
 	else()
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
