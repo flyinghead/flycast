@@ -51,6 +51,20 @@ static int ashmem_create_region(const char *name, size_t size)
 }
 #endif  // #ifdef __ANDROID__
 
+#if defined(LIBRETRO) && defined(TARGET_IPHONE)
+#include <libretro.h>
+extern retro_environment_t environ_cb;
+
+static bool free_via_frontend(void *ptr)
+{
+	if (ptr == nullptr || environ_cb == nullptr)
+		return false;
+	struct retro_exec_mem_free f = {};
+	f.rx = ptr;
+	return environ_cb(RETRO_ENVIRONMENT_EXEC_MEM_FREE, &f);
+}
+#endif
+
 namespace virtmem
 {
 
@@ -286,6 +300,48 @@ void release_jit_block(void *code_area, size_t size)
 	munmap(code_area, size);
 }
 
+#if defined(LIBRETRO) && defined(TARGET_IPHONE)
+bool prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset)
+{
+	struct retro_exec_mem_alloc alloc = {};
+	alloc.version = 1;
+	alloc.size = size;
+	if (environ_cb &&
+	    environ_cb(RETRO_ENVIRONMENT_EXEC_MEM_ALLOC, &alloc) &&
+	    alloc.mode != RETRO_EXEC_MEM_MODE_UNAVAILABLE &&
+	    alloc.rx != nullptr)
+	{
+		if (alloc.mode == RETRO_EXEC_MEM_MODE_DUAL_MAP)
+		{
+			*code_area_rw = alloc.rw;
+			*rx_offset = (char*)alloc.rx - (char*)alloc.rw;
+		}
+		else
+		{
+			*code_area_rw = alloc.rx;
+			*rx_offset = 0;
+		}
+		return true;
+	}
+
+	/* EXEC_MEM_ALLOC not available — older frontend.
+	 * Fall back to W^X mmap (works if JIT_CAPABLE is true). */
+	void *ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE,
+	                 MAP_ANON | MAP_PRIVATE, -1, 0);
+	if (ptr == MAP_FAILED)
+		return false;
+	*code_area_rw = ptr;
+	*rx_offset = 0;
+	return true;
+}
+
+void release_jit_block(void *code_area1, void *code_area2, size_t size)
+{
+	if (free_via_frontend(code_area1) || free_via_frontend(code_area2))
+		return;
+	munmap(code_area2, size);
+}
+#else
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
 bool prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset)
 {
@@ -322,6 +378,7 @@ void release_jit_block(void *code_area1, void *code_area2, size_t size)
 	// keep code_area1 (RX) mapped since it's statically allocated
 	munmap(code_area2, size);
 }
+#endif
 
 } // namespace virtmem
 

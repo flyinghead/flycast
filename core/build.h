@@ -59,7 +59,7 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || (defined(LIBRETRO) && defined(TARGET_IPHONE))
 #define FEAT_NO_RWX_PAGES
 #endif
 
