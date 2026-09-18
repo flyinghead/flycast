@@ -319,7 +319,10 @@ void spg_Serialize(Serializer& ser)
 	ser << Frame_Cycles;
 	ser << lightgun_line;
 	ser << lightgun_hpos;
+	sh4_sched_serialize(ser, vblank_schid);
+	sh4_sched_serialize(ser, render_end_schid);
 }
+
 void spg_Deserialize(Deserializer& deser)
 {
 	deser >> clc_pvr_scanline;
@@ -330,4 +333,8 @@ void spg_Deserialize(Deserializer& deser)
 	deser >> Frame_Cycles;
 	deser >> lightgun_line;
 	deser >> lightgun_hpos;
+	if (deser.version() >= Deserializer::V62) {
+		sh4_sched_deserialize(deser, vblank_schid);
+		sh4_sched_deserialize(deser, render_end_schid);
+	}
 }

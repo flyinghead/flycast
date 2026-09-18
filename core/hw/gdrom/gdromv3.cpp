@@ -16,6 +16,8 @@
 #include "serialize.h"
 
 int gdrom_schid;
+static int statusSchid = -1;
+static int nextStatus = -1;
 
 //Sense: ASC - ASCQ - Key
 int sns_asc;
@@ -32,15 +34,6 @@ cdda_t cdda;
 
 static gd_states gd_state;
 static DiscType gd_disk_type;
-/*
-	GD rom reset -> GDS_WAITCMD
-
-	GDS_WAITCMD -> ATA/SPI command [Command code is on ata_command]
-	SPI Command -> GDS_WAITPACKET -> GDS_SPI_* , depending on input
-
-	GDS_SPI_READSECTOR -> Depending on features , it can do quite a few things
-*/
-static u32 data_write_mode=0;
 
 //Registers
 static u32 DriveSel;
@@ -177,6 +170,17 @@ void PioBuffer::deserialize(Deserializer& deser)
 		deser.deserialize(&_data[0], size);
 }
 
+static void cddaTransition(int state, u64 duration = 20_sh4ms, int transientState = GD_BUSY)
+{
+	SecNumber.Status = transientState;
+	nextStatus = state;
+	sh4_sched_request(statusSchid, duration);
+}
+
+static void cddaCancelTransition() {
+	sh4_sched_request(statusSchid, -1);
+}
+
 static void gd_set_state(gd_states state)
 {
 	gd_states prev=gd_state;
@@ -256,6 +260,9 @@ static void gd_set_state(gd_states state)
 				if (sector_count > maxSectors) {
 					sector_count = maxSectors;
 					next_state = gds_readsector_pio;
+				}
+				else {
+					cddaTransition(GD_PAUSE, 67_sh4ms, GD_PLAY);
 				}
 
 				u16 *buffer = pio_buff.fill(sector_count * read_params.sector_type);
@@ -345,6 +352,7 @@ void gd_setdisc()
 
 	gd_disk_type = newd;
 	SecNumber.DiscFormat = gd_disk_type >> 4;
+	cddaCancelTransition();
 }
 
 static void gd_reset()
@@ -440,6 +448,7 @@ static void gd_process_ata_cmd()
 			Error.full = 1;
 			sns_key = 0;
 			SecNumber.Status = GD_PAUSE;
+			cddaCancelTransition();
 			IntReason.full = 1;
 			// DC Checker expects these values
 			ByteCount.low = 0x14;
@@ -749,7 +758,9 @@ static void gd_process_spi_cmd()
 		{
 #define readcmd packet_cmd.GDReadBlock
 
+			SecNumber.Status = GD_PLAY;
 			cdda.status = cdda_t::NoInfo;
+			cddaCancelTransition();
 			u32 sector_type = 2048;
 			if (readcmd.head == 1 && readcmd.subh == 1 && readcmd.data == 1 && readcmd.expdtype == 3 && readcmd.other == 0)
 				sector_type = 2340;
@@ -911,7 +922,6 @@ static void gd_process_spi_cmd()
 	case SPI_CD_PLAY:
 		{
 			const u32 param_type = packet_cmd.data_8[1] & 7;
-			printf_spicmd("SPI_CD_PLAY param_type=%d", param_type);
 
 			if (param_type == 1 || param_type == 2)
 			{
@@ -927,30 +937,24 @@ static void gd_process_spi_cmd()
 					cdda.EndAddr.FAD = ses_inf[3] << 16 | ses_inf[4] << 8 | ses_inf[5];
 				}
 				cdda.repeats = packet_cmd.data_8[6] & 0xF;
-				cdda.status = cdda_t::Playing;
-				SecNumber.Status = GD_PLAY;
-
-				GDStatus.DSC = 1;
+				printf_spicmd("SPI_CD_PLAY %d -> %d repeat %d", cdda.CurrAddr.FAD, cdda.EndAddr.FAD, cdda.repeats);
+				cddaTransition(GD_PLAY, 5_sh4ms);
 			}
 			else if (param_type == 7)
 			{
+				printf_spicmd("SPI_CD_PLAY pause");
 				if (cdda.status == cdda_t::Paused)
 				{
 					// Resume from previous pos unless we're at the end
 					if (cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
-					{
-						cdda.status = cdda_t::Terminated;
-						SecNumber.Status = GD_STANDBY;
-					}
+						cddaTransition(GD_STANDBY);
 					else
-					{
-						cdda.status = cdda_t::Playing;
-						SecNumber.Status = GD_PLAY;
-					}
+						cddaTransition(GD_PLAY);
 				}
 			}
-			else
+			else {
 				die("SPI_CD_PLAY: unknown parameter");
+			}
 
 			DEBUG_LOG(GDROM, "CDDA StartAddr=%d EndAddr=%d repeats=%d status=%d CurrAddr=%d",cdda.StartAddr.FAD,
 					cdda.EndAddr.FAD, cdda.repeats, cdda.status, cdda.CurrAddr.FAD);
@@ -964,42 +968,29 @@ static void gd_process_spi_cmd()
 			const u32 param_type = packet_cmd.data_8[1] & 7;
 			printf_spicmd("SPI_CD_SEEK param_type=%d", param_type);
 
-			SecNumber.Status = GD_PAUSE;
-			if (cdda.status == cdda_t::Playing)
-				cdda.status = cdda_t::Paused;
-
 			if (param_type == 1 || param_type == 2)
 			{
 				bool min_sec_frame = param_type == 2;
 				cdda.StartAddr.FAD = cdda.CurrAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
-#ifdef STRICT_MODE
-				SecNumber.Status = GD_SEEK;
 				GDStatus.DSC = 0;
-				sh4_sched_request(gdrom_schid, SH4_MAIN_CLOCK / 50);	// 20 ms
-#else
-				GDStatus.DSC = 1;
-#endif
+				cddaTransition(GD_PAUSE, 20_sh4ms, GD_SEEK);
 			}
 			else if (param_type == 3)
 			{
 				//stop audio , goto home
 				cdda.StartAddr.FAD = cdda.CurrAddr.FAD = 150;
-				cdda.status = cdda_t::NoInfo;
-#ifdef STRICT_MODE
-				SecNumber.Status = GD_BUSY;
 				GDStatus.DSC = 0;
-				sh4_sched_request(gdrom_schid, SH4_MAIN_CLOCK / 50);	// 20 ms
-#else
-				SecNumber.Status = GD_STANDBY;
-				GDStatus.DSC = 1;
-#endif
+				cddaTransition(GD_STANDBY, 5_sh4ms);
 			}
 			else if (param_type == 4)
 			{
 				//pause audio -- nothing more
+				SecNumber.Status = GD_PAUSE;
+				cddaCancelTransition();
 			}
-			else
+			else {
 				die("SPI_CD_SEEK  : not known parameter..");
+			}
 
 			DEBUG_LOG(GDROM, "CDDA StartAddr=%d EndAddr=%d repeats=%d status=%d CurrAddr=%d",cdda.StartAddr.FAD,
 					cdda.EndAddr.FAD, cdda.repeats, cdda.status, cdda.CurrAddr.FAD);
@@ -1017,7 +1008,7 @@ static void gd_process_spi_cmd()
 
 	case SPI_GET_SCD:
 		{
-			printf_spicmd("SPI_GET_SCD");
+			printf_spicmd("SPI_GET_SCD %d", packet_cmd.data_8[1] & 0xF);
 
 			const u32 format = packet_cmd.data_8[1] & 0xF;
 			const u32 alloc_len = (packet_cmd.data_8[3] << 8) | packet_cmd.data_8[4];
@@ -1230,16 +1221,6 @@ static int getGDROMTicks()
 //is this needed ?
 static int GDRomschd(int tag, int cycles, int jitter, void *arg)
 {
-	if (SecNumber.Status == GD_SEEK)
-	{
-		SecNumber.Status = GD_PAUSE;
-		GDStatus.DSC = 1;
-	}
-	else if (SecNumber.Status == GD_BUSY)
-	{
-		SecNumber.Status = GD_STANDBY;
-		GDStatus.DSC = 1;
-	}
 	if (!(SB_GDST & 1) || !(SB_GDEN & 1) || (dma_buff.isEmpty() && read_params.remaining_sectors == 0))
 		return 0;
 
@@ -1298,11 +1279,31 @@ static int GDRomschd(int tag, int cycles, int jitter, void *arg)
 		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}
 	// Read ALL sectors and all buffer
-	if (read_params.remaining_sectors == 0 && dma_buff.isEmpty())
-		//verify(!SB_GDST&1) -> dc can do multi read dma
+	if (read_params.remaining_sectors == 0 && dma_buff.isEmpty()) {
 		gd_set_state(gds_procpacketdone);
+		cddaTransition(GD_PAUSE, 67_sh4ms, GD_PLAY);
+	}
 
 	return getGDROMTicks();
+}
+
+static int statusSched(int tag, int cycles, int jitter, void *arg)
+{
+	if (nextStatus != -1)
+	{
+		GDStatus.DSC = 1;
+		int prevCddaStatus = cdda.status;
+		if (nextStatus == GD_PAUSE && cdda.status == cdda_t::Playing)
+			cdda.status = cdda_t::Paused;
+		else if (nextStatus == GD_STANDBY)
+			cdda.status = cdda_t::Terminated;
+		else if (nextStatus == GD_PLAY)
+			cdda.status = cdda_t::Playing;
+		DEBUG_LOG(GDROM, "statusSched: Status %d -> %d, cdda status %d -> %d", SecNumber.Status, nextStatus, prevCddaStatus, cdda.status);
+		SecNumber.Status = nextStatus;
+		nextStatus = -1;
+	}
+	return 0;
 }
 
 //DMA Start
@@ -1346,6 +1347,7 @@ static void GDROM_DmaEnable(u32 addr, u32 data)
 void gdrom_reg_Init()
 {
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	statusSchid = sh4_sched_register(0, &statusSched);
 	gd_disc_change();
 }
 
@@ -1353,6 +1355,8 @@ void gdrom_reg_Term()
 {
 	sh4_sched_unregister(gdrom_schid);
 	gdrom_schid = -1;
+	sh4_sched_unregister(statusSchid);
+	statusSchid = -1;
 }
 
 void gdrom_reg_Reset(bool hard)
@@ -1390,7 +1394,6 @@ void gdrom_reg_Reset(bool hard)
 	cdda = {};
 	gd_disk_type = NoDisk;
 
-	data_write_mode = 0;
 	DriveSel = 0xa0;
 	Error = {};
 	IntReason = {};
@@ -1423,7 +1426,6 @@ void serialize(Serializer& ser)
 	ser << cdda;
 	ser << gd_state;
 	ser << gd_disk_type;
-	ser << data_write_mode;
 	ser << DriveSel;
 	ser << Error;
 
@@ -1433,6 +1435,8 @@ void serialize(Serializer& ser)
 	ser << SecNumber;
 	ser << GDStatus;
 	ser << ByteCount;
+	sh4_sched_serialize(ser, gdrom_schid);
+	sh4_sched_serialize(ser, statusSchid);
 }
 
 void deserialize(Deserializer& deser)
@@ -1453,7 +1457,7 @@ void deserialize(Deserializer& deser)
 	deser >> cdda;
 	deser >> gd_state;
 	deser >> gd_disk_type;
-	deser >> data_write_mode;
+	deser.skip<u32>(Deserializer::V62); // data_write_mode
 	deser >> DriveSel;
 	deser >> Error;
 
@@ -1463,6 +1467,10 @@ void deserialize(Deserializer& deser)
 	deser >> SecNumber;
 	deser >> GDStatus;
 	deser >> ByteCount;
+	if (deser.version() >= Deserializer::V62) {
+		sh4_sched_deserialize(deser, gdrom_schid);
+		sh4_sched_deserialize(deser, statusSchid);
+	}
 }
 
 }

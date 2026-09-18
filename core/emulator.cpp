@@ -310,8 +310,7 @@ static void loadSpecialSettings()
 		}
 		else if (prod_id == "T17708N"	// Stupid Invaders (US)
 			|| prod_id == "T17711D"		// Stupid Invaders (EU)
-			|| prod_id == "T46509M"		// Suika (JP)
-			|| prod_id == "T36901M")	// Cool Boarders Burrrn (JP)
+			|| prod_id == "T46509M")	// Suika (JP)
 		{
 			NOTICE_LOG(BOOT, "Forcing HLE BIOS");
 			config::UseReios.override(true);

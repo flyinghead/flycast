@@ -6,6 +6,9 @@ namespace aica
 {
 
 extern RamRegion aica_ram;
+extern int aica_schid;
+extern int rtc_schid;
+extern int dma_sched_id;
 u32 GetRTC_now();
 template<typename T> T readRtcReg(u32 addr);
 template<typename T> void writeRtcReg(u32 addr, T data);
