@@ -938,7 +938,7 @@ static void gd_process_spi_cmd()
 				}
 				cdda.repeats = packet_cmd.data_8[6] & 0xF;
 				printf_spicmd("SPI_CD_PLAY %d -> %d repeat %d", cdda.CurrAddr.FAD, cdda.EndAddr.FAD, cdda.repeats);
-				cddaTransition(GD_PLAY, 5_sh4ms);
+				cddaTransition(GD_PLAY, 5_sh4ms, SecNumber.Status);
 			}
 			else if (param_type == 7)
 			{
@@ -986,6 +986,7 @@ static void gd_process_spi_cmd()
 			{
 				//pause audio -- nothing more
 				SecNumber.Status = GD_PAUSE;
+				cdda.status = cdda_t::Paused;
 				cddaCancelTransition();
 			}
 			else {
