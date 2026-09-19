@@ -13,6 +13,7 @@
 @end
 
 #define MENU_TAG_TOGGLE_MENU 501
+#define MENU_TAG_RETURN_TO_LIBRARY 502
 
 #endif /* _SDLMain_h_ */
 

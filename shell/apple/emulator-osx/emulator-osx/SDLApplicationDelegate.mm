@@ -179,6 +179,12 @@ static void installFunctionFullScreenShortcutGuard(NSMenuItem *menuItem)
     gui_open_settings();
 }
 
+- (void)returnToLibrary:(id)sender
+{
+    if (emu.running())
+        gui_stop_game();
+}
+
 static void setApplicationMenu(void)
 {
     /* warning: this code is very odd */
@@ -198,8 +204,10 @@ static void setApplicationMenu(void)
     
     [appleMenu addItemWithTitle:@"New Instance" action:@selector(newInstance:) keyEquivalent:@"n"];
 
-    NSMenuItem *toggleMenuItem = [appleMenu addItemWithTitle:@"Toggle Menu" action:@selector(toggleMenu:) keyEquivalent:@"M"];
+    NSMenuItem *toggleMenuItem = [appleMenu addItemWithTitle:NSLocalizedString(@"toggle_game_menu", nil) action:@selector(toggleMenu:) keyEquivalent:@"M"];
     [toggleMenuItem setTag:MENU_TAG_TOGGLE_MENU];
+    NSMenuItem *returnItem = [appleMenu addItemWithTitle:NSLocalizedString(@"return_to_library", nil) action:@selector(returnToLibrary:) keyEquivalent:@"B"];
+    [returnItem setTag:MENU_TAG_RETURN_TO_LIBRARY];
     [appleMenu setAutoenablesItems:NO];
 
     [appleMenu addItem:[NSMenuItem separatorItem]];
