@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include "ui/gui.h"
 #include "oslib/oslib.h"
+#include "sdl/sdl.h"
 
 #ifdef USE_BREAKPAD
 #include "client/mac/handler/exception_handler.h"
@@ -361,20 +362,7 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
 	// AppKit may deliver a document before SDL initializes the video subsystem.
-	if (SDL_WasInit(SDL_INIT_EVENTS) == 0 && SDL_InitSubSystem(SDL_INIT_EVENTS) != 0)
-		return NO;
-
-	SDL_Event event = {};
-	event.type = SDL_DROPFILE;
-	event.drop.file = SDL_strdup([filename UTF8String]);
-	if (event.drop.file == nullptr)
-		return NO;
-	if (SDL_PushEvent(&event) != 1)
-	{
-		SDL_free(event.drop.file);
-		return NO;
-	}
-	return YES;
+	return sdl_queue_open_file([filename UTF8String]) ? YES : NO;
 }
 
 /* Called when the internal event loop has just started running */
