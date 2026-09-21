@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-06 13:10\n"
+"PO-Revision-Date: 2026-09-21 08:36\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -2752,7 +2752,7 @@ msgstr "已与对等方同步"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr "跑步"
+msgstr "运行中"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
