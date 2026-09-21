@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-21 13:38\n"
+"PO-Revision-Date: 2026-09-21 15:18\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -255,7 +255,7 @@ msgstr "Flycast 错误"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
-msgstr "关闭声音"
+msgstr "无音频"
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
@@ -316,12 +316,12 @@ msgstr "CUE 文件无效"
 #: core/imgread/cue.cpp:184
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr "CUE 文件：无法打开音轨 %s"
+msgstr "CUE 文件: 无法打开音轨 %s"
 
 #: core/imgread/cue.cpp:211
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr "CUE 文件：该曲目包含未知扇区类型：%s"
+msgstr "CUE 文件: 音轨扇区类型未知 %s"
 
 #: core/imgread/cue.cpp:260
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
@@ -353,11 +353,11 @@ msgstr "CHD 文件 %s 中的 hunkbytes 无效"
 
 #: core/imgread/chd.cpp:181
 msgid "Unexpected track number"
-msgstr "轨道编号不正确"
+msgstr "意外的音轨编号"
 
 #: core/imgread/chd.cpp:184
 msgid "Unsupported subtype or pre/postgap"
-msgstr "不支持的子类型或前/后间隔"
+msgstr "不支持的子类型或前/后间隙"
 
 #: core/imgread/chd.cpp:210
 msgid "Invalid CHD: less than 3 tracks"
@@ -984,7 +984,7 @@ msgstr " 输出纹理尺寸：%d × %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr "设置"
+msgstr "集合"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
@@ -1485,7 +1485,7 @@ msgstr "All"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:240
 msgid "Directions"
-msgstr "方向"
+msgstr "下"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:241
 msgid "Up"
@@ -1687,7 +1687,7 @@ msgstr "插入记忆卡"
 
 #: core/ui/settings_controls.cpp:442 core/ui/settings_controls.cpp:847
 msgid "Map Control"
-msgstr "映射控制"
+msgstr "地图控制"
 
 #: core/ui/settings_controls.cpp:444
 #, c-format
@@ -2752,7 +2752,7 @@ msgstr "已与对等方同步"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr "运行中"
+msgstr "跑步"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
