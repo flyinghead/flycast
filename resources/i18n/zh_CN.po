@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-21 08:36\n"
+"PO-Revision-Date: 2026-09-21 13:38\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -984,7 +984,7 @@ msgstr " 输出纹理尺寸：%d × %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr "集合"
+msgstr "设置"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
@@ -1485,7 +1485,7 @@ msgstr "All"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:240
 msgid "Directions"
-msgstr "下"
+msgstr "方向"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:241
 msgid "Up"
@@ -1687,7 +1687,7 @@ msgstr "插入记忆卡"
 
 #: core/ui/settings_controls.cpp:442 core/ui/settings_controls.cpp:847
 msgid "Map Control"
-msgstr "地图控制"
+msgstr "映射控制"
 
 #: core/ui/settings_controls.cpp:444
 #, c-format
