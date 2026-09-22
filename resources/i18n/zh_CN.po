@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-21 15:18\n"
+"PO-Revision-Date: 2026-09-22 02:34\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -554,7 +554,7 @@ msgstr "无效的卡带大小"
 
 #: core/cheats.cpp:776 core/cheats.cpp:781
 msgid "Invalid cheat code"
-msgstr "作弊码无效"
+msgstr "金手指无效"
 
 #: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
 msgid "Missing value"
@@ -570,7 +570,7 @@ msgstr "缺少地址或数值"
 
 #: core/cheats.cpp:937 core/cheats.cpp:1041
 msgid "Unsupported cheat type"
-msgstr "不支持的作弊类型"
+msgstr "不支持的金手指类型"
 
 #: core/cheats.cpp:945
 msgid "Missing count or value"
@@ -594,7 +594,7 @@ msgstr "缺少测试地址"
 
 #: core/cheats.cpp:1112
 msgid "Can't save cheat file"
-msgstr "无法保存作弊文件"
+msgstr "无法保存金手指文件"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
@@ -642,7 +642,7 @@ msgstr "一半分辨率"
 
 #: core/ui/settings_video.cpp:156 core/ui/settings_network.cpp:40
 msgid "Native"
-msgstr "原生分辨率"
+msgstr "原生"
 
 #: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
@@ -890,7 +890,7 @@ msgstr "原生深度插值"
 
 #: core/ui/settings_video.cpp:334
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr "有助于解决 AMD 显卡上的纹理损坏和深度问题。在某些情况下，对英特尔显卡也有帮助。"
+msgstr "解决 AMD GPU 的纹理损坏和位深问题. 某些情况下也适用于 Intel GPU"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy Rendered Textures to VRAM"
@@ -1212,7 +1212,7 @@ msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "自动加载即时存档"
+msgstr "自动加载即时存档:"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1256,7 +1256,7 @@ msgstr "使用 RetroAchievements.org 追踪您的游戏成就"
 
 #: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr "启用 RetroAchievements 硬核模式。在此模式下，禁止使用作弊码和加载及时存档。"
+msgstr "启用 RetroAchievements 硬核模式。在此模式下，禁止使用金手指和即时存档"
 
 #: core/ui/settings_general.cpp:415
 msgid "Username"
@@ -1799,11 +1799,11 @@ msgstr "手柄震动"
 
 #: core/ui/settings_controls.cpp:938 core/ui/settings_controls.cpp:974
 msgid "Power"
-msgstr "街机电源"
+msgstr "强度"
 
 #: core/ui/settings_controls.cpp:938
 msgid "Haptic feedback power"
-msgstr "触觉反馈功能"
+msgstr "触觉反馈强度"
 
 #: core/ui/settings_controls.cpp:940
 msgid "View"
@@ -1994,7 +1994,7 @@ msgstr "成就"
 
 #: core/ui/gui.cpp:598
 msgid "Barcode Card"
-msgstr "条码读卡卡"
+msgstr "条码卡"
 
 #: core/ui/gui.cpp:609
 msgid "Insert Disk"
@@ -2588,7 +2588,7 @@ msgstr "ISP 用户名"
 
 #: core/ui/settings_network.cpp:248
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr "存储在控制台闪存中的ISP用户名。某些网络游戏将其用作玩家名称。留空可保留当前闪存中的值。"
+msgstr "msgstr \"存储在主机 Flash RAM 中的 ISP 用户名. 一些网络游戏将其用作玩家名. 留空保留当前 Flash RAM 值"
 
 #: core/ui/settings_network.cpp:254
 msgid "DNS server name or IP address"
