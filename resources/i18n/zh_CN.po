@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-22 12:58\n"
+"PO-Revision-Date: 2026-09-22 15:01\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1505,11 +1505,11 @@ msgstr "Thumbstick 下"
 
 #: core/ui/settings_controls.cpp:184 core/ui/settings_controls.cpp:248
 msgid "Thumbstick Left"
-msgstr "左摇杆"
+msgstr "Thumbstick左"
 
 #: core/ui/settings_controls.cpp:185 core/ui/settings_controls.cpp:249
 msgid "Thumbstick Right"
-msgstr "右摇杆"
+msgstr "Thumbstick右"
 
 #: core/ui/settings_controls.cpp:187 core/ui/settings_controls.cpp:251
 msgid "R.Thumbstick Up"
