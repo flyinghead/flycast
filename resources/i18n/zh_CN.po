@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-22 11:41\n"
+"PO-Revision-Date: 2026-09-22 12:58\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1413,7 +1413,7 @@ msgstr "无"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr "Sega Controller"
+msgstr "世嘉手柄"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
@@ -1437,11 +1437,11 @@ msgstr "Arcade/Ascii Stick"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr "Maracas Controller"
+msgstr "沙锤"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr "Fishing Controller"
+msgstr "钓鱼竿"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
@@ -1449,11 +1449,11 @@ msgstr "Pop'n Music controller"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr "Racing Controller"
+msgstr "赛车手柄"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr "Densha de Go! Controller"
+msgstr "电车GO"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
@@ -1461,7 +1461,7 @@ msgstr "Panther DC/Full Controller"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr "DreamParaPara Controller"
+msgstr "DreamParaPara"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
@@ -2507,7 +2507,7 @@ msgstr "匹配码"
 
 #: core/ui/settings_network.cpp:173
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr "房间代码"
+msgstr "选择一个独特的单词或数字，分享给对手，然后你们就可以联机了"
 
 #: core/ui/settings_network.cpp:175
 msgid "Connect"
@@ -2688,7 +2688,7 @@ msgstr "您是否要重置 Vulkan 以使用新驱动程序？"
 
 #: core/nullDC.cpp:195
 msgid "Save state failed - memory full"
-msgstr "保存状态失败——内存已满"
+msgstr "即时存档失败——内存已满"
 
 #: core/nullDC.cpp:222
 msgid "Cannot open save file"
