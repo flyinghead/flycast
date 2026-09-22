@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-06 13:10\n"
+"PO-Revision-Date: 2026-09-22 12:58\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -255,7 +255,7 @@ msgstr "Flycast 错误"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
-msgstr "关闭声音"
+msgstr "无音频"
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
@@ -316,12 +316,12 @@ msgstr "CUE 文件无效"
 #: core/imgread/cue.cpp:184
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr "CUE 文件：无法打开音轨 %s"
+msgstr "CUE 文件: 无法打开音轨 %s"
 
 #: core/imgread/cue.cpp:211
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr "CUE 文件：该曲目包含未知扇区类型：%s"
+msgstr "CUE 文件: 音轨扇区类型未知 %s"
 
 #: core/imgread/cue.cpp:260
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
@@ -353,11 +353,11 @@ msgstr "CHD 文件 %s 中的 hunkbytes 无效"
 
 #: core/imgread/chd.cpp:181
 msgid "Unexpected track number"
-msgstr "轨道编号不正确"
+msgstr "意外的音轨编号"
 
 #: core/imgread/chd.cpp:184
 msgid "Unsupported subtype or pre/postgap"
-msgstr "不支持的子类型或前/后间隔"
+msgstr "不支持的子类型或前/后间隙"
 
 #: core/imgread/chd.cpp:210
 msgid "Invalid CHD: less than 3 tracks"
@@ -554,7 +554,7 @@ msgstr "无效的卡带大小"
 
 #: core/cheats.cpp:776 core/cheats.cpp:781
 msgid "Invalid cheat code"
-msgstr "作弊码无效"
+msgstr "金手指无效"
 
 #: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
 msgid "Missing value"
@@ -570,7 +570,7 @@ msgstr "缺少地址或数值"
 
 #: core/cheats.cpp:937 core/cheats.cpp:1041
 msgid "Unsupported cheat type"
-msgstr "不支持的作弊类型"
+msgstr "不支持的金手指类型"
 
 #: core/cheats.cpp:945
 msgid "Missing count or value"
@@ -594,7 +594,7 @@ msgstr "缺少测试地址"
 
 #: core/cheats.cpp:1112
 msgid "Can't save cheat file"
-msgstr "无法保存作弊文件"
+msgstr "无法保存金手指文件"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
@@ -642,7 +642,7 @@ msgstr "一半分辨率"
 
 #: core/ui/settings_video.cpp:156 core/ui/settings_network.cpp:40
 msgid "Native"
-msgstr "原生分辨率"
+msgstr "原生"
 
 #: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
@@ -890,7 +890,7 @@ msgstr "原生深度插值"
 
 #: core/ui/settings_video.cpp:334
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr "有助于解决 AMD 显卡上的纹理损坏和深度问题。在某些情况下，对英特尔显卡也有帮助。"
+msgstr "解决 AMD GPU 的纹理损坏和位深问题. 某些情况下也适用于 Intel GPU"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy Rendered Textures to VRAM"
@@ -1212,7 +1212,7 @@ msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "自动加载即时存档"
+msgstr "自动加载即时存档:"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1256,7 +1256,7 @@ msgstr "使用 RetroAchievements.org 追踪您的游戏成就"
 
 #: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr "启用 RetroAchievements 硬核模式。在此模式下，禁止使用作弊码和加载及时存档。"
+msgstr "启用 RetroAchievements 硬核模式。在此模式下，禁止使用金手指和即时存档"
 
 #: core/ui/settings_general.cpp:415
 msgid "Username"
@@ -1413,7 +1413,7 @@ msgstr "无"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr "Sega Controller"
+msgstr "世嘉手柄"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
@@ -1437,11 +1437,11 @@ msgstr "Arcade/Ascii Stick"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr "Maracas Controller"
+msgstr "沙锤"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr "Fishing Controller"
+msgstr "钓鱼竿"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
@@ -1449,11 +1449,11 @@ msgstr "Pop'n Music controller"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr "Racing Controller"
+msgstr "赛车手柄"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr "Densha de Go! Controller"
+msgstr "电车GO"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
@@ -1461,7 +1461,7 @@ msgstr "Panther DC/Full Controller"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr "DreamParaPara Controller"
+msgstr "DreamParaPara"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
@@ -1615,11 +1615,11 @@ msgstr "即时存档"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
-msgstr "将即时存档加载到内存"
+msgstr "读档到内存"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:289
 msgid "Save State in RAM"
-msgstr "读取内存中的即时存档"
+msgstr "存档到内存"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:290
 msgid "Next Save State Slot"
@@ -1799,11 +1799,11 @@ msgstr "手柄震动"
 
 #: core/ui/settings_controls.cpp:938 core/ui/settings_controls.cpp:974
 msgid "Power"
-msgstr "街机电源"
+msgstr "强度"
 
 #: core/ui/settings_controls.cpp:938
 msgid "Haptic feedback power"
-msgstr "触觉反馈功能"
+msgstr "触觉反馈强度"
 
 #: core/ui/settings_controls.cpp:940
 msgid "View"
@@ -1994,7 +1994,7 @@ msgstr "成就"
 
 #: core/ui/gui.cpp:598
 msgid "Barcode Card"
-msgstr "条码读卡卡"
+msgstr "条码卡"
 
 #: core/ui/gui.cpp:609
 msgid "Insert Disk"
@@ -2243,7 +2243,7 @@ msgstr "串行控制台"
 
 #: core/ui/settings.cpp:101
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr "将Dreamcast串行控制台输出到标准输出"
+msgstr "把 Dreamcast 串行控制台输出到 stdou"
 
 #: core/ui/settings.cpp:105
 msgid "Dreamcast 32MB RAM Mod"
@@ -2267,11 +2267,11 @@ msgstr "导出已替换的纹理"
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "始终丢弃已被自定义纹理替换的纹理"
+msgstr "始终转储已被自定义纹理替换的纹理"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
-msgstr "丢弃视频和动画纹理"
+msgstr "丢弃视频与动画纹理"
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
@@ -2507,7 +2507,7 @@ msgstr "匹配码"
 
 #: core/ui/settings_network.cpp:173
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr "房间代码"
+msgstr "选择一个独特的单词或数字，分享给对手，然后你们就可以联机了"
 
 #: core/ui/settings_network.cpp:175
 msgid "Connect"
@@ -2588,7 +2588,7 @@ msgstr "ISP 用户名"
 
 #: core/ui/settings_network.cpp:248
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr "存储在控制台闪存中的ISP用户名。某些网络游戏将其用作玩家名称。留空可保留当前闪存中的值。"
+msgstr "存储在主机 Flash RAM 中的 ISP 用户名。部分网络游戏将其用作玩家名。留空则保留当前 Flash RAM 值。"
 
 #: core/ui/settings_network.cpp:254
 msgid "DNS server name or IP address"
@@ -2688,7 +2688,7 @@ msgstr "您是否要重置 Vulkan 以使用新驱动程序？"
 
 #: core/nullDC.cpp:195
 msgid "Save state failed - memory full"
-msgstr "保存状态失败——内存已满"
+msgstr "即时存档失败——内存已满"
 
 #: core/nullDC.cpp:222
 msgid "Cannot open save file"

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-09-21 05:09\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -528,7 +528,7 @@ msgstr "Naomi GDROM: Kunde inte hitta filen att avkryptera."
 
 #: core/hw/naomi/multiboard.cpp:475
 msgid "Center"
-msgstr ""
+msgstr "Centrera"
 
 #: core/reios/reios.cpp:366 core/reios/reios.cpp:369
 msgid "Reboot to BIOS"
@@ -678,11 +678,11 @@ msgstr "Synkroniserar bildfrekvensen med skärmens uppdateringsfrekvens. Rekomme
 
 #: core/ui/settings_video.cpp:212
 msgid "Frame Pacing (Experimental)"
-msgstr ""
+msgstr "Bildrutetakt (experimentell)"
 
 #: core/ui/settings_video.cpp:213
 msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
-msgstr ""
+msgstr "Ger grafikprocessorn presentationstid för varje bildruta för att efterlikna den ursprungliga bildrutetakten."
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
@@ -2087,7 +2087,7 @@ msgstr "Tryck på Start för att starta spelet nu."
 
 #: core/ui/gui.cpp:1148 core/ui/gui.cpp:1151
 msgid "Start Now"
-msgstr ""
+msgstr "Starta nu"
 
 #: core/ui/gui.cpp:1249
 msgid "Loading..."
@@ -2356,7 +2356,7 @@ msgstr "Nätverkstyp"
 
 #: core/ui/settings_network.cpp:42
 msgid "Use native Dreamcast online features using the modem or Broadband Adapter"
-msgstr ""
+msgstr "Använd Dreamcasts inbyggda onlinefunktioner via modemet eller bredbandsadaptern"
 
 #: core/ui/settings_network.cpp:46
 msgid "Enable networking using GGPO"
@@ -2460,11 +2460,11 @@ msgstr "Visa nätverksstatistik på skärmen"
 
 #: core/ui/settings_network.cpp:115
 msgid "Network Role"
-msgstr ""
+msgstr "Nätverksroll"
 
 #: core/ui/settings_network.cpp:120
 msgid "Master"
-msgstr ""
+msgstr "Huvudserver"
 
 #: core/ui/settings_network.cpp:122
 msgid "Create a local server for Naomi network games"
@@ -2472,19 +2472,19 @@ msgstr "Skapa en lokal server för Naomi nätverksspel"
 
 #: core/ui/settings_network.cpp:124
 msgid "Slave"
-msgstr ""
+msgstr "Underordnad"
 
 #: core/ui/settings_network.cpp:126
 msgid "Connect to the master server"
-msgstr ""
+msgstr "Anslut till huvudservern"
 
 #: core/ui/settings_network.cpp:128
 msgid "Satellite"
-msgstr ""
+msgstr "Satellit"
 
 #: core/ui/settings_network.cpp:130
 msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
-msgstr ""
+msgstr "Direktövervakning för spel som stöder det (Virtual-On Oratorio Tangram och Club Kart)"
 
 #: core/ui/settings_network.cpp:135
 msgid "Server"
@@ -2601,19 +2601,19 @@ msgstr "Multiboard-skärmar"
 
 #: core/ui/settings_network.cpp:262
 msgid "1 (Twin, Satellite)"
-msgstr ""
+msgstr "1 (Twin, satellit)"
 
 #: core/ui/settings_network.cpp:262
 msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
-msgstr ""
+msgstr "Konfiguration med en skärm (F355 Twin, Derby Owners Club-satellit)"
 
 #: core/ui/settings_network.cpp:264
 msgid "2+ (Deluxe, Main screen)"
-msgstr ""
+msgstr "2+ (Deluxe, huvudskärm)"
 
 #: core/ui/settings_network.cpp:265
 msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
-msgstr ""
+msgstr "Konfiguration med två eller tre skärmar (Airline Pilot, Derby Owners Club-huvudskärm, F355 Deluxe, Sega Strike Fighter)"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
