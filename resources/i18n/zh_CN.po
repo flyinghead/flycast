@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-22 03:36\n"
+"PO-Revision-Date: 2026-09-22 11:41\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1615,11 +1615,11 @@ msgstr "即时存档"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
-msgstr "将即时存档加载到内存"
+msgstr "读档到内存"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:289
 msgid "Save State in RAM"
-msgstr "读取内存中的即时存档"
+msgstr "存档到内存"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:290
 msgid "Next Save State Slot"
