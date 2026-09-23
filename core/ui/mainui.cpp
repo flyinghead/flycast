@@ -36,6 +36,10 @@ static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
 
+#ifdef FLYCAST_MACOS_NATIVE_UI
+extern "C" bool FlycastNativeLibraryVisible();
+#endif
+
 bool mainui_rend_frame()
 {
 	FC_PROFILE_SCOPE;
@@ -45,6 +49,14 @@ bool mainui_rend_frame()
 
 	if (gui_is_open())
 	{
+#ifdef FLYCAST_MACOS_NATIVE_UI
+		// SDL still pumps input events for the native window, but its hidden
+		// ImGui window needs no OpenGL work or swap-buffer wait.
+		if (FlycastNativeLibraryVisible()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(2));
+			return false;
+		}
+#endif
 		try {
 			gui_display_ui();
 		} catch (const FlycastException& e) {

@@ -975,6 +975,8 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 				gamepad->set_rumble_power(power);
 			ImGui::SameLine();
 			ShowHelpMarker(T("Rumble power"));
+			if (ImGui::Button(T("Test rumble"), ScaledVec2(150, 30)))
+				gamepad->rumble(1.f, 0.f, 500);
 		}
 		if (gamepad->has_analog_stick())
 		{
