@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-23 01:16\n"
+"PO-Revision-Date: 2026-09-23 02:27\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -273,7 +273,7 @@ msgstr "无法读取目录 %s"
 #: core/oslib/storage.cpp:213
 #, c-format
 msgid "Cannot stat %s"
-msgstr "无法统计 %s"
+msgstr "无法获取 %s 的状态"
 
 #: core/oslib/storage.cpp:234
 #, c-format
@@ -598,7 +598,7 @@ msgstr "无法保存金手指文件"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr "图形API"
+msgstr "图形 API"
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
@@ -984,7 +984,7 @@ msgstr " 输出纹理尺寸：%d × %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr "集合"
+msgstr "设置"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
@@ -1045,15 +1045,15 @@ msgstr "非VGA模式的电视广播标准"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "Japan"
-msgstr "Japan"
+msgstr "日本"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "USA"
-msgstr "USA"
+msgstr "美国"
 
 #: core/ui/settings_general.cpp:240
 msgid "Europe"
-msgstr "Europe"
+msgstr "欧洲"
 
 #: core/ui/settings_general.cpp:241
 msgctxt "region"
@@ -1062,7 +1062,7 @@ msgstr "Export"
 
 #: core/ui/settings_general.cpp:241
 msgid "Korea"
-msgstr "Korea"
+msgstr "韩国"
 
 #: core/ui/settings_general.cpp:243
 msgid "Region"
@@ -1070,7 +1070,7 @@ msgstr "Region"
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
-msgstr "BIOS区域"
+msgstr "BIOS 区域"
 
 #: core/ui/settings_general.cpp:246
 msgid "VGA"
@@ -1481,11 +1481,11 @@ msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:167
 msgid "All"
-msgstr "All"
+msgstr "全部"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:240
 msgid "Directions"
-msgstr "下"
+msgstr "方向"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:241
 msgid "Up"
@@ -1687,7 +1687,7 @@ msgstr "插入记忆卡"
 
 #: core/ui/settings_controls.cpp:442 core/ui/settings_controls.cpp:847
 msgid "Map Control"
-msgstr "地图控制"
+msgstr "映射控制"
 
 #: core/ui/settings_controls.cpp:444
 #, c-format
@@ -2243,7 +2243,7 @@ msgstr "串行控制台"
 
 #: core/ui/settings.cpp:101
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr "把 Dreamcast 串行控制台输出到 stdou"
+msgstr "把 Dreamcast 串行控制台输出到 stdout"
 
 #: core/ui/settings.cpp:105
 msgid "Dreamcast 32MB RAM Mod"
@@ -2419,7 +2419,7 @@ msgstr "仅使用左摇杆的水平轴"
 
 #: core/ui/settings_network.cpp:93
 msgid "Full"
-msgstr "完整内存管理单元模拟"
+msgstr "完整"
 
 #: core/ui/settings_network.cpp:93
 msgid "Use the left thumbstick horizontal and vertical axes"
@@ -2528,7 +2528,7 @@ msgstr "正在加载游戏..."
 #: core/ui/settings_network.cpp:195
 #, c-format
 msgid "Playing %s (%s)"
-msgstr "播放 %s (%s)"
+msgstr "正在游玩 %s (%s)"
 
 #: core/ui/settings_network.cpp:205
 msgid "Manual"
