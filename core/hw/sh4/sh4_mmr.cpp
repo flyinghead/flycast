@@ -725,6 +725,8 @@ void deserialize(Deserializer& deser)
 		p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
 
 	sh4_sched_deserialize(deser);
+	// let the serial port reschedule its callback after the scheduler has been deserialized
+	SCIFSerialPort::Instance().postDeserialize();
 }
 
 void serialize2(Serializer& ser)
