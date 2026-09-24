@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-24 09:36\n"
+"PO-Revision-Date: 2026-09-24 11:50\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1058,7 +1058,7 @@ msgstr "欧洲"
 #: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
-msgstr "Export"
+msgstr "出口"
 
 #: core/ui/settings_general.cpp:241
 msgid "Korea"
@@ -1066,11 +1066,11 @@ msgstr "韩国"
 
 #: core/ui/settings_general.cpp:243
 msgid "Region"
-msgstr "Region"
+msgstr "地区"
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
-msgstr "BIOS 区域"
+msgstr "BIOS 地区"
 
 #: core/ui/settings_general.cpp:246
 msgid "VGA"
@@ -1433,7 +1433,7 @@ msgstr "双摇杆"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr "Arcade/Ascii Stick"
+msgstr "街机/ASCII 摇杆"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
@@ -1469,7 +1469,7 @@ msgstr "世嘉 VMU"
 
 #: core/ui/settings_controls.cpp:67
 msgid "Vibration Pack"
-msgstr "Vibration Pack"
+msgstr "震动包"
 
 #: core/ui/settings_controls.cpp:68
 msgid "Microphone"
@@ -1545,7 +1545,7 @@ msgstr "Axis 3右"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:256
 msgid "Buttons"
-msgstr "按键"
+msgstr "按钮"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:267
 msgid "Triggers"
@@ -1575,7 +1575,7 @@ msgstr "右扳机 2"
 
 #: core/ui/settings_controls.cpp:217 core/ui/settings_controls.cpp:273
 msgid "System Buttons"
-msgstr "System Buttons"
+msgstr "系统按钮"
 
 #: core/ui/settings_controls.cpp:219 core/ui/settings_controls.cpp:275
 msgid "Reload"
@@ -1639,35 +1639,35 @@ msgstr "保存截图"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Button 1"
-msgstr "Button 1"
+msgstr "按钮 1"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Button 2"
-msgstr "Button 2"
+msgstr "按钮 2"
 
 #: core/ui/settings_controls.cpp:259
 msgid "Button 3"
-msgstr "Button 3"
+msgstr "按钮 3"
 
 #: core/ui/settings_controls.cpp:260 core/input/mouse.h:89
 msgid "Button 4"
-msgstr "Button 4"
+msgstr "按钮 4"
 
 #: core/ui/settings_controls.cpp:261 core/input/mouse.h:91
 msgid "Button 5"
-msgstr "Button 5"
+msgstr "按钮 5"
 
 #: core/ui/settings_controls.cpp:262
 msgid "Button 6"
-msgstr "Button 6"
+msgstr "按钮 6"
 
 #: core/ui/settings_controls.cpp:263
 msgid "Button 7"
-msgstr "Button 7"
+msgstr "按钮 7"
 
 #: core/ui/settings_controls.cpp:264
 msgid "Button 8"
-msgstr "Button 8"
+msgstr "按钮 8"
 
 #: core/ui/settings_controls.cpp:276
 msgid "Coin"
@@ -2267,7 +2267,7 @@ msgstr "导出已替换的纹理"
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "始终转储已被自定义纹理替换的纹理"
+msgstr "始终导出已被自定义纹理替换的纹理"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
@@ -2560,11 +2560,11 @@ msgstr "自动配置网络路由器以支持网络联机游戏"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast Digital Outputs"
-msgstr "数字广播输出"
+msgstr "广播数字输出"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr "通过TCP 8000端口广播数字输出与力反馈状态。兼容MAME的 ‑output network 命令行选项。仅街机游戏可用"
+msgstr "通过 TCP 8000 端口广播数字输出与力反馈状态。兼容 MAME 的 “-output network” 命令行选项。仅限街机游戏"
 
 #: core/ui/settings_network.cpp:236
 msgid "Broadband Adapter Emulation"
