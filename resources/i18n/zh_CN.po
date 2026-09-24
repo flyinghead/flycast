@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-24 13:28\n"
+"PO-Revision-Date: 2026-09-24 15:08\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1606,12 +1606,12 @@ msgstr "快进"
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
 #: core/ui/gui.cpp:637
 msgid "Load State"
-msgstr "加载即时存档"
+msgstr "读档"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
 #: core/ui/gui.cpp:645
 msgid "Save State"
-msgstr "即时存档"
+msgstr "存档"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
