@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-24 05:28\n"
+"PO-Revision-Date: 2026-09-24 09:36\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -106,11 +106,11 @@ msgstr "警告：DreamConn 已从端口 %c 断开连接"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
-msgstr "DPad2上"
+msgstr "DPad2 上"
 
 #: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
-msgstr "DPad2下"
+msgstr "DPad2 下"
 
 #: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
@@ -130,11 +130,11 @@ msgstr "VMU1 B"
 
 #: core/sdl/dreampicoport.cpp:1621
 msgid "VMU1 Up"
-msgstr "VMU1上"
+msgstr "VMU1 上"
 
 #: core/sdl/dreampicoport.cpp:1622
 msgid "VMU1 Down"
-msgstr "VMU1下"
+msgstr "VMU1 下"
 
 #: core/sdl/dreampicoport.cpp:1623
 msgid "VMU1 Left"
@@ -171,13 +171,13 @@ msgstr "开始"
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:97
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
-msgstr "方向键上"
+msgstr "方向键 上"
 
 #: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:593
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:99
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
-msgstr "方向键下"
+msgstr "方向键 下"
 
 #: core/sdl/sdl_gamepad.cpp:558 core/sdl/sdl_gamepad.cpp:597
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:101
@@ -1212,7 +1212,7 @@ msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "自动加载即时存档:"
+msgstr "自动加载即时存档："
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1465,7 +1465,7 @@ msgstr "DreamParaPara"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
-msgstr "Sega VMU"
+msgstr "世嘉 VMU"
 
 #: core/ui/settings_controls.cpp:67
 msgid "Vibration Pack"
@@ -2203,7 +2203,7 @@ msgstr "大多数情况下推荐这个，老快了"
 
 #: core/ui/settings.cpp:41
 msgid "Interpreter"
-msgstr "使用解释器"
+msgstr "解释器"
 
 #: core/ui/settings.cpp:42
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
