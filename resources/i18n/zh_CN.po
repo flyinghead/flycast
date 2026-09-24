@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-24 02:54\n"
+"PO-Revision-Date: 2026-09-24 04:06\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -80,7 +80,7 @@ msgstr "你已解锁 %d 个成就，总共有 %d 个。"
 
 #: core/achievements/achievements.cpp:948
 msgid "This game has no achievements."
-msgstr "这款游戏没有成就。"
+msgstr "该游戏没有成就"
 
 #: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
@@ -515,7 +515,7 @@ msgstr "校准完成"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "正在校准方向盘，请保证方向盘回正。"
+msgstr "正在校准方向盘，请保持方向盘居中"
 
 #: core/hw/naomi/gdcartridge.cpp:526
 #, c-format
@@ -1252,7 +1252,7 @@ msgstr "启用 RetroAchievements"
 
 #: core/ui/settings_general.cpp:409
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr "使用 RetroAchievements.org 追踪您的游戏成就"
+msgstr "使用 RetroAchievements.org 追踪你的游戏成就"
 
 #: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
@@ -1763,7 +1763,7 @@ msgstr "确认重置"
 
 #: core/ui/settings_controls.cpp:719
 msgid "Are you sure you want to reset the mappings to default?"
-msgstr "您确定要将映射重置为默认设置吗？"
+msgstr "你确定要将映射重置为默认设置吗？"
 
 #: core/ui/settings_controls.cpp:723
 msgid "Controller Type:"
@@ -2275,7 +2275,7 @@ msgstr "丢弃视频与动画纹理"
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
-msgstr "跳过视频（YUV）的渲染并跳过已更新的纹理"
+msgstr "导出时跳过视频（YUV）和已更新的纹理"
 
 #: core/ui/settings.cpp:120
 msgid "Log to File"
@@ -2383,7 +2383,7 @@ msgstr "操控玩家 1"
 
 #: core/ui/settings_network.cpp:81
 msgid "Deselect to play as player 2"
-msgstr "操控玩家 2"
+msgstr "取消勾选则以玩家 2 游玩"
 
 #: core/ui/settings_network.cpp:82 core/ui/settings_network.cpp:208
 msgid "Peer"
@@ -2391,7 +2391,7 @@ msgstr "对端对等节点IP"
 
 #: core/ui/settings_network.cpp:84
 msgid "Your peer IP address and optional port"
-msgstr "您的对等节点 IP 地址和可选端口"
+msgstr "你的对等节点 IP 地址和可选端口"
 
 #: core/ui/settings_network.cpp:85
 msgid "Frame Delay"
@@ -2684,7 +2684,7 @@ msgstr "上传自定义驱动程序"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr "您是否要重置 Vulkan 以使用新驱动程序？"
+msgstr "你是否要重置 Vulkan 以使用新驱动程序？"
 
 #: core/nullDC.cpp:195
 msgid "Save state failed - memory full"
@@ -2860,7 +2860,7 @@ msgstr "在 %s 中未找到 BIOS 文件"
 
 #: core/emulator.cpp:615
 msgid "This game requires a real BIOS"
-msgstr "这款游戏需要真正的BIOS"
+msgstr "这款游戏需要真正的 BIOS"
 
 #: core/emulator.cpp:665
 msgid "Widescreen cheat activated"
