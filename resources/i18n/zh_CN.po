@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-23 02:27\n"
+"PO-Revision-Date: 2026-09-24 02:54\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -846,7 +846,7 @@ msgstr "跳帧"
 
 #: core/ui/settings_video.cpp:321
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr "渲两帧，跳一帧"
+msgstr "两个实际渲染帧之间跳过的帧数"
 
 #: core/ui/settings_video.cpp:322
 msgid "Shadows"
