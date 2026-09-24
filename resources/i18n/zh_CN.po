@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-24 11:50\n"
+"PO-Revision-Date: 2026-09-24 13:28\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1090,11 +1090,11 @@ msgstr "视频线类型"
 
 #: core/ui/settings_general.cpp:266
 msgid "Video connection type"
-msgstr "Video connection type"
+msgstr "视频连接类型"
 
 #: core/ui/settings_general.cpp:276
 msgid "Content Location"
-msgstr "Content Location"
+msgstr "内容文件夹位置"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
@@ -1212,7 +1212,7 @@ msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "自动加载即时存档："
+msgstr "自动即时存档:"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -2259,7 +2259,7 @@ msgstr "导出纹理"
 
 #: core/ui/settings.cpp:109
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "将所有纹理导出到 <game id>"
+msgstr "将所有纹理导出到 data/texdump/<game id>"
 
 #: core/ui/settings.cpp:113
 msgid "Dump Replaced Textures"
@@ -2659,7 +2659,7 @@ msgstr "JIT 状态：%s"
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr "驱动程序名称%s"
+msgstr "驱动程序名称：%s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
