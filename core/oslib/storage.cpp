@@ -41,6 +41,7 @@ CustomStorage& customStorage()
 		std::string getSubPath(const std::string& reference, const std::string& relative) override { die("Not implemented"); }
 		FileInfo getFileInfo(const std::string& path) override { die("Not implemented"); }
 		bool exists(const std::string& path) override { die("Not implemented"); }
+		bool remove(const std::string& path) override { die("Not implemented"); }
 		bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
 				void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType) override {
 			die("Not implemented");
@@ -291,6 +292,11 @@ public:
 #endif
 	}
 
+	bool remove(const std::string& path) override
+	{
+		return nowide::remove(path.c_str()) == 0;
+	}
+
 private:
 	std::vector<FileInfo> listRoots()
 	{
@@ -398,6 +404,14 @@ bool AllStorage::exists(const std::string& path)
 		return customStorage().exists(path);
 	else
 		return stdStorage.exists(path);
+}
+
+bool AllStorage::remove(const std::string& path)
+{
+	if (customStorage().isKnownPath(path))
+		return customStorage().remove(path);
+	else
+		return stdStorage.remove(path);
 }
 
 std::string AllStorage::getDefaultDirectory()
