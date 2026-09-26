@@ -28,18 +28,21 @@ namespace net::modbba
 
 static Service *service;
 static bool usingDCNet;
+static bool usingRawModem;
 
 bool start()
 {
-	if (service == nullptr || usingDCNet != config::UseDCNet)
+	const bool useRawModem = settings.content.gameId == "HDR0010"; // Sega Rally 2 (JP)
+	if (service == nullptr || usingRawModem != useRawModem || (!useRawModem && usingDCNet != config::UseDCNet))
 	{
 		delete service;
-		if (settings.content.gameId == "HDR0010")	// Sega Rally 2 (JP)
+		if (useRawModem)
 			service = new RawModemService();
 		else if (config::UseDCNet)
 			service = new DCNetService();
 		else
 			service = new PicoTcpService();
+		usingRawModem = useRawModem;
 		usingDCNet = config::UseDCNet;
 	}
 	return service->start();
