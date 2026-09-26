@@ -10649,7 +10649,7 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_PER_PIXEL_ACCURATE_CHS "按像素（精确，但最慢）"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CHS "累积像素缓冲区大小"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CHS "更高的值可能在更高分辨率下才能正确输出。"
-#define OPTION_VAL_512MB_CHS "512M"
+#define OPTION_VAL_512MB_CHS NULL
 #define OPTION_VAL_1GB_CHS NULL
 #define OPTION_VAL_2GB_CHS NULL
 #define OPTION_VAL_4GB_CHS NULL
@@ -10748,12 +10748,12 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_500_CHS NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CHS "加载自定义纹理"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CHS "加载位于 'system/dc/textures/<游戏ID>/' 文件夹中的自定义纹理。"
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_CHS NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_CHS "预加载自定义纹理"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CHS "游戏启动时预先加载自定义纹理贴图。这可能提升性能，但会增加内存占用。"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CHS "转储纹理"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CHS "每当游戏使用一个新纹理时，它将被保存为一个 .png 文件，存放于 'system/dc/texdump/<游戏ID>/' 文件夹中。"
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHS NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHS "转储已被替换的纹理"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CHS "总是转储已经被自定义纹理替换的原始纹理"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CHS "模拟摇杆死区"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CHS "选择在摇杆开始被处理前需要推动多远的距离。"
 #define OPTION_VAL_0_CHS NULL
@@ -10834,8 +10834,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS "视觉内存单元/系统（VMU）声音"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHS "VMU 声音"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHS "启用时，会播放 VMU 的“哔”声。"
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHS NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHS "DreamPotato VMU 存储"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHS "在已连接的 DreamPotato 仿真器上启用VMU 数据存储。启用时，不使用本地VMU 保存文件。"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHS "显示视觉内存单元/系统（VMU）屏幕设置"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHS "显示 VMU 屏幕设置"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CHS "启用对模拟 VMU LCD 屏幕可见性、大小、位置和颜色的配置。注意：快速菜单可能需要切换才能使此设置生效。"
@@ -40158,10 +40158,10 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL "0 %"
 #define OPTION_VAL_5_GL "5 %"
-#define OPTION_VAL_10_GL NULL
+#define OPTION_VAL_10_GL "10 %"
 #define OPTION_VAL_15_GL NULL
 #define OPTION_VAL_20_GL NULL
-#define OPTION_VAL_25_GL NULL
+#define OPTION_VAL_25_GL "25 %"
 #define OPTION_VAL_30_GL NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GL "Activar zona morta"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GL "Seleccione canto ten que premer o gatillo antes de comezar a procesarse."
