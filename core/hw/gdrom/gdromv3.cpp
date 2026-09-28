@@ -154,6 +154,8 @@ void DmaBuffer::deserialize(Deserializer& deser)
 	{
 		index = 0;
 		deser >> size;
+		if (size > sizeof(cache))
+			throw Deserializer::Exception("Invalid GD-ROM DMA buffer size");
 		deser.deserialize(&cache[0], size);
 	}
 }
@@ -171,6 +173,8 @@ void PioBuffer::deserialize(Deserializer& deser)
 	deser >> next_state;
 	deser >> index;
 	deser >> size;
+	if (size > Capacity / sizeof(_data[0]) || index > size)
+		throw Deserializer::Exception("Invalid GD-ROM PIO buffer state");
 	if (deser.version() < Deserializer::V54)
 		deser >> _data;
 	else
