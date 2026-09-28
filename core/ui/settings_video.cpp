@@ -275,8 +275,9 @@ void gui_settings_video()
     	}
     	OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
     			T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
-    	OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 250,
-    			T("Stretch the screen horizontally"), "%d%%");
+    	OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 251,
+                T("Stretch the screen horizontally"),
+                config::ScreenStretching == 251 ? T("Stretch to Fill") : "%d%%");
     	OptionCheckbox(T("Rotate Screen 90°"), config::Rotate90, T("Rotate the screen 90° counterclockwise"));
     }
 	if (perPixel)
