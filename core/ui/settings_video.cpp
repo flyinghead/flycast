@@ -273,13 +273,13 @@ void gui_settings_video()
 					T("Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling."));
 			ImGui::Unindent();
     	}
-    	OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
-    			T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
-    	OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 251,
-                T("Stretch the screen horizontally"),
-                config::ScreenStretching == 251 ? T("Stretch to Fill") : "%d%%");
-    	OptionCheckbox(T("Rotate Screen 90°"), config::Rotate90, T("Rotate the screen 90° counterclockwise"));
-    }
+		OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
+				T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
+		OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 251,
+				T("Stretch the screen horizontally"),
+				config::ScreenStretching == 251 ? T("Stretch to Fill") : "%d%%");
+		OptionCheckbox(T("Rotate Screen 90°"), config::Rotate90, T("Rotate the screen 90° counterclockwise"));
+	}
 	if (perPixel)
 	{
 		ImGui::Spacing();
