@@ -325,10 +325,7 @@ float getOutputFramebufferAspectRatio()
 		}
 	}
 
-	if (config::ScreenStretching == 251)
-		return (float)settings.display.width / settings.display.height;
-
-	return aspectRatio * config::ScreenStretching / 100.f;
+	return applyScreenStretching(aspectRatio);
 }
 
 void getDCFramebufferReadSize(const FramebufferInfo& info, int& width, int& height)
