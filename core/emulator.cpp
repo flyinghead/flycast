@@ -699,7 +699,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		if (cheatManager.isWidescreen())
 		{
 			os_notify(i18n::T("Widescreen cheat activated"), 2000);
-			config::ScreenStretching.override(134);	// 4:3 -> 16:9
+
+			float aspectRatio = (float)settings.display.width / settings.display.height;
+			if (aspectRatio > 16.f / 9.f - 0.01f && aspectRatio < 16.f / 9.f + 0.01f)
+				config::StretchToFill.override(true);
+			else
+				config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden
 		loadGameSpecificSettings();
