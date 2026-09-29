@@ -279,7 +279,7 @@ void gui_settings_video()
 		OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
     			T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
 		{
-			DisabledScope scope(config::Widescreen || config::SuperWidescreen || config::WidescreenGameHacks);
+			DisabledScope scope(config::Widescreen || config::SuperWidescreen);
 			OptionCheckbox(T("Stretch to Fill"), config::StretchToFill,
 					T("Stretch the screen to fill the entire screen or window."));
 		}
