@@ -113,9 +113,14 @@ public:
 		return 1;
 	}
 
+	void setOriginator(bool originator) {
+		this->originator = originator;
+	}
+
 private:
 	InStream& inputStream;
 	OutStream& outputStream;
+	bool originator = true;
 
 	enum Phase {
 		None,
@@ -180,6 +185,9 @@ private:
 
 	void sendIFrame();
 	void ackIFrame(int seqNum);
+	// Answerer
+	void sendSabme();
+	void sendXid();
 
 	friend class V42Test;
 };

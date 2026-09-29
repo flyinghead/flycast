@@ -1,6 +1,7 @@
 target_sources(${PROJECT_NAME} PRIVATE
         alienfnt_modem.cpp
         alienfnt_modem.h
+        capcom.cpp
         dns.cpp
         ggpo.cpp
         ggpo.h

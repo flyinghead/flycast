@@ -27,27 +27,34 @@ namespace net::modbba
 {
 
 static Service *service;
-static bool usingDCNet;
+// Special service installed by CapComDirect, which manages its lifecycle and starting/stopping
+static Service *customService;
 
 bool start()
 {
-	if (service == nullptr || usingDCNet != config::UseDCNet)
-	{
-		delete service;
-		if (settings.content.gameId == "HDR0010")	// Sega Rally 2 (JP)
-			service = new RawModemService();
-		else if (config::UseDCNet)
-			service = new DCNetService();
-		else
-			service = new PicoTcpService();
-		usingDCNet = config::UseDCNet;
-	}
+	if (customService == service && service != nullptr)
+		return true;
+	delete service;
+	if (settings.content.gameId == "HDR0010")	// Sega Rally 2 (JP)
+		service = new RawModemService();
+	else if (config::UseDCNet)
+		service = new DCNetService();
+	else
+		service = new PicoTcpService();
 	return service->start();
 }
 
-void stop() {
+void stop()
+{
+	if (customService == service)
+		return;
 	if (service != nullptr)
 		service->stop();
+}
+
+void setCustomService(Service *service) {
+	customService = service;
+	net::modbba::service = service;
 }
 
 void writeModem(u8 b) {

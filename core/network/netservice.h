@@ -45,4 +45,6 @@ public:
 	virtual void receiveEthFrame(const u8 *frame, u32 size) = 0;
 };
 
+void setCustomService(Service *service);
+
 }

@@ -114,10 +114,11 @@ protected:
 class RawModemThread
 {
 public:
-	void start()
+	void start(uint16_t port)
 	{
 		if (thread.joinable())
 			return;
+		this->port = port;
 		io_context = std::make_unique<asio::io_context>();
 		thread = std::thread(&RawModemThread::run, this);
 	}
@@ -135,10 +136,11 @@ public:
 
 	void sendModem(u8 v)
 	{
-		if (io_context == nullptr || gameSocket == nullptr)
+		if (io_context == nullptr)
 			return;
 		io_context->post([this, v]() {
-			gameSocket->send(v);
+			if (gameSocket != nullptr)
+				gameSocket->send(v);
 		});
 	}
 
@@ -146,11 +148,11 @@ private:
 	void run();
 	void connect(const std::string& hostname);
 
+	uint16_t port = 0;
 	std::thread thread;
 	std::unique_ptr<asio::io_context> io_context;
 	std::unique_ptr<GameSocket> gameSocket;
 
-	static constexpr uint16_t IP_PORT = 7657;
 	friend class RawModemService;
 };
 static RawModemThread thread;
@@ -177,7 +179,7 @@ void RawModemThread::connect(const std::string& hostname)
 {
 	asio::ip::tcp::resolver resolver(*io_context);
 	asio::error_code ec;
-	auto it = resolver.resolve(hostname, std::to_string(IP_PORT), ec);
+	auto it = resolver.resolve(hostname, std::to_string(port), ec);
 	if (ec)
 		throw FlycastException(ec.message());
 	if (it.empty())
@@ -189,7 +191,7 @@ void RawModemThread::connect(const std::string& hostname)
 bool RawModemService::start()
 {
 	emu.setNetworkState(true);
-	thread.start();
+	thread.start(port);
 	return true;
 }
 

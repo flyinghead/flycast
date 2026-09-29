@@ -23,6 +23,7 @@
 
 #pragma once
 #include "types.h"
+#include <functional>
 
 void ModemInit();
 void ModemReset();
@@ -31,3 +32,10 @@ u32 ModemReadMem_A0_006(u32 addr,u32 size);
 void ModemWriteMem_A0_006(u32 addr,u32 data,u32 size);
 void ModemSerialize(Serializer& ser);
 void ModemDeserialize(Deserializer& deser);
+void modemOnAnswerMode(std::function<void()> callback);
+void modemOnHandshake(std::function<void()> callback);
+void modemOnDial(std::function<void(const std::string&)> callback);
+void modemPeer2Peer(bool enabled);
+void modemKeepRinging(bool enabled);
+void modemIncomingCall();
+void modemPeriodicCallback(u32 cycles, std::function<void()> callback);
