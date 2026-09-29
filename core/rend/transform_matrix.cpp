@@ -324,6 +324,10 @@ float getOutputFramebufferAspectRatio()
 			aspectRatio = 4.f / 3.f;
 		}
 	}
+
+	if (config::StretchToFill)
+		return (float)settings.display.width / settings.display.height;
+
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
