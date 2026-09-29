@@ -39,6 +39,13 @@ TEST_F(ConfigTest, parseCommandLine)
 	ASSERT_TRUE(isTransient("sect", "key2"));
 	ASSERT_EQ("quoted too with \" and ,", loadStr("sect", "key2"));
 
+	argv[2] = "INITIAL D Ver.2:key=1,  SPACED SECT  :  spaced key  =2";
+	parseCommandLine(4, argv);
+	ASSERT_TRUE(isTransient("INITIAL D Ver.2", "key"));
+	ASSERT_EQ("1", loadStr("INITIAL D Ver.2", "key"));
+	ASSERT_TRUE(isTransient("SPACED SECT", "spaced key"));
+	ASSERT_EQ("2", loadStr("SPACED SECT", "spaced key"));
+
 	argv[2] = "";
 	parseCommandLine(3, argv);
 	argv[2] = ",";
