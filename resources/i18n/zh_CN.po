@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-22 12:58\n"
+"PO-Revision-Date: 2026-09-24 15:08\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -80,7 +80,7 @@ msgstr "你已解锁 %d 个成就，总共有 %d 个。"
 
 #: core/achievements/achievements.cpp:948
 msgid "This game has no achievements."
-msgstr "这款游戏没有成就。"
+msgstr "该游戏没有成就"
 
 #: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
@@ -106,11 +106,11 @@ msgstr "警告：DreamConn 已从端口 %c 断开连接"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
-msgstr "DPad2上"
+msgstr "DPad2 上"
 
 #: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
-msgstr "DPad2下"
+msgstr "DPad2 下"
 
 #: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
@@ -130,11 +130,11 @@ msgstr "VMU1 B"
 
 #: core/sdl/dreampicoport.cpp:1621
 msgid "VMU1 Up"
-msgstr "VMU1上"
+msgstr "VMU1 上"
 
 #: core/sdl/dreampicoport.cpp:1622
 msgid "VMU1 Down"
-msgstr "VMU1下"
+msgstr "VMU1 下"
 
 #: core/sdl/dreampicoport.cpp:1623
 msgid "VMU1 Left"
@@ -171,13 +171,13 @@ msgstr "开始"
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:97
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
-msgstr "方向键上"
+msgstr "方向键 上"
 
 #: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:593
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:99
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
-msgstr "方向键下"
+msgstr "方向键 下"
 
 #: core/sdl/sdl_gamepad.cpp:558 core/sdl/sdl_gamepad.cpp:597
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:101
@@ -273,7 +273,7 @@ msgstr "无法读取目录 %s"
 #: core/oslib/storage.cpp:213
 #, c-format
 msgid "Cannot stat %s"
-msgstr "无法统计 %s"
+msgstr "无法获取 %s 的状态"
 
 #: core/oslib/storage.cpp:234
 #, c-format
@@ -515,7 +515,7 @@ msgstr "校准完成"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "正在校准方向盘，请保证方向盘回正。"
+msgstr "正在校准方向盘，请保持方向盘居中"
 
 #: core/hw/naomi/gdcartridge.cpp:526
 #, c-format
@@ -524,7 +524,7 @@ msgstr "Naomi GDROM：无法打开 %s.chd"
 
 #: core/hw/naomi/gdcartridge.cpp:611
 msgid "Naomi GDROM: Could not find the file to decrypt."
-msgstr "Naomi GDROM：无法找到待解密文件。"
+msgstr "Naomi GDROM：无法找到待解密文件"
 
 #: core/hw/naomi/multiboard.cpp:475
 msgid "Center"
@@ -598,7 +598,7 @@ msgstr "无法保存金手指文件"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr "图形API"
+msgstr "图形 API"
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
@@ -650,7 +650,7 @@ msgstr "内部渲染分辨率"
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr "内部渲染分辨率。数值越高，图形质量越好，但对GPU的要求也越高。高于显示器分辨率（但不超过显示器分辨率两倍）的数值可用于超采样，从而在不降低清晰度的前提下提供高质量的抗锯齿效果。"
+msgstr "内部渲染分辨率。数值越高，图形质量越好，但对GPU的要求也越高。高于显示器分辨率（但不超过显示器分辨率两倍）的数值可用于超采样，从而在不降低清晰度的前提下提供高质量的抗锯齿效果"
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
@@ -658,7 +658,7 @@ msgstr "整数缩放"
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
-msgstr "根据显示分辨率允许的最大整数倍对输出进行缩放。"
+msgstr "根据显示分辨率允许的最大整数倍对输出进行缩放"
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
@@ -666,7 +666,7 @@ msgstr "线性插值"
 
 #: core/ui/settings_video.cpp:205
 msgid "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."
-msgstr "使用线性插值对输出进行缩放。否则将使用最近邻插值。启用整数缩放时将禁用此功能。"
+msgstr "使用线性插值对输出进行缩放。否则将使用最近邻插值。启用整数缩放时将禁用此功能"
 
 #: core/ui/settings_video.cpp:207
 msgid "VSync"
@@ -682,7 +682,7 @@ msgstr "帧速率控制（实验性功能）"
 
 #: core/ui/settings_video.cpp:213
 msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
-msgstr "为 GPU 提供每帧的呈现时序，以重现原始帧的节奏。"
+msgstr "为 GPU 提供每帧的呈现时序，以重现原始帧的节奏"
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
@@ -706,7 +706,7 @@ msgstr "全帧缓冲区模拟"
 
 #: core/ui/settings_video.cpp:223
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr "完全精确的 VRAM 帧缓冲区模拟。有助于那些为实现特殊效果而直接访问帧缓冲区的游戏。速度非常慢，且与画面放大及宽屏模式不兼容。"
+msgstr "完全精确的 VRAM 帧缓冲区模拟。有助于那些为实现特殊效果而直接访问帧缓冲区的游戏。速度非常慢，且与画面放大及宽屏模式不兼容"
 
 #: core/ui/settings_video.cpp:227
 msgid "Load Custom Textures"
@@ -736,7 +736,7 @@ msgstr "宽屏"
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
 msgstr "在常规的 4:3 宽高比之外绘制图形。在显示区域内可能会出现图形异常。\n"
-"“宽高比适配”可显示完整的 16:9 内容。"
+"“宽高比适配”可显示完整的 16:9 内容"
 
 #: core/ui/settings_video.cpp:247
 msgid "Super Widescreen"
@@ -745,7 +745,7 @@ msgstr "超宽屏"
 #: core/ui/settings_video.cpp:248
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr "当屏幕/窗口宽高比大于16:9时，使用其完整宽度。采用等比填充，消除黑边。不支持整数倍缩放。"
+msgstr "当屏幕/窗口宽高比大于16:9时，使用其完整宽度。采用等比填充，消除黑边。不支持整数倍缩放"
 
 #: core/ui/settings_video.cpp:251
 msgid "Widescreen Game Cheats"
@@ -753,7 +753,7 @@ msgstr "宽屏补丁"
 
 #: core/ui/settings_video.cpp:252
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr "修改游戏，使其以 16:9 变形宽屏格式显示，并采用水平拉伸屏幕的方式。仅支持部分游戏。"
+msgstr "修改游戏，使其以 16:9 变形宽屏格式显示，并采用水平拉伸屏幕的方式。仅支持部分游戏"
 
 #: core/ui/settings_video.cpp:253
 msgid "Horizontal Stretching"
@@ -797,7 +797,7 @@ msgstr "像素缓冲区大小"
 
 #: core/ui/settings_video.cpp:303
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr "像素缓冲区的大小。进行大倍率放大时，可能需要调大该数值。"
+msgstr "像素缓冲区的大小。进行大倍率放大时，可能需要调大该数值"
 
 #: core/ui/settings_video.cpp:305
 msgid "Maximum Layers"
@@ -846,7 +846,7 @@ msgstr "跳帧"
 
 #: core/ui/settings_video.cpp:321
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr "渲两帧，跳一帧"
+msgstr "两个实际渲染帧之间跳过的帧数"
 
 #: core/ui/settings_video.cpp:322
 msgid "Shadows"
@@ -906,7 +906,7 @@ msgstr "各向异性过滤"
 
 #: core/ui/settings_video.cpp:377
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr "数值越高，从倾斜角度观察时纹理看起来越清晰，但对 GPU 的要求也越高。此选项仅对采用 MIP 映射的纹理有明显影响。"
+msgstr "数值越高，从倾斜角度观察时纹理看起来越清晰，但对 GPU 的要求也越高。此选项仅对采用 MIP 映射的纹理有明显影响"
 
 #: core/ui/settings_video.cpp:379
 msgid "Texture Filtering:"
@@ -927,7 +927,7 @@ msgstr "强制使用最近邻采样"
 
 #: core/ui/settings_video.cpp:383
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr "对所有纹理强制使用最近邻过滤。画面观感会更锐利，但可能引发各类渲染异常。该选项通常不会影响性能。"
+msgstr "对所有纹理强制使用最近邻过滤。画面观感会更锐利，但可能引发各类渲染异常。该选项通常不会影响性能"
 
 #: core/ui/settings_video.cpp:385
 msgid "Force Linear"
@@ -935,7 +935,7 @@ msgstr "强制线性"
 
 #: core/ui/settings_video.cpp:385
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr "强制对所有纹理进行线性滤波。外观更平滑，但可能会导致各种渲染问题。此选项通常不会影响性能。"
+msgstr "强制对所有纹理进行线性滤波。外观更平滑，但可能会导致各种渲染问题。此选项通常不会影响性能"
 
 #: core/ui/settings_video.cpp:388
 msgid "Show FPS Counter"
@@ -984,7 +984,7 @@ msgstr " 输出纹理尺寸：%d × %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr "集合"
+msgstr "设置"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
@@ -1045,32 +1045,32 @@ msgstr "非VGA模式的电视广播标准"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "Japan"
-msgstr "Japan"
+msgstr "日本"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "USA"
-msgstr "USA"
+msgstr "美国"
 
 #: core/ui/settings_general.cpp:240
 msgid "Europe"
-msgstr "Europe"
+msgstr "欧洲"
 
 #: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
-msgstr "Export"
+msgstr "出口"
 
 #: core/ui/settings_general.cpp:241
 msgid "Korea"
-msgstr "Korea"
+msgstr "韩国"
 
 #: core/ui/settings_general.cpp:243
 msgid "Region"
-msgstr "Region"
+msgstr "地区"
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
-msgstr "BIOS区域"
+msgstr "BIOS 地区"
 
 #: core/ui/settings_general.cpp:246
 msgid "VGA"
@@ -1090,11 +1090,11 @@ msgstr "视频线类型"
 
 #: core/ui/settings_general.cpp:266
 msgid "Video connection type"
-msgstr "Video connection type"
+msgstr "视频连接类型"
 
 #: core/ui/settings_general.cpp:276
 msgid "Content Location"
-msgstr "Content Location"
+msgstr "内容文件夹位置"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
@@ -1140,7 +1140,7 @@ msgstr "游戏封面列表"
 
 #: core/ui/settings_general.cpp:367
 msgid "Display game cover art in the game list."
-msgstr "在游戏列表中显示游戏封面图。"
+msgstr "在游戏列表中显示游戏封面图"
 
 #: core/ui/settings_general.cpp:368
 msgid "Fetch Box Art"
@@ -1148,7 +1148,7 @@ msgstr "获取游戏封面"
 
 #: core/ui/settings_general.cpp:369
 msgid "Fetch cover images from TheGamesDB.net."
-msgstr "从 TheGamesDB.net 获取封面图片。"
+msgstr "从 TheGamesDB.net 获取封面图片"
 
 #: core/ui/settings_general.cpp:370
 msgid "UI Scaling"
@@ -1156,7 +1156,7 @@ msgstr "UI 缩放"
 
 #: core/ui/settings_general.cpp:370
 msgid "Adjust the size of UI elements and fonts."
-msgstr "调整 UI 元素和字体的尺寸。"
+msgstr "调整 UI 元素和字体的尺寸"
 
 #: core/ui/settings_general.cpp:375
 msgid "Apply"
@@ -1212,7 +1212,7 @@ msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "自动加载即时存档:"
+msgstr "自动即时存档:"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1236,7 +1236,7 @@ msgstr "Naomi不投币"
 
 #: core/ui/settings_general.cpp:404
 msgid "Configure Naomi games in Free Play mode."
-msgstr "将Naomi游戏设置为不投币游玩模式。"
+msgstr "将Naomi游戏设置为不投币游玩模式"
 
 #: core/ui/settings_general.cpp:406
 msgid "Discord Presence"
@@ -1252,7 +1252,7 @@ msgstr "启用 RetroAchievements"
 
 #: core/ui/settings_general.cpp:409
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr "使用 RetroAchievements.org 追踪您的游戏成就"
+msgstr "使用 RetroAchievements.org 追踪你的游戏成就"
 
 #: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
@@ -1433,7 +1433,7 @@ msgstr "双摇杆"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr "Arcade/Ascii Stick"
+msgstr "街机/ASCII 摇杆"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
@@ -1465,11 +1465,11 @@ msgstr "DreamParaPara"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
-msgstr "Sega VMU"
+msgstr "世嘉 VMU"
 
 #: core/ui/settings_controls.cpp:67
 msgid "Vibration Pack"
-msgstr "Vibration Pack"
+msgstr "震动包"
 
 #: core/ui/settings_controls.cpp:68
 msgid "Microphone"
@@ -1481,11 +1481,11 @@ msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:167
 msgid "All"
-msgstr "All"
+msgstr "全部"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:240
 msgid "Directions"
-msgstr "下"
+msgstr "方向"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:241
 msgid "Up"
@@ -1505,11 +1505,11 @@ msgstr "Thumbstick 下"
 
 #: core/ui/settings_controls.cpp:184 core/ui/settings_controls.cpp:248
 msgid "Thumbstick Left"
-msgstr "左摇杆"
+msgstr "Thumbstick左"
 
 #: core/ui/settings_controls.cpp:185 core/ui/settings_controls.cpp:249
 msgid "Thumbstick Right"
-msgstr "右摇杆"
+msgstr "Thumbstick右"
 
 #: core/ui/settings_controls.cpp:187 core/ui/settings_controls.cpp:251
 msgid "R.Thumbstick Up"
@@ -1545,7 +1545,7 @@ msgstr "Axis 3右"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:256
 msgid "Buttons"
-msgstr "按键"
+msgstr "按钮"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:267
 msgid "Triggers"
@@ -1575,7 +1575,7 @@ msgstr "右扳机 2"
 
 #: core/ui/settings_controls.cpp:217 core/ui/settings_controls.cpp:273
 msgid "System Buttons"
-msgstr "System Buttons"
+msgstr "系统按钮"
 
 #: core/ui/settings_controls.cpp:219 core/ui/settings_controls.cpp:275
 msgid "Reload"
@@ -1606,12 +1606,12 @@ msgstr "快进"
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
 #: core/ui/gui.cpp:637
 msgid "Load State"
-msgstr "加载即时存档"
+msgstr "读档"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
 #: core/ui/gui.cpp:645
 msgid "Save State"
-msgstr "即时存档"
+msgstr "存档"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
@@ -1639,35 +1639,35 @@ msgstr "保存截图"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Button 1"
-msgstr "Button 1"
+msgstr "按钮 1"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Button 2"
-msgstr "Button 2"
+msgstr "按钮 2"
 
 #: core/ui/settings_controls.cpp:259
 msgid "Button 3"
-msgstr "Button 3"
+msgstr "按钮 3"
 
 #: core/ui/settings_controls.cpp:260 core/input/mouse.h:89
 msgid "Button 4"
-msgstr "Button 4"
+msgstr "按钮 4"
 
 #: core/ui/settings_controls.cpp:261 core/input/mouse.h:91
 msgid "Button 5"
-msgstr "Button 5"
+msgstr "按钮 5"
 
 #: core/ui/settings_controls.cpp:262
 msgid "Button 6"
-msgstr "Button 6"
+msgstr "按钮 6"
 
 #: core/ui/settings_controls.cpp:263
 msgid "Button 7"
-msgstr "Button 7"
+msgstr "按钮 7"
 
 #: core/ui/settings_controls.cpp:264
 msgid "Button 8"
-msgstr "Button 8"
+msgstr "按钮 8"
 
 #: core/ui/settings_controls.cpp:276
 msgid "Coin"
@@ -1687,7 +1687,7 @@ msgstr "插入记忆卡"
 
 #: core/ui/settings_controls.cpp:442 core/ui/settings_controls.cpp:847
 msgid "Map Control"
-msgstr "地图控制"
+msgstr "映射控制"
 
 #: core/ui/settings_controls.cpp:444
 #, c-format
@@ -1715,7 +1715,7 @@ msgstr "按序列录入"
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
 msgstr "如果勾选此选项，该组合键仅在按指定顺序按下所有键时才会触发。\n"
-"如果未勾选此选项，只要按任意顺序按下所有键，该组合键就会触发。"
+"如果未勾选此选项，只要按任意顺序按下所有键，该组合键就会触发"
 
 #: core/ui/settings_controls.cpp:633 core/ui/settings_controls.cpp:1073
 msgid "Controller Mapping"
@@ -1763,7 +1763,7 @@ msgstr "确认重置"
 
 #: core/ui/settings_controls.cpp:719
 msgid "Are you sure you want to reset the mappings to default?"
-msgstr "您确定要将映射重置为默认设置吗？"
+msgstr "你确定要将映射重置为默认设置吗？"
 
 #: core/ui/settings_controls.cpp:723
 msgid "Controller Type:"
@@ -1855,7 +1855,7 @@ msgstr "饱和度"
 
 #: core/ui/settings_controls.cpp:993
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
-msgstr "摇杆推至满行程（100%偏移）时发送给游戏的数值。若该数值大于100%，摇杆还未推到最大位置就会达到输出饱和。"
+msgstr "摇杆推至满行程（100%偏移）时发送给游戏的数值。若该数值大于100%，摇杆还未推到最大位置就会达到输出饱和"
 
 #: core/ui/settings_controls.cpp:1006
 msgid "Physical Devices"
@@ -1919,7 +1919,7 @@ msgstr "每个游戏独立A1‑VMU"
 
 #: core/ui/settings_controls.cpp:1217
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
-msgstr "启用此功能后，每款游戏都会在控制器A的1号端口上拥有自己的VMU。"
+msgstr "启用此功能后，每款游戏都会在控制器A的1号端口上拥有自己的VMU"
 
 #: core/ui/settings_controls.cpp:1220
 msgid "Use Physical VMU Storage"
@@ -1927,7 +1927,7 @@ msgstr "使用物理 VMU 存储"
 
 #: core/ui/settings_controls.cpp:1221
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
-msgstr "通过DreamPicoPort或DreamPotato启用对实体VMU记忆卡的读写访问。该功能与即时读档不兼容。"
+msgstr "通过DreamPicoPort或DreamPotato启用对实体VMU记忆卡的读写访问。该功能与即时读档不兼容"
 
 #: core/ui/settings_controls.cpp:1226
 msgid "Crosshair Size"
@@ -1940,7 +1940,7 @@ msgstr "关闭"
 #: core/ui/gui_achievements.cpp:297
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr "你已解锁 %d 个（共 %d 个）成就，并获得 %d 分（共 %d 分）。"
+msgstr "你已解锁 %d 个（共 %d 个）成就，并获得 %d 分（共 %d 分）"
 
 #: core/ui/gui_achievements.cpp:325
 msgid "Locked"
@@ -1978,7 +1978,7 @@ msgstr "渲染器初始化失败。\n"
 
 #: core/ui/gui.cpp:469
 msgid "Flycast has stopped."
-msgstr "Flycast 已停止运行。"
+msgstr "Flycast 已停止运行"
 
 #: core/ui/gui.cpp:576
 msgid "Resume"
@@ -2066,7 +2066,7 @@ msgstr "选择无效："
 
 #: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
 msgid "Flycast cannot write to this folder."
-msgstr "Flycast 无法向此文件夹写入数据。"
+msgstr "Flycast 无法向此文件夹写入数据"
 
 #: core/ui/gui.cpp:1092
 msgid "Select Flycast Home Folder"
@@ -2082,7 +2082,7 @@ msgstr "正在启动网络..."
 
 #: core/ui/gui.cpp:1140
 msgid "Press Start to start the game now."
-msgstr "按下“开始”按钮，立即开始游戏。"
+msgstr "按下“开始”按钮，立即开始游戏"
 
 #: core/ui/gui.cpp:1148 core/ui/gui.cpp:1151
 msgid "Start Now"
@@ -2131,7 +2131,7 @@ msgstr "启用 VMU 音效"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Play VMU beeps when enabled."
-msgstr "启用后，VMU会发出蜂鸣声。"
+msgstr "启用后，VMU会发出蜂鸣声"
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
@@ -2203,7 +2203,7 @@ msgstr "大多数情况下推荐这个，老快了"
 
 #: core/ui/settings.cpp:41
 msgid "Interpreter"
-msgstr "使用解释器"
+msgstr "解释器"
 
 #: core/ui/settings.cpp:42
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
@@ -2215,7 +2215,7 @@ msgstr "SH4 时钟"
 
 #: core/ui/settings.cpp:46
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
-msgstr "对主SH4处理器进行超频/降频操作。默认频率为200兆赫兹。设置其他数值可能会导致设备崩溃、死机，甚至你的设备会爆炸！（不是）"
+msgstr "对主SH4处理器进行超频/降频操作。默认频率为200兆赫兹。设置其他数值可能会导致设备崩溃、死机，甚至你的设备会爆炸！（骗你的，不会爆炸）"
 
 #: core/ui/settings.cpp:94
 msgid "Other"
@@ -2243,7 +2243,7 @@ msgstr "串行控制台"
 
 #: core/ui/settings.cpp:101
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr "把 Dreamcast 串行控制台输出到 stdou"
+msgstr "把 Dreamcast 串行控制台输出到 stdout"
 
 #: core/ui/settings.cpp:105
 msgid "Dreamcast 32MB RAM Mod"
@@ -2259,7 +2259,7 @@ msgstr "导出纹理"
 
 #: core/ui/settings.cpp:109
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "将所有纹理导出到 <game id>"
+msgstr "将所有纹理导出到 data/texdump/<game id>"
 
 #: core/ui/settings.cpp:113
 msgid "Dump Replaced Textures"
@@ -2267,7 +2267,7 @@ msgstr "导出已替换的纹理"
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "始终转储已被自定义纹理替换的纹理"
+msgstr "始终导出已被自定义纹理替换的纹理"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
@@ -2275,7 +2275,7 @@ msgstr "丢弃视频与动画纹理"
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
-msgstr "跳过视频（YUV）的渲染并跳过已更新的纹理"
+msgstr "导出时跳过视频（YUV）和已更新的纹理"
 
 #: core/ui/settings.cpp:120
 msgid "Log to File"
@@ -2291,7 +2291,7 @@ msgstr "自动报告崩溃"
 
 #: core/ui/settings.cpp:126
 msgid "Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included."
-msgstr "自动将崩溃报告上传至 sentry.io，以协助排查问题。报告中不包含任何个人信息。"
+msgstr "自动将崩溃报告上传至 sentry.io，以协助排查问题。报告中不包含任何个人信息"
 
 #: core/ui/settings.cpp:131
 msgid "Lua Scripting"
@@ -2303,7 +2303,7 @@ msgstr "Lua 文件名"
 
 #: core/ui/settings.cpp:135
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr "指定要使用的 Lua 文件名。该文件应位于 Flycast 配置文件夹中。若未填写，默认值为 flycast.lua。"
+msgstr "指定要使用的 Lua 文件名。该文件应位于 Flycast 配置文件夹中。若未填写，默认值为 flycast.lua"
 
 #: core/ui/settings.cpp:281
 msgid "General"
@@ -2383,7 +2383,7 @@ msgstr "操控玩家 1"
 
 #: core/ui/settings_network.cpp:81
 msgid "Deselect to play as player 2"
-msgstr "操控玩家 2"
+msgstr "取消勾选则以玩家 2 游玩"
 
 #: core/ui/settings_network.cpp:82 core/ui/settings_network.cpp:208
 msgid "Peer"
@@ -2391,7 +2391,7 @@ msgstr "对端对等节点IP"
 
 #: core/ui/settings_network.cpp:84
 msgid "Your peer IP address and optional port"
-msgstr "您的对等节点 IP 地址和可选端口"
+msgstr "你的对等节点 IP 地址和可选端口"
 
 #: core/ui/settings_network.cpp:85
 msgid "Frame Delay"
@@ -2419,7 +2419,7 @@ msgstr "仅使用左摇杆的水平轴"
 
 #: core/ui/settings_network.cpp:93
 msgid "Full"
-msgstr "完整内存管理单元模拟"
+msgstr "完整"
 
 #: core/ui/settings_network.cpp:93
 msgid "Use the left thumbstick horizontal and vertical axes"
@@ -2447,7 +2447,7 @@ msgstr "聊天窗口超时（秒）"
 
 #: core/ui/settings_network.cpp:105
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr "设置在收到新消息后，聊天窗口保持打开状态的时间长度。"
+msgstr "设置在收到新消息后，聊天窗口保持打开状态的时间长度"
 
 #: core/ui/settings_network.cpp:109 core/ui/settings_network.cpp:201
 msgid "Network Statistics"
@@ -2528,7 +2528,7 @@ msgstr "正在加载游戏..."
 #: core/ui/settings_network.cpp:195
 #, c-format
 msgid "Playing %s (%s)"
-msgstr "播放 %s (%s)"
+msgstr "正在游玩 %s (%s)"
 
 #: core/ui/settings_network.cpp:205
 msgid "Manual"
@@ -2544,7 +2544,7 @@ msgstr "充当主设备"
 
 #: core/ui/settings_network.cpp:224
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr "仅用于最大速度模式。参与联机的双方必须有一台充当主设备。"
+msgstr "仅用于最大速度模式。参与联机的双方必须有一台充当主设备"
 
 #: core/ui/settings_network.cpp:228
 msgid "Network Options"
@@ -2560,11 +2560,11 @@ msgstr "自动配置网络路由器以支持网络联机游戏"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast Digital Outputs"
-msgstr "数字广播输出"
+msgstr "广播数字输出"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr "通过TCP 8000端口广播数字输出与力反馈状态。兼容MAME的 ‑output network 命令行选项。仅街机游戏可用。"
+msgstr "通过 TCP 8000 端口广播数字输出与力反馈状态。兼容 MAME 的 “-output network” 命令行选项。仅限街机游戏"
 
 #: core/ui/settings_network.cpp:236
 msgid "Broadband Adapter Emulation"
@@ -2580,7 +2580,7 @@ msgstr "使用 DCNet"
 
 #: core/ui/settings_network.cpp:239
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr "使用 DCNet 云服务连接 Dreamcast 互联网。"
+msgstr "使用 DCNet 云服务连接 Dreamcast 互联网"
 
 #: core/ui/settings_network.cpp:242
 msgid "ISP User Name"
@@ -2588,7 +2588,7 @@ msgstr "ISP 用户名"
 
 #: core/ui/settings_network.cpp:248
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr "存储在主机 Flash RAM 中的 ISP 用户名。部分网络游戏将其用作玩家名。留空则保留当前 Flash RAM 值。"
+msgstr "存储在主机 Flash RAM 中的 ISP 用户名。部分网络游戏将其用作玩家名。留空则保留当前 Flash RAM 值"
 
 #: core/ui/settings_network.cpp:254
 msgid "DNS server name or IP address"
@@ -2600,11 +2600,11 @@ msgstr "多板并联"
 
 #: core/ui/settings_network.cpp:262
 msgid "1 (Twin, Satellite)"
-msgstr "机柜ID 1；可用于双机对战模式，也可作为卫星机节点。"
+msgstr "机柜ID 1；可用于双机对战模式，也可作为卫星机节点"
 
 #: core/ui/settings_network.cpp:262
 msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
-msgstr "多板并联硬件的单屏幕布局预设。适用于 F355 双机版、德比所有者俱乐部卫星机柜，仅输出单块屏幕画面，不展开多窗口。"
+msgstr "多板并联硬件的单屏幕布局预设。适用于 F355 双机版、德比所有者俱乐部卫星机柜，仅输出单块屏幕画面，不展开多窗口"
 
 #: core/ui/settings_network.cpp:264
 msgid "2+ (Deluxe, Main screen)"
@@ -2612,7 +2612,7 @@ msgstr "2+（豪华机柜、主屏幕）"
 
 #: core/ui/settings_network.cpp:265
 msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
-msgstr "双屏或三屏多板并联布局预设。适用于航空飞行员、德比所有者俱乐部主屏、F355豪华机柜、世嘉打击战斗机，输出对应数量的多屏画面窗口。"
+msgstr "双屏或三屏多板并联布局预设。适用于航空飞行员、德比所有者俱乐部主屏、F355豪华机柜、世嘉打击战斗机，输出对应数量的多屏画面窗口"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
@@ -2659,7 +2659,7 @@ msgstr "JIT 状态：%s"
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr "驱动程序名称%s"
+msgstr "驱动程序名称：%s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
@@ -2684,7 +2684,7 @@ msgstr "上传自定义驱动程序"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr "您是否要重置 Vulkan 以使用新驱动程序？"
+msgstr "你是否要重置 Vulkan 以使用新驱动程序？"
 
 #: core/nullDC.cpp:195
 msgid "Save state failed - memory full"
@@ -2752,7 +2752,7 @@ msgstr "已与对等方同步"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr "跑步"
+msgstr "正在运行"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
@@ -2860,7 +2860,7 @@ msgstr "在 %s 中未找到 BIOS 文件"
 
 #: core/emulator.cpp:615
 msgid "This game requires a real BIOS"
-msgstr "这款游戏需要真正的BIOS"
+msgstr "这款游戏需要真正的 BIOS"
 
 #: core/emulator.cpp:665
 msgid "Widescreen cheat activated"
