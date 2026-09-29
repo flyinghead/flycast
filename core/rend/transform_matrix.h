@@ -88,9 +88,16 @@ float getOutputFramebufferAspectRatio();
 void getDCFramebufferReadSize(const FramebufferInfo& info, int& width, int& height);
 void getWriteFBToVramParams(const rend_context& ctx, glm::ivec2& scaledSize, Rect& finalClip);
 
+inline static float applyScreenStretching(float aspectRatio) {
+	if (config::ScreenStretching == 251)
+		return (float)settings.display.width / settings.display.height;
+
+	return aspectRatio * config::ScreenStretching / 100.f;
+}
+
 inline static float getDCFramebufferAspectRatio() {
 	float aspectRatio = config::Rotate90 ? 3.f / 4.f : 4.f / 3.f;
-	return aspectRatio * config::ScreenStretching / 100.f;
+	return applyScreenStretching(aspectRatio);
 }
 
 void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate);
