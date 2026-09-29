@@ -18,7 +18,6 @@
  */
 #include "settings.h"
 #include "gui.h"
-#include "hw/pvr/Renderer_if.h"
 #include "wsi/context.h"
 
 enum RenderAPI {
@@ -64,6 +63,7 @@ void gui_settings_video()
 		perPixel = true;
 		break;
 	}
+
 	constexpr int apiCount = 0
 		#ifdef USE_VULKAN
 			+ 1
@@ -222,43 +222,18 @@ void gui_settings_video()
     	OptionCheckbox(T("Full Framebuffer Emulation"), config::EmulateFramebuffer,
     			T("Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
     			"Very slow and incompatible with upscaling and wide screen."));
-		OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
-				T("Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."));
-		ImGui::Indent();
 		{
-			DisabledScope customTexturesScope(!config::CustomTextures.get());
-			const bool gpuPreloadSupported = rend_supports_gpu_texture_preload();
-			const int configuredMode = static_cast<int>(config::customTexturePreloadMode());
-			int selectedMode = configuredMode;
+			DisabledScope scope(game_started);
+			OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
+					T("Load custom/high-res textures from data/textures/<game id>"));
+			ImGui::Indent();
 			{
-				DisabledScope readOnlyScope(config::PreloadCustomTextures.isReadOnly());
-				ImGui::TextUnformatted(T("Custom Texture Preloading"));
-				ImGui::Columns(3, "custom_texture_preload_modes", false);
-				ImGui::RadioButton(T("Off"), &selectedMode,
-						static_cast<int>(config::CustomTexturePreloadMode::Off));
-				ImGui::SameLine();
-				ShowHelpMarker(T("Load custom textures as needed."));
-				ImGui::NextColumn();
-				ImGui::RadioButton(T("System Memory"), &selectedMode,
-						static_cast<int>(config::CustomTexturePreloadMode::SystemMemory));
-				ImGui::SameLine();
-				ShowHelpMarker(T("Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."));
-				ImGui::NextColumn();
-				{
-					DisabledScope videoMemoryScope(!gpuPreloadSupported);
-					ImGui::RadioButton(T("Video Memory"), &selectedMode,
-							static_cast<int>(config::CustomTexturePreloadMode::VideoMemory));
-				}
-				ImGui::SameLine();
-				ShowHelpMarker(gpuPreloadSupported
-						? T("Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack.")
-						: T("Video-memory custom texture preloading is not supported by the current renderer."));
-				ImGui::Columns(1, nullptr, false);
+				DisabledScope scope(!config::CustomTextures.get());
+				OptionCheckbox(T("Preload Custom Textures"), config::PreloadCustomTextures,
+						T("Preload custom textures at game start. May improve performance but increases memory usage"));
 			}
-			if (selectedMode != configuredMode)
-				config::PreloadCustomTextures = selectedMode;
+			ImGui::Unindent();
 		}
-		ImGui::Unindent();
     }
 	ImGui::Spacing();
     header(T("Aspect Ratio"));
@@ -273,13 +248,12 @@ void gui_settings_video()
 					T("Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling."));
 			ImGui::Unindent();
     	}
-		OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
-				T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
-		OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 251,
-				T("Stretch the screen horizontally"),
-				config::ScreenStretching == 251 ? T("Stretch to Fill") : "%d%%");
-		OptionCheckbox(T("Rotate Screen 90°"), config::Rotate90, T("Rotate the screen 90° counterclockwise"));
-	}
+    	OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
+    			T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
+    	OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 250,
+    			T("Stretch the screen horizontally"), "%d%%");
+    	OptionCheckbox(T("Rotate Screen 90°"), config::Rotate90, T("Rotate the screen 90° counterclockwise"));
+    }
 	if (perPixel)
 	{
 		ImGui::Spacing();
