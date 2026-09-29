@@ -324,8 +324,7 @@ float getOutputFramebufferAspectRatio()
 			aspectRatio = 4.f / 3.f;
 		}
 	}
-
-	return applyScreenStretching(aspectRatio);
+	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
 void getDCFramebufferReadSize(const FramebufferInfo& info, int& width, int& height)
@@ -451,8 +450,7 @@ void getVideoShift(float& x, float& y)
 		x *= config::RenderResolution / 480.f;
 		y *= config::RenderResolution / 480.f;
 	}
-	if (!(config::EmulateFramebuffer && config::ScreenStretching == 251))
-		x *= config::ScreenStretching / 100.f;
+	x *= config::ScreenStretching / 100.f;
 }
 
 void getWriteFBToVramParams(const rend_context& ctx, glm::ivec2& scaledSize, Rect& finalClip)
