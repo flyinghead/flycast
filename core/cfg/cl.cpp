@@ -141,7 +141,7 @@ static void parseConfigOption(const std::string& str)
 			{
 			case 0:
 				// Ignore leading spaces. Inner spaces are kept (game ids such as "INITIAL D Ver.2")
-				// and trailing ones are trimmed at the ':' separator
+				// and trailing ones are trimmed at the ':' and '=' separators
 				if (!section.empty())
 					section += c;
 				break;
