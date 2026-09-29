@@ -454,7 +454,8 @@ void getVideoShift(float& x, float& y)
 		x *= config::RenderResolution / 480.f;
 		y *= config::RenderResolution / 480.f;
 	}
-	x *= config::ScreenStretching / 100.f;
+	if (!(config::EmulateFramebuffer && config::ScreenStretching == 251))
+		x *= config::ScreenStretching / 100.f;
 }
 
 void getWriteFBToVramParams(const rend_context& ctx, glm::ivec2& scaledSize, Rect& finalClip)
