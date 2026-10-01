@@ -468,7 +468,9 @@ static void on_message(u8 *msg, int len)
 		break;
 
 	case GameEvent::VF4Card:
-		setRfidCardData(event->u.card.playerNum, event->u.card.data);
+		if (len == sizeof(event->type) + sizeof(event->u.card)
+				&& event->u.card.playerNum < MAX_PLAYERS)
+			setRfidCardData(event->u.card.playerNum, event->u.card.data);
 		break;
 
 	default:
