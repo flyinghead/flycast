@@ -42,6 +42,7 @@ namespace net::modbba
 {
 
 static TsQueue<u8> toModem;
+static constexpr size_t MAX_ETH_FRAME_SIZE = 1514;
 
 class DCNetService : public Service
 {
@@ -280,6 +281,8 @@ private:
 		iterator i = begin;
 		uint16_t len = (uint8_t)*i++;
 		len |= uint8_t(*i++) << 8;
+		if (len > MAX_ETH_FRAME_SIZE)
+			return std::make_pair(begin + 2, true);
 		len += 2;
 		if (end - begin < len)
 			return std::make_pair(begin, false);
@@ -295,6 +298,14 @@ private:
 				{
 					if (ec)
 						ERROR_LOG(NETWORK, "Receive error: %s", ec.message().c_str());
+					std::error_code ignored;
+					socket.close(ignored);
+					return;
+				}
+				uint16_t frameLen = recvBuffer[0] | recvBuffer[1] << 8;
+				if (frameLen > MAX_ETH_FRAME_SIZE || len != (size_t)frameLen + 2)
+				{
+					ERROR_LOG(NETWORK, "Invalid Ethernet frame size: %d", frameLen);
 					std::error_code ignored;
 					socket.close(ignored);
 					return;
