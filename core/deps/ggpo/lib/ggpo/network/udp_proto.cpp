@@ -13,6 +13,15 @@
 static const int UDP_HEADER_SIZE = 28;     /* Size of IP + UDP headers */
 static const int NUM_SYNC_PACKETS = 5;
 static const int SYNC_RETRY_INTERVAL = 2000;
+
+static bool IsValidAppData(const UdpMsg *msg, int len)
+{
+   const int header_size = (const uint8 *)msg->u.app_data.data - (const uint8 *)msg;
+   if (len < header_size)
+      return false;
+   return msg->u.app_data.size <= MAX_APPDATA_SIZE
+      && msg->u.app_data.size <= len - header_size;
+}
 static const int SYNC_FIRST_RETRY_INTERVAL = 500;
 static const int RUNNING_RETRY_INTERVAL = 200;
 static const int KEEP_ALIVE_INTERVAL    = 200;
@@ -320,6 +329,13 @@ UdpProtocol::HandlesMsg(sockaddr_in &from,
 void
 UdpProtocol::OnMsg(UdpMsg *msg, int len)
 {
+   if (len < (int)sizeof(msg->hdr)) {
+      return;
+   }
+   if (msg->hdr.type == UdpMsg::AppData && !IsValidAppData(msg, len)) {
+      return;
+   }
+
    bool handled = false;
    typedef bool (UdpProtocol::*DispatchFn)(UdpMsg *msg, int len);
    static const DispatchFn table[] = {
@@ -791,6 +807,8 @@ UdpProtocol::ClearSendQueue()
 
 void UdpProtocol::SendAppData(const void *data, int len, bool spectators)
 {
+	if (len < 0 || len > MAX_APPDATA_SIZE || (data == nullptr && len != 0))
+		return;
 	if (_udp == nullptr)
 		return;
 	if (_current_state != Synchronzied && _current_state != Running)
@@ -806,6 +824,8 @@ void UdpProtocol::SendAppData(const void *data, int len, bool spectators)
 
 bool UdpProtocol::OnAppData(UdpMsg *msg, int len)
 {
+	if (!IsValidAppData(msg, len))
+		return false;
     UdpProtocol::Event evt(UdpProtocol::Event::AppData);
     evt.u.app_data.spectators = msg->u.app_data.spectators != 0;
     evt.u.app_data.size = msg->u.app_data.size;
