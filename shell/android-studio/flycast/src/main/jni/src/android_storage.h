@@ -39,6 +39,7 @@ public:
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
 		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
+		jremove = env->GetMethodID(clazz, "remove", "(Ljava/lang/String;)Z");
 		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZLjava/lang/String;Ljava/lang/String;)Z");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 		jimportHomeDirectory = env->GetMethodID(clazz, "importHomeDirectory", "()V");
@@ -142,6 +143,18 @@ public:
 		}
 	}
 
+	bool remove(const std::string& uri) override
+	{
+		jni::String juri(uri);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jremove, (jstring)juri);
+		try {
+			checkException();
+			return ret;
+		} catch (...) {
+			return false;
+		}
+	}
+
 	bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
 			void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType) override
 	{
@@ -237,6 +250,7 @@ private:
 	jmethodID jgetSubPath;
 	jmethodID jgetFileInfo;
 	jmethodID jexists;
+	jmethodID jremove;
 	jmethodID jsaveScreenshot;
 	jmethodID jexportHomeDirectory;
 	jmethodID jimportHomeDirectory;
