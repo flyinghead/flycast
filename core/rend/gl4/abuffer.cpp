@@ -22,6 +22,9 @@
 #include <memory>
 
 static GLuint pixels_buffer;
+static GLuint pixels_color1_buffer;
+static GLsizeiptr pixels_color1_size;
+static GLsizeiptr pixels_buffer_bytes;
 static GLuint pixels_pointers;
 static GLuint atomic_buffer;
 static gl4PipelineShader g_abuffer_final_shader[2];
@@ -111,7 +114,11 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 			srcColor = secondaryBuffer;
 		else
 		{
-			srcColor = unpackColors(pixel.color);
+			// Two-volume polys keep their area 1 color in a side buffer
+			if (area1)
+				srcColor = unpackColors(pixel_color1[pixel_list[i]]);
+			else
+				srcColor = unpackColors(pixel.color);
 			if (shadowed)
 				srcColor.rgb *= shade_scale_factor;
 		}
@@ -344,8 +351,35 @@ static void makePixelBuffer()
 		// Declare storage
 		glBufferData(GL_SHADER_STORAGE_BUFFER, pixel_buffer_size, NULL, GL_DYNAMIC_COPY);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
+		pixels_buffer_bytes = pixel_buffer_size;
+
+		// Placeholder so binding 2 is always valid. Two-volume translucent polys
+		// are rare (a handful of games) so the real allocation is deferred until
+		// one shows up: see gl4EnsurePixelColor1Buffer().
+		if (pixels_color1_buffer == 0)
+			glGenBuffers(1, &pixels_color1_buffer);
+		pixels_color1_size = 4;
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_color1_buffer);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, pixels_color1_size, NULL, GL_DYNAMIC_COPY);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pixels_color1_buffer);
 		glCheck();
 	}
+}
+
+// Grow the area 1 color buffer to one u32 per a-buffer pixel. Called the first
+// time a two-volume translucent poly is drawn, and then a no-op.
+void gl4EnsurePixelColor1Buffer()
+{
+	// The GLSL Pixel struct is 4 u32: color, depth, seq_num, next
+	constexpr GLsizeiptr pixelSize = 4 * sizeof(u32);
+	GLsizeiptr needed = pixels_buffer_bytes / pixelSize * (GLsizeiptr)sizeof(u32);
+	if (pixels_color1_buffer == 0 || pixels_color1_size >= needed)
+		return;
+	pixels_color1_size = needed;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_color1_buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, pixels_color1_size, NULL, GL_DYNAMIC_COPY);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pixels_color1_buffer);
+	glCheck();
 }
 
 void initABuffer()
@@ -438,6 +472,12 @@ void termABuffer()
 	{
 		glDeleteBuffers(1, &pixels_buffer);
 		pixels_buffer = 0;
+	}
+	if (pixels_color1_buffer != 0)
+	{
+		glDeleteBuffers(1, &pixels_color1_buffer);
+		pixels_color1_buffer = 0;
+		pixels_color1_size = 0;
 	}
 	if (atomic_buffer != 0)
 	{
