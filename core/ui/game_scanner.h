@@ -25,6 +25,7 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <atomic>
 
 struct GameMedia
 {
@@ -44,6 +45,7 @@ class GameScanner
 	std::unique_ptr<std::thread> scan_thread;
 	bool scan_done = false;
 	bool running = false;
+	std::atomic<void (*)()> changeCallback{nullptr};
 	std::unordered_map<std::string, const Game*> arcade_games;
 	std::unordered_set<std::string> arcade_gdroms;
 	using LockGuard = std::lock_guard<std::mutex>;
@@ -65,6 +67,7 @@ public:
 
 	void stop();
 	void fetch_game_list();
+	void setChangeCallback(void (*callback)()) { changeCallback.store(callback); }
 
 	std::mutex& get_mutex() { return mutex; }
 	const std::vector<GameMedia>& get_game_list() { return game_list; }
