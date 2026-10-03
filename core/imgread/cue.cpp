@@ -44,12 +44,12 @@ static u32 getSectorSize(const std::string& type) {
 			return 0;
 }
 
-Disc* cue_parse(const char* file, std::vector<u8> *digest)
+Disc* cue_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage)
 {
 	if (get_file_extension(file) != "cue")
 		return nullptr;
 
-	hostfs::File *fsource = hostfs::storage().openFile(file, "rb");
+	hostfs::File *fsource = storage.openFile(file, "rb");
 
 	if (fsource == nullptr)
 	{
@@ -57,7 +57,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 		throw FlycastException(strprintf(i18n::T("Cannot open CUE file %s"), file));
 	}
 
-	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
+	hostfs::FileInfo fileInfo = storage.getFileInfo(file);
 	size_t cue_len = fileInfo.size;
 
 	char cue_data[64_KB] = { 0 };
@@ -75,7 +75,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	std::istringstream istream(cue_data);
 	istream.imbue(std::locale::classic());
 
-	std::string basepath = hostfs::storage().getParentPath(file);
+	std::string basepath = storage.getParentPath(file);
 
 	MD5Sum md5;
 
@@ -183,14 +183,14 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				WARN_LOG(GDROM, "CUE parse error: unsupported FILE format %s. Expected BINARY", token.c_str());
 				throw FlycastException(i18n::T("Invalid CUE file"));
 			}
-			track_filename = hostfs::storage().getSubPath(basepath, track_filename);
-			hostfs::File *track_file = hostfs::storage().openFile(track_filename, "rb");
+			track_filename = storage.getSubPath(basepath, track_filename);
+			hostfs::File *track_file = storage.openFile(track_filename, "rb");
 			if (track_file == nullptr)
 				throw FlycastException(strprintf(i18n::T("CUE file: cannot open track %s"), track_filename.c_str()));
 			if (digest != nullptr)
 				md5.add(track_file);
 			delete track_file;
-			fileInfo = hostfs::storage().getFileInfo(track_filename);
+			fileInfo = storage.getFileInfo(track_filename);
 			fileStartFAD = currentFAD;
 			// Clear track context
 			track_number = -1;
@@ -247,7 +247,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				t.isrc = track_isrc;
 				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d %s", disc->tracks.size() + 1, track_filename.c_str(),
 						session_number, track_type.c_str(), t.StartFAD, t.EndFAD, t.isrc.empty() ? "" : ("ISRC " + t.isrc).c_str());
-				hostfs::File *track_file = hostfs::storage().openFile(track_filename, "rb");
+				hostfs::File *track_file = storage.openFile(track_filename, "rb");
 				t.file = new RawTrackFile(track_file, indexFAD * track_secsize, t.StartFAD, track_secsize);
 				disc->tracks.push_back(t);
 				if (disc->tracks.size() >= 2) {

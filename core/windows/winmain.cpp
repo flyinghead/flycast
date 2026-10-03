@@ -271,7 +271,7 @@ FILE *fopen(char const *file_name, char const *mode)
 	else
 		dwDesiredAccess = GENERIC_WRITE;
 	if (strchr(mode, 'w') != nullptr)
-		dwCreationDisposition = CREATE_ALWAYS;
+		dwCreationDisposition = strchr(mode, 'x') != nullptr ? CREATE_NEW : CREATE_ALWAYS;
 	else if (strchr(mode, 'a') != nullptr)
 	{
 		dwCreationDisposition = OPEN_ALWAYS;
@@ -284,7 +284,11 @@ FILE *fopen(char const *file_name, char const *mode)
 
 	HANDLE fileh = CreateFile2FromAppW(wname.get(), dwDesiredAccess, FILE_SHARE_READ, dwCreationDisposition, nullptr);
 	if (fileh == INVALID_HANDLE_VALUE)
+	{
+		if (dwCreationDisposition == CREATE_NEW)
+			errno = GetLastError() == ERROR_FILE_EXISTS ? EEXIST : EACCES;
 		return nullptr;
+	}
 
 	int fd = _open_osfhandle((intptr_t)fileh, openFlags);
 	if (fd == -1)
@@ -294,7 +298,13 @@ FILE *fopen(char const *file_name, char const *mode)
 		return nullptr;
 	}
 
-	return _fdopen(fd, mode);
+	// Exclusive creation has already been handled by CreateFile2FromAppW.
+	std::string streamMode = mode;
+	streamMode.erase(std::remove(streamMode.begin(), streamMode.end(), 'x'), streamMode.end());
+	FILE *stream = _fdopen(fd, streamMode.c_str());
+	if (stream == nullptr)
+		_close(fd);
+	return stream;
 }
 
 int remove(char const *name)

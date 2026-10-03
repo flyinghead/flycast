@@ -4,12 +4,12 @@
 #include "oslib/i18n.h"
 #include "chdpsr/cdipsr.h"
 
-Disc* cdi_parse(const char* file, std::vector<u8> *digest)
+Disc* cdi_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage)
 {
 	if (get_file_extension(file) != "cdi")
 		return nullptr;
 
-	hostfs::File *fsource = hostfs::storage().openFile(file, "rb");
+	hostfs::File *fsource = storage.openFile(file, "rb");
 
 	if (fsource == nullptr)
 	{
@@ -120,7 +120,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 					t.CTRL=track.mode==0?0:4;
 					t.StartFAD=track.start_lba+track.pregap_length;
 					t.EndFAD=t.StartFAD+track.length-1;
-					hostfs::File *trackFile = hostfs::storage().openFile(file, "rb");
+					hostfs::File *trackFile = storage.openFile(file, "rb");
 					if (trackFile == nullptr) {
 						WARN_LOG(GDROM, "Cannot re-open file '%s' errno %d", file, errno);
 						throw FlycastException(i18n::Ts("Cannot re-open CDI file"));

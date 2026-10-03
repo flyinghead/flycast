@@ -24,6 +24,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/imgread/ChdTest.cpp
         src/imgread/CueTest.cpp
         src/imgread/GdiTest.cpp
+        src/imgread/SevenZipTest.cpp
+        src/archive/SzArchiveTest.cpp
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp
