@@ -27,6 +27,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp
+        src/input/MouseTest.cpp
         src/input/InputDefTest.cpp
         src/input/InputMappingConfigFileTest.cpp
         src/input/InputSetTest.cpp
