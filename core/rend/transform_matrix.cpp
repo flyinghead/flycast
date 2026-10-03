@@ -324,6 +324,10 @@ float getOutputFramebufferAspectRatio()
 			aspectRatio = 4.f / 3.f;
 		}
 	}
+
+	if (config::StretchToFill)
+		return (float)settings.display.width / settings.display.height;
+
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
@@ -450,7 +454,21 @@ void getVideoShift(float& x, float& y)
 		x *= config::RenderResolution / 480.f;
 		y *= config::RenderResolution / 480.f;
 	}
-	x *= config::ScreenStretching / 100.f;
+	if (config::StretchToFill)
+	{
+		float aspectRatio = config::Rotate90 ? 3.f / 4.f : 4.f / 3.f;
+
+		if (!config::Rotate90 && config::Widescreen && !config::EmulateFramebuffer)
+			aspectRatio = config::SuperWidescreen
+					? (float)settings.display.width / settings.display.height
+					: 16.f / 9.f;
+
+		x *= ((float)settings.display.width / settings.display.height) / aspectRatio;
+	}
+	else
+	{
+		x *= config::ScreenStretching / 100.f;
+	}
 }
 
 void getWriteFBToVramParams(const rend_context& ctx, glm::ivec2& scaledSize, Rect& finalClip)
