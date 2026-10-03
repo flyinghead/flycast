@@ -542,6 +542,8 @@ extern Option<int> MultiboardSlaves;
 extern Option<bool> BattleCableEnable;
 extern Option<bool> UseDCNet;
 extern OptionString ISPUsername;
+extern Option<bool> DCNow;
+extern OptionString DCNowMac;
 
 #ifdef USE_OMX
 extern Option<int> OmxAudioLatency;
