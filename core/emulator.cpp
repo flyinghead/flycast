@@ -553,6 +553,8 @@ int getGamePlatform(const std::string& filename)
 	std::string extension = get_file_extension(filename);
 	if (extension.empty())
 		return DC_PLATFORM_DREAMCAST;	// unknown
+	if (extension == "7z" && !naomi_cart_IsKnownGame(filename.c_str()))
+		return DC_PLATFORM_DREAMCAST;
 	if (extension == "zip" || extension == "7z")
 		return naomi_cart_GetPlatform(filename.c_str());
 	if (extension == "bin" || extension == "dat" || extension == "lst")

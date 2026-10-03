@@ -2265,8 +2265,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	char *ext = strrchr(g_base_name, '.');
 
 	{
-		/* Check for extension .lst, .bin, .dat or .zip. If found, we will set the system type
-		 * automatically to Naomi or AtomisWave. */
+		/* Detect arcade ROMs and Dreamcast disc archives before initializing the frontend. */
 		if (ext)
 		{
 			log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
@@ -2276,7 +2275,10 @@ bool retro_load_game(const struct retro_game_info *game)
 					|| !strcmp(".zip", ext) || !strcmp(".ZIP", ext)
 					|| !strcmp(".7z", ext) || !strcmp(".7Z", ext))
 			{
-				settings.platform.system = naomi_cart_GetPlatform(game->path);
+				if (!strcmp(".7z", ext) || !strcmp(".7Z", ext))
+					settings.platform.system = getGamePlatform(game->path);
+				else
+					settings.platform.system = naomi_cart_GetPlatform(game->path);
 				// Users should use the superior format instead, let's warn them
 				if (!strcmp(".lst", ext)
 						|| !strcmp(".bin", ext) || !strcmp(".BIN", ext)

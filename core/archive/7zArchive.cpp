@@ -22,12 +22,14 @@
 #include "lzma/7z.h"
 #include "lzma/7zCrc.h"
 #include "lzma/Alloc.h"
+#include "nowide/utf/convert.hpp"
 
-#include <cstring>
+#include <mutex>
+#include <vector>
 
 #define kInputBufSize ((size_t)1 << 18)
 
-static bool crc_tables_generated;
+static std::once_flag crc_tables_generated;
 
 SRes SzArchive::ArchiveStream::Read(const ISeekInStream *p, void *buf, size_t *size)
 {
@@ -50,95 +52,107 @@ SRes SzArchive::ArchiveStream::Seek(const ISeekInStream *p, Int64 *pos, ESzSeek 
 
 bool SzArchive::Open(hostfs::File *file)
 {
-	SzArEx_Init(&szarchive);
-
-	if (archiveStream.file != nullptr)
-		delete archiveStream.file;
+	Close();
+	if (file == nullptr)
+		return false;
 	archiveStream.vt.Read = ArchiveStream::Read;
 	archiveStream.vt.Seek = ArchiveStream::Seek;
 	archiveStream.file = file;
 
 	LookToRead2_CreateVTable(&lookStream, 0);
 	lookStream.buf = (Byte *)ISzAlloc_Alloc(&g_Alloc, kInputBufSize);
-	if (lookStream.buf == NULL)
+	if (lookStream.buf == nullptr)
 	{
-		delete archiveStream.file;
+		Close();
 		return false;
 	}
 	lookStream.bufSize = kInputBufSize;
 	lookStream.realStream = &archiveStream.vt;
 	LookToRead2_Init(&lookStream);
 
-	if (!crc_tables_generated)
-	{
-		CrcGenerateTable();
-		crc_tables_generated = true;
-	}
+	std::call_once(crc_tables_generated, CrcGenerateTable);
 	SRes res = SzArEx_Open(&szarchive, &lookStream.vt, &g_Alloc, &g_Alloc);
+	if (res != SZ_OK)
+		Close();
 
 	return (res == SZ_OK);
 }
 
+std::string SzArchive::GetFileName(size_t index) const
+{
+	if (index >= szarchive.NumFiles)
+		return {};
+	size_t len = SzArEx_GetFileNameUtf16(&szarchive, index, nullptr);
+	if (len == 0)
+		return {};
+	std::vector<UInt16> name(len);
+	SzArEx_GetFileNameUtf16(&szarchive, index, name.data());
+	return nowide::utf::convert_string<char>(name.data(), name.data() + len - 1);
+}
+
+bool SzArchive::IsDirectory(size_t index) const
+{
+	return index < szarchive.NumFiles && SzArEx_IsDir(&szarchive, index);
+}
+
+u64 SzArchive::GetFileSize(size_t index) const
+{
+	return index < szarchive.NumFiles ? SzArEx_GetFileSize(&szarchive, index) : 0;
+}
+
+ArchiveFile* SzArchive::OpenFileByIndex(size_t index)
+{
+	if (index >= szarchive.NumFiles || IsDirectory(index))
+		return nullptr;
+
+	size_t offset = 0;
+	size_t out_size_processed = 0;
+	SRes res = SzArEx_Extract(&szarchive, &lookStream.vt, static_cast<UInt32>(index), &block_idx, &out_buffer, &out_buffer_size, &offset, &out_size_processed, &g_Alloc, &g_Alloc);
+	if (res != SZ_OK)
+		return nullptr;
+
+	return new SzArchiveFile(out_buffer, offset, out_size_processed);
+}
+
 ArchiveFile* SzArchive::OpenFile(const char* name)
 {
-	u16 fname[512];
-	for (UInt32 i = 0; i < szarchive.NumFiles; i++)
-	{
-		if (SzArEx_IsDir(&szarchive, i))
-			continue;
-
-		size_t len = SzArEx_GetFileNameUtf16(&szarchive, i, fname);
-		char szname[512];
-		size_t j = 0;
-		for (; j < len && j < sizeof(szname) - 1; j++)
-			szname[j] = fname[j];
-		szname[j] = 0;
-		if (strcmp(name, szname))
-			continue;
-
-		size_t offset = 0;
-		size_t out_size_processed = 0;
-		SRes res = SzArEx_Extract(&szarchive, &lookStream.vt, i, &block_idx, &out_buffer, &out_buffer_size, &offset, &out_size_processed, &g_Alloc, &g_Alloc);
-		if (res != SZ_OK)
-			return NULL;
-
-		return new SzArchiveFile(out_buffer, offset, (u32)out_size_processed);
-	}
-	return NULL;
+	for (size_t i = 0; i < GetFileCount(); i++)
+		if (!IsDirectory(i) && GetFileName(i) == name)
+			return OpenFileByIndex(i);
+	return nullptr;
 }
 
 ArchiveFile* SzArchive::OpenFileByCrc(u32 crc)
 {
 	if (crc == 0)
-		return NULL;
-	for (UInt32 i = 0; i < szarchive.NumFiles; i++)
+		return nullptr;
+	for (size_t i = 0; i < GetFileCount(); i++)
 	{
-		unsigned isDir = SzArEx_IsDir(&szarchive, i);
-		if (isDir)
+		if (IsDirectory(i) || !SzBitWithVals_Check(&szarchive.CRCs, i))
 			continue;
 
 		if (crc != szarchive.CRCs.Vals[i])
 			continue;
 
-		size_t offset = 0;
-		size_t out_size_processed = 0;
-		SRes res = SzArEx_Extract(&szarchive, &lookStream.vt, i, &block_idx, &out_buffer, &out_buffer_size, &offset, &out_size_processed, &g_Alloc, &g_Alloc);
-		if (res != SZ_OK)
-			return NULL;
-
-		return new SzArchiveFile(out_buffer, offset, (u32)out_size_processed);
+		return OpenFileByIndex(i);
 	}
-	return NULL;
+	return nullptr;
 }
 
 SzArchive::~SzArchive()
 {
-	if (lookStream.buf != NULL)
-	{
-		delete archiveStream.file;
-		ISzAlloc_Free(&g_Alloc, lookStream.buf);
-		if (out_buffer != NULL)
-			ISzAlloc_Free(&g_Alloc, out_buffer);
-		SzArEx_Free(&szarchive, &g_Alloc);
-	}
+	Close();
+}
+
+void SzArchive::Close()
+{
+	delete archiveStream.file;
+	archiveStream.file = nullptr;
+	ISzAlloc_Free(&g_Alloc, lookStream.buf);
+	lookStream.buf = nullptr;
+	ISzAlloc_Free(&g_Alloc, out_buffer);
+	out_buffer = nullptr;
+	out_buffer_size = 0;
+	block_idx = 0;
+	SzArEx_Free(&szarchive, &g_Alloc);
 }

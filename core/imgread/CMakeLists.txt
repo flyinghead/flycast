@@ -1,4 +1,5 @@
 target_sources(${PROJECT_NAME} PRIVATE
+        7z.cpp
         cdi.cpp
         cdio.cpp
         chd.cpp

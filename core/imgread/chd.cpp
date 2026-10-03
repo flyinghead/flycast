@@ -18,7 +18,7 @@ struct CHDDisc : Disc
 	u32 hunkbytes = 0;
 	u32 sph = 0;
 
-	void tryOpen(const char* file);
+	void tryOpen(const char* file, hostfs::Storage& storage);
 
 	~CHDDisc() override
 	{
@@ -106,9 +106,9 @@ static u32 getSectorSize(const std::string& type)
 	throw FlycastException(strprintf(i18n::T("chd: track type %s is not supported"), type.c_str()));
 }
 
-void CHDDisc::tryOpen(const char* file)
+void CHDDisc::tryOpen(const char* file, hostfs::Storage& storage)
 {
-	hostfs::File *fp = hostfs::storage().openFile(file, "rb");
+	hostfs::File *fp = storage.openFile(file, "rb");
 	if (fp == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
@@ -277,20 +277,15 @@ void CHDDisc::tryOpen(const char* file)
 }
 
 
-Disc* chd_parse(const char* file, std::vector<u8> *digest)
+Disc* chd_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage)
 {
-#ifdef LIBRETRO
-	if (!strstr(&file[strlen(file) - 3], "chd"))
-		return nullptr;
-#else
 	if (get_file_extension(file) != "chd")
 		return nullptr;
-#endif
 
 	CHDDisc* rv = new CHDDisc();
 
 	try {
-		rv->tryOpen(file);
+		rv->tryOpen(file, storage);
 		if (digest != nullptr)
 		{
 			digest->resize(sizeof(chd_get_header(rv->chd)->sha1));
