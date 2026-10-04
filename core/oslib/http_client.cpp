@@ -39,8 +39,6 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 
 }
 
-#if !defined(__ANDROID__) && !defined(__APPLE__)
-
 #ifdef _WIN32
 #ifndef TARGET_UWP
 #include "stdclass.h"
@@ -308,7 +306,8 @@ void term()
 }
 #endif	// !TARGET_UWP
 
-#else
+#elif (!defined(__ANDROID__) || defined(LIBRETRO)) && !defined(__APPLE__)
+
 #include <curl/curl.h>
 
 namespace http {
@@ -457,5 +456,4 @@ void term()
 }
 
 }
-#endif	// !_WIN32
-#endif	// !defined(__ANDROID__) && !defined(__APPLE__)
+#endif	// !_WIN32 && (!__ANDROID__ || LIBRETRO) && !__APPLE__

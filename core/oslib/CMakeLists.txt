@@ -2,6 +2,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         directory.cpp
         directory.h
         host_context.h
+        http_client.cpp
+        http_client.h
         http_server.cpp
         http_server.h
         i18n.cpp
@@ -16,7 +18,5 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 if(NOT LIBRETRO)
     target_sources(${PROJECT_NAME} PRIVATE
-            http_client.cpp
-            http_client.h
             oslib.cpp)
 endif()
