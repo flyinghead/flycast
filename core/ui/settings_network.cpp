@@ -160,7 +160,7 @@ void gui_settings_network()
 		}
 		else if (config::BattleCableEnable)
 		{
-#ifdef USE_ICE
+#if defined(USE_ICE) && defined(USE_WEBSOCKET)
 		    if (ImGui::BeginTabBar("battleMode", ImGuiTabBarFlags_NoTooltip))
 		    {
 				if (ImGui::BeginTabItem(T("Match Code")))
@@ -214,7 +214,7 @@ void gui_settings_network()
 					ImGui::SameLine();
 					ShowHelpMarker(T("The local UDP port to use"));
 					config::LocalPort.set(atoi(localPort));
-#ifdef USE_ICE
+#if defined(USE_ICE) && defined(USE_WEBSOCKET)
 					ImGui::EndTabItem();
 				}
 				ImGui::EndTabBar();

@@ -605,6 +605,8 @@ elseif(LIBRETRO AND ANDROID)
 	# libretro needs to enable prefab and add dependency 'implementation("io.github.vvb2060.ndk:curl:8.18.0")'
 	find_package(curl REQUIRED CONFIG)
 	target_link_libraries(${PROJECT_NAME} PRIVATE curl::curl_static)
+elseif(LIBRETRO AND WIN32)
+	target_link_libraries(${PROJECT_NAME} PRIVATE wininet)
 endif()
 
 find_package(PkgConfig)
