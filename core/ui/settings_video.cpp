@@ -263,20 +263,28 @@ void gui_settings_video()
 	ImGui::Spacing();
     header(T("Aspect Ratio"));
     {
-    	OptionCheckbox(T("Widescreen"), config::Widescreen,
-    			T("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content."));
+		OptionCheckbox(T("Widescreen"), config::Widescreen,
+				T("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content."));
 		{
-			DisabledScope scope(!config::Widescreen || config::IntegerScale);
+			DisabledScope scope(!config::Widescreen || config::IntegerScale || config::StretchToFill);
 
 			ImGui::Indent();
 			OptionCheckbox(T("Super Widescreen"), config::SuperWidescreen,
 					T("Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling."));
 			ImGui::Unindent();
     	}
-    	OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
+		OptionCheckbox(T("Widescreen Game Cheats"), config::WidescreenGameHacks,
     			T("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."));
-    	OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 250,
-    			T("Stretch the screen horizontally"), "%d%%");
+		{
+			DisabledScope scope(config::SuperWidescreen);
+			OptionCheckbox(T("Stretch to Fill"), config::StretchToFill,
+					T("Stretch the screen to fill the entire screen or window."));
+		}
+		{
+			DisabledScope scope(config::StretchToFill);
+			OptionSlider(T("Horizontal Stretching"), config::ScreenStretching, 100, 250,
+					T("Stretch the screen horizontally"), "%d%%");
+		}
     	OptionCheckbox(T("Rotate Screen 90°"), config::Rotate90, T("Rotate the screen 90° counterclockwise"));
     }
 	if (perPixel)

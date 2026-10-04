@@ -459,6 +459,7 @@ extern Option<bool> DumpTextures;
 extern Option<bool> DumpUniqueTextures;
 extern Option<bool> DumpReplacedTextures;
 extern Option<int> ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
+extern Option<bool> StretchToFill;
 extern Option<bool> Fog;
 extern Option<bool> FloatVMUs;
 extern Option<bool> Rotate90;

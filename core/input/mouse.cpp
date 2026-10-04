@@ -96,7 +96,12 @@ void SystemMouse::setWheel(int delta) {
 static void screenToNative(int& x, int& y, int width, int height)
 {
 	float fx, fy;
-	if (!config::Rotate90)
+	if (config::StretchToFill)
+	{
+		fx = x * 640.f / width;
+		fy = y * 480.f / height;
+	}
+	else if (!config::Rotate90)
 	{
 		float scale = 480.f / height;
 		fy = y * scale;
