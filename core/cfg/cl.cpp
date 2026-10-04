@@ -57,6 +57,7 @@ static void parseConfigOption(const std::string& str)
 			switch (step)
 			{
 			case 0:
+				section = trim_trailing_ws(section);
 				if (section.empty()) {
 					WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
 					return;
@@ -78,6 +79,7 @@ static void parseConfigOption(const std::string& str)
 				WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
 				return;
 			case 1:
+				key = trim_trailing_ws(key);
 				if (key.empty()) {
 					WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
 					return;
@@ -138,8 +140,14 @@ static void parseConfigOption(const std::string& str)
 			switch (step)
 			{
 			case 0:
+				// Ignore leading spaces. Inner spaces are kept (game ids such as "INITIAL D Ver.2")
+				// and trailing ones are trimmed at the ':' and '=' separators
+				if (!section.empty())
+					section += c;
+				break;
 			case 1:
-				// Ignore
+				if (!key.empty())
+					key += c;
 				break;
 			case 2:
 				value += c;

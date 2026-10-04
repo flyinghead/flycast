@@ -59,17 +59,25 @@ void init()
 	}
 }
 
-static bool crackUrl(const std::string& url, URL_COMPONENTS& components)
+struct CrackedUrl
 {
-	static char scheme[16], host[256], path[1024];
+	char scheme[16];
+	char host[256];
+	char path[2048];
+	URL_COMPONENTS components;
+};
+
+static bool crackUrl(const std::string& url, CrackedUrl& cracked)
+{
+	URL_COMPONENTS& components = cracked.components;
 	components = {};
 	components.dwStructSize = sizeof(components);
-	components.lpszScheme = scheme;
-	components.dwSchemeLength = sizeof(scheme) / sizeof(scheme[0]);
-	components.lpszHostName = host;
-	components.dwHostNameLength = sizeof(host) / sizeof(host[0]);
-	components.lpszUrlPath = path;
-	components.dwUrlPathLength = sizeof(path) / sizeof(path[0]);
+	components.lpszScheme = cracked.scheme;
+	components.dwSchemeLength = sizeof(cracked.scheme) / sizeof(cracked.scheme[0]);
+	components.lpszHostName = cracked.host;
+	components.dwHostNameLength = sizeof(cracked.host) / sizeof(cracked.host[0]);
+	components.lpszUrlPath = cracked.path;
+	components.dwUrlPathLength = sizeof(cracked.path) / sizeof(cracked.path[0]);
 
 	return InternetCrackUrlA(url.c_str(), url.length(), 0, &components);
 }
@@ -80,9 +88,10 @@ static HINTERNET connect(const URL_COMPONENTS& comp) {
 
 int get(const std::string& url, std::vector<u8>& content, const Headers *reqHeaders, Headers *respHeaders)
 {
-	URL_COMPONENTS components;
-	if (!crackUrl(url, components))
+	CrackedUrl cracked;
+	if (!crackUrl(url, cracked))
 		return 500;
+	const URL_COMPONENTS& components = cracked.components;
 
 	bool https = !strcmp(components.lpszScheme, "https");
 
@@ -109,6 +118,14 @@ int get(const std::string& url, std::vector<u8>& content, const Headers *reqHead
 	}
 	else
 	{
+		DWORD status;
+		DWORD size = sizeof(status);
+		DWORD index = 0;
+		if (HttpQueryInfo(hreq, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, &index))
+			rc = status;
+		else
+			WARN_LOG(NETWORK, "HttpQueryInfo Error %d", GetLastError());
+
 		if (respHeaders != nullptr)
 		{
 			std::string headers(4096, '\0');
@@ -161,14 +178,15 @@ int get(const std::string& url, std::vector<u8>& content, const Headers *reqHead
 	InternetCloseHandle(hreq);
 	InternetCloseHandle(ic);
 
-	return 200;
+	return rc;
 }
 
 static int post(const std::string& url, const char *headers, const u8 *payload, u32 payloadSize, std::vector<u8>& reply)
 {
-	URL_COMPONENTS components;
-	if (!crackUrl(url, components))
+	CrackedUrl cracked;
+	if (!crackUrl(url, cracked))
 		return 500;
+	const URL_COMPONENTS& components = cracked.components;
 
 	bool https = !strcmp(components.lpszScheme, "https");
 

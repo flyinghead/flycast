@@ -10649,7 +10649,7 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_PER_PIXEL_ACCURATE_CHS "按像素（精确，但最慢）"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CHS "累积像素缓冲区大小"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CHS "更高的值可能在更高分辨率下才能正确输出。"
-#define OPTION_VAL_512MB_CHS "512M"
+#define OPTION_VAL_512MB_CHS NULL
 #define OPTION_VAL_1GB_CHS NULL
 #define OPTION_VAL_2GB_CHS NULL
 #define OPTION_VAL_4GB_CHS NULL
@@ -10748,12 +10748,12 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_500_CHS NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CHS "加载自定义纹理"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CHS "加载位于 'system/dc/textures/<游戏ID>/' 文件夹中的自定义纹理。"
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_CHS NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_CHS "预加载自定义纹理"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CHS "游戏启动时预先加载自定义纹理贴图。这可能提升性能，但会增加内存占用。"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CHS "转储纹理"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CHS "每当游戏使用一个新纹理时，它将被保存为一个 .png 文件，存放于 'system/dc/texdump/<游戏ID>/' 文件夹中。"
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHS NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHS "转储已被替换的纹理"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CHS "总是转储已经被自定义纹理替换的原始纹理"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CHS "模拟摇杆死区"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CHS "选择在摇杆开始被处理前需要推动多远的距离。"
 #define OPTION_VAL_0_CHS NULL
@@ -10834,8 +10834,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS "视觉内存单元/系统（VMU）声音"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHS "VMU 声音"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHS "启用时，会播放 VMU 的“哔”声。"
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHS NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHS "DreamPotato VMU 存储"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHS "在已连接的 DreamPotato 仿真器上启用VMU 数据存储。启用时，不使用本地VMU 保存文件。"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHS "显示视觉内存单元/系统（VMU）屏幕设置"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHS "显示 VMU 屏幕设置"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CHS "启用对模拟 VMU LCD 屏幕可见性、大小、位置和颜色的配置。注意：快速菜单可能需要切换才能使此设置生效。"
@@ -35802,33 +35802,33 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DCNET_INFO_0_FR "Utilisez le service cloud DCNet pour l'accès à internet de la Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR "Résolution interne"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FR "Modifier la résolution de rendu."
-#define OPTION_VAL_320X240_FR "320x240 (Moitié)"
-#define OPTION_VAL_640X480_FR "640x480 (Natif)"
-#define OPTION_VAL_800X600_FR "800x600 (1,25x)"
-#define OPTION_VAL_960X720_FR "960x720 (1,5x)"
-#define OPTION_VAL_1024X768_FR "1024x768 (1,6x)"
-#define OPTION_VAL_1280X960_FR "1280x960 (2x)"
-#define OPTION_VAL_1440X1080_FR "1440x1080 (2,25x)"
-#define OPTION_VAL_1600X1200_FR "1600x1200 (2,5x)"
-#define OPTION_VAL_1920X1440_FR "1920x1440 (3x)"
-#define OPTION_VAL_2560X1920_FR "2560x1920 (4x)"
-#define OPTION_VAL_2880X2160_FR "2880x2160 (4,5x)"
-#define OPTION_VAL_3200X2400_FR "3200x2400 (5x)"
-#define OPTION_VAL_3840X2880_FR "3840x2880 (6x)"
-#define OPTION_VAL_4480X3360_FR "4480x3360 (7x)"
-#define OPTION_VAL_5120X3840_FR "5120x3840 (8x)"
-#define OPTION_VAL_5760X4320_FR "5760x4320 (9x)"
-#define OPTION_VAL_6400X4800_FR "6400x4800 (10x)"
-#define OPTION_VAL_7040X5280_FR "7040x5280 (11x)"
-#define OPTION_VAL_7680X5760_FR "7680x5760 (12x)"
-#define OPTION_VAL_8320X6240_FR "8320x6240 (13x)"
-#define OPTION_VAL_8960X6720_FR "8960x6720 (14x)"
-#define OPTION_VAL_9600X7200_FR "9600x7200 (15x)"
-#define OPTION_VAL_10240X7680_FR "10240x7680 (16x)"
-#define OPTION_VAL_10880X8160_FR "10880x8160 (17x)"
-#define OPTION_VAL_11520X8640_FR "11520x8640 (18x)"
-#define OPTION_VAL_12160X9120_FR "12160x9120 (19x)"
-#define OPTION_VAL_12800X9600_FR "12800x9600 (20x)"
+#define OPTION_VAL_320X240_FR "320 x 240 (Moitié)"
+#define OPTION_VAL_640X480_FR "640 x 480 (Natif)"
+#define OPTION_VAL_800X600_FR "800 x 600 (x1,25)"
+#define OPTION_VAL_960X720_FR "960 x 720 (x1,5)"
+#define OPTION_VAL_1024X768_FR "1024 x 768 (x1,6)"
+#define OPTION_VAL_1280X960_FR "1280 x 960 (x2)"
+#define OPTION_VAL_1440X1080_FR "1440 x 1080 (x2,25)"
+#define OPTION_VAL_1600X1200_FR "1600 x 1200 (x2,5)"
+#define OPTION_VAL_1920X1440_FR "1920 x 1440 (x3)"
+#define OPTION_VAL_2560X1920_FR "2560 x 1920 (x4)"
+#define OPTION_VAL_2880X2160_FR "2880 x 2160 (x4,5)"
+#define OPTION_VAL_3200X2400_FR "3200 x 2400 (x5)"
+#define OPTION_VAL_3840X2880_FR "3840 x 2880 (x6)"
+#define OPTION_VAL_4480X3360_FR "4480 x 3360 (x7)"
+#define OPTION_VAL_5120X3840_FR "5120 x 3840 (x8)"
+#define OPTION_VAL_5760X4320_FR "5760 x 4320 (x9)"
+#define OPTION_VAL_6400X4800_FR "6400 x 4800 (x10)"
+#define OPTION_VAL_7040X5280_FR "7040 x 5280 (x11)"
+#define OPTION_VAL_7680X5760_FR "7680 x 5760 (x12)"
+#define OPTION_VAL_8320X6240_FR "8320 x 6240 (x13)"
+#define OPTION_VAL_8960X6720_FR "8960 x 6720 (x14)"
+#define OPTION_VAL_9600X7200_FR "9600 x 7200 (x15)"
+#define OPTION_VAL_10240X7680_FR "10240 x 7680 (x16)"
+#define OPTION_VAL_10880X8160_FR "10880 x 8160 (x17)"
+#define OPTION_VAL_11520X8640_FR "11520 x 8640 (x18)"
+#define OPTION_VAL_12160X9120_FR "12160 x 9120 (x19)"
+#define OPTION_VAL_12800X9600_FR "12800 x 9600 (x20)"
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_FR "Type de câble"
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_FR "Le type de signal de sortie. 'TV (Composite)' est le plus largement pris en charge."
 #define OPTION_VAL_VGA_FR NULL
@@ -35856,7 +35856,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FR "Calques transparents maximum"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FR "Des valeurs plus élevées peuvent être requises pour les scènes complexes."
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR "Émulation complète du tampon d'image"
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR "Active l'émulation complète du tampon d'image dans la VRAM. Ceci est utile pour les jeux qui lisent ou écrivent directement le framebuffer dans la VRAM. Lorsque cette option est activée, la résolution interne est forcée à 640x480 et les performances peuvent être sévèrement affectées."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR "Active l'émulation complète du tampon d'image dans la VRAM. Ceci est utile pour les jeux qui lisent ou écrivent directement le framebuffer dans la VRAM. Lorsque cette option est activée, la résolution interne est forcée à 640 x 480 et les performances peuvent être sévèrement affectées."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FR "Activer la mémoire tampon du RTT (rendu vers texture)"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FR "Copier les textures rendues depuis le processeur graphique vers la VRAM. Cette option est normalement activée pour les jeux qui en ont besoin. Lorsque cette option est activée, la mise à l'échelle du rendu des textures est désactivée et les performances peuvent être impactées."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FR NULL
@@ -40158,10 +40158,10 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL "0 %"
 #define OPTION_VAL_5_GL "5 %"
-#define OPTION_VAL_10_GL NULL
+#define OPTION_VAL_10_GL "10 %"
 #define OPTION_VAL_15_GL NULL
 #define OPTION_VAL_20_GL NULL
-#define OPTION_VAL_25_GL NULL
+#define OPTION_VAL_25_GL "25 %"
 #define OPTION_VAL_30_GL NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GL "Activar zona morta"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GL "Seleccione canto ten que premer o gatillo antes de comezar a procesarse."
@@ -88266,7 +88266,7 @@ struct retro_core_options_v2 options_val = {
 #define CATEGORY_HACKS_LABEL_VN "Thủ thuật giả lập"
 #define CATEGORY_HACKS_INFO_0_VN "Cấu hình chế độ màn hình rộng, tốc độ tải GD-ROM và thay thế Kết cấu."
 #define CATEGORY_INPUT_LABEL_VN "Đều khiển"
-#define CATEGORY_INPUT_INFO_0_VN "Cấu hình tay cầm và súng ánh sáng."
+#define CATEGORY_INPUT_INFO_0_VN "Cấu hình tay cầm và Súng quang."
 #define CATEGORY_EXPANSIONS_LABEL_VN "Khe mở rộng tay cầm"
 #define CATEGORY_EXPANSIONS_INFO_0_VN "Chọn thiết bị (VMU, thiết bị rung) cắm vào mỗi khe mở rộng tay cầm."
 #define CATEGORY_VMU_LABEL_VN "Bộ nhớ trực quan Vmu"
@@ -88469,7 +88469,7 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_VN "Khi bật, các trigger sẽ hoạt động như Phím thường, nghĩa là chỉ được xử lý ở trạng thái nhấn hoàn toàn hoặc không nhấn, không có mức trung gian."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VN "Phát tín hiệu Digital Outputs"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VN "Phát tín hiệu digital và trạng thái phản hồi lực qua cổng TCP 8000. Tương thích với tùy chọn \"-output network\" của MAME."
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VN "Hiển thị Cài đặt Súng Ánh Sáng"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VN "Hiển thị Cài đặt Súng quang"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VN "Bật cấu hình các tùy chọn hiển thị con trỏ súng. Lưu ý: Có thể cần mở Quick Menu để thiết lập này có hiệu lực."
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VN "Tỉ lệ kích thước con trỏ súng"
 #define OPTION_VAL_50_VN NULL

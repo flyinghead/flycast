@@ -5,6 +5,7 @@
 void input_sdl_init();
 void input_sdl_handle();
 void input_sdl_quit();
+bool sdl_queue_open_file(const char *path);
 void sdl_window_create();
 void sdl_window_destroy();
 bool sdl_recreate_window(u32 flags);

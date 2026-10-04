@@ -441,7 +441,6 @@ void SCIFSerialPort::deserialize(Deserializer& deser)
 		transmitting = false;
 	}
 	SCIF_SCBRR2 &= 0xff;	// work around previous issues with dynarecs
-	updateBaudRate();
 }
 
 struct PTYPipe : public SerialPort::Pipe
