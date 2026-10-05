@@ -824,21 +824,21 @@ void CapcomDirect::resetModemCallbacks()
 std::string CapcomDirect::getBattleCode()
 {
 	constexpr u32 addresses[] {
-		0x8c23b004, // mvsc2
-		0x0c2eacb8, // pstone2
-		0x0c052140, // sf3strike3 (05ffc0)
-		0x8c225dfc, // sfzero3
-		0x0c2e7368, // spawn
-		0x0c2e712c, // vampire (340c68, 341e80, 345dac, 355f4c)
-		0x0c236a9c, // tennis (237a1c, 23839c)
-		0x0c26ddac, // cvspro (30f46c 38cdb8)
-		0x0c1051b6, // jojo (8997c8)
-		0x0c3f2ee8, // pjustice
-		0x0c31e6c8, // ssf8 (320afc 329b84 339d24)
-		0x0c3f6904, // tech romancer
-		0x0c42b320, // taisen net gimmick (430894 56a5a0)
-		0x0c2dbaa4, // hmgeo
-		0x0c2450dc, // puzzle8 (247510 26494c 2832b8 293458)
+		0x8c2b522c, // mvsc2
+		0x0c81d410, // pstone2
+		0x8ceadbd4, // sf3strike3
+		0x8c223b54, // sfzero3
+		0x0c2de580, // spawn
+		0x8c340c68, // vampire
+		0x0c237a1c, // tennis
+		0x8c30f46c, // cvspro
+		0x8c8997c8, // jojo
+		0x0c3f5974, // pjustice
+		0x8c31e6c8, // ssf8
+		0x8c4af628, // tech romancer
+		0x8c42b320, // taisen net gimmick
+		0x0c2d6d00, // hmgeo
+		0x0c2450dc, // puzzle8
 	};
 	if (gameId == 0 || gameId > std::size(addresses))
 		return {};
