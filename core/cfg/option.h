@@ -28,6 +28,9 @@
 #include <libretro.h>
 #endif
 
+#include <cstring>
+#include <cstdlib>
+
 namespace config {
 
 class BaseOption {
