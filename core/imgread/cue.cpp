@@ -248,6 +248,8 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d %s", disc->tracks.size() + 1, track_filename.c_str(),
 						session_number, track_type.c_str(), t.StartFAD, t.EndFAD, t.isrc.empty() ? "" : ("ISRC " + t.isrc).c_str());
 				hostfs::File *track_file = hostfs::storage().openFile(track_filename, "rb");
+				if (track_file == nullptr)
+					throw FlycastException(strprintf(i18n::T("CUE file: cannot open track %s"), track_filename.c_str()));
 				t.file = new RawTrackFile(track_file, indexFAD * track_secsize, t.StartFAD, track_secsize);
 				disc->tracks.push_back(t);
 				if (disc->tracks.size() >= 2) {
