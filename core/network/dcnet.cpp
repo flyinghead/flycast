@@ -433,7 +433,7 @@ public:
 		this->handler = std::function<void(const std::error_code&, const asio::ip::address&, const std::string&)>(handler);
 		try {
 			asio::ip::udp::resolver resolver(io_context);
-			auto it = resolver.resolve("dcnet.flyca.st", std::to_string(PORT));
+			auto it = resolver.resolve(asio::ip::udp::v4(), "dcnet.flyca.st", std::to_string(PORT));
 			if (it.empty()) {
 				finish();
 				return;
