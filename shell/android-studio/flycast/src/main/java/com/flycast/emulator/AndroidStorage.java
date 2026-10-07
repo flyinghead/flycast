@@ -101,8 +101,49 @@ public class AndroidStorage {
     }
 
     public int openFile(String uri, String mode) throws FileNotFoundException {
-        ParcelFileDescriptor pfd = activity.getContentResolver().openFileDescriptor(Uri.parse(uri), mode);
+        Uri parsedUri = Uri.parse(uri);
+        ParcelFileDescriptor pfd;
+        try {
+            pfd = activity.getContentResolver().openFileDescriptor(parsedUri, mode);
+        } catch (Exception e) {
+            if (!mode.contains("w")) {
+                if (e instanceof FileNotFoundException)
+                    throw (FileNotFoundException)e;
+                FileNotFoundException fnfe = new FileNotFoundException(uri);
+                fnfe.initCause(e);
+                throw fnfe;
+            }
+            parsedUri = createMissingDocument(parsedUri);
+            if (parsedUri == null) {
+                if (e instanceof FileNotFoundException)
+                    throw (FileNotFoundException)e;
+                FileNotFoundException fnfe = new FileNotFoundException(uri);
+                fnfe.initCause(e);
+                throw fnfe;
+            }
+            pfd = activity.getContentResolver().openFileDescriptor(parsedUri, mode);
+        }
         return pfd.detachFd();
+    }
+
+    private Uri createMissingDocument(Uri uri)
+    {
+        try {
+            if (!DocumentsContract.isDocumentUri(activity, uri))
+                return null;
+            String documentId = DocumentsContract.getDocumentId(uri);
+            int separator = documentId.lastIndexOf('/');
+            if (separator < 0 || separator == documentId.length() - 1)
+                return null;
+            String parentId = documentId.substring(0, separator);
+            String name = documentId.substring(separator + 1);
+            Uri parentUri = DocumentsContract.buildDocumentUriUsingTree(uri, parentId);
+            return DocumentsContract.createDocument(activity.getContentResolver(), parentUri,
+                    "application/octet-stream", name);
+        } catch (Exception e) {
+            Log.w("Flycast", "Failed to create document: " + uri, e);
+            return null;
+        }
     }
 
     public InputStream openInputStream(String uri) throws FileNotFoundException {
@@ -248,6 +289,21 @@ public class AndroidStorage {
         } finally {
             if (cursor != null)
                 cursor.close();
+        }
+    }
+
+    public boolean remove(String uriString)
+    {
+        Uri uri = Uri.parse(uriString);
+        try {
+            if (DocumentsContract.isDocumentUri(activity, uri)) {
+                return DocumentsContract.deleteDocument(activity.getContentResolver(), uri);
+            }
+            DocumentFile docFile = DocumentFile.fromTreeUri(activity, uri);
+            return docFile != null && docFile.delete();
+        } catch (Exception e) {
+            Log.w("Flycast", "Failed to delete: " + uriString, e);
+            return false;
         }
     }
 

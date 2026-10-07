@@ -109,10 +109,16 @@ std::string getArcadeFlashPath()
 {
 	// Check user-defined save path first
 	if (!config::SavePath.get().empty())
-		return config::SavePath.get() + "/" + settings.content.fileName;
+	{
+		try {
+			return hostfs::storage().getSubPath(config::SavePath, settings.content.fileName);
+		} catch (const hostfs::StorageException& e) {
+		}
+	}
 	else
 		// Fall back to default
 		return get_game_save_prefix();
+	return get_game_save_prefix();
 }
 
 std::string findFlash(const std::string& prefix, const std::string& names)
@@ -127,6 +133,17 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 		size_t percent = name.find('%');
 		if (percent != npos)
 			name = name.replace(percent, 1, prefix);
+
+		// First check user-defined save paths for writable flash/NVRAM files
+		if (!config::SavePath.get().empty() && name.find("nvmem") != std::string::npos)
+		{
+			try {
+				std::string fullpath = hostfs::storage().getSubPath(config::SavePath, name);
+				if (hostfs::storage().exists(fullpath))
+					return fullpath;
+			} catch (const hostfs::StorageException& e) {
+			}
+		}
 
 		// First check user-defined BIOS paths
 		for (const auto& path : config::BiosPath.get())
@@ -163,6 +180,13 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 
 std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 {
+	if (!config::SavePath.get().empty() && (!prefix.empty() || !name.empty()))
+	{
+		try {
+			return hostfs::storage().getSubPath(config::SavePath, prefix + name);
+		} catch (const hostfs::StorageException& e) {
+		}
+	}
 	return get_writable_data_path(prefix + name);
 }
 

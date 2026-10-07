@@ -23,6 +23,7 @@
 #include "dinokich_card.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
+#include "oslib/storage.h"
 #include <algorithm>
 
 namespace systemsp
@@ -126,12 +127,12 @@ DinokichCardReader::DinokichCardReader(SerialPort *port, int index, const std::s
 
 	for (Slot& slot : slots_)
 	{
-		FILE *f = nowide::fopen(getCardDataPath(index).c_str(), "rb");
+		hostfs::File *f = hostfs::storage().openFile(getCardDataPath(index), "rb");
 		if (f != nullptr)
 		{
-			if (fread(slot.eeprom.data(), 1, slot.eeprom.size(), f) != slot.eeprom.size())
+			if (f->read(slot.eeprom.data(), 1, slot.eeprom.size()) != slot.eeprom.size())
 				WARN_LOG(NAOMI, "Rfid card %d: truncated read", index);
-			fclose(f);
+			delete f;
 			// TODO Decrypt card and check game credits. Renew if zero.
 		}
 		else
@@ -385,12 +386,12 @@ DinokichCardReader::Reply DinokichCardReader::on_63(const std::vector<u8>& f) {
 void DinokichCardReader::saveCard(int slotId)
 {
     Slot& slot = slots_[slotId];
-	FILE *f = nowide::fopen(getCardDataPath(index + slotId).c_str(), "wb");
+	hostfs::File *f = hostfs::storage().openFile(getCardDataPath(index + slotId), "wb");
 	if (f != nullptr)
 	{
-		if (fwrite(slot.eeprom.data(), 1, slot.eeprom.size(), f) != slot.eeprom.size())
+		if (f->write(slot.eeprom.data(), 1, slot.eeprom.size()) != slot.eeprom.size())
 			WARN_LOG(NAOMI, "Rfid card %d: truncated write", index);
-		fclose(f);
+		delete f;
 	}
 	else {
 		WARN_LOG(NAOMI, "Card saved failed to %s", getCardDataPath(index).c_str());
