@@ -32,22 +32,21 @@ static Service *customService;
 
 bool start()
 {
-	if (customService == service && service != nullptr)
-		return true;
-	delete service;
-	if (settings.content.gameId == "HDR0010")	// Sega Rally 2 (JP)
-		service = new RawModemService();
-	else if (config::UseDCNet)
-		service = new DCNetService();
-	else
-		service = new PicoTcpService();
+	if (customService == nullptr)
+	{
+		delete service;
+		if (settings.content.gameId == "HDR0010")	// Sega Rally 2 (JP)
+			service = new RawModemService();
+		else if (config::UseDCNet)
+			service = new DCNetService();
+		else
+			service = new PicoTcpService();
+	}
 	return service->start();
 }
 
 void stop()
 {
-	if (customService == service)
-		return;
 	if (service != nullptr)
 		service->stop();
 }

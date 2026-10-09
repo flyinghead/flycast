@@ -27,11 +27,15 @@
 #include "util/tsqueue.h"
 #include "oslib/i18n.h"
 #include "oslib/oslib.h"
+#include "reios/reios.h"
 #include <juice/juice.h>
 #include <stdlib.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
+
+#include <thread>
+using namespace std::chrono_literals;
 
 //
 // Emulates the Capcom Direct gaming service.
@@ -63,21 +67,22 @@
 // TODO intermittent lock up at battle start after PING/PONG/START (zero3, mvsc2)
 
 // Capcom Direct games
-//  1 Marvel vs. Capcom 2				T1215M
-//  2 Power Stone 2						T1218M
-//  3 Street Fighter III 3rd Strike		T1209M
-//  4 Street Fighter Zero 3 for M.S.	T1230M
-//  5 Spawn								T1216M
-//  6 Vampire Chronicle for M.S.		T1235M
-//  7 Netto De Tennis					T1234M
-//  8 Capcom vs. SNK Pro				T1247M
-//  9 Jojo's Bizarre Adventure for M.S. T1231M
-// 10 Project Justice					T1221M
-// 11 Super Street Fighter IIX for M.S.	T1236M
-// 12 Tech Romancer for M.S.			T1232M
-// 13 Taisen Net Gimmick				T1248M
-// 14 Heavy Metal: Geomatrix			T1246M
-// 15 Super Puzzle Fighter IIX for M.S.	T1250M
+//  1 Marvel vs. Capcom 2					T1215M
+//  2 Power Stone 2							T1218M
+//  3 Street Fighter III 3rd Strike			T1209M
+//  4 Street Fighter Zero 3 for M.S.		T1230M
+//  5 Spawn									T1216M
+//  6 Vampire Chronicle for M.S.			T1235M
+//  7 Netto De Tennis						T1234M
+//  8 Capcom vs. SNK Millennium Fight Pro	T1247M
+//    Capcom vs. SNK Millennium Fight		T1217M
+//  9 Jojo's Bizarre Adventure for M.S.		T1231M
+// 10 Project Justice						T1221M
+// 11 Super Street Fighter IIX for M.S.		T1236M
+// 12 Tech Romancer for M.S.				T1232M
+// 13 Taisen Net Gimmick					T1248M
+// 14 Heavy Metal: Geomatrix				T1246M
+// 15 Super Puzzle Fighter IIX for M.S.		T1250M
 
 namespace net::modbba
 {
@@ -87,6 +92,9 @@ const std::string games[] {
 		"T1234M", "T1247M", "T1231M", "T1221M", "T1236M", "T1232M",
 		"T1248M", "T1246M", "T1250M"
 };
+
+enum PackeType { Register = 1, Start, Candidates, Stop };
+static constexpr u8 PKT_MAGIC[] { 0xBA, 0x11, 0x1E, 0x01 };
 
 class CapcomIceNetService;
 
@@ -118,7 +126,12 @@ static CapcomDirect capcom;
 class CapcomIceNetService : public Service
 {
 public:
-	bool start() override
+	bool start() override {
+		// Fake
+		return true;
+	}
+
+	void realStart()
 	{
 		juice_set_log_level(JUICE_LOG_LEVEL_INFO);
 		juice_set_log_handler(juiceLogHandler);
@@ -157,11 +170,10 @@ public:
 				return false;
 			}
 			juice_gather_candidates(agent);
+			state = Gathering;
 
 			return true;
 		});
-
-		return true;
 	}
 
 	void sendRegister(int game, bool caller, u32 battleCode)
@@ -173,12 +185,23 @@ public:
 
 	void stop() override
 	{
-		juiceCompleted = false;
-		txBuffering.stop();
-		if (getJuiceAgent() != nullptr) {
-			juice_destroy(agent);
-			agent = nullptr;
+		if (state == Connected)
+		{
+			INFO_LOG(NETWORK, "Stopping Capcom Net service");
+			sendStop();
+			state = Closed;
+			txBuffering.stop();
+			if (getJuiceAgent() != nullptr) {
+				juice_destroy(agent);
+				agent = nullptr;
+			}
 		}
+	}
+
+	void realStop()
+	{
+		state = Connected; // make sure stop() does stop
+		stop();
 		if (serverConn != nullptr) {
 			serverConn->disconnect();
 			serverConn.reset();
@@ -189,7 +212,7 @@ public:
 	{
 		{
 			std::lock_guard<std::mutex> _(mutex);
-			if (!juiceCompleted) {
+			if (state != Syncing) {
 				startSent = true;
 				return;
 			}
@@ -205,6 +228,14 @@ public:
 		if (serverConn == nullptr)
 			return false;
 		return serverConn->receiveStart();
+	}
+
+	void sendStop()
+	{
+		u8 data[6] {};
+		memcpy(data, PKT_MAGIC, sizeof(PKT_MAGIC));
+		data[4] = Stop;
+		juice_send(getJuiceAgent(), (const char *)data, sizeof(data));
 	}
 
 	void writeModem(u8 b) override
@@ -226,21 +257,24 @@ public:
 		// hmgeo		12
 		// puzzle		16
 
+		if (state == Closed)
+			throw ConnectionClosed();
 		txQueue.push(b);
 		txBuffering.reset();
-		if (startSync && b != 0xa && (b < 'A' || b > 'Z'))
+		if (state == Syncing && b != 0xa && (b < 'A' || b > 'Z'))
 		{
 			// Crude initial synchronization
 			u64 t0 = getTimeMs();
 			while (rxQueue.empty() && getTimeMs() -  t0 < 500)
 				;
-			startSync = false;
+			state = Connected;
 		}
 	}
 
 	void flushTxQueue()
 	{
-		if (txQueue.empty() || !juiceCompleted)
+		if (txQueue.empty()
+				|| (state != Syncing && state != Connected))
 			return;
 		std::string data;
 		data.reserve(txQueue.size());
@@ -255,6 +289,8 @@ public:
 		*/
 		while (!txQueue.empty())
 			data.push_back((char)txQueue.pop());
+		if (!memcmp(data.c_str(), "\nREDY\n", 6))
+			resyncTime = getTimeMs();
 		int ret = juice_send(getJuiceAgent(), data.c_str(), data.size());
 		if (ret)
 			WARN_LOG(NETWORK, "juice send failed: %d", ret);
@@ -263,13 +299,31 @@ public:
 	int readModem() override
 	{
 		if (rxQueue.empty())
+		{
+			if (state == Closed)
+				throw ConnectionClosed();
 			return -1;
+		}
 		u8 c = rxQueue.pop();
-		if (startSync && c != 0xa && (c < 'A' || c > 'Z'))
-			startSync = false;
+		if (state == Syncing && c != 0xa && (c < 'A' || c > 'Z'))
+			state = Connected;
 		return c;
 	}
-	int modemAvailable() override {
+	int modemAvailable() override
+	{
+		if (rxQueue.empty() && state == Closed)
+			throw ConnectionClosed();
+		if (resyncTime != 0 && rxQueue.empty())
+		{
+			u64 now = getTimeMs();
+			if (now - resyncTime >= 500)
+			{
+				// FIXME Spawn: resync resend endless loop (prob < 17%)
+				WARN_LOG(NETWORK, "Resync timeout. Resending");
+				juice_send(getJuiceAgent(), "\nREDY\n", 6);
+				resyncTime = now;
+			}
+		}
 		return rxQueue.size();
 	}
 
@@ -321,7 +375,7 @@ private:
 			{
 				std::lock_guard<std::mutex> _(mutex);
 				startSendNow = startSent;
-				juiceCompleted = true;
+				this->state = Syncing;
 			}
 			if (!caller && startSendNow)
 			{
@@ -336,7 +390,7 @@ private:
 		else if (state == JUICE_STATE_FAILED)
 		{
 			WARN_LOG(NETWORK, "ICE connection failed or closed");
-			// TODO something?
+			this->state = Closed;
 		}
 	}
 
@@ -352,6 +406,17 @@ private:
 		len -= 4;
 		data += 4;
 		*/
+		if (len >= 6 && data[4] == Stop && !memcmp(data, PKT_MAGIC, sizeof(PKT_MAGIC)))
+		{
+			if (state == Connected) {
+				INFO_LOG(NETWORK, "Stop received from peer");
+				state = Closed;
+			}
+			return;
+		}
+		if (len == 4 && !memcmp(data, "\nOK\n", 4))
+			resyncTime = 0;
+
 		while (len--)
 			rxQueue.push(*data++);
 	}
@@ -444,7 +509,7 @@ private:
 			if (io_context == nullptr)
 				return;
 			io_context->post([this]() {
-				outPacket.insert(outPacket.end(), std::begin(MAGIC), std::end(MAGIC));
+				outPacket.insert(outPacket.end(), std::begin(PKT_MAGIC), std::end(PKT_MAGIC));
 				outPacket.push_back(2);
 				outPacket.push_back(0);
 				send();
@@ -457,7 +522,7 @@ private:
 				return;
 			std::string candidates = cands;
 			io_context->post([this, candidates]() {
-				outPacket.insert(outPacket.end(), std::begin(MAGIC), std::end(MAGIC));
+				outPacket.insert(outPacket.end(), std::begin(PKT_MAGIC), std::end(PKT_MAGIC));
 				outPacket.push_back(3);
 				size_t len = candidates.size();
 				if (len <= 0xfe) {
@@ -481,8 +546,8 @@ private:
 	private:
 		void sendRegister(int game, bool caller, u32 battleCode)
 		{
-			outPacket.insert(outPacket.end(), std::begin(MAGIC), std::end(MAGIC));
-			outPacket.push_back(1);
+			outPacket.insert(outPacket.end(), std::begin(PKT_MAGIC), std::end(PKT_MAGIC));
+			outPacket.push_back(Register);
 			outPacket.push_back(6);
 			outPacket.push_back(game);
 			outPacket.push_back(caller);
@@ -529,7 +594,7 @@ private:
 				close();
 				return;
 			}
-			if (memcmp(packet.data(), MAGIC, sizeof(MAGIC)))
+			if (memcmp(packet.data(), PKT_MAGIC, sizeof(PKT_MAGIC)))
 			{
 				ERROR_LOG(NETWORK, "Invalid magic number in packet");
 				close();
@@ -537,10 +602,10 @@ private:
 			}
 			switch (packet[4])
 			{
-			case 2: // start
+			case Start:
 				startReceived = true;
 				break;
-			case 3: // candidates
+			case Candidates:
 				{
 					unsigned start;
 					if (packet[5] == 0xff)
@@ -665,20 +730,19 @@ private:
 	};
 
 	juice_agent_t *agent = nullptr;
+	enum { Init, Gathering, Syncing, Connected, Closed }
+	state {};
 	std::future<bool> initStatus;
 	TsQueue<u8> rxQueue;
 	TsQueue<u8> txQueue;
 	TxBuffering txBuffering { *this, 2 };
 	std::unique_ptr<BattleServerConn> serverConn;
 	bool caller = false;
-	bool startSync = true;
-	bool juiceCompleted = false;
 	bool startSent = false;
 	std::mutex mutex;
+	u64 resyncTime = 0;
 	//u32 rxSeq = 1;
 	//u32 txSeq = 0;
-
-	static constexpr u8 MAGIC[] { 0xBA, 0x11, 0x1E, 0x01 };
 };
 
 CapcomDirect::CapcomDirect() {
@@ -709,6 +773,9 @@ void CapcomDirect::onLoadGame()
 			gameId = i + 1;
 			break;
 		}
+	if (gameId == 0 && settings.content.gameId == "T1217M")
+		// Capcom vs SNK Millennium Fight and M.F. Pro use the same game code
+		gameId = 8;
 	active = gameId != 0;
 }
 
@@ -717,7 +784,7 @@ void CapcomDirect::startCapcomDirectService()
 	INFO_LOG(NETWORK, "Capcom network service started");
 	capcomService = std::make_unique<CapcomIceNetService>();
 	setCustomService(capcomService.get());
-	capcomService->start();
+	capcomService->realStart();
 	std::string battleCode = getBattleCode();
 	INFO_LOG(NETWORK, "Capcom battle code: %s (%s)", battleCode.c_str(), caller ? "caller" : "callee");
 	u32 shortCode = strtol(battleCode.substr(0, 8).c_str(), nullptr, 16);
@@ -753,7 +820,7 @@ void CapcomDirect::stopCapcomDirectService()
 {
 	setCustomService(nullptr);
 	if (capcomService != nullptr) {
-		capcomService->stop();
+		capcomService->realStop();
 		capcomService.reset();
 	}
 	resetModemCallbacks();
@@ -831,7 +898,7 @@ std::string CapcomDirect::getBattleCode()
 		0x0c2de580, // spawn
 		0x8c340c68, // vampire
 		0x0c237a1c, // tennis
-		0x8c30f46c, // cvspro
+		0x8c30f46c, // cvsmfpro
 		0x8c8997c8, // jojo
 		0x0c3f5974, // pjustice
 		0x8c31e6c8, // ssf8
@@ -842,7 +909,18 @@ std::string CapcomDirect::getBattleCode()
 	};
 	if (gameId == 0 || gameId > std::size(addresses))
 		return {};
-	const u32 address = addresses[(int)gameId - 1];
+	u32 address;
+	if (settings.content.gameId == "T1217M")
+	{
+		// cvsmf v1 or v2
+		if (ip_meta.product_version[1] == '1')
+			address = 0x8c316e2c;
+		else
+			address = 0x8c31762c;
+	}
+	else {
+		address = addresses[(int)gameId - 1];
+	}
 	std::string battleCode;
 	for (int i = 0; i < 14; i++)
 		battleCode += addrspace::read8(address + i);

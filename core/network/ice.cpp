@@ -35,6 +35,7 @@ STUNConfig STUNConfig::get()
 	cfg.turn_username = "flycast";
 	cfg.turn_password = "rules";
 
+	http::init();
 	std::vector<u8> content;
 	std::string ctype;
 	int status = http::get("https://dcnet.flyca.st/stun.json", content, ctype);

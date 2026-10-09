@@ -345,6 +345,16 @@ static bool setModemSpeedFromCONF()
 	return speed != 0;
 }
 
+static void hangUp()
+{
+	INFO_LOG(MODEM, "Hanging up modem");
+	modem_regs.ABCODE = 0x96;
+	modem_regs.reg1f.NEWS = 1;
+	modem_regs.CONF = 0xC0;
+	dspram[0x2e4] = 0;
+	connect_state = DISCONNECTED;
+}
+
 static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 {
 #ifndef NDEBUG
@@ -538,10 +548,14 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			}
 			if (rxFifo.size() < 16)
 			{
-				int c = curInput->read();
-				if (c >= 0) {
-					rxFifo.push_back(c);
-					updateRxFifoStatus();
+				try {
+					int c = curInput->read();
+					if (c >= 0) {
+						rxFifo.push_back(c);
+						updateRxFifoStatus();
+					}
+				} catch (const net::modbba::ConnectionClosed& e) {
+					hangUp();
 				}
 			}
 			break;
@@ -836,7 +850,12 @@ static void ModemNormalWrite(u32 reg, u32 data)
 #ifndef NDEBUG
 			sent_bytes++;
 #endif
-			curOutput->write(data);
+			try {
+				curOutput->write(data);
+			} catch (const net::modbba::ConnectionClosed& e) {
+				hangUp();
+				break;
+			}
 
 			modem_regs.reg1e.TDBE = 0;
 			txFifoSize += 1.f;

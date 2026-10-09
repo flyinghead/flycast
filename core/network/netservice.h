@@ -18,9 +18,16 @@
  */
 #pragma once
 #include "types.h"
+#include <stdexcept>
 
 namespace net::modbba
 {
+
+class ConnectionClosed : public std::exception
+{
+public:
+	ConnectionClosed() = default;
+};
 
 bool start();
 void stop();
