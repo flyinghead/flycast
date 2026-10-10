@@ -70,6 +70,9 @@ static inline int get_last_error() { return WSAGetLastError(); }
 #ifndef SHUT_RD
 #define SHUT_RD SD_RECEIVE
 #endif
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif
 #endif
 
 bool is_local_address(u32 addr);
