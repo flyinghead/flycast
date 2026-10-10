@@ -231,7 +231,8 @@ std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices{{
 	{{Option<int>("device4.1.net", 0, "input"),
 	Option<int>("device4.2.net", 0, "input")}},
 }};
-Option<bool> PerGameVmu("PerGameVmu", true, "config");
+Option<int> PerGameVmu("PerGameVmu", 1, "config");	// VMU A1
+Option<std::vector<std::string>, false> PerGameVmuPrefix("PerGameVmuPrefix", {}, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif
