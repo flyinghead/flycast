@@ -51,7 +51,7 @@ std::string getVmuPath(const std::string& port, bool save)
 {
 	std::string vmuName;
 	
-	if (((port == "A1" && config::PerGameVmu == 1) || config::PerGameVmu == 2))
+	if ((port == "A1" && config::PerGameVmu == 1) || config::PerGameVmu == 2)
 	{
 		if (settings.platform.isConsole() && !settings.content.gameId.empty())
 		{
