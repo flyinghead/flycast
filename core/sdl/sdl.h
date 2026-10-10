@@ -8,6 +8,10 @@ void input_sdl_quit();
 bool sdl_queue_open_file(const char *path);
 void sdl_window_create();
 void sdl_window_destroy();
+#ifdef FLYCAST_MACOS_NATIVE_UI
+void sdl_set_native_library_visible(bool visible);
+void sdl_set_game_fullscreen(bool enabled);
+#endif
 bool sdl_recreate_window(u32 flags);
 bool sdl_update_display_metrics(SDL_Window *window, u32 windowFlags);
 void sdl_fix_steamdeck_dpi(SDL_Window *window);
