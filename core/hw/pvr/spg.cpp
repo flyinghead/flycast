@@ -8,6 +8,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "stdclass.h"
 #include <array>
+#include <atomic>
 
 #ifdef TEST_AUTOMATION
 #include "input/gamepad_device.h"
@@ -28,6 +29,7 @@ static u64 last_fps;
 constexpr int PIXEL_CLOCK = 27 * 1000 * 1000;
 static u32 Line_Cycles;
 static u32 Frame_Cycles;
+static std::atomic<double> videoFrameDuration{1.0 / 60.0};
 int render_end_schid;
 int vblank_schid;
 
@@ -58,6 +60,8 @@ void CalculateSync()
 		Line_Cycles /= 2;
 
 	Frame_Cycles = pvr_numscanlines * Line_Cycles;
+	if (Frame_Cycles != 0)
+		videoFrameDuration.store(double(Frame_Cycles) / SH4_MAIN_CLOCK, std::memory_order_relaxed);
 	prv_cur_scanline = 0;
 	clc_pvr_scanline = 0;
 
@@ -66,6 +70,11 @@ void CalculateSync()
 #ifdef LIBRETRO
 	retro_refresh_av_info((double)SH4_MAIN_CLOCK / ((double)Line_Cycles * (double)pvr_numscanlines));
 #endif
+}
+
+double spg_GetFrameDuration()
+{
+	return videoFrameDuration.load(std::memory_order_relaxed);
 }
 
 static int getNextSpgInterrupt()
@@ -331,10 +340,17 @@ void spg_Deserialize(Deserializer& deser)
 	deser >> prv_cur_scanline;
 	deser >> Line_Cycles;
 	deser >> Frame_Cycles;
+	if (Frame_Cycles) videoFrameDuration.store(double(Frame_Cycles) / SH4_MAIN_CLOCK, std::memory_order_relaxed);
 	deser >> lightgun_line;
 	deser >> lightgun_hpos;
 	if (deser.version() >= Deserializer::V62) {
 		sh4_sched_deserialize(deser, vblank_schid);
 		sh4_sched_deserialize(deser, render_end_schid);
 	}
+}
+
+double spg_GetVideoTime() {
+	// Keep sub-field precision: rounding swaps to a vblank number adds a
+	// whole field of jitter when a stable game's render phase crosses it.
+	return double(sh4_sched_now64()) / SH4_MAIN_CLOCK;
 }
