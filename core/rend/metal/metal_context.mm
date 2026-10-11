@@ -29,9 +29,7 @@
 #include <functional>
 #endif
 #ifdef VIDEO_ROUTING
-void os_VideoRoutingPublishMetalTexture(id<MTLTexture> texture, FCMetal4Commands * command);
-void os_VideoRoutingTermMetal();
-bool os_VideoRoutingMetalHasClients(id<MTLDevice> device);
+#include "metal_syphon.h"
 #endif
 
 static void checkMetal(NSError *error, const char *operation)

@@ -253,54 +253,6 @@ void os_VideoRoutingTermGL()
 }
 #endif
 
-#ifdef USE_METAL
-#include "rend/metal/metal_commands.h"
-static SyphonMetalServer *nativeMetalServer;
-void os_VideoRoutingTermMetal();
-bool os_VideoRoutingMetalHasClients(id<MTLDevice> device)
-{
-	if (nativeMetalServer && nativeMetalServer.device != device)
-		os_VideoRoutingTermMetal();
-	int boardID = config::loadInt("naomi", "BoardId");
-	NSString *name = [NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID];
-	if (nativeMetalServer == nil) {
-		nativeMetalServer = [[SyphonMetalServer alloc] initWithName:name device:device options:nil];
-		if (!nativeMetalServer) throw FlycastException("Cannot create Metal Syphon server");
-	}
-	if (![nativeMetalServer.name isEqualToString:name]) nativeMetalServer.name = name;
-	return nativeMetalServer.hasClients;
-}
-void os_VideoRoutingPublishMetalTexture(id<MTLTexture> texture, FCMetal4Commands *command)
-{
-	// The caller prepares the server before encoding any optional scaling.
-	// Recheck clients without loading the board ID and formatting its name again.
-	if (!nativeMetalServer || nativeMetalServer.device != texture.device || !nativeMetalServer.hasClients) return;
-	SyphonMetalServer *server = nativeMetalServer;
-	id<MTLTexture> surface = [server prepareFrameOfSize:NSMakeSize(texture.width, texture.height)];
-	if (!surface) return;
-	if (surface.pixelFormat != texture.pixelFormat || texture.framebufferOnly)
-		throw FlycastException("Invalid Metal 4 Syphon surface format");
-	FCMetal4ComputeEncoder *copy = [command transferEncoder];
-	[copy copyFromTexture:texture sourceSlice:0 sourceLevel:0 sourceOrigin:MTLOriginMake(0, 0, 0)
-		sourceSize:MTLSizeMake(texture.width, texture.height, 1) toTexture:surface
-		destinationSlice:0 destinationLevel:0 destinationOrigin:MTLOriginMake(0, 0, 0)];
-	[copy endEncoding];
-	[command addCompletedHandler:^(FCMetal4Commands *done) {
-		if (done.status == FCMetal4StatusCompleted) [server publishCompletedFrame:surface source:texture];
-	}];
-}
-void os_VideoRoutingTermMetal()
-{
-	[nativeMetalServer stop]; [nativeMetalServer release]; nativeMetalServer = nil;
-}
-#ifdef METAL_RENDERER_TESTS
-NSDictionary *os_VideoRoutingMetalServerDescriptionForTests()
-{
-	return nativeMetalServer.serverDescription;
-}
-#endif
-#endif
-
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan.h"
 
