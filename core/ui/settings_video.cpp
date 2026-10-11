@@ -19,12 +19,16 @@
 #include "settings.h"
 #include "gui.h"
 #include "wsi/context.h"
+#ifdef USE_METAL
+#include "rend/metal/metal_context.h"
+#endif
 
 enum RenderAPI {
 	OpenGL,
 	Vulkan,
 	DirectX9,
-	DirectX11
+	DirectX11,
+	Metal
 };
 
 void gui_settings_video()
@@ -62,9 +66,20 @@ void gui_settings_video()
 		renderApi = DirectX11;
 		perPixel = true;
 		break;
+	case RenderType::Metal:
+		renderApi = Metal;
+		perPixel = false;
+		break;
+	case RenderType::Metal_OIT:
+		renderApi = Metal;
+		perPixel = true;
+		break;
 	}
 
 	constexpr int apiCount = 0
+		#ifdef USE_METAL
+			+ 1
+		#endif
 		#ifdef USE_VULKAN
 			+ 1
 		#endif
@@ -85,6 +100,10 @@ void gui_settings_video()
 		header(T("Graphics API"));
 		{
 			ImGui::Columns(apiCount, "renderApi", false);
+#ifdef USE_METAL
+			ImGui::RadioButton("Metal 4", &renderApi, Metal);
+			ImGui::NextColumn();
+#endif
 #ifdef USE_OPENGL
 			ImGui::RadioButton("OpenGL", &renderApi, OpenGL);
 			ImGui::NextColumn();
@@ -115,7 +134,18 @@ void gui_settings_video()
     }
     header(T("Transparent Sorting"));
     {
-		const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
+		// The selected API may differ from the context until this UI frame ends.
+		// Never carry Metal/Vulkan OIT into an API that cannot implement it.
+		bool has_per_pixel = renderApi != DirectX9;
+#if defined(GLES2) || defined(__APPLE__)
+		if (renderApi == OpenGL)
+			has_per_pixel = false;
+#endif
+		if ((renderApi == OpenGL && isOpenGL(config::RendererType))
+				|| (renderApi == Vulkan && isVulkan(config::RendererType)))
+			has_per_pixel = has_per_pixel && GraphicsContext::Instance()->hasPerPixel();
+		if (!has_per_pixel)
+			perPixel = false;
     	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
     	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
     	ImGui::RadioButton(T("Per Triangle"), &renderer, 0);
@@ -202,6 +232,18 @@ void gui_settings_video()
         ImGui::SameLine();
         ShowHelpMarker(T("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."));
 		OptionCheckbox(T("Integer Scaling"), config::IntegerScale, T("Scales the output by the maximum integer multiple allowed by the display resolution."));
+#ifdef USE_METAL
+		if (renderApi == Metal) {
+			const auto *context = dynamic_cast<MetalContext *>(GraphicsContext::Instance());
+			const bool supported = !context || context->supportsMetalFX();
+			{
+				DisabledScope scope(!supported || config::IntegerScale);
+				OptionCheckbox(T("MetalFX Spatial"), config::MetalFXSpatial,
+					T("Upscales the game image when the window is larger than the internal resolution. Lower internal resolutions reduce GPU work. Disable Integer Scaling to use MetalFX."));
+			}
+			if (!supported) ImGui::TextWrapped("%s", T("MetalFX Spatial is unavailable on the current GPU."));
+		}
+#endif
 		OptionCheckbox(T("Linear Interpolation"), config::LinearInterpolation, T("Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."));
 #ifndef TARGET_IPHONE
     	OptionCheckbox(T("VSync"), config::VSync, T("Synchronizes the frame rate with the screen refresh rate. Recommended"));
@@ -212,7 +254,7 @@ void gui_settings_video()
 			OptionCheckbox(T("Frame Pacing (Experimental)"), config::FramePacing,
 					T("Provide the GPU with presentation timing for each frame to replicate original frame pacing."));
 #else
-	    	if (isVulkan(config::RendererType))
+			if (isVulkan(config::RendererType) || isMetal(config::RendererType))
 	    		OptionCheckbox(T("Duplicate frames"), config::DupeFrames, T("Duplicate frames on high refresh rate monitors (120 Hz and higher)"));
 #endif
     	}
@@ -434,5 +476,8 @@ void gui_settings_video()
     case DirectX11:
     	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
     	break;
+    case Metal:
+		config::RendererType = perPixel ? RenderType::Metal_OIT : RenderType::Metal;
+		break;
     }
 }

@@ -74,6 +74,7 @@ struct Renderer
 	// Otherwise either width or height will be used as the maximum width or height respectively.
 	virtual bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
+	virtual void SetPresentationTime(double videoTime) {}
 	virtual bool Present() { return true; }
 
 	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area = 0) { return nullptr; }

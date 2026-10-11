@@ -413,7 +413,9 @@ public:
 #else
 	RendererOption() : Option<RenderType>("pvr.rend",
 #endif
-#if defined(USE_DX11)
+#if defined(USE_METAL)
+			RenderType::Metal
+#elif defined(USE_DX11)
 			RenderType::DirectX11
 #elif defined(USE_DX9)
 			RenderType::DirectX9
@@ -466,6 +468,9 @@ extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
 extern Option<bool> IntegerScale;
 extern Option<bool> LinearInterpolation;
+#ifdef USE_METAL
+extern Option<bool> MetalFXSpatial;
+#endif
 extern Option<bool> VSync;
 extern Option<int64_t> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;

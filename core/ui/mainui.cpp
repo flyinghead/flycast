@@ -100,17 +100,32 @@ void mainui_loop(bool forceStart)
 		mainui_enabled = true;
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
+	const bool presentTimings = config::loadBool("log", "PresentTiming", false);
+	u64 timingFrame = 0;
+	auto lastTimingFrame = std::chrono::steady_clock::now();
 
 	while (mainui_enabled)
 	{
 		fc_profiler::startThread("main");
 
+		const auto frameStart = std::chrono::steady_clock::now();
+		const bool gameFrame = !gui_is_open();
+		if (!gameFrame) lastTimingFrame = frameStart;
 		if (mainui_rend_frame() && imguiDriver != nullptr)
 		{
+			const auto presentStart = std::chrono::steady_clock::now();
 			try {
 				imguiDriver->present();
 			} catch (const FlycastException& e) {
 				forceReinit = true;
+			}
+			if (presentTimings && gameFrame && !gui_is_open() && timingFrame < 1800) {
+				const auto now = std::chrono::steady_clock::now();
+				auto ms = [](auto duration) { return std::chrono::duration<double, std::milli>(duration).count(); };
+				NOTICE_LOG(RENDERER, "Present timing %llu: API %d vsync %d fast %d cycle %.3f ms render %.3f ms swap %.3f ms",
+					(unsigned long long)++timingFrame, (int)config::RendererType.get(), (int)config::VSync.get(),
+					(int)settings.input.fastForwardMode, ms(now - lastTimingFrame), ms(presentStart - frameStart), ms(now - presentStart));
+				lastTimingFrame = now;
 			}
 		}
 		if (imguiDriver == nullptr)
@@ -119,8 +134,8 @@ void mainui_loop(bool forceStart)
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
 			mainui_term();
-			int prevApi = isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : currentRenderer == RenderType::DirectX9 ? 2 : 3;
-			int newApi = isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : config::RendererType == RenderType::DirectX9 ? 2 : 3;
+			int prevApi = isMetal(currentRenderer) ? 4 : isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : currentRenderer == RenderType::DirectX9 ? 2 : 3;
+			int newApi = isMetal(config::RendererType) ? 4 : isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : config::RendererType == RenderType::DirectX9 ? 2 : 3;
 			if (newApi != prevApi || forceReinit)
 			{
 				try {

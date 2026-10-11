@@ -26,12 +26,28 @@
 #include "gl_context.h"
 #include "rend/dx9/dxcontext.h"
 #include "rend/dx11/dx11context.h"
+#ifdef USE_METAL
+#include "rend/metal/metal_context.h"
+#endif
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 #endif
 
 void initRenderApi(void *window, void *display)
 {
+#ifdef USE_METAL
+#if !defined(USE_OPENGL) && !defined(USE_VULKAN) && !defined(USE_DX9) && !defined(USE_DX11)
+	if (!isMetal(config::RendererType))
+		config::RendererType = RenderType::Metal;
+#endif
+	if (isMetal(config::RendererType))
+	{
+		// A selected Metal 4 backend must satisfy its device/SDK requirements.
+		// Report initialization failure instead of silently changing APIs.
+		MetalContext::Create(window, display);
+		return;
+	}
+#endif
 #ifdef USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
@@ -77,6 +93,9 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	try {
 		GLGraphicsContext::Create(window, display);
+		if (config::RendererType == RenderType::OpenGL_OIT
+				&& !GraphicsContext::Instance()->hasPerPixel())
+			config::RendererType = RenderType::OpenGL;
 		return;
 	} catch (const std::exception& e) {
 		WARN_LOG(RENDERER, "OpenGL init failed: %s", e.what());

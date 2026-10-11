@@ -1560,8 +1560,7 @@ void gui_refresh_files() {
 }
 
 void reset_vmus() {
-	for (u32 i = 0; i < std::size(vmu_lcd_status); i++)
-		vmu_lcd_status[i] = false;
+	resetVmuScreens();
 }
 
 void gui_error(const std::string& what) {

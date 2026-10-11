@@ -103,6 +103,8 @@ void gui_settings_about()
 		header("Vulkan");
 	else if (isDirectX(config::RendererType))
 		header("DirectX");
+	else if (isMetal(config::RendererType))
+		header("Metal 4");
 	ImGui::Text(T("Driver Name: %s"), GraphicsContext::Instance()->getDriverName().c_str());
 	ImGui::Text(T("Version: %s"), GraphicsContext::Instance()->getDriverVersion().c_str());
 

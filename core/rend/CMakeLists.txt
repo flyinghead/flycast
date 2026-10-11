@@ -29,6 +29,10 @@ if(USE_VULKAN)
     add_subdirectory(vulkan)
 endif()
 
+if(USE_METAL)
+    add_subdirectory(metal)
+endif()
+
 if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))
     add_subdirectory(dx9)
 endif()

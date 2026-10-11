@@ -908,6 +908,7 @@ void GamepadDevice::RampAnalog()
 
 #ifdef TEST_AUTOMATION
 #include "cfg/option.h"
+#include "hw/pvr/Renderer_if.h"
 static bool replay_inited;
 FILE *replay_file;
 u64 next_event;
@@ -920,16 +921,28 @@ void replay_input()
 	if (!replay_inited)
 	{
 		replay_file = get_record_input(false);
+		if (replay_file != nullptr)
+			settings.input.fastForwardMode = config::loadBool("record", "fast_forward", false);
 		replay_inited = true;
 	}
 	u64 now = sh4_sched_now64();
+	if (replay_file != nullptr)
+	{
+		static u64 last_report;
+		if (now - last_report >= SH4_MAIN_CLOCK * 10ULL)
+		{
+			NOTICE_LOG(INPUT, "Replay progress cycles=%llu wall_ms=%llu renders=%u",
+				(unsigned long long)now, (unsigned long long)getTimeMs(), FrameCount);
+			last_report = now;
+		}
+	}
 	if (config::UseReios)
 	{
 		// Account for the swirl time
 		if (config::Broadcast == 0)
-			now = std::max((int64_t)now - 2152626532L, 0L);
+			now = std::max<int64_t>((int64_t)now - 2152626532LL, 0);
 		else
-			now = std::max((int64_t)now - 2191059108L, 0L);
+			now = std::max<int64_t>((int64_t)now - 2191059108LL, 0);
 	}
 	if (replay_file == NULL)
 	{

@@ -25,6 +25,9 @@ extern bool vmu_lcd_status[8];
 extern u64 vmuLastChanged[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
+// Copy changed pixels atomically with their generation for threaded renderers.
+bool getVmuScreenSnapshot(int index, u64& generation, u32 *pixels);
+void resetVmuScreens();
 
 // Crosshair
 const u32 *getCrosshairTextureData();
@@ -50,8 +53,4 @@ static inline bool crosshairNeeded(int port)
 	return true;
 }
 
-static inline void blankVmus()
-{
-	memset(vmu_lcd_data, 0, sizeof(vmu_lcd_data));
-	memset(vmuLastChanged, 0, sizeof(vmuLastChanged));
-}
+void blankVmus();

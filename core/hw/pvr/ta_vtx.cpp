@@ -1170,7 +1170,8 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 {
 	const bool perPixel = config::RendererType == RenderType::OpenGL_OIT
 			|| config::RendererType == RenderType::DirectX11_OIT
-			|| config::RendererType == RenderType::Vulkan_OIT;
+			|| config::RendererType == RenderType::Vulkan_OIT
+			|| config::RendererType == RenderType::Metal_OIT;
 	const bool mergeTranslucent = config::PerStripSorting || perPixel;
 
 	if (config::RenderResolution > 480 && !config::EmulateFramebuffer && config::FixUpscaleBleedingEdge)

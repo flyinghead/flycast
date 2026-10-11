@@ -76,7 +76,19 @@ static void emu_flycast_term()
 extern "C" int SDL_main(int argc, char *argv[])
 {
     char *home = getenv("HOME");
-    if (home != NULL)
+    const char *configOverride = getenv("FLYCAST_CONFIG_DIR");
+    if (configOverride != nullptr && *configOverride != '\0')
+    {
+        // Isolate portable installations and renderer validation from user settings.
+        std::string config_dir(configOverride);
+        mkdir(config_dir.c_str(), 0755);
+        set_user_config_dir(config_dir);
+        add_system_data_dir(config_dir);
+        config_dir += "/data/";
+        mkdir(config_dir.c_str(), 0755);
+        set_user_data_dir(config_dir);
+    }
+    else if (home != NULL)
     {
         std::string config_dir = std::string(home) + "/.flycast/";
 		if (!file_exists(config_dir))
@@ -218,6 +230,7 @@ void os_RunInstance(int argc, const char *argv[])
 
 #import <Syphon/Syphon.h>
 #import <cfg/cfg.h>
+#ifdef USE_OPENGL
 static SyphonOpenGLServer* syphonGLServer;
 
 void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
@@ -238,6 +251,55 @@ void os_VideoRoutingTermGL()
 	[syphonGLServer release];
 	syphonGLServer = NULL;
 }
+#endif
+
+#ifdef USE_METAL
+#include "rend/metal/metal_commands.h"
+static SyphonMetalServer *nativeMetalServer;
+void os_VideoRoutingTermMetal();
+bool os_VideoRoutingMetalHasClients(id<MTLDevice> device)
+{
+	if (nativeMetalServer && nativeMetalServer.device != device)
+		os_VideoRoutingTermMetal();
+	int boardID = config::loadInt("naomi", "BoardId");
+	NSString *name = [NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID];
+	if (nativeMetalServer == nil) {
+		nativeMetalServer = [[SyphonMetalServer alloc] initWithName:name device:device options:nil];
+		if (!nativeMetalServer) throw FlycastException("Cannot create Metal Syphon server");
+	}
+	if (![nativeMetalServer.name isEqualToString:name]) nativeMetalServer.name = name;
+	return nativeMetalServer.hasClients;
+}
+void os_VideoRoutingPublishMetalTexture(id<MTLTexture> texture, FCMetal4Commands *command)
+{
+	// The caller prepares the server before encoding any optional scaling.
+	// Recheck clients without loading the board ID and formatting its name again.
+	if (!nativeMetalServer || nativeMetalServer.device != texture.device || !nativeMetalServer.hasClients) return;
+	SyphonMetalServer *server = nativeMetalServer;
+	id<MTLTexture> surface = [server prepareFrameOfSize:NSMakeSize(texture.width, texture.height)];
+	if (!surface) return;
+	if (surface.pixelFormat != texture.pixelFormat || texture.framebufferOnly)
+		throw FlycastException("Invalid Metal 4 Syphon surface format");
+	FCMetal4ComputeEncoder *copy = [command transferEncoder];
+	[copy copyFromTexture:texture sourceSlice:0 sourceLevel:0 sourceOrigin:MTLOriginMake(0, 0, 0)
+		sourceSize:MTLSizeMake(texture.width, texture.height, 1) toTexture:surface
+		destinationSlice:0 destinationLevel:0 destinationOrigin:MTLOriginMake(0, 0, 0)];
+	[copy endEncoding];
+	[command addCompletedHandler:^(FCMetal4Commands *done) {
+		if (done.status == FCMetal4StatusCompleted) [server publishCompletedFrame:surface source:texture];
+	}];
+}
+void os_VideoRoutingTermMetal()
+{
+	[nativeMetalServer stop]; [nativeMetalServer release]; nativeMetalServer = nil;
+}
+#ifdef METAL_RENDERER_TESTS
+NSDictionary *os_VideoRoutingMetalServerDescriptionForTests()
+{
+	return nativeMetalServer.serverDescription;
+}
+#endif
+#endif
 
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan.h"

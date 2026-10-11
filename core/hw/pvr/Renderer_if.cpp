@@ -50,10 +50,11 @@ public:
 	{
 		Message() = default;
 		Message(MessageType type, FramebufferInfo config)
-			: type(type), config(config) {}
+			: type(type), config(config), videoTime(spg_GetVideoTime()) {}
 
 		MessageType type = NoMessage;
 		FramebufferInfo config;
+		double videoTime = 0;
 	};
 
 	void enqueue(MessageType type, FramebufferInfo config = FramebufferInfo())
@@ -177,13 +178,13 @@ private:
 		switch (msg.type)
 		{
 		case Render:
-			render();
+			render(msg.videoTime);
 			return true;
 		case RenderFramebuffer:
 			renderFramebuffer(msg.config);
 			return true;
 		case Present:
-			present();
+			present(msg.videoTime);
 			return true;
 		case Stop:
 		case NoMessage:
@@ -192,7 +193,7 @@ private:
 		}
 	}
 
-	void render()
+	void render(double videoTime)
 	{
 		FC_PROFILE_SCOPE;
 
@@ -243,7 +244,7 @@ private:
 		if (!renderToScreen)
 			renderEnd.Set();
 		else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
-			present();
+			present(videoTime);
 
 		//clear up & free data ..
 		FinishRender(taContext);
@@ -261,10 +262,11 @@ private:
 		renderer->RenderFramebuffer(config);
 	}
 
-	void present()
+	void present(double videoTime)
 	{
 		FC_PROFILE_SCOPE;
 
+		renderer->SetPresentationTime(videoTime);
 		if (renderer->Present())
 		{
 			presented = true;
@@ -415,6 +417,7 @@ Renderer* rend_OITVulkan();
 Renderer* rend_DirectX9();
 Renderer* rend_DirectX11();
 Renderer* rend_OITDirectX11();
+Renderer* rend_Metal(bool perPixel);
 
 static void rend_create_renderer()
 {
@@ -424,15 +427,27 @@ static void rend_create_renderer()
 	switch (config::RendererType)
 	{
 	default:
+#ifdef USE_METAL
+	case RenderType::Metal:
+		renderer = rend_Metal(false);
+		break;
+	case RenderType::Metal_OIT:
+		renderer = rend_Metal(true);
+		break;
+#endif
 #ifdef USE_OPENGL
 	case RenderType::OpenGL:
 		renderer = rend_GLES2();
 		break;
-#if !defined(GLES2) && !defined(__APPLE__)
 	case RenderType::OpenGL_OIT:
+#if !defined(GLES2) && !defined(__APPLE__)
 		renderer = rend_GL4();
-		break;
+#else
+		// Includes saved OIT settings and frontends without initRenderApi().
+		config::RendererType = RenderType::OpenGL;
+		renderer = rend_GLES2();
 #endif
+		break;
 #endif
 #ifdef USE_VULKAN
 	case RenderType::Vulkan:
