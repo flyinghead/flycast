@@ -35956,13 +35956,13 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_FR "Toujours importer les textures qui sont déjà remplacées par des textures personnalisées."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FR "Deadzone du stick analogique"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_FR "Sélectionner la distance à laquelle vous devez pousser le stick analogique avant que ne commence son traitement."
-#define OPTION_VAL_0_FR NULL
-#define OPTION_VAL_5_FR NULL
-#define OPTION_VAL_10_FR NULL
-#define OPTION_VAL_15_FR NULL
-#define OPTION_VAL_20_FR NULL
-#define OPTION_VAL_25_FR NULL
-#define OPTION_VAL_30_FR NULL
+#define OPTION_VAL_0_FR "0 %"
+#define OPTION_VAL_5_FR "5 %"
+#define OPTION_VAL_10_FR "10 %"
+#define OPTION_VAL_15_FR "15 %"
+#define OPTION_VAL_20_FR "20 %"
+#define OPTION_VAL_25_FR "25 %"
+#define OPTION_VAL_30_FR "30 %"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_FR "Deadzone des gâchettes"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_FR "Sélectionner combien vous devez appuyer sur la gâchette avant que ne commence son traitement."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_FR "Gâchettes numériques"
@@ -35972,11 +35972,11 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FR "Afficher les réglages du pistolet"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FR "Activer la configuration des options d'affichage du viseur des pistolets. REMARQUE : le menu rapide devrait être réouvert pour que ce paramètre prenne effet."
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FR "Mise à l'échelle du viseur de pistolet"
-#define OPTION_VAL_50_FR NULL
-#define OPTION_VAL_60_FR NULL
-#define OPTION_VAL_70_FR NULL
-#define OPTION_VAL_80_FR NULL
-#define OPTION_VAL_90_FR NULL
+#define OPTION_VAL_50_FR "50 %"
+#define OPTION_VAL_60_FR "60 %"
+#define OPTION_VAL_70_FR "70 %"
+#define OPTION_VAL_80_FR "80 %"
+#define OPTION_VAL_90_FR "90 %"
 #define OPTION_VAL_100_O48_FR NULL
 #define OPTION_VAL_110_O48_FR NULL
 #define OPTION_VAL_120_O48_FR NULL
@@ -36077,7 +36077,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_LIGHT_YELLOW_2_27_FR "Jaune clair (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_FR "Couleur des pixels éteints de l'écran du VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_FR "Opacité de l'écran du VMU 1"
-#define OPTION_VAL_40_FR NULL
+#define OPTION_VAL_40_FR "40 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FR "Affichage de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FR "Position de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FR "Taille de l'écran du VMU 2"
