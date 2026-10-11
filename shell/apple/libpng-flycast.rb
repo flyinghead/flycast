@@ -20,6 +20,9 @@ class LibpngFlycast < Formula
       "-DPNG_SHARED=OFF",
       "-DPNG_TESTS=OFF",
       "-DPNG_ARM_NEON=off",
+      # Universal builds skip libpng's per-architecture NEON definitions.
+      # Keep its ARM sources and callers consistently disabled in both slices.
+      "-DCMAKE_C_FLAGS=-DPNG_ARM_NEON_OPT=0",
       "-DPNG_FRAMEWORK=OFF"
     ]
 

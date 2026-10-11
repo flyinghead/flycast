@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#ifdef USE_METAL
 #include "metal_fx.h"
 #import <MetalFX/MetalFX.h>
 #include <atomic>
@@ -153,3 +154,4 @@ id<MTLTexture> MetalFXUpscaler::upscale(id<MTLTexture> input, FCMetal4Commands *
 	impl->cachedWidth = width; impl->cachedHeight = height;
 	return slot.output;
 }
+#endif // Apple Silicon Metal 4 slice

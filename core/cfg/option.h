@@ -428,6 +428,16 @@ public:
 
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 
+	void load() override {
+		Option<RenderType>::load();
+#if defined(TARGET_MAC) && !defined(USE_METAL)
+		// Settings can be shared with the arm64 slice (or copied from another
+		// Mac). Never leave an Intel build pointing at an unavailable backend.
+		if (isMetal(value))
+			set(defaultValue);
+#endif
+	}
+
 	void reset() override {
 		// don't reset the value to avoid quick switching when starting a game
 		overridden = false;

@@ -29,7 +29,9 @@ enum RenderAPI {
 	Vulkan,
 	DirectX9,
 	DirectX11,
+#ifdef USE_METAL
 	Metal
+#endif
 };
 
 void gui_settings_video()
@@ -67,6 +69,7 @@ void gui_settings_video()
 		renderApi = DirectX11;
 		perPixel = true;
 		break;
+#ifdef USE_METAL
 	case RenderType::Metal:
 		renderApi = Metal;
 		perPixel = false;
@@ -75,6 +78,7 @@ void gui_settings_video()
 		renderApi = Metal;
 		perPixel = true;
 		break;
+#endif
 	}
 	constexpr int apiCount = 0
 		#ifdef USE_METAL
@@ -509,8 +513,10 @@ void gui_settings_video()
     case DirectX11:
     	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
     	break;
+#ifdef USE_METAL
     case Metal:
 		config::RendererType = perPixel ? RenderType::Metal_OIT : RenderType::Metal;
 		break;
+#endif
     }
 }

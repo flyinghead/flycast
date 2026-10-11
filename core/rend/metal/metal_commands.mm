@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#if defined(USE_METAL) || defined(FLYCAST_METAL_STANDALONE)
 #include "metal_commands.h"
 #ifdef FLYCAST_METAL_STANDALONE
 #include <stdexcept>
@@ -493,3 +494,4 @@ static void requireCommand(bool valid, const char *message)
     [_encoder copyFromBuffer:source sourceOffset:offset sourceBytesPerRow:row sourceBytesPerImage:image sourceSize:size toTexture:destination destinationSlice:slice destinationLevel:level destinationOrigin:origin];
 }
 @end
+#endif // Apple Silicon Metal 4 slice

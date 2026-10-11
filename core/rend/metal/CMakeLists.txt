@@ -1,4 +1,7 @@
-target_compile_definitions(${PROJECT_NAME} PRIVATE USE_METAL)
+# Clang applies this definition to the arm64 compilation only, including PCHs.
+# CMake's target definitions alone would enable Metal in both universal slices.
+target_compile_options(${PROJECT_NAME} PRIVATE
+    "$<$<COMPILE_LANGUAGE:C,CXX,OBJC,OBJCXX>:SHELL:-Xarch_arm64 -DUSE_METAL>")
 option(METAL_RENDERER_TESTS "Run ROM-free Metal renderer validation on startup" OFF)
 if(METAL_RENDERER_TESTS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE METAL_RENDERER_TESTS)
@@ -34,7 +37,10 @@ target_compile_features(flycast_metal_gpu_tests PRIVATE cxx_std_17)
 target_compile_definitions(flycast_metal_gpu_tests PRIVATE FLYCAST_METAL_STANDALONE)
 target_compile_options(flycast_metal_gpu_tests PRIVATE -fobjc-arc -mmacosx-version-min=26.0)
 target_link_options(flycast_metal_gpu_tests PRIVATE -mmacosx-version-min=26.0)
-set_target_properties(flycast_metal_gpu_tests PROPERTIES XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "26.0")
+set_target_properties(flycast_metal_gpu_tests PROPERTIES
+    OSX_ARCHITECTURES "arm64"
+    OSX_DEPLOYMENT_TARGET "26.0"
+    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "26.0")
 target_link_libraries(flycast_metal_gpu_tests PRIVATE
     ${FLYCAST_METAL_FRAMEWORK} ${FLYCAST_FOUNDATION_FRAMEWORK})
 add_executable(flycast_metal_presentation_tests EXCLUDE_FROM_ALL
