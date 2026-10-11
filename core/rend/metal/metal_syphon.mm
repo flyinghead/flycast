@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#ifdef USE_METAL
 #include "metal_syphon.h"
 #include "types.h"
 #include "cfg/cfg.h"
@@ -147,3 +148,4 @@ NSDictionary *os_VideoRoutingMetalServerDescriptionForTests()
 	return nativeMetalServer.serverDescription;
 }
 #endif
+#endif // Apple Silicon Metal 4 slice

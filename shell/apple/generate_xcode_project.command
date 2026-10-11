@@ -185,7 +185,7 @@ if [ ! -f core/deps/glslang/CMakeLists.txt ]; then
     fi
 fi
 
-echo "1) macOS ($(uname -m))"
+echo "1) macOS (Universal: Intel + Apple Silicon)"
 echo "2) iOS"
 read -p "Choose your target platform: " x
 
@@ -216,7 +216,7 @@ else
         fi
     fi
 
-    option="-DCMAKE_OSX_ARCHITECTURES=$(uname -m) -DUSE_VULKAN=$use_vulkan"
+    option="-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64 -DUSE_VULKAN=$use_vulkan"
     if [ "$use_vulkan" = "ON" ]; then
         option+=" -DMOLTENVK_DYLIB=$moltenvk_dylib"
     fi

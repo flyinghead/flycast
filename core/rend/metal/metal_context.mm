@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#ifdef USE_METAL
 #include "metal_context.h"
 #include "metal_shaders.h"
 #include "metal_shader_options.h"
@@ -1442,3 +1443,4 @@ void MetalContext::readTexture(id<MTLTexture> texture, std::vector<u8>& pixels)
 #include "../../../tests/metal/metal_syphon_validation.inc"
 #endif
 #endif
+#endif // Apple Silicon Metal 4 slice

@@ -35,19 +35,15 @@ if(APPLE)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum tvOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
 	else()
-		if(NOT LIBRETRO AND (NOT DEFINED USE_METAL OR USE_METAL))
-			# Set the target before project()/DetectArchitecture: Metal 4 has
-			# no Intel backend and requires the macOS 26 SDK/runtime.
-			if(DEFINED CMAKE_OSX_ARCHITECTURES AND NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
-				message(FATAL_ERROR "The Metal 4 backend requires CMAKE_OSX_ARCHITECTURES=arm64")
-			endif()
-			set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
+		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS app architectures")
+		if(NOT LIBRETRO AND (NOT DEFINED USE_METAL OR USE_METAL) AND "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+			# A universal app contains Metal 4 only in its arm64 slice.
+			# Keep the deployment target before project()/DetectArchitecture.
 			if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "26.0")
 				set(CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum macOS deployment version" FORCE)
 			endif()
 		else()
 			set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum macOS deployment version")
-			set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
 		endif()
 	endif()
 	if(CMAKE_GENERATOR STREQUAL "Xcode")
@@ -109,7 +105,7 @@ option(USE_DX11 "Build with Direct3D 11 support" ON)
 option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 set(USE_METAL_DEFAULT OFF)
-if(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT LIBRETRO)
+if(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT LIBRETRO AND "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
 	set(USE_METAL_DEFAULT ON)
 endif()
 option(USE_METAL "Build the native Apple Silicon Metal 4 renderer (standalone macOS)" ${USE_METAL_DEFAULT})
@@ -117,9 +113,14 @@ if(USE_METAL AND (NOT APPLE OR NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR LIBRET
 	message(FATAL_ERROR "USE_METAL currently requires standalone macOS")
 endif()
 if(USE_METAL)
-	if(NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64" OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "26.0")
-		message(FATAL_ERROR "Metal 4 requires an arm64-only target and macOS 26 or later")
+	if(NOT "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "26.0")
+		message(FATAL_ERROR "Metal 4 requires an arm64 slice and macOS 26 or later")
 	endif()
+	foreach(_metal_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+		if(NOT _metal_arch MATCHES "^(arm64|x86_64)$")
+			message(FATAL_ERROR "Unsupported macOS architecture with Metal 4: ${_metal_arch}")
+		endif()
+	endforeach()
 	enable_language(OBJC OBJCXX)
 	include(CheckOBJCXXSourceCompiles)
 	check_objcxx_source_compiles("#import <Metal/Metal.h>
@@ -441,34 +442,32 @@ if(USE_BREAKPAD AND NOT LIBRETRO)
 		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
 
 		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND sleep 20
-				COMMAND mkdir -p ../symbols
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a x86_64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-x64.sym
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-arm64.sym
-			)
+			set(FLYCAST_DSYM "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM")
 		else()
+			set(FLYCAST_DSYM "${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM")
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND sleep 20
-				COMMAND mkdir -p ../symbols
 				COMMAND dsymutil $<TARGET_FILE:flycast>
-					-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a x86_64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-x64.sym
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-arm64.sym
+					-o "${FLYCAST_DSYM}"
+				VERBATIM
 			)
 		endif()
+		# Metal-enabled apps may be universal or arm64-only. Export only the
+		# slices actually built, rather than assuming an Intel slice exists.
+		set(FLYCAST_SYMBOLS_DIR "${CMAKE_BINARY_DIR}/../symbols")
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${FLYCAST_SYMBOLS_DIR}"
+			VERBATIM)
+		foreach(_symbol_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+			set(_symbol_suffix "${_symbol_arch}")
+			if(_symbol_arch STREQUAL "x86_64")
+				set(_symbol_suffix "x64")
+			endif()
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a "${_symbol_arch}" -g "${FLYCAST_DSYM}" $<TARGET_FILE:flycast>
+					> "${FLYCAST_SYMBOLS_DIR}/Flycast-${_symbol_suffix}.sym"
+				VERBATIM)
+		endforeach()
 	endif()
 endif()
 
@@ -1473,6 +1472,13 @@ if(NOT LIBRETRO)
 				if(NOT MOLTENVK_DYLIB_PATH OR NOT EXISTS "${MOLTENVK_DYLIB_PATH}")
 					message(FATAL_ERROR "A macOS MoltenVK dylib is required for macOS Vulkan builds. Run shell/apple/generate_xcode_project.command to download the configured MoltenVK release, or pass -DMOLTENVK_DYLIB=/path/to/libMoltenVK.dylib.")
 				endif()
+				foreach(_moltenvk_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+					execute_process(COMMAND lipo "${MOLTENVK_DYLIB_PATH}" -verify_arch "${_moltenvk_arch}"
+						RESULT_VARIABLE _moltenvk_arch_result ERROR_VARIABLE _moltenvk_arch_error)
+					if(NOT _moltenvk_arch_result EQUAL 0)
+						message(FATAL_ERROR "MoltenVK is missing app architecture ${_moltenvk_arch}: ${_moltenvk_arch_error}")
+					endif()
+				endforeach()
 				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 					COMMAND ${CMAKE_COMMAND} -E copy "${MOLTENVK_DYLIB_PATH}"
 					$<TARGET_FILE_DIR:flycast>/../Frameworks/libMoltenVK.dylib)

@@ -1,4 +1,5 @@
 // Native PowerVR2 renderer for Metal 4. SPDX-License-Identifier: GPL-2.0-or-later
+#ifdef USE_METAL
 #include "metal_texture.h"
 #include "metal_shaders.h"
 #include "metal_oit_tiling.h"
@@ -2325,3 +2326,4 @@ void metalValidateRenderer()
 	settings.platform = previousPlatform;
 }
 #endif
+#endif // Apple Silicon Metal 4 slice

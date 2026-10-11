@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#ifdef USE_METAL
 #include "metal_pipeline_cache.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
@@ -491,3 +492,4 @@ void MetalPipelineCache::finish() noexcept
 		}
 	}
 }
+#endif // Apple Silicon Metal 4 slice
