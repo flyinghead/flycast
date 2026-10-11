@@ -13,8 +13,9 @@ target_sources(${PROJECT_NAME} PRIVATE
     metal_texture.h metal_texture.mm
     metal_pipeline_cache.h metal_pipeline_cache.mm
     metal_fx.h metal_fx.mm
+    metal_syphon.h metal_syphon.mm
     metal_shaders.h metal_shader_options.h metal_modifier_clip.h metal_renderer.mm)
-set_source_files_properties(metal_commands.mm metal_context.mm metal_texture.mm metal_renderer.mm metal_pipeline_cache.mm metal_fx.mm
+set_source_files_properties(metal_commands.mm metal_context.mm metal_texture.mm metal_renderer.mm metal_pipeline_cache.mm metal_fx.mm metal_syphon.mm
     TARGET_DIRECTORY ${PROJECT_NAME}
     PROPERTIES COMPILE_OPTIONS "-fobjc-arc" SKIP_PRECOMPILE_HEADERS ON)
 find_library(FLYCAST_METAL_FRAMEWORK Metal REQUIRED)

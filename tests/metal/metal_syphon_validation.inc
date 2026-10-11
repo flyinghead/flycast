@@ -1,7 +1,6 @@
 // Exercise the production exporter with a real Syphon Metal client.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #import <Syphon/Syphon.h>
-NSDictionary *os_VideoRoutingMetalServerDescriptionForTests();
 
 void MetalContext::validateSyntheticSyphon()
 {
