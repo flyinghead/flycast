@@ -1042,7 +1042,7 @@ FCMetal4RenderEncoder * MetalContext::beginPresentation()
 				impl->displayLink.reset(); impl->presentationTimeline.reset();
 				impl->displayRefresh = settings.display.refreshRate;
 			}
-			if (!impl->displayLink) impl->displayLink = std::make_unique<MetalDisplayLink>(impl->layer, impl->queue,
+			if (!impl->displayLink) impl->displayLink = std::make_unique<MetalDisplayLink>((__bridge NSView *)impl->view, impl->layer, impl->queue,
 				quadPipeline(true), impl->nearest, impl->submissions, impl->presentationTimings, settings.display.refreshRate);
 			impl->displayLink->setActive(true, true);
 		} else impl->displayLink.reset();
