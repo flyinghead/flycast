@@ -188,6 +188,7 @@ public:
 		if (state == Connected)
 		{
 			INFO_LOG(NETWORK, "Stopping Capcom Net service");
+			flushTxQueue();
 			sendStop();
 			state = Closed;
 			txBuffering.stop();
@@ -301,8 +302,10 @@ public:
 		if (rxQueue.empty())
 		{
 			if (state == Closed)
-				throw ConnectionClosed();
-			return -1;
+				// Helps spawn and hmgeo when one end has closed the connection
+				return 0;
+			else
+				return -1;
 		}
 		u8 c = rxQueue.pop();
 		if (state == Syncing && c != 0xa && (c < 'A' || c > 'Z'))
@@ -312,7 +315,8 @@ public:
 	int modemAvailable() override
 	{
 		if (rxQueue.empty() && state == Closed)
-			throw ConnectionClosed();
+			// Helps spawn and hmgeo when one end has closed the connection
+			return 1;
 		if (resyncTime != 0 && rxQueue.empty())
 		{
 			u64 now = getTimeMs();
@@ -787,7 +791,7 @@ void CapcomDirect::startCapcomDirectService()
 	capcomService->realStart();
 	std::string battleCode = getBattleCode();
 	INFO_LOG(NETWORK, "Capcom battle code: %s (%s)", battleCode.c_str(), caller ? "caller" : "callee");
-	u32 shortCode = strtol(battleCode.substr(0, 8).c_str(), nullptr, 16);
+	u32 shortCode = strtoul(battleCode.substr(0, 8).c_str(), nullptr, 16);
 	capcomService->sendRegister(gameId, caller, shortCode);
 	if (caller)
 		// Keep the phone ringing until we receive Start from the callee
@@ -901,11 +905,11 @@ std::string CapcomDirect::getBattleCode()
 		0x8c30f46c, // cvsmfpro
 		0x8c8997c8, // jojo
 		0x0c3f5974, // pjustice
-		0x8c31e6c8, // ssf8
+		0x8c31e6c8, // ssf2
 		0x8c4af628, // tech romancer
 		0x8c42b320, // taisen net gimmick
 		0x0c2d6d00, // hmgeo
-		0x0c2450dc, // puzzle8
+		0x0c2450dc, // puzzle2
 	};
 	if (gameId == 0 || gameId > std::size(addresses))
 		return {};
