@@ -632,19 +632,19 @@ static InputDescriptors kick4csh_inputs = {
 static InputDescriptors wccf_inputs = {
 	{
 		// UDLR START
-		// NAOMI_BTN0_KEY "ENTER"?
+		// NAOMI_BTN0_KEY "PRESSURE"
 		// NAOMI_BTN1_KEY "SHOOT"
 		// NAOMI_BTN2_KEY card vendor error
 		// NAOMI_BTN3_KEY card vendor empty
 		// P2:
 		// NAOMI_BTN0_KEY "KEEPER"
-		// NAOMI_BTN1_KEY card vendor standy
+		// NAOMI_BTN1_KEY card vendor standby
 		// NAOMI_BTN2_KEY "DATA"
 		// UP club team card
 		// DOWN SW1
 		// LEFT SW2
 		// RIGHT !card vendor sensor
-		{ NAOMI_BTN0_KEY, "ENTER" },
+		{ NAOMI_BTN0_KEY, "PRESSURE" },
 		{ NAOMI_BTN1_KEY, "SHOOT" },
 		{ NAOMI_BTN2_KEY, "SW1", 0, NAOMI_DOWN_KEY },
 		{ NAOMI_BTN3_KEY, "KEEPER", 0, NAOMI_BTN0_KEY },
