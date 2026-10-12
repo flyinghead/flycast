@@ -1,0 +1,2028 @@
+name: Build Dashboard APK
+
+# Single-file setup: this workflow adds the Dashboard screen to Flycast and builds the APK.
+# Run it from the Actions tab with "Run workflow" (it also starts by itself when you save this file).
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'l10n_**'
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install ccache cmake libcurl4-openssl-dev ninja-build
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - uses: actions/cache@v5
+        with:
+          path: ~/.ccache
+          key: dashboard-ccache-${{ github.sha }}
+          restore-keys: dashboard-ccache-
+
+      - name: Add the Dashboard screen
+        run: |
+          set -e
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/DashboardActivity.java)"
+          cat > shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/DashboardActivity.java <<'DASH_EOF_1'
+          package com.flycast.emulator.dashboard;
+
+          import android.app.Activity;
+          import android.content.ActivityNotFoundException;
+          import android.content.ClipData;
+          import android.content.Intent;
+          import android.graphics.Bitmap;
+          import android.graphics.BitmapFactory;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.view.View;
+          import android.window.OnBackInvokedDispatcher;
+          import android.widget.Toast;
+
+          import com.flycast.emulator.NativeGLActivity;
+          import com.flycast.emulator.R;
+
+          import java.util.ArrayList;
+          import java.util.List;
+
+          /**
+           * Console-style start screen. Games are started by handing their URI to the regular Flycast
+           * activity, so every emulator setting (video resolution, controls, ...) keeps working unchanged.
+           */
+          public class DashboardActivity extends Activity {
+              private static final int REQ_GAMES = 7101;
+              private static final int REQ_FOLDER = 7102;
+              private static final int REQ_BACKGROUND = 7103;
+              private static final int REQ_MUSIC = 7104;
+              private static final int REQ_CLICK = 7105;
+              private static final int REQ_PLAY = 7106;
+
+              private final Handler handler = new Handler(Looper.getMainLooper());
+              private DashboardStore store;
+              private SoundManager sounds;
+              private DashboardView view;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  store = new DashboardStore(this);
+                  sounds = new SoundManager(this, store);
+
+                  view = new DashboardView(this);
+                  view.setHints(getString(R.string.dash_hint_select), getString(R.string.dash_hint_back),
+                          getString(R.string.dash_hint_tabs));
+                  view.setListener(new DashboardView.Listener() {
+                      @Override
+                      public void onMove() {
+                          sounds.playMove();
+                      }
+
+                      @Override
+                      public void onSelect() {
+                          sounds.playSelect();
+                      }
+
+                      @Override
+                      public void onExit() {
+                          finish();
+                      }
+                  });
+                  setContentView(view);
+                  view.requestFocus();
+
+                  // Back gesture / button on Android 13+ does not always arrive as a key event
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                      getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                              OnBackInvokedDispatcher.PRIORITY_DEFAULT, new android.window.OnBackInvokedCallback() {
+                                  @Override
+                                  public void onBackInvoked() {
+                                      view.handleBack();
+                                  }
+                              });
+                  }
+
+                  sounds.reloadClickSounds();
+                  loadBackground();
+                  rebuild();
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  hideSystemBars();
+                  view.requestFocus();
+                  sounds.startMusic();
+              }
+
+              @Override
+              protected void onPause() {
+                  super.onPause();
+                  sounds.pauseMusic();
+              }
+
+              @Override
+              protected void onDestroy() {
+                  super.onDestroy();
+                  sounds.release();
+              }
+
+              @Override
+              public void onWindowFocusChanged(boolean hasFocus) {
+                  super.onWindowFocusChanged(hasFocus);
+                  if (hasFocus)
+                      hideSystemBars();
+              }
+
+              @SuppressWarnings("deprecation")
+              private void hideSystemBars() {
+                  getWindow().getDecorView().setSystemUiVisibility(
+                          View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                  | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                  | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                  | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                  | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  // Used on Android 12 and older
+                  view.handleBack();
+              }
+
+              // ---- content ----
+
+              private void rebuild() {
+                  List<DashboardView.Tab> tabs = new ArrayList<>();
+
+                  // Games
+                  DashboardView.Tab games = new DashboardView.Tab(getString(R.string.dash_tab_games));
+                  games.emptyText = getString(R.string.dash_empty_games);
+                  for (final DashboardStore.Game g : store.getGames()) {
+                      games.items.add(new DashboardView.Item(g.name, getString(R.string.dash_play), true, new Runnable() {
+                          @Override
+                          public void run() {
+                              launchGame(g.uri);
+                          }
+                      }));
+                  }
+                  tabs.add(games);
+
+                  // Add games
+                  DashboardView.Tab add = new DashboardView.Tab(getString(R.string.dash_tab_add));
+                  add.items.add(item(R.string.dash_add_files, R.string.dash_add_files_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          pickGameFiles();
+                      }
+                  }));
+                  add.items.add(item(R.string.dash_add_folder, R.string.dash_add_folder_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          pickGameFolder();
+                      }
+                  }));
+                  add.items.add(item(R.string.dash_clear, R.string.dash_clear_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          store.clearGames();
+                          toast(getString(R.string.dash_toast_cleared));
+                          rebuild();
+                      }
+                  }));
+                  tabs.add(add);
+
+                  // Files
+                  DashboardView.Tab files = new DashboardView.Tab(getString(R.string.dash_tab_files));
+                  files.items.add(item(R.string.dash_files_browse, R.string.dash_files_browse_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          openFlycast();
+                      }
+                  }));
+                  files.items.add(item(R.string.dash_files_pick, R.string.dash_files_pick_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          pickAndPlay();
+                      }
+                  }));
+                  tabs.add(files);
+
+                  // Settings
+                  DashboardView.Tab settings = new DashboardView.Tab(getString(R.string.dash_tab_settings));
+                  settings.items.add(item(R.string.dash_bg, R.string.dash_bg_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          pickMedia("image/*", REQ_BACKGROUND);
+                      }
+                  }));
+                  settings.items.add(item(R.string.dash_bg_reset, R.string.dash_bg_reset_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          store.resetBackground();
+                          loadBackground();
+                      }
+                  }));
+                  settings.items.add(item(R.string.dash_music, R.string.dash_music_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          pickMedia("audio/*", REQ_MUSIC);
+                      }
+                  }));
+                  settings.items.add(new DashboardView.Item(
+                          getString(R.string.dash_music_state, onOff(store.isMusicOn())),
+                          getString(R.string.dash_music_state_desc), false, new Runnable() {
+                      @Override
+                      public void run() {
+                          store.setMusicOn(!store.isMusicOn());
+                          sounds.updateMusic();
+                          rebuild();
+                      }
+                  }));
+                  settings.items.add(new DashboardView.Item(
+                          getString(R.string.dash_volume, store.getVolume()),
+                          getString(R.string.dash_volume_desc), false, new Runnable() {
+                      @Override
+                      public void run() {
+                          int v = store.getVolume() + 20;
+                          store.setVolume(v > 100 ? 0 : v);
+                          sounds.updateMusic();
+                          rebuild();
+                      }
+                  }));
+                  settings.items.add(item(R.string.dash_music_reset, R.string.dash_music_reset_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          store.resetMusic();
+                          sounds.updateMusic();
+                      }
+                  }));
+                  settings.items.add(item(R.string.dash_click, R.string.dash_click_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          pickMedia("audio/*", REQ_CLICK);
+                      }
+                  }));
+                  settings.items.add(new DashboardView.Item(
+                          getString(R.string.dash_click_state, onOff(store.isSfxOn())),
+                          getString(R.string.dash_click_state_desc), false, new Runnable() {
+                      @Override
+                      public void run() {
+                          store.setSfxOn(!store.isSfxOn());
+                          rebuild();
+                      }
+                  }));
+                  settings.items.add(item(R.string.dash_click_reset, R.string.dash_click_reset_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          store.resetClick();
+                          sounds.reloadClickSounds();
+                      }
+                  }));
+                  tabs.add(settings);
+
+                  // Emulator (Flycast's own menu: video resolution, controls, ...)
+                  DashboardView.Tab emu = new DashboardView.Tab(getString(R.string.dash_tab_emulator));
+                  emu.items.add(item(R.string.dash_emu_open, R.string.dash_emu_open_desc, new Runnable() {
+                      @Override
+                      public void run() {
+                          openFlycast();
+                      }
+                  }));
+                  tabs.add(emu);
+
+                  view.setTabs(tabs);
+              }
+
+              private DashboardView.Item item(int titleRes, int descRes, Runnable action) {
+                  return new DashboardView.Item(getString(titleRes), getString(descRes), false, action);
+              }
+
+              private String onOff(boolean on) {
+                  return getString(on ? R.string.dash_on : R.string.dash_off);
+              }
+
+              private void toast(String message) {
+                  Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+              }
+
+              // ---- launching ----
+
+              private void launchGame(String uri) {
+                  Intent intent = new Intent(this, NativeGLActivity.class);
+                  intent.setAction(Intent.ACTION_VIEW);
+                  intent.setData(Uri.parse(uri));
+                  intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                  startActivity(intent);
+              }
+
+              /** Opens the regular Flycast screen (game browser and its settings menu). */
+              private void openFlycast() {
+                  startActivity(new Intent(this, NativeGLActivity.class));
+              }
+
+              // ---- pickers ----
+
+              private void pickGameFiles() {
+                  Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                  i.addCategory(Intent.CATEGORY_OPENABLE);
+                  i.setType("*/*");
+                  i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                  i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                  startPicker(i, REQ_GAMES);
+              }
+
+              private void pickAndPlay() {
+                  Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                  i.addCategory(Intent.CATEGORY_OPENABLE);
+                  i.setType("*/*");
+                  i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                  startPicker(i, REQ_PLAY);
+              }
+
+              private void pickGameFolder() {
+                  Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                  i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                  startPicker(i, REQ_FOLDER);
+              }
+
+              private void pickMedia(String mime, int request) {
+                  Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                  i.addCategory(Intent.CATEGORY_OPENABLE);
+                  i.setType(mime);
+                  startPicker(i, request);
+              }
+
+              private void startPicker(Intent intent, int request) {
+                  try {
+                      startActivityForResult(intent, request);
+                  } catch (ActivityNotFoundException e) {
+                      toast(getString(R.string.dash_toast_no_picker));
+                  }
+              }
+
+              private void keepAccess(Uri uri) {
+                  try {
+                      getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                  } catch (Exception ignored) {
+                      // some providers do not support persistable grants; the game may need to be added again later
+                  }
+              }
+
+              @Override
+              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+                  super.onActivityResult(requestCode, resultCode, data);
+                  if (resultCode != RESULT_OK || data == null)
+                      return;
+
+                  switch (requestCode) {
+                      case REQ_GAMES: {
+                          List<Uri> uris = new ArrayList<>();
+                          ClipData clip = data.getClipData();
+                          if (clip != null) {
+                              for (int i = 0; i < clip.getItemCount(); i++)
+                                  uris.add(clip.getItemAt(i).getUri());
+                          } else if (data.getData() != null) {
+                              uris.add(data.getData());
+                          }
+                          int added = 0;
+                          for (Uri uri : uris) {
+                              keepAccess(uri);
+                              if (store.addGame(uri.toString(), store.queryDisplayName(uri)))
+                                  added++;
+                          }
+                          toast(getString(R.string.dash_toast_added, added));
+                          rebuild();
+                          break;
+                      }
+                      case REQ_FOLDER: {
+                          final Uri tree = data.getData();
+                          if (tree == null)
+                              break;
+                          keepAccess(tree);
+                          toast(getString(R.string.dash_toast_scanning));
+                          new Thread(new Runnable() {
+                              @Override
+                              public void run() {
+                                  final List<DashboardStore.Game> found = GameScanner.scan(DashboardActivity.this, tree);
+                                  final int before = store.getGames().size();
+                                  store.addGames(found);
+                                  final int added = store.getGames().size() - before;
+                                  handler.post(new Runnable() {
+                                      @Override
+                                      public void run() {
+                                          if (isFinishing())
+                                              return;
+                                          toast(getString(R.string.dash_toast_added, added));
+                                          rebuild();
+                                      }
+                                  });
+                              }
+                          }).start();
+                          break;
+                      }
+                      case REQ_PLAY: {
+                          Uri uri = data.getData();
+                          if (uri != null) {
+                              keepAccess(uri);
+                              launchGame(uri.toString());
+                          }
+                          break;
+                      }
+                      case REQ_BACKGROUND: {
+                          Uri uri = data.getData();
+                          if (uri != null && store.importBackground(uri))
+                              loadBackground();
+                          else
+                              toast(getString(R.string.dash_toast_failed));
+                          break;
+                      }
+                      case REQ_MUSIC: {
+                          Uri uri = data.getData();
+                          if (uri != null && store.importMusic(uri))
+                              sounds.updateMusic();
+                          else
+                              toast(getString(R.string.dash_toast_failed));
+                          break;
+                      }
+                      case REQ_CLICK: {
+                          Uri uri = data.getData();
+                          if (uri != null && store.importClick(uri)) {
+                              sounds.reloadClickSounds();
+                              sounds.playSelect();
+                          } else {
+                              toast(getString(R.string.dash_toast_failed));
+                          }
+                          break;
+                      }
+                      default:
+                          break;
+                  }
+              }
+
+              // ---- background picture ----
+
+              private void loadBackground() {
+                  final String path = store.getBackgroundPath();
+                  if (path == null) {
+                      view.setBackgroundBitmap(null);
+                      return;
+                  }
+                  new Thread(new Runnable() {
+                      @Override
+                      public void run() {
+                          final Bitmap bmp = decodeScaled(path, 1920, 1080);
+                          handler.post(new Runnable() {
+                              @Override
+                              public void run() {
+                                  if (!isFinishing())
+                                      view.setBackgroundBitmap(bmp);
+                              }
+                          });
+                      }
+                  }).start();
+              }
+
+              private static Bitmap decodeScaled(String path, int maxW, int maxH) {
+                  try {
+                      BitmapFactory.Options bounds = new BitmapFactory.Options();
+                      bounds.inJustDecodeBounds = true;
+                      BitmapFactory.decodeFile(path, bounds);
+                      if (bounds.outWidth <= 0 || bounds.outHeight <= 0)
+                          return null;
+                      int sample = 1;
+                      while (bounds.outWidth / (sample * 2) >= maxW && bounds.outHeight / (sample * 2) >= maxH)
+                          sample *= 2;
+                      BitmapFactory.Options opts = new BitmapFactory.Options();
+                      opts.inSampleSize = sample;
+                      return BitmapFactory.decodeFile(path, opts);
+                  } catch (OutOfMemoryError e) {
+                      return null;
+                  }
+              }
+          }
+          DASH_EOF_1
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/DashboardStore.java)"
+          cat > shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/DashboardStore.java <<'DASH_EOF_2'
+          package com.flycast.emulator.dashboard;
+
+          import android.content.ContentResolver;
+          import android.content.Context;
+          import android.content.SharedPreferences;
+          import android.database.Cursor;
+          import android.net.Uri;
+          import android.provider.OpenableColumns;
+
+          import org.json.JSONArray;
+          import org.json.JSONException;
+          import org.json.JSONObject;
+
+          import java.io.File;
+          import java.io.FileOutputStream;
+          import java.io.IOException;
+          import java.io.InputStream;
+          import java.io.OutputStream;
+          import java.util.ArrayList;
+          import java.util.List;
+
+          /**
+           * Persistent state of the dashboard: game library, background image, music and click sounds.
+           * Custom media files chosen by the user are copied into the app's private storage so they keep
+           * working without any storage permission.
+           */
+          public class DashboardStore {
+              public static class Game {
+                  public final String uri;
+                  public final String name;
+
+                  public Game(String uri, String name) {
+                      this.uri = uri;
+                      this.name = name;
+                  }
+              }
+
+              private static final String PREFS = "xdashboard";
+              private static final String KEY_GAMES = "games";
+              private static final String KEY_BACKGROUND = "background";
+              private static final String KEY_MUSIC = "music";
+              private static final String KEY_CLICK = "click";
+              private static final String KEY_MUSIC_ON = "music_on";
+              private static final String KEY_SFX_ON = "sfx_on";
+              private static final String KEY_VOLUME = "volume";
+
+              private final Context context;
+              private final SharedPreferences prefs;
+              private final List<Game> games = new ArrayList<>();
+
+              public DashboardStore(Context context) {
+                  this.context = context.getApplicationContext();
+                  this.prefs = this.context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+                  loadGames();
+              }
+
+              // ---- game library ----
+
+              private void loadGames() {
+                  games.clear();
+                  String json = prefs.getString(KEY_GAMES, "[]");
+                  try {
+                      JSONArray array = new JSONArray(json);
+                      for (int i = 0; i < array.length(); i++) {
+                          JSONObject o = array.getJSONObject(i);
+                          games.add(new Game(o.getString("uri"), o.getString("name")));
+                      }
+                  } catch (JSONException e) {
+                      games.clear();
+                  }
+              }
+
+              private void saveGames() {
+                  JSONArray array = new JSONArray();
+                  try {
+                      for (Game g : games) {
+                          JSONObject o = new JSONObject();
+                          o.put("uri", g.uri);
+                          o.put("name", g.name);
+                          array.put(o);
+                      }
+                  } catch (JSONException ignored) {
+                  }
+                  prefs.edit().putString(KEY_GAMES, array.toString()).apply();
+              }
+
+              public synchronized List<Game> getGames() {
+                  return new ArrayList<>(games);
+              }
+
+              /** Adds a game unless its URI is already present. Returns true if it was added. */
+              public synchronized boolean addGame(String uri, String name) {
+                  for (Game g : games) {
+                      if (g.uri.equals(uri))
+                          return false;
+                  }
+                  games.add(new Game(uri, name));
+                  sortGames();
+                  saveGames();
+                  return true;
+              }
+
+              public synchronized void addGames(List<Game> newGames) {
+                  boolean changed = false;
+                  for (Game n : newGames) {
+                      boolean exists = false;
+                      for (Game g : games) {
+                          if (g.uri.equals(n.uri)) {
+                              exists = true;
+                              break;
+                          }
+                      }
+                      if (!exists) {
+                          games.add(n);
+                          changed = true;
+                      }
+                  }
+                  if (changed) {
+                      sortGames();
+                      saveGames();
+                  }
+              }
+
+              public synchronized void removeGame(String uri) {
+                  for (int i = 0; i < games.size(); i++) {
+                      if (games.get(i).uri.equals(uri)) {
+                          games.remove(i);
+                          saveGames();
+                          return;
+                      }
+                  }
+              }
+
+              public synchronized void clearGames() {
+                  games.clear();
+                  saveGames();
+              }
+
+              private void sortGames() {
+                  java.util.Collections.sort(games, new java.util.Comparator<Game>() {
+                      @Override
+                      public int compare(Game a, Game b) {
+                          return a.name.compareToIgnoreCase(b.name);
+                      }
+                  });
+              }
+
+              // ---- display names ----
+
+              public static String stripExtension(String name) {
+                  int dot = name.lastIndexOf('.');
+                  return dot > 0 ? name.substring(0, dot) : name;
+              }
+
+              public String queryDisplayName(Uri uri) {
+                  String name = null;
+                  if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+                      Cursor c = null;
+                      try {
+                          c = context.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
+                          if (c != null && c.moveToFirst())
+                              name = c.getString(0);
+                      } catch (Exception ignored) {
+                      } finally {
+                          if (c != null)
+                              c.close();
+                      }
+                  }
+                  if (name == null || name.isEmpty()) {
+                      name = uri.getLastPathSegment();
+                      if (name == null)
+                          name = "Game";
+                      int slash = name.lastIndexOf('/');
+                      if (slash >= 0)
+                          name = name.substring(slash + 1);
+                  }
+                  return stripExtension(name);
+              }
+
+              // ---- media settings ----
+
+              public String getBackgroundPath() {
+                  return existingPath(KEY_BACKGROUND);
+              }
+
+              public String getMusicPath() {
+                  return existingPath(KEY_MUSIC);
+              }
+
+              public String getClickPath() {
+                  return existingPath(KEY_CLICK);
+              }
+
+              private String existingPath(String key) {
+                  String path = prefs.getString(key, null);
+                  if (path != null && !new File(path).exists())
+                      return null;
+                  return path;
+              }
+
+              public boolean importBackground(Uri uri) {
+                  return importMedia(uri, "background", KEY_BACKGROUND);
+              }
+
+              public boolean importMusic(Uri uri) {
+                  return importMedia(uri, "music", KEY_MUSIC);
+              }
+
+              public boolean importClick(Uri uri) {
+                  return importMedia(uri, "click", KEY_CLICK);
+              }
+
+              public void resetBackground() {
+                  clearMedia(KEY_BACKGROUND);
+              }
+
+              public void resetMusic() {
+                  clearMedia(KEY_MUSIC);
+              }
+
+              public void resetClick() {
+                  clearMedia(KEY_CLICK);
+              }
+
+              private void clearMedia(String key) {
+                  String path = prefs.getString(key, null);
+                  if (path != null)
+                      new File(path).delete();
+                  prefs.edit().remove(key).apply();
+              }
+
+              private boolean importMedia(Uri uri, String baseName, String key) {
+                  File dir = new File(context.getFilesDir(), "dashboard");
+                  if (!dir.exists() && !dir.mkdirs())
+                      return false;
+                  // Use a fresh file name each time so cached decoders never see stale content
+                  File dest = new File(dir, baseName + "_" + System.currentTimeMillis());
+                  InputStream in = null;
+                  OutputStream out = null;
+                  try {
+                      in = context.getContentResolver().openInputStream(uri);
+                      if (in == null)
+                          return false;
+                      out = new FileOutputStream(dest);
+                      byte[] buf = new byte[64 * 1024];
+                      int n;
+                      while ((n = in.read(buf)) > 0)
+                          out.write(buf, 0, n);
+                      out.flush();
+                  } catch (IOException | SecurityException e) {
+                      dest.delete();
+                      return false;
+                  } finally {
+                      try {
+                          if (in != null)
+                              in.close();
+                      } catch (IOException ignored) {
+                      }
+                      try {
+                          if (out != null)
+                              out.close();
+                      } catch (IOException ignored) {
+                      }
+                  }
+                  String old = prefs.getString(key, null);
+                  if (old != null)
+                      new File(old).delete();
+                  prefs.edit().putString(key, dest.getAbsolutePath()).apply();
+                  return true;
+              }
+
+              public boolean isMusicOn() {
+                  return prefs.getBoolean(KEY_MUSIC_ON, true);
+              }
+
+              public void setMusicOn(boolean on) {
+                  prefs.edit().putBoolean(KEY_MUSIC_ON, on).apply();
+              }
+
+              public boolean isSfxOn() {
+                  return prefs.getBoolean(KEY_SFX_ON, true);
+              }
+
+              public void setSfxOn(boolean on) {
+                  prefs.edit().putBoolean(KEY_SFX_ON, on).apply();
+              }
+
+              /** Music volume in percent, 0..100 */
+              public int getVolume() {
+                  return prefs.getInt(KEY_VOLUME, 60);
+              }
+
+              public void setVolume(int percent) {
+                  prefs.edit().putInt(KEY_VOLUME, Math.max(0, Math.min(100, percent))).apply();
+              }
+          }
+          DASH_EOF_2
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/DashboardView.java)"
+          cat > shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/DashboardView.java <<'DASH_EOF_3'
+          package com.flycast.emulator.dashboard;
+
+          import android.content.Context;
+          import android.graphics.Bitmap;
+          import android.graphics.Canvas;
+          import android.graphics.Color;
+          import android.graphics.LinearGradient;
+          import android.graphics.Paint;
+          import android.graphics.RadialGradient;
+          import android.graphics.RectF;
+          import android.graphics.Shader;
+          import android.graphics.Typeface;
+          import android.text.Layout;
+          import android.text.StaticLayout;
+          import android.text.TextPaint;
+          import android.view.InputDevice;
+          import android.view.KeyEvent;
+          import android.view.MotionEvent;
+          import android.view.View;
+
+          import java.util.ArrayList;
+          import java.util.List;
+
+          /**
+           * A console-style dashboard drawn entirely with Canvas: tab titles along the top, a list of items
+           * under the current tab and a detail panel on the right. It is designed for TV remotes and game
+           * pads (D-pad, A/B, shoulder buttons), and also reacts to touch.
+           * All artwork is drawn in code; no third-party assets are used.
+           */
+          public class DashboardView extends View {
+
+              public static class Item {
+                  public final String title;
+                  public final String desc;
+                  public final boolean game;
+                  public final Runnable action;
+
+                  public Item(String title, String desc, boolean game, Runnable action) {
+                      this.title = title;
+                      this.desc = desc;
+                      this.game = game;
+                      this.action = action;
+                  }
+              }
+
+              public static class Tab {
+                  public final String title;
+                  public final List<Item> items = new ArrayList<>();
+                  public String emptyText = "";
+
+                  public Tab(String title) {
+                      this.title = title;
+                  }
+              }
+
+              public interface Listener {
+                  /** The selection moved: play the navigation sound. */
+                  void onMove();
+
+                  /** An item was activated: play the select sound. */
+                  void onSelect();
+
+                  /** Back was requested on the first tab: leave the dashboard. */
+                  void onExit();
+              }
+
+              private static final int GREEN = 0xFF6DBE1E;
+              private static final int GREEN_DARK = 0xFF2F7A0A;
+              private static final int RED = 0xFFD2382B;
+
+              private final List<Tab> tabs = new ArrayList<>();
+              private int[] selection = new int[0];
+              private int tabIndex;
+
+              private float tabPos;
+              private float scroll;
+              private float scrollTarget;
+
+              private Bitmap background;
+              private String hintSelect = "";
+              private String hintBack = "";
+              private String hintTabs = "";
+              private Listener listener;
+
+              // layout (recomputed from the view height)
+              private float u = 1f;
+              private int rowsVisible = 6;
+
+              // paints
+              private final Paint bgPaint = new Paint();
+              private final Paint glowPaint = new Paint();
+              private final Paint shadePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+              private final Paint bitmapPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
+              private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+              private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+              private final TextPaint text = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+              private final RectF rect = new RectF();
+
+              // touch / stick state
+              private float downX, downY;
+              private int lastStickX, lastStickY;
+
+              public DashboardView(Context context) {
+                  super(context);
+                  setFocusable(true);
+                  setFocusableInTouchMode(true);
+                  stroke.setStyle(Paint.Style.STROKE);
+              }
+
+              public void setListener(Listener l) {
+                  listener = l;
+              }
+
+              public void setHints(String select, String back, String tabsHint) {
+                  hintSelect = select;
+                  hintBack = back;
+                  hintTabs = tabsHint;
+                  invalidate();
+              }
+
+              public void setBackgroundBitmap(Bitmap bmp) {
+                  background = bmp;
+                  invalidate();
+              }
+
+              /** Replaces the content, keeping the current tab and (where possible) the selected rows. */
+              public void setTabs(List<Tab> newTabs) {
+                  int oldCount = selection.length;
+                  int[] oldSel = selection;
+                  tabs.clear();
+                  tabs.addAll(newTabs);
+                  selection = new int[tabs.size()];
+                  for (int i = 0; i < selection.length; i++) {
+                      int s = i < oldCount ? oldSel[i] : 0;
+                      int n = tabs.get(i).items.size();
+                      selection[i] = n == 0 ? -1 : Math.max(0, Math.min(s, n - 1));
+                  }
+                  if (tabIndex >= tabs.size())
+                      tabIndex = Math.max(0, tabs.size() - 1);
+                  ensureVisible(true);
+                  invalidate();
+              }
+
+              public int getTabIndex() {
+                  return tabIndex;
+              }
+
+              // ---- navigation ----
+
+              private Tab currentTab() {
+                  return tabs.isEmpty() ? null : tabs.get(tabIndex);
+              }
+
+              private void moveTab(int delta) {
+                  int n = Math.max(0, Math.min(tabs.size() - 1, tabIndex + delta));
+                  if (n == tabIndex || tabs.isEmpty())
+                      return;
+                  tabIndex = n;
+                  ensureVisible(true);
+                  if (listener != null)
+                      listener.onMove();
+                  invalidate();
+              }
+
+              private void moveSelection(int delta) {
+                  Tab t = currentTab();
+                  if (t == null || t.items.isEmpty())
+                      return;
+                  int n = Math.max(0, Math.min(t.items.size() - 1, selection[tabIndex] + delta));
+                  if (n == selection[tabIndex])
+                      return;
+                  selection[tabIndex] = n;
+                  ensureVisible(false);
+                  if (listener != null)
+                      listener.onMove();
+                  invalidate();
+              }
+
+              private void activate() {
+                  Tab t = currentTab();
+                  if (t == null || t.items.isEmpty())
+                      return;
+                  int s = selection[tabIndex];
+                  if (s < 0 || s >= t.items.size())
+                      return;
+                  Item item = t.items.get(s);
+                  if (listener != null)
+                      listener.onSelect();
+                  if (item.action != null)
+                      item.action.run();
+              }
+
+              /** Handles the back action. Returns true if the dashboard stays open. */
+              public boolean handleBack() {
+                  if (tabIndex != 0) {
+                      tabIndex = 0;
+                      ensureVisible(true);
+                      if (listener != null)
+                          listener.onMove();
+                      invalidate();
+                      return true;
+                  }
+                  if (listener != null)
+                      listener.onExit();
+                  return false;
+              }
+
+              private void ensureVisible(boolean snap) {
+                  Tab t = currentTab();
+                  int sel = (t == null || t.items.isEmpty()) ? 0 : Math.max(0, selection[tabIndex]);
+                  if (sel < scrollTarget)
+                      scrollTarget = sel;
+                  else if (sel > scrollTarget + rowsVisible - 1)
+                      scrollTarget = sel - rowsVisible + 1;
+                  if (t == null || t.items.size() <= rowsVisible)
+                      scrollTarget = 0;
+                  if (snap)
+                      scroll = scrollTarget;
+              }
+
+              // ---- input ----
+
+              @Override
+              public boolean onKeyDown(int keyCode, KeyEvent event) {
+                  switch (keyCode) {
+                      case KeyEvent.KEYCODE_DPAD_LEFT:
+                      case KeyEvent.KEYCODE_BUTTON_L1:
+                          moveTab(-1);
+                          return true;
+                      case KeyEvent.KEYCODE_DPAD_RIGHT:
+                      case KeyEvent.KEYCODE_BUTTON_R1:
+                          moveTab(1);
+                          return true;
+                      case KeyEvent.KEYCODE_DPAD_UP:
+                          moveSelection(-1);
+                          return true;
+                      case KeyEvent.KEYCODE_DPAD_DOWN:
+                          moveSelection(1);
+                          return true;
+                      case KeyEvent.KEYCODE_PAGE_UP:
+                          moveSelection(-rowsVisible);
+                          return true;
+                      case KeyEvent.KEYCODE_PAGE_DOWN:
+                          moveSelection(rowsVisible);
+                          return true;
+                      case KeyEvent.KEYCODE_DPAD_CENTER:
+                      case KeyEvent.KEYCODE_ENTER:
+                      case KeyEvent.KEYCODE_NUMPAD_ENTER:
+                      case KeyEvent.KEYCODE_BUTTON_A:
+                          if (event.getRepeatCount() == 0)
+                              activate();
+                          return true;
+                      case KeyEvent.KEYCODE_BUTTON_B:
+                      case KeyEvent.KEYCODE_ESCAPE:
+                      case KeyEvent.KEYCODE_BACK:
+                          if (event.getRepeatCount() == 0)
+                              handleBack();
+                          return true;
+                      default:
+                          return super.onKeyDown(keyCode, event);
+                  }
+              }
+
+              @Override
+              public boolean onGenericMotionEvent(MotionEvent event) {
+                  if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
+                          && event.getAction() == MotionEvent.ACTION_MOVE) {
+                      float hx = event.getAxisValue(MotionEvent.AXIS_HAT_X);
+                      float hy = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                      float sx = event.getAxisValue(MotionEvent.AXIS_X);
+                      float sy = event.getAxisValue(MotionEvent.AXIS_Y);
+                      int dx = hx > 0.5f ? 1 : hx < -0.5f ? -1 : (sx > 0.6f ? 1 : sx < -0.6f ? -1 : 0);
+                      int dy = hy > 0.5f ? 1 : hy < -0.5f ? -1 : (sy > 0.6f ? 1 : sy < -0.6f ? -1 : 0);
+                      if (dx != lastStickX) {
+                          lastStickX = dx;
+                          if (dx != 0)
+                              moveTab(dx);
+                      }
+                      if (dy != lastStickY) {
+                          lastStickY = dy;
+                          if (dy != 0)
+                              moveSelection(dy);
+                      }
+                      return true;
+                  }
+                  return super.onGenericMotionEvent(event);
+              }
+
+              @Override
+              public boolean onTouchEvent(MotionEvent e) {
+                  switch (e.getActionMasked()) {
+                      case MotionEvent.ACTION_DOWN:
+                          downX = e.getX();
+                          downY = e.getY();
+                          return true;
+                      case MotionEvent.ACTION_UP: {
+                          float dx = e.getX() - downX;
+                          float dy = e.getY() - downY;
+                          float slop = 24f * u;
+                          if (Math.abs(dx) < slop && Math.abs(dy) < slop) {
+                              handleTap(e.getX(), e.getY());
+                          } else if (Math.abs(dx) > Math.abs(dy)) {
+                              moveTab(dx < 0 ? 1 : -1);
+                          } else {
+                              int steps = Math.max(1, (int) (Math.abs(dy) / (rowHeight() + gap())));
+                              moveSelection(dy < 0 ? steps : -steps);
+                          }
+                          return true;
+                      }
+                      default:
+                          return true;
+                  }
+              }
+
+              private void handleTap(float x, float y) {
+                  int w = getWidth();
+                  int h = getHeight();
+                  if (y < h * 0.23f) {
+                      // tab header: pick the title closest to the tap
+                      int best = tabIndex;
+                      float bestDist = Float.MAX_VALUE;
+                      for (int i = 0; i < tabs.size(); i++) {
+                          float tx = tabX(i, w);
+                          float d = Math.abs(x - (tx + 90f * u));
+                          if (d < bestDist) {
+                              bestDist = d;
+                              best = i;
+                          }
+                      }
+                      moveTab(best - tabIndex);
+                      return;
+                  }
+                  float top = h * 0.27f;
+                  float step = rowHeight() + gap();
+                  if (y >= top && x < w * 0.60f) {
+                      int row = (int) (scroll + (y - top) / step);
+                      Tab t = currentTab();
+                      if (t != null && row >= 0 && row < t.items.size()) {
+                          if (row == selection[tabIndex]) {
+                              activate();
+                          } else {
+                              selection[tabIndex] = row;
+                              ensureVisible(false);
+                              if (listener != null)
+                                  listener.onMove();
+                              invalidate();
+                          }
+                      }
+                  }
+              }
+
+              // ---- drawing ----
+
+              private float rowHeight() {
+                  return 92f * u;
+              }
+
+              private float gap() {
+                  return 10f * u;
+              }
+
+              private float tabX(int index, int w) {
+                  return w * 0.10f + (index - tabPos) * w * 0.26f;
+              }
+
+              @Override
+              protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+                  u = h / 1080f;
+                  bgPaint.setShader(new LinearGradient(0, 0, 0, h, 0xFF222A30, 0xFF080B0D, Shader.TileMode.CLAMP));
+                  glowPaint.setShader(new RadialGradient(w * 0.25f, h * 1.05f, Math.max(w, h) * 0.75f,
+                          new int[]{0xAA4CA313, 0x00000000}, null, Shader.TileMode.CLAMP));
+                  float listTop = h * 0.27f;
+                  float listBottom = h * 0.88f;
+                  rowsVisible = Math.max(1, (int) ((listBottom - listTop + gap()) / (rowHeight() + gap())));
+                  ensureVisible(true);
+              }
+
+              private boolean animate() {
+                  boolean again = false;
+                  float d = tabIndex - tabPos;
+                  if (Math.abs(d) > 0.003f) {
+                      tabPos += d * 0.22f;
+                      again = true;
+                  } else {
+                      tabPos = tabIndex;
+                  }
+                  float ds = scrollTarget - scroll;
+                  if (Math.abs(ds) > 0.003f) {
+                      scroll += ds * 0.25f;
+                      again = true;
+                  } else {
+                      scroll = scrollTarget;
+                  }
+                  return again;
+              }
+
+              @Override
+              protected void onDraw(Canvas c) {
+                  int w = getWidth();
+                  int h = getHeight();
+                  boolean again = animate();
+
+                  drawBackground(c, w, h);
+                  drawHeader(c, w, h);
+                  drawList(c, w, h);
+                  drawPanel(c, w, h);
+                  drawFooter(c, w, h);
+
+                  if (again)
+                      postInvalidateOnAnimation();
+              }
+
+              private void drawBackground(Canvas c, int w, int h) {
+                  if (background != null) {
+                      float s = Math.max((float) w / background.getWidth(), (float) h / background.getHeight());
+                      float dw = background.getWidth() * s;
+                      float dh = background.getHeight() * s;
+                      rect.set((w - dw) / 2f, (h - dh) / 2f, (w + dw) / 2f, (h + dh) / 2f);
+                      c.drawBitmap(background, null, rect, bitmapPaint);
+                      c.drawColor(0x59000000);
+                  } else {
+                      c.drawRect(0, 0, w, h, bgPaint);
+                      c.drawRect(0, 0, w, h, glowPaint);
+                  }
+                  // darken top and bottom edges so text stays readable on any picture
+                  shadePaint.setShader(new LinearGradient(0, 0, 0, h * 0.26f, 0xB0000000, 0x00000000, Shader.TileMode.CLAMP));
+                  c.drawRect(0, 0, w, h * 0.26f, shadePaint);
+                  shadePaint.setShader(new LinearGradient(0, h * 0.84f, 0, h, 0x00000000, 0xC0000000, Shader.TileMode.CLAMP));
+                  c.drawRect(0, h * 0.84f, w, h, shadePaint);
+                  shadePaint.setShader(null);
+              }
+
+              private void drawHeader(Canvas c, int w, int h) {
+                  text.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+                  float baseline = h * 0.17f;
+                  for (int i = 0; i < tabs.size(); i++) {
+                      float dx = i - tabPos;
+                      if (dx < -1f)
+                          continue;
+                      float near = Math.min(Math.abs(dx), 1f);
+                      float alpha = dx < 0 ? 1f + dx : 1f - 0.45f * near;
+                      text.setTextSize((50f - 14f * near) * u);
+                      int base = blend(0xFFB8C4CC, Color.WHITE, 1f - near);
+                      text.setColor(withAlpha(base, alpha));
+                      c.drawText(tabs.get(i).title, tabX(i, w), baseline, text);
+                  }
+                  // thin accent line under the titles
+                  fill.setShader(new LinearGradient(w * 0.08f, 0, w * 0.92f, 0,
+                          new int[]{GREEN, 0x556DBE1E, 0x006DBE1E}, null, Shader.TileMode.CLAMP));
+                  c.drawRect(w * 0.08f, h * 0.205f, w * 0.92f, h * 0.205f + 3f * u, fill);
+                  fill.setShader(null);
+              }
+
+              private void drawList(Canvas c, int w, int h) {
+                  Tab t = currentTab();
+                  if (t == null)
+                      return;
+                  float left = w * 0.10f;
+                  float rowW = w * 0.48f;
+                  float top = h * 0.27f;
+                  float bottom = h * 0.88f;
+                  float step = rowHeight() + gap();
+
+                  if (t.items.isEmpty()) {
+                      text.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+                      text.setTextSize(32f * u);
+                      text.setColor(0xFFC8D2D8);
+                      drawWrapped(c, t.emptyText, left, top, rowW);
+                      return;
+                  }
+
+                  c.save();
+                  c.clipRect(0, top - 6f * u, w, bottom);
+                  for (int i = 0; i < t.items.size(); i++) {
+                      float y = top + (i - scroll) * step;
+                      if (y + rowHeight() < top - 6f * u || y > bottom)
+                          continue;
+                      boolean selected = i == selection[tabIndex];
+                      Item item = t.items.get(i);
+                      rect.set(left, y, left + rowW, y + rowHeight());
+                      float radius = 10f * u;
+
+                      if (selected) {
+                          fill.setShader(new LinearGradient(0, y, 0, y + rowHeight(), 0xFF8FDA33, GREEN_DARK, Shader.TileMode.CLAMP));
+                          fill.setShadowLayer(18f * u, 0, 4f * u, 0x996DBE1E);
+                          c.drawRoundRect(rect, radius, radius, fill);
+                          fill.clearShadowLayer();
+                          fill.setShader(null);
+                          // glossy highlight on the upper half
+                          fill.setColor(0x33FFFFFF);
+                          rect.set(left + 3f * u, y + 3f * u, left + rowW - 3f * u, y + rowHeight() * 0.48f);
+                          c.drawRoundRect(rect, radius, radius, fill);
+                          rect.set(left, y, left + rowW, y + rowHeight());
+                      } else {
+                          fill.setColor(0x8C000000);
+                          c.drawRoundRect(rect, radius, radius, fill);
+                          stroke.setColor(0x33FFFFFF);
+                          stroke.setStrokeWidth(1.5f * u);
+                          c.drawRoundRect(rect, radius, radius, stroke);
+                      }
+
+                      float textX = left + 30f * u;
+                      if (item.game) {
+                          drawDisc(c, left + 28f * u + 24f * u, y + rowHeight() / 2f, 24f * u, selected);
+                          textX = left + 28f * u + 24f * u * 2f + 22f * u;
+                      }
+                      text.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                      text.setTextSize(33f * u);
+                      text.setColor(selected ? Color.WHITE : 0xFFDDE5EA);
+                      float maxW = left + rowW - 24f * u - textX;
+                      String title = android.text.TextUtils.ellipsize(item.title, text, maxW,
+                              android.text.TextUtils.TruncateAt.END).toString();
+                      float ty = y + rowHeight() / 2f - (text.ascent() + text.descent()) / 2f;
+                      c.drawText(title, textX, ty, text);
+                  }
+                  c.restore();
+
+                  // scroll indicators
+                  if (scroll > 0.05f)
+                      drawArrow(c, left + rowW / 2f, top - 18f * u, true);
+                  if (scroll + rowsVisible < t.items.size() - 0.05f)
+                      drawArrow(c, left + rowW / 2f, bottom + 6f * u, false);
+              }
+
+              private void drawArrow(Canvas c, float cx, float cy, boolean up) {
+                  fill.setColor(0xCCFFFFFF);
+                  android.graphics.Path p = new android.graphics.Path();
+                  float s = 10f * u;
+                  if (up) {
+                      p.moveTo(cx - s, cy + s * 0.6f);
+                      p.lineTo(cx + s, cy + s * 0.6f);
+                      p.lineTo(cx, cy - s * 0.6f);
+                  } else {
+                      p.moveTo(cx - s, cy - s * 0.6f);
+                      p.lineTo(cx + s, cy - s * 0.6f);
+                      p.lineTo(cx, cy + s * 0.6f);
+                  }
+                  p.close();
+                  c.drawPath(p, fill);
+              }
+
+              private void drawPanel(Canvas c, int w, int h) {
+                  Tab t = currentTab();
+                  if (t == null || t.items.isEmpty())
+                      return;
+                  int sel = selection[tabIndex];
+                  if (sel < 0 || sel >= t.items.size())
+                      return;
+                  Item item = t.items.get(sel);
+                  float left = w * 0.64f;
+                  float width = w * 0.26f;
+                  float top = h * 0.27f;
+
+                  if (item.game) {
+                      drawDisc(c, left + width / 2f, top + 150f * u, 130f * u, true);
+                      text.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                      text.setTextSize(36f * u);
+                      text.setColor(Color.WHITE);
+                      drawWrapped(c, item.title, left, top + 320f * u, width);
+                      text.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+                      text.setTextSize(28f * u);
+                      text.setColor(0xFFB8E27E);
+                      drawWrapped(c, item.desc, left, top + 420f * u, width);
+                  } else {
+                      text.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                      text.setTextSize(38f * u);
+                      text.setColor(Color.WHITE);
+                      float used = drawWrapped(c, item.title, left, top, width);
+                      text.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+                      text.setTextSize(28f * u);
+                      text.setColor(0xFFC8D2D8);
+                      drawWrapped(c, item.desc, left, top + used + 16f * u, width);
+                  }
+              }
+
+              /** Draws wrapped text with the current paint and returns the height used. */
+              @SuppressWarnings("deprecation")
+              private float drawWrapped(Canvas c, String s, float x, float y, float width) {
+                  if (s == null || s.isEmpty())
+                      return 0f;
+                  StaticLayout layout = new StaticLayout(s, text, (int) width, Layout.Alignment.ALIGN_NORMAL, 1.15f, 0f, false);
+                  c.save();
+                  c.translate(x, y);
+                  layout.draw(c);
+                  c.restore();
+                  return layout.getHeight();
+              }
+
+              /** A simple original disc illustration. */
+              private void drawDisc(Canvas c, float cx, float cy, float r, boolean bright) {
+                  fill.setShader(new RadialGradient(cx - r * 0.3f, cy - r * 0.3f, r * 1.4f,
+                          new int[]{bright ? 0xFFF4F7F9 : 0xFFD0D8DE, bright ? 0xFF8E9BA5 : 0xFF69747C}, null, Shader.TileMode.CLAMP));
+                  c.drawCircle(cx, cy, r, fill);
+                  fill.setShader(null);
+                  fill.setColor(bright ? 0xFF2F7A0A : 0xFF3A444B);
+                  c.drawCircle(cx, cy, r * 0.62f, fill);
+                  fill.setColor(0xFFE8EDF0);
+                  c.drawCircle(cx, cy, r * 0.30f, fill);
+                  fill.setColor(0xFF1B2126);
+                  c.drawCircle(cx, cy, r * 0.12f, fill);
+              }
+
+              private void drawFooter(Canvas c, int w, int h) {
+                  float cy = h * 0.945f;
+                  float r = 20f * u;
+                  float x = w * 0.10f;
+
+                  x = drawButtonHint(c, x, cy, r, GREEN, "A", hintSelect) + 44f * u;
+                  x = drawButtonHint(c, x, cy, r, RED, "B", hintBack) + 44f * u;
+                  text.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+                  text.setTextSize(26f * u);
+                  text.setColor(0xFFC8D2D8);
+                  float ty = cy - (text.ascent() + text.descent()) / 2f;
+                  c.drawText("◄ ►  " + hintTabs, x, ty, text);
+              }
+
+              private float drawButtonHint(Canvas c, float x, float cy, float r, int color, String letter, String label) {
+                  fill.setColor(color);
+                  c.drawCircle(x + r, cy, r, fill);
+                  text.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                  text.setTextSize(24f * u);
+                  text.setColor(Color.WHITE);
+                  float lw = text.measureText(letter);
+                  c.drawText(letter, x + r - lw / 2f, cy - (text.ascent() + text.descent()) / 2f, text);
+                  text.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+                  text.setTextSize(26f * u);
+                  text.setColor(0xFFE2EAEE);
+                  float tx = x + r * 2f + 12f * u;
+                  c.drawText(label, tx, cy - (text.ascent() + text.descent()) / 2f, text);
+                  return tx + text.measureText(label);
+              }
+
+              // ---- color helpers ----
+
+              private static int withAlpha(int color, float alpha) {
+                  int a = Math.max(0, Math.min(255, (int) (Color.alpha(color) * alpha)));
+                  return (color & 0x00FFFFFF) | (a << 24);
+              }
+
+              private static int blend(int from, int to, float t) {
+                  int r = (int) (Color.red(from) + (Color.red(to) - Color.red(from)) * t);
+                  int g = (int) (Color.green(from) + (Color.green(to) - Color.green(from)) * t);
+                  int b = (int) (Color.blue(from) + (Color.blue(to) - Color.blue(from)) * t);
+                  return Color.rgb(r, g, b);
+              }
+          }
+          DASH_EOF_3
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/GameScanner.java)"
+          cat > shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/GameScanner.java <<'DASH_EOF_4'
+          package com.flycast.emulator.dashboard;
+
+          import android.content.Context;
+          import android.database.Cursor;
+          import android.net.Uri;
+          import android.provider.DocumentsContract;
+
+          import java.util.ArrayList;
+          import java.util.List;
+          import java.util.Locale;
+
+          /**
+           * Scans a folder picked with the system folder picker (Storage Access Framework) for game images.
+           * The URIs returned are tree-based document URIs, which is what Flycast expects so it can find the
+           * track files that sit next to a .gdi/.cue file.
+           */
+          public class GameScanner {
+              private static final String[] EXTENSIONS = {"gdi", "cdi", "chd", "cue", "zip", "7z", "lst"};
+              private static final int MAX_DEPTH = 4;
+              private static final int MAX_GAMES = 2000;
+
+              public static List<DashboardStore.Game> scan(Context context, Uri treeUri) {
+                  List<DashboardStore.Game> result = new ArrayList<>();
+                  try {
+                      String rootId = DocumentsContract.getTreeDocumentId(treeUri);
+                      scanDir(context, treeUri, rootId, 0, result);
+                  } catch (Exception ignored) {
+                      // invalid tree uri or permission lost: return what we have
+                  }
+                  return result;
+              }
+
+              private static void scanDir(Context context, Uri treeUri, String parentId, int depth,
+                                          List<DashboardStore.Game> out) {
+                  if (depth > MAX_DEPTH || out.size() >= MAX_GAMES)
+                      return;
+                  Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentId);
+                  Cursor c = null;
+                  List<String> subDirs = new ArrayList<>();
+                  try {
+                      c = context.getContentResolver().query(children, new String[]{
+                              DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                              DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                              DocumentsContract.Document.COLUMN_MIME_TYPE
+                      }, null, null, null);
+                      if (c == null)
+                          return;
+                      while (c.moveToNext()) {
+                          String id = c.getString(0);
+                          String name = c.getString(1);
+                          String mime = c.getString(2);
+                          if (name == null)
+                              continue;
+                          if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
+                              subDirs.add(id);
+                          } else if (isGameFile(name)) {
+                              Uri doc = DocumentsContract.buildDocumentUriUsingTree(treeUri, id);
+                              out.add(new DashboardStore.Game(doc.toString(), DashboardStore.stripExtension(name)));
+                          }
+                      }
+                  } catch (Exception ignored) {
+                  } finally {
+                      if (c != null)
+                          c.close();
+                  }
+                  for (String dirId : subDirs)
+                      scanDir(context, treeUri, dirId, depth + 1, out);
+              }
+
+              private static boolean isGameFile(String name) {
+                  int dot = name.lastIndexOf('.');
+                  if (dot < 0)
+                      return false;
+                  String ext = name.substring(dot + 1).toLowerCase(Locale.ROOT);
+                  for (String e : EXTENSIONS) {
+                      if (e.equals(ext))
+                          return true;
+                  }
+                  return false;
+              }
+          }
+          DASH_EOF_4
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/SoundManager.java)"
+          cat > shell/android-studio/flycast/src/main/java/com/flycast/emulator/dashboard/SoundManager.java <<'DASH_EOF_5'
+          package com.flycast.emulator.dashboard;
+
+          import android.content.Context;
+          import android.media.AudioAttributes;
+          import android.media.AudioManager;
+          import android.media.MediaPlayer;
+          import android.media.SoundPool;
+          import android.os.Build;
+
+          import java.io.File;
+          import java.io.FileOutputStream;
+          import java.io.IOException;
+          import java.io.OutputStream;
+
+          /**
+           * Background music (looping) and short UI sounds for the dashboard.
+           * If the user did not choose a click sound, two short original tones are generated in code.
+           */
+          public class SoundManager {
+              private final Context context;
+              private final DashboardStore store;
+
+              private SoundPool pool;
+              private int moveSound;
+              private int selectSound;
+              private boolean customClick;
+              private boolean soundsLoaded;
+
+              private MediaPlayer music;
+              private String musicPath;
+              private boolean started;
+
+              public SoundManager(Context context, DashboardStore store) {
+                  this.context = context.getApplicationContext();
+                  this.store = store;
+              }
+
+              // ---- UI sounds ----
+
+              public void reloadClickSounds() {
+                  releasePool();
+                  soundsLoaded = false;
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                      AudioAttributes attrs = new AudioAttributes.Builder()
+                              .setUsage(AudioAttributes.USAGE_GAME)
+                              .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                              .build();
+                      pool = new SoundPool.Builder().setMaxStreams(4).setAudioAttributes(attrs).build();
+                  } else {
+                      pool = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
+                  }
+                  String custom = store.getClickPath();
+                  try {
+                      if (custom != null) {
+                          customClick = true;
+                          moveSound = pool.load(custom, 1);
+                          selectSound = moveSound;
+                      } else {
+                          customClick = false;
+                          File dir = context.getCacheDir();
+                          File move = new File(dir, "dash_move.wav");
+                          File select = new File(dir, "dash_select.wav");
+                          writeTone(move, 1040, 45, 0.35f);
+                          writeTone(select, 1480, 110, 0.5f);
+                          moveSound = pool.load(move.getAbsolutePath(), 1);
+                          selectSound = pool.load(select.getAbsolutePath(), 1);
+                      }
+                      soundsLoaded = true;
+                  } catch (Exception e) {
+                      soundsLoaded = false;
+                  }
+              }
+
+              public void playMove() {
+                  if (pool == null)
+                      reloadClickSounds();
+                  if (soundsLoaded && store.isSfxOn() && pool != null)
+                      pool.play(moveSound, customClick ? 0.5f : 0.8f, customClick ? 0.5f : 0.8f, 1, 0, 1f);
+              }
+
+              public void playSelect() {
+                  if (pool == null)
+                      reloadClickSounds();
+                  if (soundsLoaded && store.isSfxOn() && pool != null)
+                      pool.play(selectSound, 1f, 1f, 1, 0, 1f);
+              }
+
+              private static void writeTone(File file, int freq, int millis, float amplitude) throws IOException {
+                  final int rate = 22050;
+                  int samples = rate * millis / 1000;
+                  byte[] pcm = new byte[samples * 2];
+                  for (int i = 0; i < samples; i++) {
+                      double t = i / (double) rate;
+                      // fast attack, exponential decay
+                      double env = Math.min(1.0, i / 80.0) * Math.exp(-6.0 * i / samples);
+                      short v = (short) (Math.sin(2 * Math.PI * freq * t) * env * amplitude * 32767);
+                      pcm[2 * i] = (byte) (v & 0xff);
+                      pcm[2 * i + 1] = (byte) ((v >> 8) & 0xff);
+                  }
+                  OutputStream out = new FileOutputStream(file);
+                  try {
+                      int dataLen = pcm.length;
+                      byte[] h = new byte[44];
+                      putStr(h, 0, "RIFF");
+                      putInt(h, 4, 36 + dataLen);
+                      putStr(h, 8, "WAVE");
+                      putStr(h, 12, "fmt ");
+                      putInt(h, 16, 16);
+                      h[20] = 1; // PCM
+                      h[22] = 1; // mono
+                      putInt(h, 24, rate);
+                      putInt(h, 28, rate * 2);
+                      h[32] = 2; // block align
+                      h[34] = 16; // bits per sample
+                      putStr(h, 36, "data");
+                      putInt(h, 40, dataLen);
+                      out.write(h);
+                      out.write(pcm);
+                  } finally {
+                      out.close();
+                  }
+              }
+
+              private static void putStr(byte[] b, int off, String s) {
+                  for (int i = 0; i < s.length(); i++)
+                      b[off + i] = (byte) s.charAt(i);
+              }
+
+              private static void putInt(byte[] b, int off, int v) {
+                  b[off] = (byte) (v & 0xff);
+                  b[off + 1] = (byte) ((v >> 8) & 0xff);
+                  b[off + 2] = (byte) ((v >> 16) & 0xff);
+                  b[off + 3] = (byte) ((v >> 24) & 0xff);
+              }
+
+              // ---- background music ----
+
+              /** Call from onResume. Starts the music if it is enabled and a file was chosen. */
+              public void startMusic() {
+                  started = true;
+                  updateMusic();
+              }
+
+              /** Call from onPause (also when a game is launched). */
+              public void pauseMusic() {
+                  started = false;
+                  if (music != null) {
+                      try {
+                          if (music.isPlaying())
+                              music.pause();
+                      } catch (IllegalStateException ignored) {
+                      }
+                  }
+              }
+
+              /** Re-evaluates the music state after the settings changed. */
+              public void updateMusic() {
+                  String path = store.getMusicPath();
+                  boolean shouldPlay = started && store.isMusicOn() && path != null;
+                  if (!shouldPlay) {
+                      if (music != null) {
+                          try {
+                              if (music.isPlaying())
+                                  music.pause();
+                          } catch (IllegalStateException ignored) {
+                          }
+                      }
+                      if (path == null)
+                          releaseMusic();
+                      return;
+                  }
+                  try {
+                      if (music == null || musicPath == null || !musicPath.equals(path)) {
+                          releaseMusic();
+                          music = new MediaPlayer();
+                          music.setDataSource(path);
+                          music.setLooping(true);
+                          music.prepare();
+                          musicPath = path;
+                      }
+                      float vol = store.getVolume() / 100f;
+                      music.setVolume(vol, vol);
+                      if (!music.isPlaying())
+                          music.start();
+                  } catch (Exception e) {
+                      releaseMusic();
+                  }
+              }
+
+              private void releaseMusic() {
+                  if (music != null) {
+                      try {
+                          music.release();
+                      } catch (Exception ignored) {
+                      }
+                      music = null;
+                      musicPath = null;
+                  }
+              }
+
+              private void releasePool() {
+                  if (pool != null) {
+                      pool.release();
+                      pool = null;
+                  }
+              }
+
+              public void release() {
+                  releaseMusic();
+                  releasePool();
+              }
+          }
+          DASH_EOF_5
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/res/values/dashboard_strings.xml)"
+          cat > shell/android-studio/flycast/src/main/res/values/dashboard_strings.xml <<'DASH_EOF_6'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="dash_tab_games">Games</string>
+              <string name="dash_tab_add">Add Games</string>
+              <string name="dash_tab_files">Files</string>
+              <string name="dash_tab_settings">Settings</string>
+              <string name="dash_tab_emulator">Emulator</string>
+
+              <string name="dash_empty_games">No games yet.\nGo to Add Games to add game files or a whole folder.</string>
+              <string name="dash_play">Press A to play</string>
+
+              <string name="dash_add_files">Add game files</string>
+              <string name="dash_add_files_desc">Choose one or more game files from your device. Games made of several files (GDI) work best when added with a folder.</string>
+              <string name="dash_add_folder">Add a games folder</string>
+              <string name="dash_add_folder_desc">Scan a folder and its sub-folders for GDI, CDI, CHD, CUE, ZIP and 7Z games.</string>
+              <string name="dash_clear">Clear game list</string>
+              <string name="dash_clear_desc">Remove every game from the list. Your files are not deleted.</string>
+
+              <string name="dash_files_browse">Browse files</string>
+              <string name="dash_files_browse_desc">Open the Flycast file browser to explore your folders and start a game from there.</string>
+              <string name="dash_files_pick">Pick a game and play</string>
+              <string name="dash_files_pick_desc">Choose a game file with the system file picker and start it right away.</string>
+
+              <string name="dash_bg">Change background</string>
+              <string name="dash_bg_desc">Choose a picture from your device to use as the dashboard background.</string>
+              <string name="dash_bg_reset">Reset background</string>
+              <string name="dash_bg_reset_desc">Go back to the default background.</string>
+              <string name="dash_music">Choose background music</string>
+              <string name="dash_music_desc">Pick an audio file (MP3, OGG, WAV) that loops while you are on the dashboard.</string>
+              <string name="dash_music_state">Background music: %1$s</string>
+              <string name="dash_music_state_desc">Turn the background music on or off.</string>
+              <string name="dash_music_reset">Remove background music</string>
+              <string name="dash_music_reset_desc">Stop using your music file.</string>
+              <string name="dash_volume">Music volume: %1$d%%</string>
+              <string name="dash_volume_desc">Press A to raise the volume. It goes back to zero after the maximum.</string>
+              <string name="dash_click">Choose click sound</string>
+              <string name="dash_click_desc">Pick a short audio file used when moving and selecting.</string>
+              <string name="dash_click_state">Click sounds: %1$s</string>
+              <string name="dash_click_state_desc">Turn the menu sounds on or off.</string>
+              <string name="dash_click_reset">Reset click sound</string>
+              <string name="dash_click_reset_desc">Go back to the built-in sounds.</string>
+              <string name="dash_on">On</string>
+              <string name="dash_off">Off</string>
+
+              <string name="dash_emu_open">Open Flycast</string>
+              <string name="dash_emu_open_desc">The original emulator menu with all its options: video resolution, controls, audio, BIOS, save states and more. Your emulator settings are untouched.</string>
+
+              <string name="dash_hint_select">Select</string>
+              <string name="dash_hint_back">Back</string>
+              <string name="dash_hint_tabs">Tabs</string>
+
+              <string name="dash_toast_added">%1$d game(s) added</string>
+              <string name="dash_toast_scanning">Scanning folder…</string>
+              <string name="dash_toast_no_picker">No file picker was found on this device</string>
+              <string name="dash_toast_failed">That file could not be used</string>
+              <string name="dash_toast_cleared">Game list cleared</string>
+          </resources>
+          DASH_EOF_6
+          mkdir -p "$(dirname shell/android-studio/flycast/src/main/res/values-ar/dashboard_strings.xml)"
+          cat > shell/android-studio/flycast/src/main/res/values-ar/dashboard_strings.xml <<'DASH_EOF_7'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="dash_tab_games">الألعاب</string>
+              <string name="dash_tab_add">إضافة ألعاب</string>
+              <string name="dash_tab_files">الملفات</string>
+              <string name="dash_tab_settings">الإعدادات</string>
+              <string name="dash_tab_emulator">المحاكي</string>
+
+              <string name="dash_empty_games">لا توجد ألعاب بعد.\nاذهب إلى إضافة ألعاب لإضافة ملفات الألعاب أو مجلد كامل.</string>
+              <string name="dash_play">اضغط A للعب</string>
+
+              <string name="dash_add_files">إضافة ملفات ألعاب</string>
+              <string name="dash_add_files_desc">اختر ملفاً أو أكثر من جهازك. الألعاب المكوّنة من عدة ملفات (GDI) الأفضل إضافتها عبر المجلد.</string>
+              <string name="dash_add_folder">إضافة مجلد ألعاب</string>
+              <string name="dash_add_folder_desc">فحص المجلد والمجلدات الفرعية بحثاً عن ألعاب GDI وCDI وCHD وCUE وZIP و7Z.</string>
+              <string name="dash_clear">مسح قائمة الألعاب</string>
+              <string name="dash_clear_desc">إزالة كل الألعاب من القائمة. ملفاتك لا تُحذف.</string>
+
+              <string name="dash_files_browse">تصفح الملفات</string>
+              <string name="dash_files_browse_desc">فتح متصفح ملفات Flycast لاستعراض المجلدات وتشغيل لعبة منه.</string>
+              <string name="dash_files_pick">اختيار لعبة وتشغيلها</string>
+              <string name="dash_files_pick_desc">اختر ملف لعبة بمنتقي ملفات النظام وابدأ تشغيلها فوراً.</string>
+
+              <string name="dash_bg">تغيير الخلفية</string>
+              <string name="dash_bg_desc">اختر صورة من جهازك لتكون خلفية الواجهة.</string>
+              <string name="dash_bg_reset">إعادة الخلفية الافتراضية</string>
+              <string name="dash_bg_reset_desc">العودة إلى الخلفية الأصلية.</string>
+              <string name="dash_music">اختيار موسيقى الخلفية</string>
+              <string name="dash_music_desc">اختر ملفاً صوتياً (MP3 أو OGG أو WAV) يتكرر أثناء وجودك في الواجهة.</string>
+              <string name="dash_music_state">موسيقى الخلفية: %1$s</string>
+              <string name="dash_music_state_desc">تشغيل موسيقى الخلفية أو إيقافها.</string>
+              <string name="dash_music_reset">إزالة موسيقى الخلفية</string>
+              <string name="dash_music_reset_desc">التوقف عن استخدام ملف الموسيقى.</string>
+              <string name="dash_volume">مستوى الموسيقى: %1$d%%</string>
+              <string name="dash_volume_desc">اضغط A لرفع الصوت. يعود إلى الصفر بعد الحد الأقصى.</string>
+              <string name="dash_click">اختيار صوت النقر</string>
+              <string name="dash_click_desc">اختر ملفاً صوتياً قصيراً يُستخدم عند التنقل والاختيار.</string>
+              <string name="dash_click_state">أصوات النقر: %1$s</string>
+              <string name="dash_click_state_desc">تشغيل أصوات القائمة أو إيقافها.</string>
+              <string name="dash_click_reset">إعادة صوت النقر الافتراضي</string>
+              <string name="dash_click_reset_desc">العودة إلى الأصوات المدمجة.</string>
+              <string name="dash_on">تشغيل</string>
+              <string name="dash_off">إيقاف</string>
+
+              <string name="dash_emu_open">فتح Flycast</string>
+              <string name="dash_emu_open_desc">قائمة المحاكي الأصلية بكل خياراتها: دقة الفيديو، أزرار التحكم، الصوت، البايوس، حفظ الحالة وغيرها. إعدادات المحاكي كما هي بدون تغيير.</string>
+
+              <string name="dash_hint_select">اختيار</string>
+              <string name="dash_hint_back">رجوع</string>
+              <string name="dash_hint_tabs">التبويبات</string>
+
+              <string name="dash_toast_added">تمت إضافة %1$d لعبة</string>
+              <string name="dash_toast_scanning">جارٍ فحص المجلد…</string>
+              <string name="dash_toast_no_picker">لم يتم العثور على منتقي ملفات في هذا الجهاز</string>
+              <string name="dash_toast_failed">تعذّر استخدام هذا الملف</string>
+              <string name="dash_toast_cleared">تم مسح قائمة الألعاب</string>
+          </resources>
+          DASH_EOF_7
+          cat > /tmp/patch_manifest.py <<'DASH_EOF_PY'
+          import re, sys
+          p = "shell/android-studio/flycast/src/main/AndroidManifest.xml"
+          s = open(p, encoding="utf-8").read()
+          if "dashboard.DashboardActivity" in s:
+              sys.exit(0)
+          pat = re.compile(r'(?P<alias><activity-alias\s[^>]*?android:name="com\.flycast\.emulator\.MainActivity"[^>]*>)\s*<intent-filter>\s*<action android:name="android\.intent\.action\.MAIN"\s*/>.*?</intent-filter>', re.S)
+          m = pat.search(s)
+          if not m:
+              sys.exit("manifest pattern not found")
+          act = """<activity
+                      android:name="com.flycast.emulator.dashboard.DashboardActivity"
+                      android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
+                      android:screenOrientation="sensorLandscape"
+                      android:exported="true"
+                      android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                          <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+                  """
+          s = s[:m.start()] + act + m.group("alias") + s[m.end():]
+          open(p, "w", encoding="utf-8").write(s)
+          print("manifest patched")
+          DASH_EOF_PY
+          python3 /tmp/patch_manifest.py
+          sed -i 's/applicationId = "com.flycast.emulator"/applicationId = "com.flycast.dashboard"/' shell/android-studio/flycast/build.gradle.kts
+          sed -i 's|>Flycast</string>|>Flycast Dashboard</string>|' shell/android-studio/flycast/src/main/res/values/donottranslate.xml
+          grep -q 'com.flycast.dashboard' shell/android-studio/flycast/build.gradle.kts
+          grep -q 'Flycast Dashboard' shell/android-studio/flycast/src/main/res/values/donottranslate.xml
+
+      - name: Create icons
+        continue-on-error: true
+        run: |
+          pip install --quiet pillow
+          cat > /tmp/make_icons.py <<'DASH_EOF_ICONS'
+          import sys
+          from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+          res = sys.argv[1]
+          S = 4  # supersampling
+
+
+          def orb(size):
+              """Original glossy green orb with a disc in the middle."""
+              n = size * S
+              img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+              d = ImageDraw.Draw(img)
+              m = int(n * 0.06)
+              # soft shadow
+              sh = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+              ImageDraw.Draw(sh).ellipse((m, m + n * 0.03, n - m, n - m + n * 0.03), fill=(0, 0, 0, 120))
+              sh = sh.filter(ImageFilter.GaussianBlur(n * 0.025))
+              img = Image.alpha_composite(img, sh)
+              d = ImageDraw.Draw(img)
+              # body gradient (dark green -> bright green)
+              body = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+              bd = ImageDraw.Draw(body)
+              for i in range(n):
+                  t = i / n
+                  c = (int(30 + 80 * (1 - t)), int(110 + 90 * (1 - t)), int(10 + 20 * (1 - t)), 255)
+                  bd.line((0, i, n, i), fill=c)
+              mask = Image.new("L", (n, n), 0)
+              ImageDraw.Draw(mask).ellipse((m, m, n - m, n - m), fill=255)
+              img.paste(body, (0, 0), mask)
+              d = ImageDraw.Draw(img)
+              # rim
+              d.ellipse((m, m, n - m, n - m), outline=(20, 70, 8, 255), width=max(2, n // 60))
+              # disc
+              cx = cy = n / 2
+              r = n * 0.27
+              d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(238, 243, 246, 255))
+              r2 = r * 0.66
+              d.ellipse((cx - r2, cy - r2, cx + r2, cy + r2), fill=(70, 150, 20, 255))
+              r3 = r * 0.30
+              d.ellipse((cx - r3, cy - r3, cx + r3, cy + r3), fill=(238, 243, 246, 255))
+              r4 = r * 0.12
+              d.ellipse((cx - r4, cy - r4, cx + r4, cy + r4), fill=(25, 40, 20, 255))
+              # gloss on upper half
+              gl = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+              gd = ImageDraw.Draw(gl)
+              gd.ellipse((m + n * 0.05, m + n * 0.02, n - m - n * 0.05, n * 0.55), fill=(255, 255, 255, 70))
+              gm = Image.new("L", (n, n), 0)
+              ImageDraw.Draw(gm).ellipse((m, m, n - m, n - m), fill=255)
+              gl.putalpha(Image.composite(gl.getchannel("A"), Image.new("L", (n, n), 0), gm))
+              img = Image.alpha_composite(img, gl)
+              return img.resize((size, size), Image.LANCZOS)
+
+
+          for folder, size in [("ldpi", 36), ("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144)]:
+              orb(size).save(f"{res}/drawable-{folder}/ic_launcher.png")
+
+          # TV banner 320x180: dark background with the orb and a title
+          W, H = 320 * 3, 180 * 3
+          ban = Image.new("RGBA", (W, H), (12, 16, 18, 255))
+          bd = ImageDraw.Draw(ban)
+          for y in range(H):
+              t = y / H
+              bd.line((0, y, W, y), fill=(int(34 - 22 * t), int(42 - 28 * t), int(48 - 32 * t), 255))
+          glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+          ImageDraw.Draw(glow).ellipse((-W * 0.2, H * 0.4, W * 0.7, H * 1.6), fill=(76, 163, 19, 110))
+          glow = glow.filter(ImageFilter.GaussianBlur(40))
+          ban = Image.alpha_composite(ban, glow)
+          o = orb(int(H * 0.62))
+          ban.alpha_composite(o, (int(W * 0.07), int((H - o.height) / 2)))
+          bd = ImageDraw.Draw(ban)
+          font = None
+          for path in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                       "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"):
+              try:
+                  font = ImageFont.truetype(path, int(H * 0.20))
+                  small = ImageFont.truetype(path, int(H * 0.10))
+                  break
+              except OSError:
+                  continue
+          if font is None:
+              font = small = ImageFont.load_default()
+          tx = int(W * 0.07) + o.width + int(W * 0.05)
+          bd.text((tx, int(H * 0.30)), "Flycast", font=font, fill=(255, 255, 255, 255))
+          bd.text((tx, int(H * 0.56)), "DASHBOARD", font=small, fill=(150, 215, 80, 255))
+          ban.convert("RGBA").resize((320, 180), Image.LANCZOS).save(f"{res}/drawable-xhdpi/ic_banner.png")
+          print("done")
+          DASH_EOF_ICONS
+          python3 /tmp/make_icons.py "$PWD/shell/android-studio/flycast/src/main/res"
+
+      - name: Use debug signing
+        run: sed -i 's/signingConfigs.getByName("release")/signingConfigs.getByName("debug")/g' shell/android-studio/flycast/build.gradle.kts
+
+      - name: Build
+        working-directory: shell/android-studio
+        run: ./gradlew assembleRelease --parallel
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: flycast-dashboard-apk
+          path: shell/android-studio/flycast/build/outputs/apk/release/*.apk
