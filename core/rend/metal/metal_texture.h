@@ -3,7 +3,7 @@
 #include "metal_context.h"
 #include "rend/TexCache.h"
 
-class MetalTexture final : public BaseTextureCacheData
+class API_AVAILABLE(macos(26.0)) MetalTexture final : public BaseTextureCacheData
 {
 public:
 	MetalTexture() : BaseTextureCacheData({}, {}, 0) {}

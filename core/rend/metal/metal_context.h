@@ -6,6 +6,7 @@
 #include "wsi/context.h"
 #include <memory>
 #include <utility>
+#include <os/availability.h>
 
 #ifdef __OBJC__
 #include <array>
@@ -27,7 +28,7 @@ struct ImDrawData;
 #pragma pop_macro("PAGE_SIZE")
 #endif
 
-class MetalContext final : public GraphicsContext
+class API_AVAILABLE(macos(26.0)) MetalContext final : public GraphicsContext
 {
 public:
 	static void Create(void *window, void *display);

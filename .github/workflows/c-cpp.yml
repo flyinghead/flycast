@@ -22,7 +22,7 @@ jobs:
       matrix:
         config:
           - { name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release }
-          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: '-G Xcode "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64" -DUSE_METAL=ON -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB', destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
+          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: '-G Xcode -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64" -DUSE_METAL=ON -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB', destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
           - { name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
           - { name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release }
           - { name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo, packagePath: artifact/flycast-x86_64-w64-mingw32.zip }
@@ -32,6 +32,16 @@ jobs:
     steps:
       - name: Set up build environment (macOS)
         run: |
+          # Xcode 27's SDK no longer supports Catalina. Xcode 26 includes
+          # Metal 4 and still supports the official macOS 10.15 app floor.
+          xcode_developer_dir="/Applications/Xcode_26.6.app/Contents/Developer"
+          if [ ! -d "$xcode_developer_dir" ]; then
+            echo "Xcode 26.6 is required for the Catalina-compatible universal release." >&2
+            exit 1
+          fi
+          export DEVELOPER_DIR="$xcode_developer_dir"
+          echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          xcodebuild -version
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
           brew update || :
@@ -159,6 +169,7 @@ jobs:
 
       - name: Package app (macos)
         run: |
+          python3 shell/apple/check_macos_compatibility.py artifact/bin/Flycast.app
           cd artifact/bin
           for arch in x86_64 arm64; do
             lipo Flycast.app/Contents/MacOS/Flycast -verify_arch "$arch"

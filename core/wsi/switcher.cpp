@@ -28,6 +28,7 @@
 #include "rend/dx11/dx11context.h"
 #ifdef USE_METAL
 #include "rend/metal/metal_context.h"
+#include "rend/metal/metal_support.h"
 #endif
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
@@ -42,10 +43,22 @@ void initRenderApi(void *window, void *display)
 #endif
 	if (isMetal(config::RendererType))
 	{
-		// A selected Metal 4 backend must satisfy its device/SDK requirements.
-		// Report initialization failure instead of silently changing APIs.
-		MetalContext::Create(window, display);
-		return;
+		if (__builtin_available(macOS 26.0, *)) {
+			if (metal4Available()) {
+				MetalContext::Create(window, display);
+				return;
+			}
+		}
+		// Also handles command-line overrides made after settings were loaded.
+		// An unavailable optional backend must not prevent older Macs starting.
+		WARN_LOG(RENDERER, "Metal 4 unavailable on this Mac; using a compatible graphics API");
+#ifdef USE_OPENGL
+		config::RendererType = RenderType::OpenGL;
+#elif defined(USE_VULKAN)
+		config::RendererType = RenderType::Vulkan;
+#else
+		throw FlycastException("Metal 4 requires Apple Silicon and macOS 26 or later");
+#endif
 	}
 #endif
 #ifdef USE_VULKAN

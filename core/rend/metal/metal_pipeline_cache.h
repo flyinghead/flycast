@@ -4,7 +4,7 @@
 
 // Independent read archives keep foreground PSO creation separate from the
 // material compiler and the serial, best-effort archive writer.
-class MetalPipelineCache : public std::enable_shared_from_this<MetalPipelineCache>
+class API_AVAILABLE(macos(26.0)) MetalPipelineCache : public std::enable_shared_from_this<MetalPipelineCache>
 {
 public:
 	static std::shared_ptr<MetalPipelineCache> create(id<MTL4Compiler> foreground, id<MTL4Compiler> material,

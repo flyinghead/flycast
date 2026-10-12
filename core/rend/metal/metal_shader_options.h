@@ -2,6 +2,7 @@
 #pragma once
 #import <Metal/Metal.h>
 
+API_AVAILABLE(macos(26.0))
 inline MTLCompileOptions *metalShaderOptions(id<MTLDevice> device, bool allowRelaxedDivisions = true)
 {
 	MTLCompileOptions *options = [[MTLCompileOptions alloc] init];

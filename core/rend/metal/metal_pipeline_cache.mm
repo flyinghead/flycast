@@ -97,6 +97,7 @@ NSArray<NSURL *> *cacheFiles(NSURL *directory)
 	}];
 }
 
+API_AVAILABLE(macos(26.0))
 id<MTL4Archive> openArchive(id<MTLDevice> device, NSURL *url)
 {
 	NSError *error = nil;

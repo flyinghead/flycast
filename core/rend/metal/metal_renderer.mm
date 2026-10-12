@@ -75,7 +75,7 @@ const MTLCompareFunction depthOps[] = {
 	MTLCompareFunctionNever, MTLCompareFunctionLess, MTLCompareFunctionEqual, MTLCompareFunctionLessEqual,
 	MTLCompareFunctionGreater, MTLCompareFunctionNotEqual, MTLCompareFunctionGreaterEqual, MTLCompareFunctionAlways
 };
-struct FlightTicket
+struct API_AVAILABLE(macos(26.0)) FlightTicket
 {
 	dispatch_semaphore_t semaphore;
 	bool submitted = false;
@@ -89,6 +89,7 @@ MTLBlendFactor blendFactor(u32 mode, bool source, bool alpha = false)
 		MTLBlendFactorSourceAlpha, MTLBlendFactorOneMinusSourceAlpha, MTLBlendFactorDestinationAlpha, MTLBlendFactorOneMinusDestinationAlpha };
 	return factors[mode & 7];
 }
+API_AVAILABLE(macos(26.0))
 MTL4RenderPipelineColorAttachmentDescriptor *polygonBlend(TSP tsp, bool color)
 {
 	MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
@@ -101,7 +102,7 @@ MTL4RenderPipelineColorAttachmentDescriptor *polygonBlend(TSP tsp, bool color)
 	return blend;
 }
 
-class MetalRenderer final : public Renderer
+class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 {
 	const bool perPixel;
 	rend_context *rc = nullptr;
@@ -2303,9 +2304,15 @@ public:
 #endif
 }
 
-Renderer *rend_Metal(bool perPixel) { return new MetalRenderer(perPixel); }
+Renderer *rend_Metal(bool perPixel)
+{
+	if (@available(macOS 26.0, *))
+		return new MetalRenderer(perPixel);
+	throw RendererException("Metal 4 requires macOS 26 or later");
+}
 
 #ifdef METAL_RENDERER_TESTS
+API_AVAILABLE(macos(26.0))
 void metalValidateRenderer()
 {
 	RamRegion previousVRAM = vram;

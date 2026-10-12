@@ -22,6 +22,7 @@
 #include "wsi/context.h"
 #ifdef USE_METAL
 #include "rend/metal/metal_context.h"
+#include "rend/metal/metal_support.h"
 #endif
 
 enum RenderAPI {
@@ -80,9 +81,9 @@ void gui_settings_video()
 		break;
 #endif
 	}
-	constexpr int apiCount = 0
+	const int apiCount = 0
 		#ifdef USE_METAL
-			+ 1
+			+ (metal4Available() ? 1 : 0)
 		#endif
 		#ifdef USE_VULKAN
 			+ 1
@@ -105,8 +106,10 @@ void gui_settings_video()
 		{
 			ImGui::Columns(apiCount, "renderApi", false);
 #ifdef USE_METAL
-			ImGui::RadioButton("Metal 4", &renderApi, Metal);
-			ImGui::NextColumn();
+			if (metal4Available()) {
+				ImGui::RadioButton("Metal 4", &renderApi, Metal);
+				ImGui::NextColumn();
+			}
 #endif
 #ifdef USE_OPENGL
 			ImGui::RadioButton("OpenGL", &renderApi, OpenGL);
@@ -237,15 +240,17 @@ void gui_settings_video()
         ShowHelpMarker(T("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."));
 		OptionCheckbox(T("Integer Scaling"), config::IntegerScale, T("Scales the output by the maximum integer multiple allowed by the display resolution."));
 #ifdef USE_METAL
-		if (renderApi == Metal) {
-			const auto *context = dynamic_cast<MetalContext *>(GraphicsContext::Instance());
-			const bool supported = !context || context->supportsMetalFX();
-			{
-				DisabledScope scope(!supported || config::IntegerScale);
-				OptionCheckbox(T("MetalFX Spatial"), config::MetalFXSpatial,
-					T("Upscales the game image when the window is larger than the internal resolution. Lower internal resolutions reduce GPU work. Disable Integer Scaling to use MetalFX."));
+		if (__builtin_available(macOS 26.0, *)) {
+			if (renderApi == Metal && metal4Available()) {
+				const auto *context = dynamic_cast<MetalContext *>(GraphicsContext::Instance());
+				const bool supported = !context || context->supportsMetalFX();
+				{
+					DisabledScope scope(!supported || config::IntegerScale);
+					OptionCheckbox(T("MetalFX Spatial"), config::MetalFXSpatial,
+						T("Upscales the game image when the window is larger than the internal resolution. Lower internal resolutions reduce GPU work. Disable Integer Scaling to use MetalFX."));
+				}
+				if (!supported) ImGui::TextWrapped("%s", T("MetalFX Spatial is unavailable on the current GPU."));
 			}
-			if (!supported) ImGui::TextWrapped("%s", T("MetalFX Spatial is unavailable on the current GPU."));
 		}
 #endif
 		OptionCheckbox(T("Linear Interpolation"), config::LinearInterpolation, T("Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."));

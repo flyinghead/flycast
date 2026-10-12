@@ -35,16 +35,11 @@ if(APPLE)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum tvOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
 	else()
+		# Metal 4 is a runtime-gated feature, not the minimum OS of the app.
+		# AppleClang raises the arm64 slice to macOS 11 automatically.
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum macOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS app architectures")
-		if(NOT LIBRETRO AND (NOT DEFINED USE_METAL OR USE_METAL) AND "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
-			# A universal app contains Metal 4 only in its arm64 slice.
-			# Keep the deployment target before project()/DetectArchitecture.
-			if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "26.0")
-				set(CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum macOS deployment version" FORCE)
-			endif()
-		else()
-			set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum macOS deployment version")
-		endif()
+		include(MacDeploymentSDK)
 	endif()
 	if(CMAKE_GENERATOR STREQUAL "Xcode")
 		set(ZLIB_LIBRARY "-lz" CACHE STRING "Use generic linker flag for Xcode to support multiple SDKs")
@@ -114,8 +109,8 @@ if(USE_METAL AND (NOT APPLE OR NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR LIBRET
 	message(FATAL_ERROR "USE_METAL currently requires standalone macOS")
 endif()
 if(USE_METAL)
-	if(NOT "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES OR CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "26.0")
-		message(FATAL_ERROR "Metal 4 requires an arm64 slice and macOS 26 or later")
+	if(NOT "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+		message(FATAL_ERROR "Metal 4 requires an arm64 slice")
 	endif()
 	foreach(_metal_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
 		if(NOT _metal_arch MATCHES "^(arm64|x86_64)$")
@@ -460,7 +455,7 @@ if(USE_BREAKPAD AND NOT LIBRETRO)
 		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		include(MacBreakpad)
 		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
 
 		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
@@ -485,7 +480,7 @@ if(USE_BREAKPAD AND NOT LIBRETRO)
 				set(_symbol_suffix "x64")
 			endif()
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+				COMMAND "${FLYCAST_DUMP_SYMS}"
 					-a "${_symbol_arch}" -g "${FLYCAST_DSYM}" $<TARGET_FILE:flycast>
 					> "${FLYCAST_SYMBOLS_DIR}/Flycast-${_symbol_suffix}.sym"
 				VERBATIM)
@@ -1005,6 +1000,20 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
 if(USE_DISCORD AND NOT LIBRETRO)
 	option(BUILD_EXAMPLES "Build example apps" OFF)
 	add_subdirectory(core/deps/discord-rpc EXCLUDE_FROM_ALL)
+	if(APPLE)
+		# The pinned RPC library exports a hard-coded 10.10 linker flag through
+		# its static-library interface. The app's deployment target must win.
+		get_target_property(_discord_links discord-rpc LINK_LIBRARIES)
+		list(REMOVE_ITEM _discord_links "-framework AppKit, -mmacosx-version-min=10.10")
+		list(APPEND _discord_links "-framework AppKit")
+		set_property(TARGET discord-rpc PROPERTY LINK_LIBRARIES "${_discord_links}")
+		get_target_property(_discord_interface discord-rpc INTERFACE_LINK_LIBRARIES)
+		list(REMOVE_ITEM _discord_interface "-framework AppKit, -mmacosx-version-min=10.10"
+			"$<LINK_ONLY:-framework AppKit, -mmacosx-version-min=10.10>")
+		list(APPEND _discord_interface "-framework AppKit")
+		list(REMOVE_DUPLICATES _discord_interface)
+		set_property(TARGET discord-rpc PROPERTY INTERFACE_LINK_LIBRARIES "${_discord_interface}")
+	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/discord-rpc/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE discord-rpc)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DISCORD)
@@ -1461,6 +1470,10 @@ if(NOT LIBRETRO)
 			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
 			source_group("Resources" FILES ${ASSETS})
 			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+			set(FLYCAST_MACOS_ARM64_MINIMUM "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+			if(FLYCAST_MACOS_ARM64_MINIMUM VERSION_LESS "11.0")
+				set(FLYCAST_MACOS_ARM64_MINIMUM "11.0")
+			endif()
 
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast"

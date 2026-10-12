@@ -9,6 +9,7 @@
 // Syphon's public subclassing API owns discovery and IOSurface transport.
 // Flycast owns GPU encoding, residency and feedback on its native Metal 4 queue.
 // No patched SyphonMetalServer or legacy MTLCommandBuffer is required.
+API_AVAILABLE(macos(26.0))
 @interface FlycastMetalSyphonServer : SyphonServerBase
 @property (readonly, strong) id<MTLDevice> device;
 - (instancetype)initWithName:(NSString *)name device:(id<MTLDevice>)device;
@@ -115,7 +116,7 @@
 
 // Renderer-owned; completion handlers retain the specific server they target,
 // so a stopped/recreated exporter cannot receive an old submission's frame.
-static FlycastMetalSyphonServer *nativeMetalServer;
+static FlycastMetalSyphonServer *nativeMetalServer API_AVAILABLE(macos(26.0));
 
 bool os_VideoRoutingMetalHasClients(id<MTLDevice> device)
 {
