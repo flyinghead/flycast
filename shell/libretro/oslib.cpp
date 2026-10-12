@@ -119,11 +119,11 @@ std::string findNaomiBios(const std::string& name)
 {
 	std::string basepath(game_dir_no_slash);
 	basepath += PATH_DEFAULT_SLASH() + name;
-	if (!file_exists(basepath))
+	if (!path_is_valid(basepath.c_str()))
 	{
 		// File not found in system dir, try game dir instead
 		basepath = g_roms_dir + name;
-		if (!file_exists(basepath))
+		if (!path_is_valid(basepath.c_str()))
 			return "";
 	}
 	return basepath;
