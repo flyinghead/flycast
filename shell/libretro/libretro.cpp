@@ -414,7 +414,9 @@ void retro_init()
 	i18n::init();
 
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
-	if (!emuInited)
+	if (emuInited)
+		emu.initSh4();
+	else
 #else
 	(void)emuInited;
 #endif
@@ -436,6 +438,7 @@ void retro_deinit()
 	os_UninstallFaultHandler();
 	
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
+	emu.termSh4();
 	addrspace::release();
 #else
 	emu.term();

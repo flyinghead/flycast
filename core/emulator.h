@@ -113,6 +113,14 @@ public:
 	 */
 	void term();
 	/**
+	 * Terminate the SH4 executors so that the address space can be released.
+	 */
+	void termSh4();
+	/**
+	 * Map memory into the address space and initialize the SH4 executors again once it has been reserved again.
+	 */
+	void initSh4();
+	/**
 	 * Load the specified game/media. Will call init() first.
 	 * May throw if the game cannot be loaded.
 	 * If a game is already loaded, or the emulator is in the error state, unloadGame() must be called first.

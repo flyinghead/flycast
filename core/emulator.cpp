@@ -530,6 +530,23 @@ void Emulator::init()
 	state = Init;
 }
 
+void Emulator::termSh4()
+{
+	if (recompiler != nullptr)
+		recompiler->Term();
+	if (interpreter != nullptr)
+		interpreter->Term();
+}
+
+void Emulator::initSh4()
+{
+	addrspace::initMappings();
+	if (recompiler != nullptr)
+		recompiler->Init();
+	if (interpreter != nullptr)
+		interpreter->Init();
+}
+
 Sh4Executor *Emulator::getSh4Executor()
 {
 #if FEAT_SHREC != DYNAREC_NONE
