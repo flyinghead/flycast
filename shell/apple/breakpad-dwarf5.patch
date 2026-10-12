@@ -1,0 +1,25 @@
+--- a/src/common/dwarf/dwarf2reader.cc
++++ b/src/common/dwarf/dwarf2reader.cc
+@@ -61,6 +61,8 @@
+     return iter;
+   std::string macho_name("__");
+   macho_name += name + 1;
++  if (macho_name == "__debug_str_offsets")
++    macho_name = "__debug_str_offs";
+   iter = sections.find(macho_name);
+   return iter;
+ }
+--- a/src/common/mac/dump_syms.cc
++++ b/src/common/mac/dump_syms.cc
+@@ -361,8 +361,9 @@
+                    vector<Module::Line>* lines,
+                    std::map<uint32_t, Module::File*>* files) {
+     DwarfLineToModule handler(module, compilation_dir_, lines, files);
+-    LineInfo parser(program, length, byte_reader_, nullptr, 0,
+-                                  nullptr, 0, &handler);
++    LineInfo parser(program, length, byte_reader_,
++                    string_section, string_section_length,
++                    line_string_section, line_string_section_length, &handler);
+     parser.Start();
+   }
+  private:

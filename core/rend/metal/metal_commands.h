@@ -22,6 +22,7 @@ typedef NS_ENUM(NSUInteger, FCMetal4Status) {
 
 // Owns native Metal 4 commands, their allocator, argument tables and resources
 // through commit feedback. All encoding happens on the renderer's owning thread.
+API_AVAILABLE(macos(26.0))
 @interface FCMetal4Commands : NSObject
 @property (readonly, strong) id<MTL4CommandBuffer> native;
 @property (readonly, strong) FCMetal4Queue *commandQueue;
@@ -48,6 +49,7 @@ typedef NS_ENUM(NSUInteger, FCMetal4Status) {
 - (void)waitForEvent:(id<MTLEvent>)event value:(uint64_t)value;
 @end
 
+API_AVAILABLE(macos(26.0))
 @interface FCMetal4Queue : NSObject
 @property (readonly, strong) id<MTL4CommandQueue> native;
 @property (readonly, strong) id<MTLDevice> device;
@@ -55,6 +57,7 @@ typedef NS_ENUM(NSUInteger, FCMetal4Status) {
 - (FCMetal4Commands *)commandBuffer;
 @end
 
+API_AVAILABLE(macos(26.0))
 @interface FCMetal4RenderEncoder : NSObject
 @property (copy) NSString *label;
 - (void)endEncoding;
@@ -81,6 +84,7 @@ typedef NS_ENUM(NSUInteger, FCMetal4Status) {
 - (void)drawIndexedPrimitives:(MTLPrimitiveType)type indexCount:(NSUInteger)count indexType:(MTLIndexType)indexType indexBuffer:(id<MTLBuffer>)buffer indexBufferOffset:(NSUInteger)offset instanceCount:(NSUInteger)instances baseVertex:(NSInteger)vertex baseInstance:(NSUInteger)instance;
 @end
 
+API_AVAILABLE(macos(26.0))
 @interface FCMetal4ComputeEncoder : NSObject
 @property (copy) NSString *label;
 - (void)endEncoding;

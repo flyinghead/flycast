@@ -39,6 +39,7 @@ static void checkMetal(NSError *error, const char *operation)
 		throw RendererException(std::string(operation) + ": " + error.localizedDescription.UTF8String);
 }
 
+API_AVAILABLE(macos(26.0))
 static void commitCommands(FCMetal4Commands * command, dispatch_group_t submissions)
 {
 	if (!command || !submissions || command.status >= FCMetal4StatusCommitted)
@@ -62,7 +63,7 @@ static void commitCommands(FCMetal4Commands * command, dispatch_group_t submissi
 
 // Only the serial material queue accesses this cache. Jobs keep it and their
 // library alive independently of the context across renderer/backend changes.
-struct MetalMaterialFunctions
+struct API_AVAILABLE(macos(26.0)) MetalMaterialFunctions
 {
 	struct Hash {
 		size_t operator()(const MetalContext::MaterialConstants& key) const {
@@ -190,7 +191,7 @@ struct MetalContext::Impl
 	}
 };
 
-class MetalDriver final : public ImGuiDriver
+class API_AVAILABLE(macos(26.0)) MetalDriver final : public ImGuiDriver
 {
 	struct UITexture { id<MTLTexture> texture; id<MTLSamplerState> sampler; };
 	std::unordered_map<std::string, UITexture> textures;
@@ -802,6 +803,7 @@ id<MTLTexture> MetalContext::makeTexture(int width, int height, MTLPixelFormat f
 	if (!texture) throw RendererException("Metal texture allocation failed");
 	return texture;
 }
+API_AVAILABLE(macos(26.0))
 static MTL4RenderPipelineDescriptor *pipelineDescriptor(MTL4FunctionDescriptor *vertex, MTL4FunctionDescriptor *fragment,
 	MTLVertexDescriptor *layout, MTLPixelFormat color, MTL4RenderPipelineColorAttachmentDescriptor *blend)
 {

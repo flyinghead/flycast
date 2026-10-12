@@ -11,6 +11,7 @@ if(METAL_FRAME_CAPTURE_TESTS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE FLYCAST_FRAME_CAPTURE_TESTS)
 endif()
 target_sources(${PROJECT_NAME} PRIVATE
+    metal_support.h metal_support.mm
     metal_commands.h metal_commands.mm
     metal_context.h metal_context.mm
     metal_texture.h metal_texture.mm
@@ -18,15 +19,17 @@ target_sources(${PROJECT_NAME} PRIVATE
     metal_fx.h metal_fx.mm
     metal_syphon.h metal_syphon.mm
     metal_shaders.h metal_shader_options.h metal_modifier_clip.h metal_renderer.mm)
-set_source_files_properties(metal_commands.mm metal_context.mm metal_texture.mm metal_renderer.mm metal_pipeline_cache.mm metal_fx.mm metal_syphon.mm
+set_source_files_properties(metal_support.mm metal_commands.mm metal_context.mm metal_texture.mm metal_renderer.mm metal_pipeline_cache.mm metal_fx.mm metal_syphon.mm
     TARGET_DIRECTORY ${PROJECT_NAME}
-    PROPERTIES COMPILE_OPTIONS "-fobjc-arc" SKIP_PRECOMPILE_HEADERS ON)
+    PROPERTIES COMPILE_OPTIONS "-fobjc-arc;-Werror=unguarded-availability;-Werror=unguarded-availability-new" SKIP_PRECOMPILE_HEADERS ON)
 find_library(FLYCAST_METAL_FRAMEWORK Metal REQUIRED)
 find_library(FLYCAST_QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 find_library(FLYCAST_METALFX_FRAMEWORK MetalFX REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${FLYCAST_METAL_FRAMEWORK} ${FLYCAST_QUARTZCORE_FRAMEWORK})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${FLYCAST_METALFX_FRAMEWORK})
+# MetalFX does not exist on Catalina. A weak framework load lets the Intel
+# slice launch there and the arm64 slice use the guarded Metal 4 scaler.
+target_link_libraries(${PROJECT_NAME} PRIVATE "$<LINK_LIBRARY:WEAK_FRAMEWORK,${FLYCAST_METALFX_FRAMEWORK}>")
 find_library(FLYCAST_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 add_executable(flycast_metal_gpu_tests EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/metal/metal_gpu_tests.mm

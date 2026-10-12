@@ -14,14 +14,14 @@
 
 // Only immutable compositions cross from the renderer to the
 // display thread. The last reference releases a bounded composition slot.
-struct MetalDisplayImage {
+struct API_AVAILABLE(macos(26.0)) MetalDisplayImage {
 	id<MTLTexture> texture;
 	id<MTLSharedEvent> readyEvent;
 	u64 readyValue = 0;
 	double target = 0;
 	u64 content = 0;
 };
-struct MetalDisplayState {
+struct API_AVAILABLE(macos(26.0)) MetalDisplayState {
 	std::mutex mutex;
 	std::deque<std::shared_ptr<MetalDisplayImage>> pending;
 	std::shared_ptr<MetalDisplayImage> visible;
@@ -38,6 +38,7 @@ struct MetalDisplayState {
 	u64 busy = 0, evicted = 0;
 };
 
+API_AVAILABLE(macos(26.0))
 @interface FCMetalDisplayDelegate : NSObject
 - (instancetype)initWithState:(std::shared_ptr<MetalDisplayState>)state;
 @end
@@ -137,7 +138,7 @@ struct MetalDisplayState {
 }
 @end
 
-class MetalDisplayLink {
+class API_AVAILABLE(macos(26.0)) MetalDisplayLink {
 	std::shared_ptr<MetalDisplayState> state = std::make_shared<MetalDisplayState>();
 	std::thread thread;
 	CFRunLoopRef runLoop = nullptr;

@@ -55,7 +55,19 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
+	<key>LSMinimumSystemVersionByArchitecture</key>
+	<dict>
+		<key>x86_64</key>
+		<string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
+		<key>arm64</key>
+		<string>${FLYCAST_MACOS_ARM64_MINIMUM}</string>
+	</dict>
+	<key>LSEnvironment</key>
+	<dict>
+		<key>MTL_HUD_ENABLED</key>
+		<string>0</string>
+	</dict>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>LSApplicationCategoryType</key>

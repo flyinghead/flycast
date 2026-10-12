@@ -4,7 +4,7 @@
 
 // Presentation-only spatial upscaling. Call after acquiring the completed
 // presentation slot and before opening its render encoder.
-class MetalFXUpscaler
+class API_AVAILABLE(macos(26.0)) MetalFXUpscaler
 {
 public:
 	MetalFXUpscaler(id<MTLDevice> device, id<MTL4Compiler> compiler);

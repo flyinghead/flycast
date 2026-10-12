@@ -385,7 +385,8 @@ void input_sdl_handle()
 #if defined(USE_METAL) && defined(METAL_RENDERER_TESTS)
 					if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F9
 							&& isMetal(config::RendererType) && config::loadBool("log", "MetalVSyncTests", false)) {
-						MetalContext::Instance()->requestVSyncValidation();
+						if (__builtin_available(macOS 26.0, *))
+							MetalContext::Instance()->requestVSyncValidation();
 						break;
 					}
 #endif
