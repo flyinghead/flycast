@@ -19,10 +19,12 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     strategy:
+      fail-fast: false
       matrix:
         config:
           - { name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release }
-          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: '-G Xcode -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64" -DUSE_METAL=ON -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB', destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
+          - { name: x86_64-apple-darwin, os: macos-latest, shell: sh, arch: x86_64, brewArchFlag: '--with-intel', cmakeArgs: '-G Xcode -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DUSE_METAL=OFF -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB', destDir: osx-x86_64, buildType: Release, packagePath: artifact/flycast-macos-intel.zip }
+          - { name: arm64-apple-darwin, os: macos-latest, shell: sh, arch: arm64, brewArchFlag: '--with-arm', cmakeArgs: '-G Xcode -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_OSX_ARCHITECTURES=arm64 -DUSE_METAL=ON -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB', destDir: osx-arm64, buildType: Release, packagePath: artifact/flycast-macos-arm64.zip }
           - { name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
           - { name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release }
           - { name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo, packagePath: artifact/flycast-x86_64-w64-mingw32.zip }
@@ -36,7 +38,7 @@ jobs:
           # Metal 4 and still supports the official macOS 10.15 app floor.
           xcode_developer_dir="/Applications/Xcode_26.6.app/Contents/Developer"
           if [ ! -d "$xcode_developer_dir" ]; then
-            echo "Xcode 26.6 is required for the Catalina-compatible universal release." >&2
+            echo "Xcode 26.6 is required for the compatible macOS releases." >&2
             exit 1
           fi
           export DEVELOPER_DIR="$xcode_developer_dir"
@@ -59,10 +61,11 @@ jobs:
             echo "MoltenVK $moltenvk_tag was downloaded, but macOS libMoltenVK.dylib was not found." >&2
             exit 1
           fi
-          for arch in x86_64 arm64; do
-            lipo "$moltenvk_dylib" -verify_arch "$arch"
-          done
-          echo "MOLTENVK_DYLIB=$moltenvk_dylib" >> $GITHUB_ENV
+          lipo "$moltenvk_dylib" -verify_arch "${{ matrix.config.arch }}"
+          moltenvk_thin="$moltenvk_root/libMoltenVK.dylib"
+          lipo "$moltenvk_dylib" -thin "${{ matrix.config.arch }}" -output "$moltenvk_thin"
+          codesign --force --sign - "$moltenvk_thin"
+          echo "MOLTENVK_DYLIB=$moltenvk_thin" >> "$GITHUB_ENV"
         if: runner.os == 'macOS'
 
       - name: Set up build environment (Linux)
@@ -99,18 +102,18 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Compile universal dependencies (macOS)
+      - name: Compile architecture-specific dependencies (macOS)
         run: |
           for formula in ./shell/apple/libomp.rb ./shell/apple/libpng-flycast.rb; do
             libname=$(basename "$formula" .rb)
-            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" || \
-            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula"
-          
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" "${{ matrix.config.brewArchFlag }}" || \
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula" "${{ matrix.config.brewArchFlag }}"
+            
             prefix=$(brew --prefix $libname)
             # Find and verify the static library
             libfile=$(find "$prefix/lib" -name "*.a" | head -n1)
-            lipo -info "$libfile"
-          
+            test "$(lipo -archs "$libfile")" = "${{ matrix.config.arch }}"
+            
             # Export prefix for subsequent CMake steps
             if [ -z "$CMAKE_PREFIX_PATH" ]; then
               CMAKE_PREFIX_PATH="$prefix"
@@ -119,7 +122,7 @@ jobs:
             fi
           done
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
-        if: matrix.config.name == 'apple-darwin'
+        if: runner.os == 'macOS'
 
       - uses: actions/cache@v6
         with:
@@ -169,19 +172,13 @@ jobs:
 
       - name: Package app (macos)
         run: |
-          python3 shell/apple/check_macos_compatibility.py artifact/bin/Flycast.app
+          python3 shell/apple/check_macos_compatibility.py artifact/bin/Flycast.app --arch "${{ matrix.config.arch }}"
           cd artifact/bin
-          for arch in x86_64 arm64; do
-            lipo Flycast.app/Contents/MacOS/Flycast -verify_arch "$arch"
-            for dylib in Flycast.app/Contents/Frameworks/*.dylib; do
-              [ -f "$dylib" ] || continue
-              lipo "$dylib" -verify_arch "$arch"
-            done
-          done
+          codesign --force --deep --sign - Flycast.app
           codesign --verify --deep --strict --all-architectures --verbose=4 Flycast.app
           zip -rm flycast.app.zip Flycast.app
           cp flycast.app.zip "../../${{ matrix.config.packagePath }}"
-        if: matrix.config.name == 'apple-darwin'
+        if: runner.os == 'macOS'
 
       - name: Package app (windows)
         run: |
@@ -229,4 +226,5 @@ jobs:
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin' || matrix.config.name == 'x86_64-pc-linux-gnu') && github.event_name == 'push' }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-w64-mingw32' || runner.os == 'macOS' || matrix.config.name == 'x86_64-pc-linux-gnu') && github.event_name == 'push' }}
+        
