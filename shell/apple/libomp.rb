@@ -28,9 +28,6 @@ class Libomp < Formula
   depends_on "lit" => :build
   uses_from_macos "llvm" => :build
 
-  option "with-intel", "Build only the Intel macOS library"
-  option "with-arm", "Build only the Apple Silicon macOS library"
-
   on_linux do
     depends_on "python@3.13"
   end
@@ -55,13 +52,11 @@ class Libomp < Formula
     args = ["-DLIBOMP_INSTALL_ALIASES=OFF"]
     args << "-DOPENMP_ENABLE_LIBOMPTARGET=OFF" if OS.linux?
 
-    odie "Choose either --with-intel or --with-arm" if build.with?("intel") && build.with?("arm")
-    architectures = build.with?("intel") ? "x86_64" : (build.with?("arm") ? "arm64" : "arm64;x86_64")
-    deployment_target = build.with?("arm") ? "11.0" : "10.15"
+    # Build universal binary     #Flycast
     ENV.permit_arch_flags
     ENV.runtime_cpu_detection
-    args << "-DCMAKE_OSX_ARCHITECTURES=#{architectures}"
-    args << "-DCMAKE_OSX_DEPLOYMENT_TARGET=#{deployment_target}"
+    args << "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+    args << "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15"
 
     # system "cmake", "-S", "src", "-B", "build/shared", *std_cmake_args, *args
     # system "cmake", "--build", "build/shared"
