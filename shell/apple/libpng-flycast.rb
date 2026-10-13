@@ -9,14 +9,19 @@ class LibpngFlycast < Formula
   uses_from_macos "zlib"
 
   # Keg-only to avoid conflict with standard libpng and fix CI resolution
-  keg_only "it is a universal static build for Flycast"
+  keg_only "it is a static build for Flycast"
+
+  option "with-intel", "Build only the Intel macOS library"
+  option "with-arm", "Build only the Apple Silicon macOS library"
 
   def install
-    # Build universal binary     #Flycast
+    odie "Choose either --with-intel or --with-arm" if build.with?("intel") && build.with?("arm")
+    architectures = build.with?("intel") ? "x86_64" : (build.with?("arm") ? "arm64" : "arm64;x86_64")
+    deployment_target = build.with?("arm") ? "11.0" : "10.15"
     ENV.permit_arch_flags
     args = std_cmake_args + [
-      "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-      "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
+      "-DCMAKE_OSX_ARCHITECTURES=#{architectures}",
+      "-DCMAKE_OSX_DEPLOYMENT_TARGET=#{deployment_target}",
       "-DPNG_SHARED=OFF",
       "-DPNG_TESTS=OFF",
       "-DPNG_ARM_NEON=off",
