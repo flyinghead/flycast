@@ -456,14 +456,17 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 
 static void loadDecryptedRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
-	// Try to load BIOS from naomi.zip
-	if (!loadBios("naomi", NULL, NULL, config::Region))
+	// Try to load BIOS from naomi.zip or naomi2.zip
+	const bool naomi2 = settings.platform.isNaomi2();
+	const char *biosName = naomi2 ? "naomi2" : "naomi";
+	if (!loadBios(biosName, NULL, NULL, config::Region))
 	{
-		WARN_LOG(NAOMI, "Warning: Region %d bios not found in naomi.zip", config::Region.get());
-		if (!loadBios("naomi", NULL, NULL, -1))
+		WARN_LOG(NAOMI, "Warning: Region %d bios not found in %s.zip", config::Region.get(), biosName);
+		if (!loadBios(biosName, NULL, NULL, -1))
 		{
 			if (!bios_loaded)
-				throw FlycastException(Ts("Error: cannot load BIOS from naomi.zip"));
+				throw FlycastException(naomi2 ? Ts("Error: cannot load BIOS from naomi2.zip")
+						: Ts("Error: cannot load BIOS from naomi.zip"));
 		}
 	}
 
@@ -846,6 +849,20 @@ void naomi_cart_deserialize(Deserializer& deser)
 	touchscreen::deserialize(deser);
 	printer::deserialize(deser);
 	hopper::deserialize(deser);
+}
+
+// Decrypted single-file roms aren't in the romset table. The board name in the
+// cartridge header tells Naomi 2 from Naomi.
+int naomi_cart_GetDecryptedRomPlatform(const std::string& path)
+{
+	char boardName[16] {};
+	hostfs::File *file = hostfs::storage().openFile(path, "rb");
+	if (file != nullptr)
+	{
+		file->read(boardName, sizeof(boardName), 1);
+		delete file;
+	}
+	return memcmp(boardName, "Naomi2", 6) == 0 ? DC_PLATFORM_NAOMI2 : DC_PLATFORM_NAOMI;
 }
 
 int naomi_cart_GetPlatform(const char *path)
