@@ -20,7 +20,7 @@
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
 #ifdef USE_METAL
-#include "rend/metal/metal_support.h"
+#include "rend/metal4/metal4_support.h"
 #endif
 #ifdef LIBRETRO
 #include <libretro.h>

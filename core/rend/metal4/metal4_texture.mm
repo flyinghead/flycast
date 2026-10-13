@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
-#include "metal_texture.h"
+#include "metal4_texture.h"
 #include <algorithm>
 
 namespace {

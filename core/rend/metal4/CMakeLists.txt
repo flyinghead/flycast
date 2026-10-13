@@ -11,15 +11,15 @@ if(METAL_FRAME_CAPTURE_TESTS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE FLYCAST_FRAME_CAPTURE_TESTS)
 endif()
 target_sources(${PROJECT_NAME} PRIVATE
-    metal_support.h metal_support.mm
-    metal_commands.h metal_commands.mm
-    metal_context.h metal_context.mm
-    metal_texture.h metal_texture.mm
-    metal_pipeline_cache.h metal_pipeline_cache.mm
-    metal_fx.h metal_fx.mm
-    metal_syphon.h metal_syphon.mm
-    metal_shaders.h metal_shader_options.h metal_modifier_clip.h metal_renderer.mm)
-set_source_files_properties(metal_support.mm metal_commands.mm metal_context.mm metal_texture.mm metal_renderer.mm metal_pipeline_cache.mm metal_fx.mm metal_syphon.mm
+    metal4_support.h metal4_support.mm
+    metal4_commands.h metal4_commands.mm
+    metal4_context.h metal4_context.mm
+    metal4_texture.h metal4_texture.mm
+    metal4_pipeline_cache.h metal4_pipeline_cache.mm
+    metal4_fx.h metal4_fx.mm
+    metal4_syphon.h metal4_syphon.mm
+    metal4_shaders.h metal4_shader_options.h metal4_modifier_clip.h metal4_renderer.mm)
+set_source_files_properties(metal4_support.mm metal4_commands.mm metal4_context.mm metal4_texture.mm metal4_renderer.mm metal4_pipeline_cache.mm metal4_fx.mm metal4_syphon.mm
     TARGET_DIRECTORY ${PROJECT_NAME}
     PROPERTIES COMPILE_OPTIONS "-fobjc-arc;-Werror=unguarded-availability;-Werror=unguarded-availability-new" SKIP_PRECOMPILE_HEADERS ON)
 find_library(FLYCAST_METAL_FRAMEWORK Metal REQUIRED)
@@ -33,7 +33,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE "$<LINK_LIBRARY:WEAK_FRAMEWORK,${F
 find_library(FLYCAST_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 add_executable(flycast_metal_gpu_tests EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/metal/metal_gpu_tests.mm
-    ${CMAKE_CURRENT_SOURCE_DIR}/metal_commands.mm)
+    ${CMAKE_CURRENT_SOURCE_DIR}/metal4_commands.mm)
 target_include_directories(flycast_metal_gpu_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/core ${CMAKE_SOURCE_DIR}/core/deps/glm)
 target_compile_features(flycast_metal_gpu_tests PRIVATE cxx_std_17)

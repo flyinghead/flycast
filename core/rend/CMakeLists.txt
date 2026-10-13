@@ -34,7 +34,7 @@ if(USE_VULKAN)
 endif()
 
 if(USE_METAL)
-    add_subdirectory(metal)
+    add_subdirectory(metal4)
 endif()
 
 if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))

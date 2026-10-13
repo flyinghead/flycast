@@ -21,8 +21,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "wsi/context.h"
 #ifdef USE_METAL
-#include "rend/metal/metal_context.h"
-#include "rend/metal/metal_support.h"
+#include "rend/metal4/metal4_context.h"
+#include "rend/metal4/metal4_support.h"
 #endif
 
 enum RenderAPI {

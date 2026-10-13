@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
-#include "metal_fx.h"
+#include "metal4_fx.h"
 #import <MetalFX/MetalFX.h>
 #include <atomic>
 

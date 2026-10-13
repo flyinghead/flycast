@@ -19,7 +19,7 @@
 #include "sdl_keyboard_mac.h"
 #include "wsi/context.h"
 #if defined(USE_METAL) && defined(METAL_RENDERER_TESTS)
-#include "rend/metal/metal_context.h"
+#include "rend/metal4/metal4_context.h"
 #endif
 #include "ui/gui.h"
 #include "emulator.h"

@@ -1,6 +1,6 @@
 // Standalone, ROM-free Metal GPU checks. SPDX-License-Identifier: GPL-2.0-or-later
 #import <Metal/Metal.h>
-#include "rend/metal/metal_commands.h"
+#include "rend/metal4/metal4_commands.h"
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -10,9 +10,9 @@
 #include <limits>
 #include <utility>
 using u32 = uint32_t;
-#include "rend/metal/metal_shaders.h"
-#include "rend/metal/metal_shader_options.h"
-#include "rend/metal/metal_oit_tiling.h"
+#include "rend/metal4/metal4_shaders.h"
+#include "rend/metal4/metal4_shader_options.h"
+#include "rend/metal4/metal4_oit_tiling.h"
 
 namespace {
 struct Vertex {

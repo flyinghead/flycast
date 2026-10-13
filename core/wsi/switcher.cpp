@@ -27,8 +27,8 @@
 #include "rend/dx9/dxcontext.h"
 #include "rend/dx11/dx11context.h"
 #ifdef USE_METAL
-#include "rend/metal/metal_context.h"
-#include "rend/metal/metal_support.h"
+#include "rend/metal4/metal4_context.h"
+#include "rend/metal4/metal4_support.h"
 #endif
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"

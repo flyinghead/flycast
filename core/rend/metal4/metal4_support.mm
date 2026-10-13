@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
-#include "metal_support.h"
+#include "metal4_support.h"
 #import <Metal/Metal.h>
 
 bool metal4Available()

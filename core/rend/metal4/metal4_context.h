@@ -18,7 +18,7 @@
 #define Rect MacOSRect
 #define RGBColor MacOSRGBColor
 #import <Metal/Metal.h>
-#include "metal_commands.h"
+#include "metal4_commands.h"
 #import <QuartzCore/CAMetalLayer.h>
 #include <dispatch/dispatch.h>
 struct ImDrawData;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
-#include "metal_context.h"
+#include "metal4_context.h"
 
 // Independent read archives keep foreground PSO creation separate from the
 // material compiler and the serial, best-effort archive writer.
