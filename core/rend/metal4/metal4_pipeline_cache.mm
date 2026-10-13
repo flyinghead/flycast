@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
-#include "metal_pipeline_cache.h"
+#include "metal4_pipeline_cache.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
 #include <CommonCrypto/CommonDigest.h>

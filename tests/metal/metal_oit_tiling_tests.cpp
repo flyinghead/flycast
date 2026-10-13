@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "rend/metal/metal_oit_tiling.h"
+#include "rend/metal4/metal4_oit_tiling.h"
 #include <cassert>
 #include <cstdio>
 #include <random>

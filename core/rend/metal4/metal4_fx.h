@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
-#include "metal_context.h"
+#include "metal4_context.h"
 
 // Presentation-only spatial upscaling. Call after acquiring the completed
 // presentation slot and before opening its render encoder.

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
-#include "metal_context.h"
-#include "metal_shaders.h"
-#include "metal_shader_options.h"
-#include "metal_pipeline_cache.h"
-#include "metal_fx.h"
-#include "metal_presentation_timing.h"
+#include "metal4_context.h"
+#include "metal4_shaders.h"
+#include "metal4_shader_options.h"
+#include "metal4_pipeline_cache.h"
+#include "metal4_fx.h"
+#include "metal4_presentation_timing.h"
 #include "ui/imgui_driver.h"
 #include "ui/gui.h"
 #include "hw/pvr/Renderer_if.h"
@@ -30,7 +30,7 @@
 #include <functional>
 #endif
 #ifdef VIDEO_ROUTING
-#include "metal_syphon.h"
+#include "metal4_syphon.h"
 #endif
 
 static void checkMetal(NSError *error, const char *operation)
@@ -59,7 +59,7 @@ static void commitCommands(FCMetal4Commands * command, dispatch_group_t submissi
 	}
 }
 
-#include "metal_display_link.h"
+#include "metal4_display_link.h"
 
 // Only the serial material queue accesses this cache. Jobs keep it and their
 // library alive independently of the context across renderer/backend changes.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "rend/metal/metal_modifier_clip.h"
+#include "rend/metal4/metal4_modifier_clip.h"
 #include <cstdlib>
 #include <random>
 #include <cstdio>

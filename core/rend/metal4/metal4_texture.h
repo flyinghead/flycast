@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
-#include "metal_context.h"
+#include "metal4_context.h"
 #include "rend/TexCache.h"
 
 class API_AVAILABLE(macos(26.0)) MetalTexture final : public BaseTextureCacheData

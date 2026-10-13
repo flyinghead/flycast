@@ -1,9 +1,9 @@
 // Native PowerVR2 renderer for Metal 4. SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
-#include "metal_texture.h"
-#include "metal_shaders.h"
-#include "metal_oit_tiling.h"
-#include "metal_modifier_clip.h"
+#include "metal4_texture.h"
+#include "metal4_shaders.h"
+#include "metal4_oit_tiling.h"
+#include "metal4_modifier_clip.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/sorter.h"

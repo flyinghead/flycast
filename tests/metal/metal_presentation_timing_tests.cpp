@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "rend/metal/metal_presentation_timing.h"
+#include "rend/metal4/metal4_presentation_timing.h"
 #include <cstdio>
 #include <limits>
 

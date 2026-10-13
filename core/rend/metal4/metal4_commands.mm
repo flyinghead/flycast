@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #if defined(USE_METAL) || defined(FLYCAST_METAL_STANDALONE)
-#include "metal_commands.h"
+#include "metal4_commands.h"
 #ifdef FLYCAST_METAL_STANDALONE
 #include <stdexcept>
 using MetalCommandException = std::runtime_error;
