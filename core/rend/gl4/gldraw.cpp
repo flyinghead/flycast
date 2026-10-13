@@ -486,7 +486,6 @@ void gl4CreateTextures(int width, int height)
 void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
-	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 	if (!gl.rendContext->isRTT)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
@@ -494,6 +493,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 		if (gl.rendContext->clearFramebuffer)
 		{
 			// Clear framebuffer
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
 			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
@@ -504,7 +504,6 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, output_fbo);
 			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 			glCheck();
-			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 		}
 		if (gl4ShaderUniforms.base_clipping.enabled)
 			glcache.Enable(GL_SCISSOR_TEST);
@@ -512,6 +511,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
+	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 	glcache.DepthMask(GL_TRUE);
 	glClearDepthf(0.f);
 	glcache.StencilMask(0xFF);

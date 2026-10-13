@@ -455,7 +455,16 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->PSSetShaderResources(0, 1, &opaqueTextureView.get());
         auto sampler = samplers->getSampler(false);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
-		deviceContext->RSSetScissorRects(1, &scissorRect);
+		D3D11_RECT rect {};
+		if (rendContext->isRTT) {
+			rect.right = rendContext->framebufferWidth;
+			rect.bottom = rendContext->framebufferHeight;
+		}
+		else {
+			rect.right = width;
+			rect.bottom = height;
+		}
+		deviceContext->RSSetScissorRects(1, &rect);
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(false, false, 0, false), 0);
 		setCullMode(0);
 
