@@ -326,7 +326,9 @@ if(WINDOWS_STORE)
 	set(USE_VULKAN OFF)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+if(NOT (APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+endif()
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS- /utf-8)
 	if(WINDOWS_STORE)
@@ -435,6 +437,9 @@ if(USE_BREAKPAD AND NOT LIBRETRO)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
 		include(MacBreakpad)
 		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+		# Release still needs line tables for its Breakpad dSYM. Keep the
+		# linker debug map intact until dsymutil/Xcode has consumed it.
+		target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:-gline-tables-only>")
 
 		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
 			set(FLYCAST_DSYM "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM")
@@ -1457,6 +1462,7 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_COPYRIGHT "Copyright © ${YEAR} Flycast contributors. All rights reserved."
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf"
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym"
+				XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] YES
 				XCODE_ATTRIBUTE_CLANG_DEBUG_INFORMATION_LEVEL[variant=Release] "line-tables-only"
 				XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] YES
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=RelWithDebInfo] "dwarf-with-dsym"
