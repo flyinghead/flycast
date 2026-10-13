@@ -55,7 +55,10 @@ void DMAC_Ch2St()
 			src += newLen;
 		}
 		SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, len);
-		TAWrite(dst, psrc, len / sizeof(SQBuffer));
+		if (psrc != nullptr)
+			TAWrite(dst, psrc, len / sizeof(SQBuffer));
+		else
+			WARN_LOG(SH4, "DMAC: Ch2 TA DMA source out of bounds: src %x dst %x len %x", DMAC_SAR(2), SB_C2DSTAT, SB_C2DLEN);
 		src += len;
 	}
 	// Direct Texture path and mirror
@@ -69,6 +72,13 @@ void DMAC_Ch2St()
 		{
 			// 64-bit path
 			dst = (dst & 0x00FFFFFF) | 0xa4000000;
+			// Don't write past the end of VRAM
+			const u32 vramOffset = dst & VRAM_MASK;
+			if (vramOffset + len > VRAM_SIZE)
+			{
+				WARN_LOG(SH4, "DMAC: Ch2 texture DMA clamped to VRAM: dst %x len %x", dst, len);
+				len = VRAM_SIZE - vramOffset;
+			}
 			if ((src & RAM_MASK) + len > RAM_SIZE)
 			{
 				u32 newLen = RAM_SIZE - (src & RAM_MASK);
