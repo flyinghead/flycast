@@ -63,11 +63,6 @@
 		<key>arm64</key>
 		<string>${FLYCAST_MACOS_ARM64_MINIMUM}</string>
 	</dict>
-	<key>LSEnvironment</key>
-	<dict>
-		<key>MTL_HUD_ENABLED</key>
-		<string>0</string>
-	</dict>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>LSApplicationCategoryType</key>
