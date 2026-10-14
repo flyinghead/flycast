@@ -1199,7 +1199,7 @@ jobs:
                   ensureVisible(true);
               }
 
-              private boolean animate() {
+              private boolean stepAnimation() {
                   boolean again = false;
                   float d = tabIndex - tabPos;
                   if (Math.abs(d) > 0.003f) {
@@ -1222,7 +1222,7 @@ jobs:
               protected void onDraw(Canvas c) {
                   int w = getWidth();
                   int h = getHeight();
-                  boolean again = animate();
+                  boolean again = stepAnimation();
 
                   drawBackground(c, w, h);
                   drawHeader(c, w, h);
