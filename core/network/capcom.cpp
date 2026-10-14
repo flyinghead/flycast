@@ -241,7 +241,7 @@ public:
 
 	void writeModem(u8 b) override
 	{
-		// Games packet sizes:
+		// Games packet sizes (V.42 payload):
 		// mvsc2		4
 		// pstone2		34
 		// sf3strike3	16
@@ -262,14 +262,8 @@ public:
 			throw ConnectionClosed();
 		txQueue.push(b);
 		txBuffering.reset();
-		if (state == Syncing && b != 0xa && (b < 'A' || b > 'Z'))
-		{
-			// Crude initial synchronization
-			u64 t0 = getTimeMs();
-			while (rxQueue.empty() && getTimeMs() -  t0 < 500)
-				;
+		if (state == Syncing)
 			state = Connected;
-		}
 	}
 
 	void flushTxQueue()
@@ -279,19 +273,8 @@ public:
 			return;
 		std::string data;
 		data.reserve(txQueue.size());
-		/*
-		// Detect packet losses
-		data.reserve(txQueue.size() + 4);
-		++txSeq;
-		data.push_back(txSeq);
-		data.push_back(txSeq >> 8);
-		data.push_back(txSeq >> 16);
-		data.push_back(txSeq >> 24);
-		*/
 		while (!txQueue.empty())
 			data.push_back((char)txQueue.pop());
-		if (!memcmp(data.c_str(), "\nREDY\n", 6))
-			resyncTime = getTimeMs();
 		int ret = juice_send(getJuiceAgent(), data.c_str(), data.size());
 		if (ret)
 			WARN_LOG(NETWORK, "juice send failed: %d", ret);
@@ -302,32 +285,19 @@ public:
 		if (rxQueue.empty())
 		{
 			if (state == Closed)
-				// Helps spawn and hmgeo when one end has closed the connection
-				return 0;
+				throw ConnectionClosed();
 			else
 				return -1;
 		}
 		u8 c = rxQueue.pop();
-		if (state == Syncing && c != 0xa && (c < 'A' || c > 'Z'))
+		if (state == Syncing)
 			state = Connected;
 		return c;
 	}
 	int modemAvailable() override
 	{
 		if (rxQueue.empty() && state == Closed)
-			// Helps spawn and hmgeo when one end has closed the connection
-			return 1;
-		if (resyncTime != 0 && rxQueue.empty())
-		{
-			u64 now = getTimeMs();
-			if (now - resyncTime >= 500)
-			{
-				// FIXME Spawn: resync resend endless loop (prob < 17%)
-				WARN_LOG(NETWORK, "Resync timeout. Resending");
-				juice_send(getJuiceAgent(), "\nREDY\n", 6);
-				resyncTime = now;
-			}
-		}
+			throw ConnectionClosed();
 		return rxQueue.size();
 	}
 
@@ -400,16 +370,6 @@ private:
 
 	void onJuiceReceive(const char *data, size_t len)
 	{
-		/*
-		// Detect packet losses
-		u32 seq;
-		memcpy(&seq, data, 4);
-		if (seq != rxSeq)
-			WARN_LOG(NETWORK, "Packet out of order: expected %d got %d", rxSeq, seq);
-		rxSeq = seq + 1;
-		len -= 4;
-		data += 4;
-		*/
 		if (len >= 6 && data[4] == Stop && !memcmp(data, PKT_MAGIC, sizeof(PKT_MAGIC)))
 		{
 			if (state == Connected) {
@@ -418,9 +378,6 @@ private:
 			}
 			return;
 		}
-		if (len == 4 && !memcmp(data, "\nOK\n", 4))
-			resyncTime = 0;
-
 		while (len--)
 			rxQueue.push(*data++);
 	}
@@ -744,9 +701,6 @@ private:
 	bool caller = false;
 	bool startSent = false;
 	std::mutex mutex;
-	u64 resyncTime = 0;
-	//u32 rxSeq = 1;
-	//u32 txSeq = 0;
 };
 
 CapcomDirect::CapcomDirect() {
@@ -800,8 +754,7 @@ void CapcomDirect::startCapcomDirectService()
 		if (capcomService->receiveStart())
 		{
 			INFO_LOG(NETWORK, "%s: Start received", caller ? "caller" : "callee");
-			// TODO p2p mode isn't working
-			modemPeer2Peer(false);
+			modemPeer2Peer(true);
 			if (caller) {
 				// Pick up the phone and start the handshake
 				modemKeepRinging(false);

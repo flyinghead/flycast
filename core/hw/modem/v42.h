@@ -70,6 +70,9 @@ private:
 class HdlcDecoder : public OutStream
 {
 public:
+	HdlcDecoder(bool keepCrc = false)
+		: keepCrc(keepCrc)
+	{}
 	void write(u8 v);
 	bool frameAvailable() const { return !frames.empty(); }
 	std::vector<u8> getFrame();
@@ -81,12 +84,13 @@ private:
 	int rxOnes = 0;
 	int rxPosition = 0;
 	u8 rxCurByte = 0;
+	bool keepCrc;
 };
 
 class HdlcEncoder : public BufferedTransformer
 {
 public:
-	void sendFrame(const std::vector<u8>& data);
+	void sendFrame(const std::vector<u8>& data, int crc = -1);
 	void sendFlag();
 	void reset() override;
 
@@ -127,6 +131,7 @@ private:
 		Detection,
 		Establish,
 		Connected,
+		DiscSent,
 		Release,
 		V14			// Bomberman Online, Power Smash, Pro Yakyu Team de asobou net!
 	};
@@ -185,11 +190,64 @@ private:
 
 	void sendIFrame();
 	void ackIFrame(int seqNum);
+	void sendDisc();
 	// Answerer
 	void sendSabme();
 	void sendXid();
 
 	friend class V42Test;
+};
+
+//
+// Converts between synchronous HDLC and HDLC-like asynchronous frames
+// as used by ppp. This is used for Capcom peer-to-peer communication.
+// Upper layer protocols such as V.42 (and potentially V.42bis) are implemented
+// natively by each peer. This way error correction works end to end.
+//
+class HdlcSyncAsync : public InStream, public OutStream
+{
+public:
+	HdlcSyncAsync(InStream& in, OutStream& out)
+		: inputStream(in), outputStream(out)
+	{}
+	int read() override;
+	void write(u8 v) override;
+	void reset();
+
+	int available() override {
+		return 1;
+	}
+
+	void setOriginator(bool originator) {
+		this->originator = originator;
+	}
+
+private:
+	void handleSyncFrame();
+	void handleAsyncFrame();
+
+	InStream& inputStream;
+	OutStream& outputStream;
+	bool originator = true;
+
+	enum Phase {
+		None,
+		Detection,
+		Connected,
+		Release,
+	};
+	Phase phase = None;
+	u8 lastRx = 0;
+	int odpCount = 0;
+	V14Encoder v14Encoder;
+	V14Decoder v14Decoder;
+	HdlcEncoder hdlcEncoder;
+	HdlcDecoder hdlcDecoder {true};
+	std::vector<uint8_t> inFrame;
+	bool escapeSeen = false;
+
+	static constexpr uint8_t FLAG = 0x7e;
+	static constexpr uint8_t ESCAPE = 0x7d;
 };
 
 //

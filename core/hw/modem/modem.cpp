@@ -177,6 +177,7 @@ static InStream *curInput = &netIn;
 static OutStream *curOutput = &netOut;
 
 static V42Protocol v42Proto { netIn, netOut };
+static HdlcSyncAsync hdlcProto { netIn, netOut };
 
 static bool v8bis;
 static V8bisProtocol v8bisProto;
@@ -207,9 +208,16 @@ static void configureStreams()
 		curInput = &v8bisProto;
 		curOutput = &v8bisProto;
 	}
-	else if (modem_regs.reg08.ASYN == 0 && !peer2peerRawMode) {
-		curInput = &v42Proto;
-		curOutput = &v42Proto;
+	else if (modem_regs.reg08.ASYN == 0)
+	{
+		if (peer2peerRawMode) {
+			curInput = &hdlcProto;
+			curOutput = &hdlcProto;
+		}
+		else {
+			curInput = &v42Proto;
+			curOutput = &v42Proto;
+		}
 	}
 	else {
 		curInput = &netIn;
@@ -524,6 +532,8 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			callback_cycles = 238_sh4us;
 			v42Proto.reset();
 			v42Proto.setOriginator(modem_regs.reg09.ORG);
+			hdlcProto.reset();
+			hdlcProto.setOriginator(modem_regs.reg09.ORG);
 
 			break;
 
@@ -1152,6 +1162,7 @@ void ModemDeserialize(Deserializer& deser)
 
 	rxFifo.clear();
 	v42Proto.reset();
+	hdlcProto.reset();
 	v8bis = false;
 	v8bisProto.reset();
 	configureStreams();
