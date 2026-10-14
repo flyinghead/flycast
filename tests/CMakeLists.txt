@@ -15,6 +15,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/serialize_test.cpp
         src/AicaArmTest.cpp
         src/Sh4InterpreterTest.cpp
+        src/SorterTest.cpp
         src/MmuTest.cpp
         src/HttpTest.cpp
         src/IniFileTest.cpp
