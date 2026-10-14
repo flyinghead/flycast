@@ -29,28 +29,42 @@ constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 
 static u8 q_subchannel[96];
 
-static bool convertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
+static u8 bin2bcd(u32 v) {
+	return (u8)((v % 10) | ((v / 10) << 4));
+}
+
+static bool convertSector(u8* in_buff, u8* out_buff, int from, int to, int sector)
 {
 	//get subchannel data, if any
-	if (from == 2448)
-	{
+	if (from == 2448) {
 		memcpy(q_subchannel, in_buff + 2352, 96);
 		from -= 96;
 	}
-	else
+	else {
 		memset(q_subchannel, 0, sizeof(q_subchannel));
+	}
 
 	//if no conversion
-	if (to == from)
-	{
+	if (to == from) {
 		memcpy(out_buff, in_buff, to);
 		return true;
 	}
 	switch (to)
 	{
 	case 2340:
-		verify(from == 2352);
-		memcpy(out_buff, &in_buff[12], 2340);
+		verify(from == 2352 || from == 2336);
+		if (from == 2336)
+		{
+			// 2336 formats have no header, synthesize one from the FAD
+			out_buff[0] = bin2bcd(sector / 75 / 60);
+			out_buff[1] = bin2bcd((sector / 75) % 60);
+			out_buff[2] = bin2bcd(sector % 75);
+			out_buff[3] = 2;
+			memcpy(&out_buff[4], in_buff, 2336);
+		}
+		else {
+			memcpy(out_buff, &in_buff[12], 2340);
+		}
 		break;
 	case 2328:
 		verify(from == 2352);
@@ -313,6 +327,10 @@ u32 Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, bool stopOnMiss, Loa
 		}
 		else if (fmt == 2048 && secfmt == SECFMT_2336_MODE2) {
 			memcpy(dst, temp + 8, 2048);
+		}
+		else if (fmt == 2340 && secfmt == SECFMT_2336_MODE2) {
+			// Bleemcast
+			convertSector(temp, dst, 2336, fmt, FAD);
 		}
 		else if (fmt == 2048 && (secfmt == SECFMT_2048_MODE1 || secfmt == SECFMT_2048_MODE2_FORM1)) {
 			memcpy(dst, temp, 2048);
