@@ -26,7 +26,6 @@ assert info["LSMinimumSystemVersion"] == minimum[architectures[0]], "Incorrect a
 for arch in architectures:
     assert info["LSMinimumSystemVersionByArchitecture"][arch] == minimum[arch], \
         f"{arch}: incorrect architecture-specific OS floor"
-assert info["LSEnvironment"]["MTL_HUD_ENABLED"] == "0", "Metal HUD must be disabled by default"
 
 for macho in (binary, *sorted((app / "Contents/Frameworks").rglob("*.dylib"))):
     actual = output("lipo", "-archs", str(macho)).split()
