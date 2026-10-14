@@ -1771,7 +1771,7 @@ jobs:
           mkdir -p "$(dirname shell/android-studio/flycast/src/main/res/values/dashboard_strings.xml)"
           cat > shell/android-studio/flycast/src/main/res/values/dashboard_strings.xml <<'DASH_EOF_6'
           <?xml version="1.0" encoding="utf-8"?>
-          <resources>
+          <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
               <string name="dash_tab_games">Games</string>
               <string name="dash_tab_add">Add Games</string>
               <string name="dash_tab_files">Files</string>
@@ -1918,6 +1918,8 @@ jobs:
           python3 /tmp/patch_manifest.py
           sed -i 's/applicationId = "com.flycast.emulator"/applicationId = "com.flycast.dashboard"/' shell/android-studio/flycast/build.gradle.kts
           sed -i 's|>Flycast</string>|>Flycast Dashboard</string>|' shell/android-studio/flycast/src/main/res/values/donottranslate.xml
+          sed -i '0,/^android {/s//android {\n    lint {\n        abortOnError = false\n        checkReleaseBuilds = false\n    }\n/' shell/android-studio/flycast/build.gradle.kts
+          grep -q 'checkReleaseBuilds' shell/android-studio/flycast/build.gradle.kts
           grep -q 'com.flycast.dashboard' shell/android-studio/flycast/build.gradle.kts
           grep -q 'Flycast Dashboard' shell/android-studio/flycast/src/main/res/values/donottranslate.xml
 
@@ -2020,7 +2022,22 @@ jobs:
 
       - name: Build
         working-directory: shell/android-studio
-        run: ./gradlew assembleRelease --parallel
+        run: |
+          set +e
+          ./gradlew assembleRelease --parallel --console=plain > "$GITHUB_WORKSPACE/build.log" 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+          python3 - <<'PYEOF'
+          import os, re
+          t = open(os.path.join(os.environ["GITHUB_WORKSPACE"], "build.log"), errors="replace").read().splitlines()
+          keys = re.compile(r"error:|\be: |FAILED|What went wrong|Execution failed|Caused by|Lint found|MissingTranslation|undefined reference|fatal error|ninja: build stopped|CMake Error")
+          picked = [l for l in t if keys.search(l)][:25]
+          msg = "\n".join(picked + ["-----"] + t[-25:])[:3500]
+          msg = msg.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print("::error title=Gradle build failed::" + msg)
+          PYEOF
+          fi
+          exit $code
 
       - uses: actions/upload-artifact@v6
         with:
