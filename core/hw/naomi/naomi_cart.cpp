@@ -663,6 +663,14 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		}
 		if (!gameId.empty())
 			settings.content.gameId = gameId;
+		// A decrypted dump has no Games[] entry and so no input descriptor.
+		// Must be set before the maple devices are created.
+		if (NaomiGameInputs == nullptr && CurrentCartridge->game == nullptr)
+		{
+			NaomiGameInputs = naomiInputsForBootTitle(gameId.c_str());
+			if (NaomiGameInputs != nullptr)
+				NOTICE_LOG(NAOMI, "Input descriptor for the decrypted dump found by header title");
+		}
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s] region %x players %x vertical %x", settings.content.gameId.c_str(), (u8)bootId.country, bootId.cabinet, bootId.vertical);
 
 		if (gameId == "INITIAL D"
