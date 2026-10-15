@@ -485,6 +485,106 @@ public:
 		}
 		return resolveList(list, layers, limit, expectedStatus);
 	}
+	void validateZeroAlphaNoOp()
+	{
+		const auto savedTexture0 = tex0, savedTexture1 = tex1;
+		setResolveLayers(32);
+		for(u32 destination : {1u,5u}) {
+		MetalPolyUniforms back{}, front{};
+		back.trilinear = front.trilinear = 1;
+		back.tsp0 = front.tsp0 = (1u << 20) | (2u << 22) | (4u << 29) | (destination << 26);
+		front.flags = 1;
+		for (bool tiny : {false, true}) {
+			uint8_t transparent[]{90, 140, 210, uint8_t(tiny ? 1 : 0)};
+			tex0 = texture(MTLPixelFormatRGBA8Unorm, 1, 1, transparent, 4);
+			front.flags = 1 | (tiny ? 1u << 10 : 0);
+			front.trilinear = tiny ? .25f : 1;
+			auto reference = oit(back, front);
+			require(((u32 *)counter.contents)[0] == 2, "Zero-alpha reference did not allocate both fragments");
+			front.flags |= MetalOITZeroAlphaNoOp;
+			require(reference == oit(back, front), "Zero/quantized-zero alpha changed GPU pixels");
+			require(((u32 *)counter.contents)[0] == 1, "Zero-alpha fragment was not eliminated");
+		}
+		front.flags = 1 | (1u << 6); front.trilinear = 1; front.tsp1 = front.tsp0;
+		uint8_t transparent[]{90,140,210,0}, opaque[]{0,255,0,255};
+		tex0 = texture(MTLPixelFormatRGBA8Unorm,1,1,transparent,4);
+		tex1 = texture(MTLPixelFormatRGBA8Unorm,1,1,opaque,4);
+		auto reference = oit(back, front, true); front.flags |= MetalOITZeroAlphaNoOp;
+		require(reference == oit(back, front, true), "Zero-alpha elision lost visible second-volume color");
+		require(((u32 *)counter.contents)[0] == 2, "Visible second volume was incorrectly eliminated");
+		tex1 = texture(MTLPixelFormatRGBA8Unorm,1,1,transparent,4);
+		front.flags &= ~MetalOITZeroAlphaNoOp; reference = oit(back, front, true); front.flags |= MetalOITZeroAlphaNoOp;
+		require(reference == oit(back, front, true), "Two zero-alpha volumes changed GPU pixels");
+		require(((u32 *)counter.contents)[0] == 1, "Two zero-alpha volumes were not eliminated");
+		}
+		tex0 = savedTexture0; tex1 = savedTexture1;
+		printf("PASS zero-alpha OIT: exact pixels, real allocation counts, quantized alpha, second-volume visibility guard\n");
+	}
+	void validateSourceOverResolve()
+	{
+		u32 random = 431;
+		for (u32 layers : {1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+			for (u32 fixture = 0; fixture < 16; ++fixture) {
+				std::vector<MetalOITNode> list(layers);
+				for (u32 i = 0; i < layers; ++i) {
+					random = random * 1664525u + 1013904223u;
+					list[i] = {i % 7 == 0 ? random | 0xff000000u : random, float((random >> 16) % 11), i + 1 < layers ? i + 1 : ~0u, i, 0};
+					if (fixture % 4 == 0 && i % 9 == 0) {
+						const float edges[]{std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::infinity(),-std::numeric_limits<float>::infinity(),0.0f,-0.0f};
+						list[i].depth = edges[(fixture + i / 9) % 5];
+					}
+				}
+				auto reference = resolveList(list, layers, layers, 0, false, true);
+				auto candidate = resolveList(list, layers, layers, 0, true);
+				require(reference == candidate, "Source-over resolve changed exact GPU pixels");
+				for (bool sourceOver : {false, true}) for (bool reset : {false, true})
+					require(reference == resolveList(list, layers, layers, 0, sourceOver, true, true, reset),
+						"Dense resolve changed exact GPU pixels");
+				for (bool reset : {false,true})
+					require(reference == resolveList(list,layers,layers,0,false,true,true,reset,true), "Packed polygon sequence changed exact GPU pixels");
+				for (bool sourceOver : {false,true}) for(bool reset : {false,true})
+					require(reference == resolveList(list,layers,layers,0,sourceOver,true,false,reset,true),"Packed linked resolve changed exact GPU pixels");
+				if (layers > 1 && fixture == 0) {
+					const u32 cutoff = layers / 2;
+					const auto truncated = resolveList(list,layers,cutoff,2,false,true);
+					for(bool sourceOver : {false,true}) for(bool reset : {false,true})
+						require(truncated == resolveList(list,layers,cutoff,2,sourceOver,true,false,reset,true),"Packed linked layer cutoff/status changed");
+				}
+			}
+		}
+		printf("PASS source-over resolve: 144 exact GPU comparisons, all layer kernels, randomized alpha/colors, equal depths\n");
+		printf("PASS packed linked resolve: 576 exact GPU comparisons, full sorting keys, layer cutoffs/status and reset/source-over variants\n");
+		printf("PASS packed dense resolve: 288 exact GPU comparisons, all layer kernels, full sequence retained\n");
+		printf("PASS dense resolve: 576 exact GPU comparisons, both layouts, reset/reuse, all layer kernels, NaN/infinity/signed-zero sort keys\n");
+	}
+	void validatePackedPolygonResolve()
+	{
+		const auto savedPolygons = polygons;
+		polygons = [device newBufferWithLength:32768 * sizeof(MetalOITPoly) options:MTLResourceStorageModeShared];
+		auto table = static_cast<MetalOITPoly *>(polygons.contents);
+		for (u32 i=0;i<32768;++i) {
+			const u32 mode=(i*73+19)&255;
+			table[i]={(mode&7)<<29 | ((mode>>3)&7)<<26 | ((mode>>6)&1)<<25 | ((mode>>7)&1)<<24,0};
+		}
+		u32 random=491;
+		const u32 polygonIds[]{0,1,32767,16384,8191,12345};
+		for (u32 layers : {1u,2u,4u,8u,16u,32u,64u,128u,256u}) for(u32 fixture=0;fixture<8;++fixture) {
+			std::vector<MetalOITNode> list(layers);
+			for(u32 i=0;i<layers;++i) {
+				random=random*1664525u+1013904223u;
+				const u32 polygon=polygonIds[(i+fixture)%6];
+				const u32 sequence=(polygon<<17)|(i==0 ? 131071u : random&131071u);
+				float depth=float((random>>17)%17);
+				if(fixture==0 && i%7==0)depth=std::numeric_limits<float>::quiet_NaN();
+				list[i]={random,depth,i+1<layers ? i+1 : ~0u,sequence,polygon<<2};
+			}
+			const auto reference=resolveList(list,layers,layers,0,false,false,false,false,false,true);
+			for(bool reset : {false,true}) for(bool dense : {false,true})
+				require(reference==resolveList(list,layers,layers,0,false,false,dense,reset,true,true),"Packed full-width polygon/sequence changed blend pixels");
+		}
+		polygons=savedPolygons;
+		printf("PASS packed polygon metadata: 288 exact GPU comparisons, all blend/accumulator factors, polygon 32767, uint32 sequence boundary and NaN barriers\n");
+	}
 	void validateTiledOIT()
 	{
 		constexpr u32 width = 17, height = 9;
@@ -497,16 +597,18 @@ public:
 		size_t fixture = 0;
 		for (bool shadow : {false, true}) for (bool volume : {false,true}) for (bool dither : {false, true}) for (bool clipped : {false,true}) for (bool textured : {false,true}) {
 			std::vector<uint8_t> reference;
-			for (u32 layers : {32u,2u}) for (u32 capacity : {2 * width * height, 27u}) {
-				auto reset = compute([NSString stringWithFormat:@"oit_resolve_%u_reset",layers]);
+			for (u32 layers : {32u,2u}) for (u32 capacity : {2 * width * height, 27u}) for (bool sourceOver : {false, true}) for (bool packedList : {false,true}) {
+				if ((sourceOver || packedList) && (shadow || volume)) continue;
+				auto reset = compute([NSString stringWithFormat:@"oit_resolve_%u_reset%@%@",layers,sourceOver ? @"_source_over" : @"",packedList ? @"_packed" : @""]);
 				frame.capacity = capacity; frame.dithering = dither;
-				nodes = [device newBufferWithLength:capacity * sizeof(MetalOITNode) options:MTLResourceStorageModeShared];
+				nodes = [device newBufferWithLength:capacity * (packedList ? sizeof(MetalOITPackedNode) : sizeof(MetalOITNode)) options:MTLResourceStorageModeShared];
 				colors1 = [device newBufferWithLength:capacity * sizeof(u32) options:MTLResourceStorageModeShared];
 				memset(heads.contents, 255, heads.length); memset(counter.contents, 0, 8);
 				MetalPolyUniforms back{}, front{};
 				back.trilinear = front.trilinear = 1;
 				back.tsp0 = front.tsp0 = (1u << 20) | (2u << 22) | (4u << 29) | (5u << 26);
-				back.sequence = 1; front.sequence = 2; front.polyIndex = 1;
+				back.sequence = 1; front.sequence = (1u << 17) | 2; front.polyIndex = 1;
+				if (packedList) back.flags = front.flags = MetalOITPackedList;
 				if (clipped) { back.flags |= 1u << 8; back.clip = {3,1,11,7}; }
 				if (textured) { back.flags |= 1; front.flags |= 1; }
 				if (volume) { back.flags |= 1u << 6; front.flags |= 1u << 6; back.tsp1 = front.tsp1 = back.tsp0; }
@@ -562,6 +664,7 @@ public:
 			++fixture;
 		}
 		frame.oitTile = {};
+		printf("PASS source-over reset kernels: exact full-frame comparison with the general resolver, odd edges, clipped/textured/dithered passes\n");
 		printf("PASS tiled OIT: exact full-frame pixels with a 27-node buffer, 2/32-layer arrays, reset/reuse, modifiers, dithering, clipping, textures, odd tile edges\n");
 	}
 	std::array<uint8_t,4> resolveKeys(std::initializer_list<std::pair<float,u32>> keys)
@@ -576,14 +679,31 @@ public:
 		list.back().next = ~0u;
 		return resolveList(list, 32, list.size(), 0);
 	}
-	std::array<uint8_t,4> resolveList(const std::vector<MetalOITNode>& list, u32 layers, u32 limit, u32 expectedStatus)
+	std::array<uint8_t,4> resolveList(const std::vector<MetalOITNode>& list, u32 layers, u32 limit, u32 expectedStatus, bool sourceOver = false, bool alphaReference = false, bool dense = false, bool reset = false, bool packed = false, bool keepPolygonTable = false)
 	{
-		static_cast<MetalOITPoly *>(polygons.contents)[0] = {1u << 29, 0};
-		auto source = [device newBufferWithBytes:list.data() length:list.size() * sizeof(MetalOITNode) options:MTLResourceStorageModeShared];
+		if (!keepPolygonTable) static_cast<MetalOITPoly *>(polygons.contents)[0] = {(sourceOver || alphaReference) ? (4u << 29) | (5u << 26) : 1u << 29, 0};
+		id<MTLBuffer> source;
+		if (dense && (sourceOver || packed)) {
+			std::vector<MetalOITDenseColorNode> packed;
+			for (auto i = list.rbegin(); i != list.rend(); ++i) packed.push_back({i->color0, i->depth, i->sequence});
+			source = [device newBufferWithBytes:packed.data() length:packed.size() * sizeof(packed[0]) options:MTLResourceStorageModeShared];
+		} else if (dense) {
+			std::vector<MetalOITDenseNode> packed;
+			for (auto i = list.rbegin(); i != list.rend(); ++i) packed.push_back({i->color0, i->depth, i->sequence, i->metadata >> 2});
+			source = [device newBufferWithBytes:packed.data() length:packed.size() * sizeof(packed[0]) options:MTLResourceStorageModeShared];
+		} else if (packed) {
+			std::vector<MetalOITPackedNode> compact;
+			for (const auto& n : list) compact.push_back({n.color0,n.depth,n.next,n.sequence});
+			source = [device newBufferWithBytes:compact.data() length:compact.size() * sizeof(compact[0]) options:MTLResourceStorageModeShared];
+		} else source = [device newBufferWithBytes:list.data() length:list.size() * sizeof(MetalOITNode) options:MTLResourceStorageModeShared];
 		setResolveLayers(layers);
+		if (sourceOver) resolve = compute([NSString stringWithFormat:@"oit_resolve_%u_source_over", layers]);
+		if (dense || packed) resolve = compute([NSString stringWithFormat:@"oit_resolve_%u%@%@%@%@", layers, reset ? @"_reset" : @"", dense ? @"_dense" : @"", sourceOver ? @"_source_over" : @"", packed ? @"_packed" : @""]);
 		const u32 oldLimit = frame.maxLayers;
+		const auto oldTile = frame.oitTile;
+		if (dense) frame.oitTile = {0, 0, 1, 1};
 		frame.maxLayers = limit;
-		*(u32 *)heads.contents = 0; memset(counter.contents, 0, 8);
+		*(u32 *)heads.contents = dense ? u32(list.size() - 1) : 0; memset(counter.contents, 0, 8);
 		uint8_t zero[4]{};
 		auto input = texture(MTLPixelFormatRGBA8Unorm, 1, 1, zero, 4), output = texture(MTLPixelFormatRGBA8Unorm);
 		auto cb = [queue commandBuffer];
@@ -595,6 +715,8 @@ public:
 		[c dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)]; [c endEncoding];
 		auto result = read(output, cb);
 		frame.maxLayers = oldLimit;
+		frame.oitTile = oldTile;
+		if (reset) require(*(u32 *)heads.contents == ~0u, "Dense resolve did not reset the pixel count");
 		require(((u32 *)counter.contents)[1] == expectedStatus, "Unexpected full-list OIT status");
 		return result;
 	}
@@ -694,7 +816,7 @@ int main(int argc, char **argv)
 {
 	@autoreleasepool { try {
 		if (argc > 1 && strcmp(argv[1], "--oit-tiles-only") == 0) {
-			for (bool relaxed : {false,true}) { GPU g(relaxed); g.validateTiledOIT(); }
+			for (bool relaxed : {false,true}) { GPU g(relaxed); g.validateZeroAlphaNoOp(); g.validateTiledOIT(); g.validateSourceOverResolve(); g.validatePackedPolygonResolve(); }
 			return 0;
 		}
 		std::vector<std::array<uint8_t,4>> preciseTexelBoundaries;

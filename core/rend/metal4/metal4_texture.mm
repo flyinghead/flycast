@@ -42,6 +42,7 @@ std::string MetalTexture::GetId() { return std::to_string((uintptr_t)(__bridge v
 
 void MetalTexture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
+	renderTargetSerial = aliasSerial = 0;
 	MetalContext *context = MetalContext::Instance();
 	const TextureFormat format = textureFormat(tex_type);
 	if (format.bytesPerPixel == 2 && !context->supportsPackedTextures())
@@ -87,6 +88,51 @@ bool MetalTexture::Delete()
 	if (!BaseTextureCacheData::Delete())
 		return false;
 	image = nil;
+	renderTargetSerial = aliasSerial = 0;
 	return true;
+}
+
+void MetalTextureCache::publishRenderTarget(MetalTexture& texture, FB_W_CTRL_type control, u32 stride, const Rect& clip)
+{
+	texture.renderTargetSerial = texture.aliasSerial = 0;
+	renderTargets.erase(texture.startAddress);
+	// Reinterpretation is exact for a complete linear 16-bit image. Partial
+	// writes, packed rows and differently sized/twiddled views retain decoding.
+	if (control.fb_packmode > 3 || (stride && stride != u32(texture.width) * 2)
+			|| clip.origin != glm::ivec2(0) || clip.size != glm::ivec2(texture.width, texture.height)) return;
+	texture.renderTargetControl = control;
+	texture.renderTargetSerial = ++renderSerial;
+	const u64 key = (texture.tsp.full & TSPTextureCacheMask.full)
+		| (u64(texture.tcw.full & TCWTextureCacheMask.full) << 32);
+	renderTargets[texture.startAddress] = key;
+	// CPU writes must invalidate a GPU-only source before another format can
+	// borrow it. This uses the existing VRAM-write notification mechanism.
+	texture.protectVRam();
+}
+
+MetalTexture *MetalTextureCache::findRenderTargetAlias(const MetalTexture& texture, TCW tcw)
+{
+	if (!tcw.ScanOrder || tcw.MipMapped || tcw.VQ_Comp || tcw.PixelFmt > Pixel4444) return nullptr;
+	const auto record = renderTargets.find(texture.startAddress);
+	if (record == renderTargets.end()) return nullptr;
+	const auto entry = cache.find(record->second);
+	if (entry == cache.end()) return nullptr;
+	auto& source = entry->second;
+	if (&source == &texture || !source.renderTargetSerial || source.dirty || !source.image
+			|| source.width != texture.width || source.height != texture.height) return nullptr;
+	u32 stride = tcw.StrideSel ? (TEXT_CONTROL & 31) * 32 : texture.width;
+	if (stride && stride != texture.width) return nullptr;
+	return &source;
+}
+
+void MetalTextureCache::CollectCleanup()
+{
+	BaseTextureCache::CollectCleanup();
+	for (auto i = renderTargets.begin(); i != renderTargets.end();) {
+		const auto source = cache.find(i->second);
+		if (source == cache.end() || !source->second.renderTargetSerial || source->second.dirty)
+			i = renderTargets.erase(i);
+		else ++i;
+	}
 }
 #endif // Apple Silicon Metal 4 slice

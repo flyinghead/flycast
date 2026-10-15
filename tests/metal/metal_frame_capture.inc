@@ -17,9 +17,44 @@ struct Listener {
 };
 static Listener listener;
 static bool enabled() { return loaded && std::getenv("FLYCAST_METAL_CAPTURE_DIR") != nullptr; }
+static void dumpGeometry(const rend_context& rc)
+{
+	const char *directory = std::getenv("FLYCAST_METAL_GEOMETRY_DIR");
+	if (!directory) return;
+	static unsigned index = 0;
+	const unsigned current = index++;
+	const char *strideText = std::getenv("FLYCAST_METAL_GEOMETRY_STRIDE");
+	if (strideText ? current % unsigned(std::max(1, std::atoi(strideText))) != 0
+		: current != 0 && current != 60 && current != 120) return;
+	char name[64]; std::snprintf(name, sizeof(name), "/geometry-%04u.json", current);
+	FILE *file = nowide::fopen((std::string(directory) + name).c_str(), "w");
+	if (!file) throw RendererException("Metal geometry capture write failed");
+	std::fprintf(file, "{\"vertices\":[");
+	for (size_t i = 0; i < rc.verts.size(); ++i) {
+		const auto& v = rc.verts[i];
+		std::fprintf(file, "%s{\"xyz\":[%.9g,%.9g,%.9g],\"uv\":[%.9g,%.9g],\"rgba\":[%u,%u,%u,%u]}",
+			i ? "," : "", v.x, v.y, v.z, v.u, v.v, v.col[0], v.col[1], v.col[2], v.col[3]);
+	}
+	std::fprintf(file, "],\"indices\":[");
+	for (size_t i = 0; i < rc.idx.size(); ++i) std::fprintf(file, "%s%u", i ? "," : "", rc.idx[i]);
+	std::fprintf(file, "],\"lists\":[");
+	unsigned list = 0;
+	for (const auto *polygons : {&rc.global_param_op, &rc.global_param_pt, &rc.global_param_tr}) {
+		std::fprintf(file, "%s[", list++ ? "," : "");
+		for (size_t i = 0; i < polygons->size(); ++i) {
+			const auto& p = (*polygons)[i];
+			std::fprintf(file, "%s{\"first\":%u,\"count\":%u,\"isp\":%u,\"pcw\":%u,\"tsp\":%u,\"tcw\":%u}",
+				i ? "," : "", p.first, p.count, p.isp.full, p.pcw.full, p.tsp.full, p.tcw.full);
+		}
+		std::fprintf(file, "]");
+	}
+	std::fprintf(file, "]}\n");
+	std::fclose(file);
+}
 static void fingerprint(const rend_context& rc)
 {
 	if (!enabled() || rc.isRTT) return;
+	dumpGeometry(rc);
 	u64 hash = 14695981039346656037ull;
 	auto bytes = [&](const void *data, size_t length) {
 		const u8 *p = static_cast<const u8 *>(data);
@@ -39,13 +74,19 @@ static void fingerprint(const rend_context& rc)
 static void frame(Renderer *renderer, double videoTime)
 {
 	if (!enabled() || geometry == 0) return;
-	static unsigned index = 0;
+	static unsigned index = 0, captured = 0;
+	const unsigned current = index++;
+	const char *startText = std::getenv("FLYCAST_METAL_CAPTURE_START");
+	const char *strideText = std::getenv("FLYCAST_METAL_CAPTURE_STRIDE");
+	const unsigned start = startText ? std::max(0, std::atoi(startText)) : 0;
+	const unsigned stride = strideText ? std::max(1, std::atoi(strideText)) : 1;
+	if (current < start || (current - start) % stride != 0) return;
 	const char *directory = std::getenv("FLYCAST_METAL_CAPTURE_DIR");
 	std::vector<u8> rgb;
 	int width = 0, height = 0;
 	if (!renderer->GetLastFrame(rgb, width, height) || width <= 0 || height <= 0
 			|| rgb.size() != size_t(width) * height * 3) throw RendererException("Metal capture readback failed");
-	char name[64]; std::snprintf(name, sizeof(name), "/frame-%04u.png", index);
+	char name[64]; std::snprintf(name, sizeof(name), "/frame-%04u.png", current);
 	const std::string path = std::string(directory) + name;
 	stbi_flip_vertically_on_write(0);
 	if (!stbi_write_png(path.c_str(), width, height, 3, rgb.data(), width * 3))
@@ -54,11 +95,11 @@ static void frame(Renderer *renderer, double videoTime)
 	FILE *file = nowide::fopen(manifest.c_str(), "a");
 	if (!file) throw RendererException("Metal capture manifest write failed");
 	std::fprintf(file, "{\"index\":%u,\"geometry\":\"%016llx\",\"video_time\":%.9f,\"width\":%d,\"height\":%d,\"vertices\":%u,\"modifiers\":%u}\n",
-		index, (unsigned long long)geometry, videoTime, width, height, vertices, modifiers);
+		current, (unsigned long long)geometry, videoTime, width, height, vertices, modifiers);
 	std::fclose(file);
 	const char *limit = std::getenv("FLYCAST_METAL_CAPTURE_FRAMES");
-	if (++index >= unsigned(limit ? std::max(1, std::atoi(limit)) : 400)) {
-		std::fprintf(stderr, "Metal complete-frame capture finished: %u frames\n", index);
+	if (++captured >= unsigned(limit ? std::max(1, std::atoi(limit)) : 400)) {
+		std::fprintf(stderr, "Metal complete-frame capture finished: %u frames\n", captured);
 		std::fflush(nullptr);
 		// Isolated diagnostic profile only; never save or alter user state.
 		std::_Exit(0);

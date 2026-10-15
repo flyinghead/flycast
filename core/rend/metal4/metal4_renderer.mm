@@ -3,6 +3,7 @@
 #include "metal4_texture.h"
 #include "metal4_shaders.h"
 #include "metal4_oit_tiling.h"
+#include "metal4_oit_sequence.h"
 #include "metal4_modifier_clip.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
@@ -50,6 +51,14 @@ enum class RenderAttachments { ColorDepth, DepthOnly, None };
 bool needsOITColor(u32 tsp0, u32 tsp1, bool twoVolumes)
 {
 	return !(tsp0 & (1u << 25)) || (twoVolumes && !(tsp1 & (1u << 25)));
+}
+bool sourceOverBlend(TSP tsp)
+{
+	return tsp.SrcInstr == 4 && tsp.DstInstr == 5 && !tsp.SrcSelect && !tsp.DstSelect;
+}
+bool zeroAlphaIdentity(TSP tsp)
+{
+	return tsp.SrcInstr == 4 && (tsp.DstInstr == 1 || tsp.DstInstr == 5) && !tsp.SrcSelect && !tsp.DstSelect;
 }
 bool needsOITColor(const MetalPolyUniforms& p)
 {
@@ -106,7 +115,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 {
 	const bool perPixel;
 	rend_context *rc = nullptr;
-	BaseTextureCache<MetalTexture> textureCache;
+	MetalTextureCache textureCache;
 	MetalTexture fog, palette, framebuffer;
 	id<MTLTexture> screen, screenDepth, depth, shadowDepth, shadowStencil, emptyStencil, target, white;
 	id<MTLBuffer> vertices, indices, modifiers, lights, nodes, oitColors1, heads, counter, oitPolygons, frameUniforms;
@@ -135,6 +144,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	std::map<u32, ResolvePipeline> resolvePipelines;
 	id<MTLDepthStencilState> disabledDepth;
 	id<MTLRenderPipelineState> scalePipeline;
+	id<MTLComputePipelineState> rttReinterpretPipeline;
 	MTLVertexDescriptor *vertexLayout, *dcVertexLayout, *depthLayout, *modLayout;
 	std::map<u64, id<MTLRenderPipelineState>> pipelines;
 	std::map<u64, id<MTLRenderPipelineState>> materialPipelines;
@@ -162,7 +172,8 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	bool framebufferRendered = false;
 	double presentationVideoTime = 0;
 	bool screenRendered = false;
-	bool colorModifiers = false, oitModifiers = false;
+	bool colorModifiers = false, oitModifiers = false, denseOIT = false, denseColorOIT = false, densePackedOIT = false;
+	bool packedListOIT = false;
 	struct PassState {
 		bool sortedFragments, colorModifiers, oitModifiers, resetOITHeads;
 	};
@@ -227,6 +238,9 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	bool disableDepthBounds = false;
 	bool disableColourUV = false;
 	bool disableOrderedModifiers = false;
+	bool disableOITBounds = false;
+	bool disableDenseOIT = false;
+	bool disablePackedOIT = false;
 #endif
 	float conservativeDepthBound(const PolyParam& poly, u32 first, u32 count, bool *colourCoordinates = nullptr) const
 	{
@@ -1056,6 +1070,13 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		// operation. Punch-through depth always shades only area 0.
 		if (!activeTwoVolumes(pp, pass, colorModifiers, oitModifiers))
 			p.flags &= ~TwoVolumes;
+		// Blending controls are deliberately absent from material keys. Keep
+		// this proof dynamic and check every area which a modifier may select.
+		if (pass == PolyPass::OIT && zeroAlphaIdentity(pp.tsp)
+				&& (!(p.flags & TwoVolumes) || zeroAlphaIdentity(pp.tsp1))) p.flags |= MetalOITZeroAlphaNoOp;
+		if (pass == PolyPass::OIT && denseOIT)
+			p.flags |= MetalOITDense | (denseColorOIT ? MetalOITDenseColor : 0) | (densePackedOIT ? MetalOITDensePacked : 0);
+		if (pass == PolyPass::OIT && packedListOIT) p.flags |= MetalOITPackedList;
 		normalizePoly(p, pass);
 		const bool positionOnly = depthPositionOnly || backgroundDepth || (pass == PolyPass::OIT && !needsOITColor(p));
 		const bool needsBound = !positionOnly && pass != PolyPass::OIT
@@ -1430,7 +1451,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (translucent) endTranslucentEncoder();
 	}
 
-	ResolvePipeline makeResolvePipeline(NSString *name)
+	ResolvePipeline makeResolvePipeline(NSString *name, u32 layers = 0)
 	{
 		ResolvePipeline pipeline;
 		id<MTLComputePipelineState> state = context()->makeComputePipeline(name);
@@ -1439,27 +1460,29 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		const MTLSize limits = context()->device().maxThreadsPerThreadgroup;
 		if (!maximum || !executionWidth || !limits.width || !limits.height || !limits.depth)
 			throw RendererException("Metal framebuffer compute pipeline has invalid threadgroup limits");
-		// Keep adjacent pixels in one SIMD row. Retain the previous
-		// 64-thread budget unless one SIMD group itself is wider; large
-		// layer arrays must not force the device's maximum group size.
+		// Keep adjacent pixels in one SIMD row. Moderate layer arrays benefit
+		// from four SIMD rows; large arrays retain the smaller thread budget.
+		// Never exceed the pipeline's register-dependent threadgroup limit.
 		const NSUInteger width = std::min({executionWidth, maximum, limits.width});
-		const NSUInteger budget = std::min(maximum, std::max<NSUInteger>(64, executionWidth));
+		const NSUInteger budget = std::min(maximum, std::max<NSUInteger>(layers && layers <= 32 ? 128 : 64, executionWidth));
 		const NSUInteger height = std::min(budget / width, limits.height);
 		pipeline.threads = MTLSizeMake(width, height, 1);
 		pipeline.state = state;
 		return pipeline;
 	}
-	const ResolvePipeline& resolvePipeline(u32 layers, bool resetHeads = false)
+	const ResolvePipeline& resolvePipeline(u32 layers, bool resetHeads = false, bool sourceOver = false, bool dense = false, bool packed = false)
 	{
 		// Bound each thread's sorting array to the configured layer count.
-		// Two bounded families keep reset work out of the last OIT pass.
-		// Power-of-two layer bounds limit the cache to eighteen variants.
+		// Keep reset work out of the last pass. The source-over family omits
+		// unused accumulator/volume metadata only after a complete pass proof.
+		// Power-of-two bounds limit the seven families to 126 variants.
 		u32 capacity = 1;
 		while (capacity < layers) capacity <<= 1;
-		const u32 key = capacity | (u32(resetHeads) << 9);
+		const u32 key = capacity | (u32(resetHeads) << 9) | (u32(sourceOver) << 10) | (u32(dense) << 11) | (u32(packed) << 12);
 		auto& pipeline = resolvePipelines[key];
 		if (!pipeline.state)
-			pipeline = makeResolvePipeline([NSString stringWithFormat:@"oit_resolve_%u%@", capacity, resetHeads ? @"_reset" : @""]);
+			pipeline = makeResolvePipeline([NSString stringWithFormat:@"oit_resolve_%u%@%@%@%@", capacity,
+				resetHeads ? @"_reset" : @"", dense ? @"_dense" : @"", sourceOver ? @"_source_over" : @"", packed ? @"_packed" : @""], capacity);
 		return pipeline;
 	}
 	NSUInteger oitNodeBytes() const
@@ -1576,7 +1599,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		[b endEncoding];
 	}
 	void resolveFramebuffer(FCMetal4Commands * cb, bool finalPass, FrameResources& resources, bool oit, bool resetHeads = false,
-		id<MTLTexture> tiledOutput = nil, const metal_oit::Tile *tile = nullptr, u32 layerBound = 0)
+		id<MTLTexture> tiledOutput = nil, const metal_oit::Tile *tile = nullptr, u32 layerBound = 0, bool sourceOver = false, bool dense = false, bool packed = false)
 	{
 		const bool copyOnly = !oit && !(frame.dithering && finalPass);
 		MTLTextureUsage usage = MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget;
@@ -1598,7 +1621,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 				sourceSize:MTLSizeMake(frame.width, frame.height, 1) toTexture:output destinationSlice:0 destinationLevel:0 destinationOrigin:MTLOriginMake(0, 0, 0)];
 			[b endEncoding];
 		} else {
-			const ResolvePipeline& pipeline = oit ? resolvePipeline(layerBound ? layerBound : frame.maxLayers, resetHeads) : finish;
+			const ResolvePipeline& pipeline = oit ? resolvePipeline(layerBound ? layerBound : frame.maxLayers, resetHeads, sourceOver, dense, packed) : finish;
 			FCMetal4ComputeEncoder * c = [cb computeCommandEncoder];
 			if (!c) throw RendererException("Metal framebuffer resolve encoder allocation failed");
 			const NSUInteger frameOffset = !finalPass && frame.dithering ? frameUniformStride : 0;
@@ -1608,6 +1631,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 				// Each tile needs its own origin without changing the raster's frame.
 				MetalFrameUniforms tiledFrame = frame;
 				tiledFrame.oitTile = {tile->x, tile->y, tile->width, tile->height};
+				if (dense) tiledFrame.maxLayers = layerBound;
 				if (!finalPass) tiledFrame.dithering = 0;
 				[c setBytes:&tiledFrame length:sizeof(tiledFrame) atIndex:1];
 			} else [c setBuffer:frameUniforms offset:frameOffset atIndex:1];
@@ -1624,7 +1648,29 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (!tiledOutput) target = output;
 	}
 
-	std::vector<metal_oit::Tile> oitTiles(u32 first, u32 last, u32& layerBound) const
+	bool sequenceCarriesPolygon(u32 first, u32 last) const
+	{
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+		if (std::getenv("FLYCAST_METAL_CAPTURE_DISABLE_PACKED")) return false;
+#endif
+#ifdef METAL_RENDERER_TESTS
+		if (disablePackedOIT) return false;
+#endif
+		if (rc->global_param_tr.empty() || rc->global_param_tr.front().first >= rc->idx.size()) return false;
+		const u32 base = rc->idx[rc->global_param_tr.front().first];
+		for (u32 i = first; i < last; ++i) {
+			const auto& poly = rc->global_param_tr[i];
+			if (poly.count < 3) continue;
+			if (poly.first > rc->idx.size() || poly.count > rc->idx.size() - poly.first) return false;
+			for (u32 j = 0; j < poly.count; ++j) {
+				const u32 vertex = rc->idx[poly.first + j];
+				if (vertex != ~0u && !metal_oit::sequenceCarriesPolygon(i, base, vertex)) return false;
+			}
+		}
+		return true;
+	}
+
+	std::vector<metal_oit::Tile> oitTiles(u32 first, u32 last, u32& layerBound, bool& dense, bool compactColor, u32 linkedCapacity = 0) const
 	{
 		std::vector<metal_oit::Tile> triangles;
 		const metal_oit::Tile whole{0, 0, frame.width, frame.height};
@@ -1645,6 +1691,9 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 				const auto& m = frame.ndc;
 				bool bounded = !poly.isNaomi2() && m[0][3] == 0 && m[1][3] == 0 && m[2][3] == 0 && m[3][3] == 1
 					&& m[0][2] == 0 && m[1][2] == 0 && m[3][2] == 0 && std::isnormal(m[2][2]) && m[2][2] > 0;
+#ifdef METAL_RENDERER_TESTS
+				if (disableOITBounds) bounded = false;
+#endif
 				double left = frame.width, top = frame.height, right = 0, bottom = 0;
 				for (int j = 0; j < 3 && bounded; ++j) {
 					if (index[j] >= rc->verts.size()) { bounded = false; break; }
@@ -1659,7 +1708,13 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 					for (int axis = 0; axis < 2; ++axis) {
 						double value = 0, magnitude = 0;
 						for (int k = 0; k < 4; ++k) { const double term = double(m[k][axis]) * values[k]; value += term; magnitude += std::abs(term); }
-						if (!std::isfinite(value) || !std::isfinite(magnitude) || magnitude > 65536) { bounded = false; break; }
+						// Clipped strips can have very large off-screen vertices.
+						// Their rounding margin below remains conservative; only
+						// float overflow, including native-depth division, requires
+						// the full-screen fallback, not a fixed coordinate cutoff.
+						const double safeMagnitude = double(std::numeric_limits<float>::max())
+							* std::min(1.0, reciprocal) / 16;
+						if (!std::isfinite(value) || !std::isfinite(magnitude) || magnitude > safeMagnitude) { bounded = false; break; }
 						// Include raster subpixel rounding and float matrix error.
 						const double size = axis == 0 ? frame.width : frame.height;
 						const double margin = 4 + magnitude * std::numeric_limits<float>::epsilon() * 16 * size;
@@ -1682,7 +1737,21 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		// small pass therefore needs no large thread-local sorting array.
 		// This bound never truncates the configured or attainable layer count.
 		layerBound = u32(std::max<size_t>(1, std::min<size_t>(frame.maxLayers, triangles.size())));
-		return metal_oit::plan(frame.width, frame.height, triangles, frame.capacity);
+		if (dense) {
+			const u32 peak = std::max(1u,metal_oit::peakCoverage(triangles,frame.maxLayers+1));
+			const size_t stride = compactColor ? sizeof(MetalOITDenseColorNode) : sizeof(MetalOITDenseNode);
+			const size_t pixels = std::min<size_t>(nodes.length/stride,std::numeric_limits<u32>::max())/peak;
+			if (peak <= frame.maxLayers && pixels) {
+				layerBound = peak;
+				return metal_oit::plan(frame.width,frame.height,{whole},pixels);
+			}
+			dense = false;
+		}
+		return metal_oit::plan(frame.width, frame.height, triangles, linkedCapacity ? linkedCapacity : frame.capacity);
+	}
+
+	std::vector<metal_oit::Tile> oitTiles(u32 first,u32 last,u32& layerBound) const {
+		bool dense = false; return oitTiles(first,last,layerBound,dense,false);
 	}
 
 	id<MTLTexture> scaleTexture(id<MTLTexture> image, int width, int height, FCMetal4Commands * cb = nil,
@@ -1828,12 +1897,12 @@ public:
 		for (auto& offsets : naomi2Offsets) offsets.clear();
 		frameUniforms = nil;
 		screen = screenDepth = depth = shadowDepth = shadowStencil = emptyStencil = target = white = nil; vertices = indices = modifiers = lights = nodes = oitColors1 = heads = counter = emptyLights = oitPolygons = nil;
-		resolve = {}; finish = {}; disabledDepth = nil; scalePipeline = nil; rc = nullptr;
+		resolve = {}; finish = {}; disabledDepth = nil; scalePipeline = nil; rttReinterpretPipeline = nil; rc = nullptr;
 		screenRendered = framebufferRendered = false;
 		discardInitialColor = false;
 		backgroundColorCleared = initialColorClear = false;
 		skipBackgroundDepth = false;
-		colorModifiers = oitModifiers = false;
+		colorModifiers = oitModifiers = denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
 		passStates.clear();
 		shadowDepthPassCount = 0;
 		lightOffsets.clear();
@@ -1841,6 +1910,34 @@ public:
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override
 	{
 		MetalTexture *texture = textureCache.getTextureCacheData(tsp, tcw, area);
+		if (MetalTexture *source = textureCache.findRenderTargetAlias(*texture, tcw)) {
+			if (texture->aliasSerial != source->renderTargetSerial || texture->NeedsUpdate()) {
+				// Submit earlier readers before rewriting a retained alias. No
+				// CPU readback: conversion and the next draw use the Metal 4 queue.
+				context()->flushTextureUpdates();
+				const MTLPixelFormat format = MTLPixelFormatRGBA8Unorm;
+				const MTLTextureUsage usage = MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
+				if (!context()->canReuseTextureWrites(texture->image) || texture->image == source->image
+						|| texture->image.width != source->image.width || texture->image.height != source->image.height
+						|| texture->image.pixelFormat != format || texture->image.usage != usage)
+					texture->image = context()->makeTexture(source->image.width, source->image.height, format, usage);
+				if (!rttReinterpretPipeline) rttReinterpretPipeline = context()->makeComputePipeline(@"rtt_reinterpret");
+				FCMetal4Commands *command = [context()->queue() commandBuffer];
+				if (!command) throw RendererException("Metal RTT reinterpret command allocation failed");
+				FCMetal4ComputeEncoder *encoder = [command computeCommandEncoder];
+				if (!encoder) throw RendererException("Metal RTT reinterpret encoder allocation failed");
+				const u32 control[]{source->renderTargetControl.full, tcw.PixelFmt, u32(config::EmulateFramebuffer), 0};
+				[encoder setComputePipelineState:rttReinterpretPipeline];
+				[encoder setBytes:control length:sizeof(control) atIndex:0];
+				[encoder setTexture:source->image atIndex:0]; [encoder setTexture:texture->image atIndex:1];
+				const NSUInteger width = std::min<NSUInteger>(rttReinterpretPipeline.threadExecutionWidth, rttReinterpretPipeline.maxTotalThreadsPerThreadgroup);
+				[encoder dispatchThreads:MTLSizeMake(texture->image.width, texture->image.height, 1) threadsPerThreadgroup:MTLSizeMake(width, 1, 1)];
+				[encoder endEncoding]; context()->submitCommandBuffer(command);
+				texture->renderTargetSerial = 0; texture->aliasSerial = source->renderTargetSerial;
+				texture->dirty = 0; texture->unprotectVRam(); texture->protectVRam();
+			}
+			return texture;
+		}
 		if (texture->NeedsUpdate()) { if (!texture->Update()) return nullptr; }
 		else if (texture->IsCustomTextureAvailable()) texture->CheckCustomTexture();
 		return texture;
@@ -1919,7 +2016,7 @@ public:
 			FCMetal4Commands * cb = commands.buffer();
 			// Build all per-render resources before encoding. The Metal 4 submission
 			// owner retains bound resources, including prior RTT feedback images.
-			frame = {};
+			frame = {}; denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
 			oitRasterTile = {};
 			frame.width = rc->framebufferWidth; frame.height = rc->framebufferHeight;
 			matrices.CalcMatrices(rc, frame.width, frame.height); frame.ndc = matrices.GetNormalMatrix();
@@ -2097,7 +2194,28 @@ public:
 						// Subsequent OIT passes consume the preceding resolve's reset.
 						if (firstOITPass) { clearOIT(cb); firstOITPass = false; }
 						u32 layerBound;
-						const auto tiles = oitTiles(previous.tr_count, pass.tr_count, layerBound);
+						// Only the OIT modifier path can change node shadow/area bits.
+						// Mixed blending or active modifiers use the general resolver.
+						const bool sourceOver = !oitModifiers && std::all_of(rc->global_param_tr.begin() + previous.tr_count,
+							rc->global_param_tr.begin() + pass.tr_count, [](const PolyParam& poly) {
+								return poly.count < 3 || sourceOverBlend(poly.tsp);
+							});
+						denseOIT = !oitModifiers; denseColorOIT = sourceOver;
+						densePackedOIT = denseOIT && !sourceOver && sequenceCarriesPolygon(previous.tr_count, pass.tr_count);
+						bool packedListAllowed = !oitModifiers && (sourceOver || densePackedOIT);
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+						if (std::getenv("FLYCAST_METAL_CAPTURE_DISABLE_PACKED_LIST")) packedListAllowed = false;
+#endif
+#ifdef METAL_RENDERER_TESTS
+						denseOIT &= !disableDenseOIT;
+						packedListAllowed &= !disablePackedOIT;
+#endif
+						// Reuse the same physical node allocation. Packed lists can
+						// address more nodes, but never more bytes than that buffer.
+						const u32 linkedCapacity = packedListAllowed ? u32(std::min<NSUInteger>(
+							nodes.length / sizeof(MetalOITPackedNode), std::numeric_limits<u32>::max())) : frame.capacity;
+						const auto tiles = oitTiles(previous.tr_count,pass.tr_count,layerBound,denseOIT,sourceOver || densePackedOIT,linkedCapacity);
+						packedListOIT = packedListAllowed && !denseOIT;
 						const bool tiled = tiles.size() > 1;
 						id<MTLTexture> tiledOutput = nil;
 						if (tiled) {
@@ -2112,6 +2230,14 @@ public:
 							// The same full-frame viewport preserves derivatives and seams.
 							oitRasterTile = tiled ? tile : metal_oit::Tile{};
 							e = encoder(cb, RenderAttachments::None);
+							if (denseOIT) {
+								auto denseFrame = frame; denseFrame.oitTile = {tile.x,tile.y,tile.width,tile.height}; denseFrame.maxLayers = layerBound;
+								[e setFragmentBytes:&denseFrame length:sizeof(denseFrame) atIndex:1];
+							} else if (packedListOIT) {
+								auto packedFrame = frame; packedFrame.capacity = linkedCapacity;
+								[e setFragmentBytes:&packedFrame length:sizeof(packedFrame) atIndex:1];
+							}
+
 							drawList(e, rc->global_param_tr, previous.tr_count, pass.tr_count, ListType_Translucent, false, PolyPass::OIT);
 							[e endEncoding]; e = nil;
 							if (pass.mv_op_tr_shared) drawModifiers(cb, e, rc->global_param_mvo, previous.mvo_count, pass.mvo_count, true);
@@ -2119,8 +2245,9 @@ public:
 							// Reclaim nodes after each disjoint tile. Every tile reads
 							// the same opaque input and writes its own output pixels.
 								resolveFramebuffer(cb, finalPass, resources, true, tiled || passStates[passIndex].resetOITHeads,
-									tiledOutput, tiled ? &tile : nullptr, layerBound);
+									tiledOutput, tiled || denseOIT ? &tile : nullptr, layerBound, sourceOver, denseOIT, packedListOIT || (denseOIT && densePackedOIT));
 						}
+						denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
 						oitRasterTile = {};
 						if (tiledOutput) target = tiledOutput;
 					} else {
@@ -2190,6 +2317,7 @@ public:
 					int w, h; getPvrFramebufferSize(*rc, w, h);
 					MetalTexture *texture = textureCache.getRTTexture(rc->fb_W_SOF1 & VRAM_MASK, rc->fb_W_CTRL.fb_packmode, w, h);
 					texture->image = target; texture->dirty = 0; texture->unprotectVRam();
+					textureCache.publishRenderTarget(*texture, rc->fb_W_CTRL, rc->fb_W_LINESTRIDE * 8, rc->fbClip);
 				}
 			} else {
 				screen = target;
@@ -2328,6 +2456,9 @@ void metalValidateRenderer()
 			native.validateSynthetic();
 			native.Term();
 		}
+	} catch (const std::exception& error) {
+		ERROR_LOG(RENDERER, "Metal production validation failed: %s", error.what());
+		vram = previousVRAM; settings.platform = previousPlatform; throw;
 	} catch (...) { vram = previousVRAM; settings.platform = previousPlatform; throw; }
 	vram = previousVRAM;
 	settings.platform = previousPlatform;
