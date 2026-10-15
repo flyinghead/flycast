@@ -60,6 +60,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
+#include "network/dcnow.h"
 #include "LogManager.h"
 #include "cheats.h"
 #include "rend/osd.h"
@@ -2252,6 +2253,8 @@ bool retro_load_game(const struct retro_game_info *game)
 		vmu_dir = game_dir;
 
 	snprintf(vmu_dir_no_slash, sizeof(vmu_dir_no_slash), "%s", vmu_dir);
+	dcnow::setStateDir(vmu_dir_no_slash);
+	dcnow::init();
 
 	// > Get content name
 	remove_extension(content_name, g_base_name, sizeof(content_name));
@@ -2437,6 +2440,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
+	dcnow::deinit();
 	emu.unloadGame();
 	dreampotato::term();
 	game_data.clear();
