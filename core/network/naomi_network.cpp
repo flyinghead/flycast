@@ -210,6 +210,8 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 				}
 			if (slave == nullptr)
 			{
+				if (maxSlots <= 1 || slaves.size() >= (unsigned)maxSlots - 1)
+					break;
 				slaves.push_back(Slave());
 				slave = &slaves.back();
 				slave->state = 0; // unused
@@ -246,6 +248,9 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 	case SyncReply:
 		if (!config::ActAsServer && !_startNow)
 		{
+			if (packet->sync.nodeId == 0 || packet->sync.nodeId >= maxSlots
+					|| (serverIp != INADDR_BROADCAST && addr->sin_addr.s_addr != serverIp))
+				break;
 			serverIp = addr->sin_addr.s_addr;
 			slotId = packet->sync.nodeId;
 			nextPeer.sin_family = AF_INET;
@@ -257,7 +262,11 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 		break;
 
 	case Start:
-		if (!_startNow)
+		if (!config::ActAsServer && !_startNow
+				&& addr->sin_addr.s_addr == serverIp
+				&& packet->start.nodeCount >= 2
+				&& packet->start.nodeCount <= maxSlots
+				&& slotId < packet->start.nodeCount)
 		{
 			slotCount = packet->start.nodeCount;
 			sendAck(addr);
@@ -266,6 +275,8 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 		break;
 
 	case Data:
+		if (!_startNow)
+			break;
 		if (!receivedData.empty())
 			INFO_LOG(NETWORK, "Received packet overwritten");
 		receivedData.resize(size - packet->size(0));
