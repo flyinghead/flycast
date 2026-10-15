@@ -43,6 +43,51 @@ inline void partition(Tile tile, const std::vector<Tile>& triangles, uint64_t ca
 	partition(a, triangles, capacity, result);
 	partition(b, triangles, capacity, result);
 }
+// Bound per-pixel sorting storage by spatial overlap, not the total number
+// of primitives in a pass. Half-open rectangles include every raster sample
+// of their source triangle, so this can only overestimate the required layers.
+inline uint32_t peakCoverage(const std::vector<Tile>& triangles, uint32_t limit)
+{
+	if (limit == 0) return 0;
+	struct Event { uint64_t x, top, bottom; int delta; };
+	std::vector<Event> events;
+	std::vector<uint64_t> ys;
+	events.reserve(triangles.size() * 2); ys.reserve(triangles.size() * 2);
+	for (Tile r : triangles) {
+		if (!r.width || !r.height) continue;
+		const uint64_t bottom = uint64_t(r.y) + r.height;
+		events.push_back({r.x,r.y,bottom,1});
+		events.push_back({uint64_t(r.x)+r.width,r.y,bottom,-1});
+		ys.push_back(r.y); ys.push_back(bottom);
+	}
+	if (events.empty()) return 0;
+	std::sort(ys.begin(),ys.end()); ys.erase(std::unique(ys.begin(),ys.end()),ys.end());
+	std::sort(events.begin(),events.end(),[](const Event& a,const Event& b) { return a.x < b.x; });
+	struct Node { int64_t maximum = 0, added = 0; };
+	std::vector<Node> tree((ys.size()-1)*4);
+	const auto add = [&](auto&& self,size_t node,size_t lo,size_t hi,size_t first,size_t last,int delta) -> void {
+		if (first <= lo && hi <= last) { tree[node].added += delta; tree[node].maximum += delta; return; }
+		const size_t mid = lo + (hi-lo)/2;
+		if (first < mid) self(self,node*2+1,lo,mid,first,last,delta);
+		if (last > mid) self(self,node*2+2,mid,hi,first,last,delta);
+		tree[node].maximum = tree[node].added + std::max(tree[node*2+1].maximum,tree[node*2+2].maximum);
+	};
+	uint32_t maximum = 0;
+	for (size_t i = 0; i < events.size();) {
+		const uint64_t x = events[i].x;
+		// Remove ending rectangles and add starting ones before measuring:
+		// touching edges never add an extra layer at this X coordinate.
+		do {
+			const auto& e = events[i++];
+			const size_t top = std::lower_bound(ys.begin(),ys.end(),e.top)-ys.begin();
+			const size_t bottom = std::lower_bound(ys.begin(),ys.end(),e.bottom)-ys.begin();
+			add(add,0,0,ys.size()-1,top,bottom,e.delta);
+		} while (i < events.size() && events[i].x == x);
+		if (tree[0].maximum >= limit) return limit;
+		maximum = std::max(maximum,uint32_t(tree[0].maximum));
+	}
+	return maximum;
+}
 inline std::vector<Tile> plan(uint32_t width, uint32_t height, const std::vector<Tile>& triangles, uint64_t capacity)
 {
 	if (!width || !height || !capacity) throw std::runtime_error("Metal OIT tile dimensions/capacity must be positive");

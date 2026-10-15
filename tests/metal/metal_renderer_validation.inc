@@ -656,6 +656,109 @@ void MetalRenderer::validateSynthetic()
 	fixture.render_passes[0].autosort = true;
 	check("sorted alpha", 127, 0, 128);
 	if (perPixel) {
+		// The linked-list renderer is an independent reference for dense
+		// storage: exercise every blend/accumulator combination, not only
+		// source-over colors, and compare the entire production framebuffer.
+		const auto savedVertices = fixture.verts;
+		const auto savedIndices = fixture.idx;
+		const auto savedTranslucent = fixture.global_param_tr;
+		const auto savedPasses = fixture.render_passes;
+		const int64_t savedBudget = config::PixelBufferSize;
+		const bool savedNative = config::NativeDepthInterpolation;
+		const int savedLayers = config::PerPixelLayers; config::PerPixelLayers = 32;
+		fixture.verts.resize(12);
+		for (unsigned j=0;j<4;++j) {
+			fixture.verts[8+j] = fixture.verts[4+j];
+			fixture.verts[8+j].z = 2.5f;
+			fixture.verts[8+j].col[0]=37; fixture.verts[8+j].col[1]=211;
+			fixture.verts[8+j].col[2]=59; fixture.verts[8+j].col[3]=85;
+		}
+		fixture.idx.insert(fixture.idx.end(),{8,9,10,11});
+		PolyParam second = fixture.global_param_tr.front(); second.first = 8;
+		fixture.global_param_tr.push_back(second); fixture.render_passes[0].tr_count=2;
+		for (u32 combination=0;combination<260;++combination) {
+			// The last four layouts also exercise dense storage split across
+			// many tiles, odd output edges and both depth interpolation modes.
+			fixture.framebufferWidth = combination >= 256 ? 65 : 64;
+			fixture.framebufferHeight = combination >= 256 ? 47 : 48;
+			config::NativeDepthInterpolation = combination >= 258;
+			for (unsigned j=0;j<2;++j) {
+				auto& p=fixture.global_param_tr[j];
+				const u32 value=j ? (combination*37+17)%256 : combination;
+				p.tsp.SrcInstr=value&7; p.tsp.DstInstr=(value>>3)&7;
+				p.tsp.SrcSelect=(value>>6)&1; p.tsp.DstSelect=(value>>7)&1;
+				if (combination>=256) {
+					p.tsp.SrcInstr=4; p.tsp.DstInstr=combination&1 ? 1 : 5;
+					p.tsp.SrcSelect=p.tsp.DstSelect=0;
+				}
+			}
+			config::PixelBufferSize = savedBudget;
+			disableDenseOIT=true; disablePackedOIT=true;
+			if(!Render())throw RendererException("Metal linked OIT blend reference failed");
+			std::vector<u8> reference;context()->readTexture(screen,reference);
+			disablePackedOIT=false;
+			if(!Render())throw RendererException("Metal packed linked OIT render failed");
+			if(!(drawState.uniforms.flags & MetalOITPackedList))throw RendererException("Metal fixture did not use packed linked storage");
+			std::vector<u8> linked;context()->readTexture(screen,linked);
+			if(reference!=linked)throw RendererException("Metal packed linked OIT changed blend/accumulator pixels");
+			if (combination >= 256) config::PixelBufferSize = 4096;
+			disableDenseOIT=false;
+			disablePackedOIT=true;
+			if(!Render())throw RendererException("Metal unpacked dense OIT reference failed");
+			std::vector<u8> unpacked;context()->readTexture(screen,unpacked);
+			if(reference!=unpacked)throw RendererException("Metal unpacked dense OIT changed blend pixels");
+			disablePackedOIT=false;
+			if(!Render())throw RendererException("Metal dense OIT blend render failed");
+			if(!(drawState.uniforms.flags & MetalOITDense))throw RendererException("Metal dense fixture did not use dense storage");
+			const bool sourceOver = std::all_of(fixture.global_param_tr.begin(),fixture.global_param_tr.end(),[](const PolyParam& p){return sourceOverBlend(p.tsp);});
+			if(!sourceOver && !(drawState.uniforms.flags & MetalOITDensePacked))throw RendererException("Metal dense fixture did not pack its polygon sequence");
+			std::vector<u8> candidate;context()->readTexture(screen,candidate);
+			if(reference!=candidate)throw RendererException("Metal dense OIT changed blend/accumulator pixels: "+std::to_string(combination));
+		}
+		disableDenseOIT=disablePackedOIT=false;config::PerPixelLayers=savedLayers;
+		config::PixelBufferSize=savedBudget;config::NativeDepthInterpolation=savedNative;
+		fixture.framebufferWidth=64;fixture.framebufferHeight=48;
+		fixture.verts=savedVertices;fixture.idx=savedIndices;
+		fixture.global_param_tr=savedTranslucent;fixture.render_passes=savedPasses;
+		NOTICE_LOG(RENDERER,"Metal validation PASS: 780 dense/linked full-frame comparisons, packed/unpacked linked and dense metadata, all blend/accumulator modes and source-over/additive layouts");
+	}
+	if (perPixel) {
+		// Compare the actual GPU raster/resolve against a full-screen coverage
+		// bound. Large off-screen coordinates must not force needless tiles,
+		// but clipping and native-depth interpolation must keep exact pixels.
+		const auto savedVertices = fixture.verts;
+		const int64_t savedBudget = config::PixelBufferSize;
+		const bool savedNative = config::NativeDepthInterpolation;
+		config::PixelBufferSize = 64 * 48 * MetalOITNodeBudgetStride;
+		for (bool native : {false, true}) for (float extent : {1.e8f, 1.e16f, 1.e30f}) {
+			config::NativeDepthInterpolation = native;
+			for (unsigned layout = 0; layout < 4; ++layout) {
+				for (unsigned i = 4; i < 8; ++i) {
+					auto& v = fixture.verts[i];
+					v.x = layout == 0 ? extent + (i & 1 ? extent * .5f : 0)
+						: layout == 1 ? -extent - (i & 1 ? extent * .5f : 0)
+						: layout == 2 ? (i & 1 ? 320 : -extent) : (i & 1 ? extent : 320);
+					v.y = i & 2 ? 480 : 0;
+				}
+				disableOITBounds = true;
+				if (!Render()) throw RendererException("Metal full-coverage clipping reference failed");
+				std::vector<u8> reference; context()->readTexture(screen, reference);
+				disableOITBounds = false;
+				if (!Render()) throw RendererException("Metal large-coordinate clipping candidate failed");
+				std::vector<u8> candidate; context()->readTexture(screen, candidate);
+				if (reference != candidate) throw RendererException("Metal large-coordinate OIT bounds changed GPU pixels");
+				if (layout < 2) {
+					u32 bound;
+					if (oitTiles(0, 1, bound).size() != 1)
+						throw RendererException("Metal off-screen triangles still force extra OIT tiles");
+				}
+			}
+		}
+		disableOITBounds = false; fixture.verts = savedVertices;
+		config::PixelBufferSize = savedBudget; config::NativeDepthInterpolation = savedNative;
+		NOTICE_LOG(RENDERER, "Metal validation PASS: 24 exact large-coordinate OIT clipping pairs and off-screen tile bounds");
+	}
+	if (perPixel) {
 		const int oldLayers = config::PerPixelLayers;
 		for (int layers : {1, 17, 32, 33, 129, 256}) {
 			config::PerPixelLayers = layers;
@@ -858,6 +961,108 @@ void MetalRenderer::validateSynthetic()
 	mip.UploadToGPU(8, 8, levels.data(), true, false);
 	context()->waitIdle();
 	NOTICE_LOG(RENDERER, "Metal validation PASS: texture mip chains (%s)", perPixel ? "OIT" : "standard");
+	{
+		// Compare actual RTT-format aliases against the production VRAM writer
+		// and decoder. Nearest sampling tests both RGB and alpha without a CPU
+		// reimplementation of either pixel-packing or texture-format rules.
+		constexpr u32 address = 0x600000, dimension = 16;
+		std::vector<u8> saved(dimension * dimension * 2), rgba(dimension * dimension * 4);
+		memcpy(saved.data(), &vram[address], saved.size());
+		const bool savedEmulate = config::EmulateFramebuffer;
+		const u32 savedFrameCount = FrameCount; FrameCount = std::max(1u, FrameCount);
+		const auto sample = [&](id<MTLTexture> image, bool ignoreAlpha) {
+			auto output = context()->makeTexture(dimension, dimension, MTLPixelFormatBGRA8Unorm);
+			FCMetal4Commands *command = [context()->queue() commandBuffer];
+			MTL4RenderPassDescriptor *pass = [MTL4RenderPassDescriptor new];
+			pass.colorAttachments[0].texture = output;
+			pass.colorAttachments[0].loadAction = MTLLoadActionClear;
+			pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+			pass.colorAttachments[0].clearColor = MTLClearColorMake(.25, .5, .75, .5);
+			auto encoder = [command renderCommandEncoderWithDescriptor:pass];
+			context()->drawQuad(encoder, image, MTLViewport{0,0,dimension,dimension,0,1}, false, ignoreAlpha, nullptr, false);
+			[encoder endEncoding]; context()->submitCommandBuffer(command);
+			std::vector<u8> pixels; context()->readTexture(output, pixels); return pixels;
+		};
+		unsigned pairs = 0;
+		for (u32 mode = 0; mode < 4; ++mode) for (u32 format = 0; format < 3; ++format) {
+			if ((mode == 0 || mode == 3 ? 0u : mode) == format) continue;
+			for (bool truncate : {false, true}) for (bool high : {false, true}) for (u32 version = 0; version < 2; ++version) {
+				for (u32 i = 0; i < dimension * dimension; ++i) {
+					rgba[i*4] = u8(i + version * 31); rgba[i*4+1] = u8(i*73 + version*53);
+					rgba[i*4+2] = u8(i*151 + version*71); rgba[i*4+3] = u8(i*43 + version*97);
+				}
+				FB_W_CTRL_type control{}; control.fb_packmode = mode; control.fb_dither = truncate;
+				control.fb_kval = high ? 128 : 0; control.fb_alpha_threshold = high ? 128 : 0;
+				config::EmulateFramebuffer = truncate;
+				auto source = textureCache.getRTTexture(address, mode, dimension, dimension);
+				source->tex_type = TextureType::_8888;
+				source->UploadToGPU(dimension, dimension, rgba.data(), false);
+				source->dirty = 0; source->unprotectVRam();
+				textureCache.publishRenderTarget(*source, control, dimension * 2, Rect({0,0},{dimension,dimension}));
+				TSP tsp{}; tsp.TexU = tsp.TexV = 1;
+				TCW tcw{}; tcw.TexAddr = address >> 3; tcw.ScanOrder = 1; tcw.PixelFmt = format;
+				auto alias = static_cast<MetalTexture *>(GetTexture(tsp, tcw, 0));
+				if (!alias || alias->aliasSerial != source->renderTargetSerial || !alias->aliasSerial)
+					throw RendererException("Metal RTT alias generation was not updated");
+				auto aliasImage = alias->image;
+				if (GetTexture(tsp, tcw, 0) != alias || alias->image != aliasImage)
+					throw RendererException("Metal RTT alias cache hit rebuilt its image");
+				const auto candidateRGB = sample(aliasImage, true), candidateAlpha = sample(aliasImage, false);
+				VramLockedWriteOffset(address);
+				if (!source->dirty || textureCache.findRenderTargetAlias(*alias, tcw))
+					throw RendererException("Metal RTT alias survived a CPU VRAM write");
+				WriteTextureToVRam(dimension, dimension, rgba.data(), (u16 *)&vram[address], control, dimension * 2, Rect({0,0},{dimension,dimension}));
+				MetalTexture reference(tsp, tcw, 0);
+				if (!reference.Update()) throw RendererException("Metal RTT reference decode failed");
+				const auto referenceRGB = sample(reference.image, true), referenceAlpha = sample(reference.image, false);
+				if (candidateRGB != referenceRGB || candidateAlpha != referenceAlpha) {
+					for (size_t i = 0; i < candidateRGB.size(); ++i) if (candidateRGB[i] != referenceRGB[i]) {
+						ERROR_LOG(RENDERER,"RTT alias difference mode %u format %u truncate %d high %d version %u byte %zu candidate %u reference %u source %u %u %u %u",mode,format,truncate,high,version,i,candidateRGB[i],referenceRGB[i],rgba[(i/4)*4],rgba[(i/4)*4+1],rgba[(i/4)*4+2],rgba[(i/4)*4+3]); break;
+					}
+					throw RendererException("Metal RTT format alias differs from VRAM pack/decode: " + std::to_string(mode) + " to " + std::to_string(format));
+				}
+				reference.Delete(); ++pairs;
+			}
+		}
+		{
+			MetalTextureCache isolated;
+			auto source = isolated.getRTTexture(address, 1, dimension, dimension);
+			source->image = context()->makeTexture(dimension, dimension, MTLPixelFormatRGBA8Unorm);
+			source->dirty = 0; FB_W_CTRL_type control{}; control.fb_packmode = 1;
+			TSP tsp{}; tsp.TexU = tsp.TexV = 1;
+			TCW tcw{}; tcw.TexAddr = address >> 3; tcw.ScanOrder = 1; tcw.PixelFmt = Pixel4444;
+			MetalTexture view(tsp, tcw, 0);
+			isolated.publishRenderTarget(*source, control, dimension * 2, Rect({0,0},{dimension,dimension}));
+			if (isolated.findRenderTargetAlias(view, tcw) != source) throw RendererException("Metal RTT source lookup failed");
+			for (unsigned layout = 0; layout < 4; ++layout) {
+				TCW incompatible = tcw;
+				if (layout == 0) incompatible.ScanOrder = 0;
+				if (layout == 1) incompatible.MipMapped = 1;
+				if (layout == 2) incompatible.VQ_Comp = 1;
+				if (layout == 3) incompatible.PixelFmt = PixelPal4;
+				if (isolated.findRenderTargetAlias(view, incompatible)) throw RendererException("Metal RTT incompatible view used a linear alias");
+			}
+			TSP large = tsp; large.TexU = 2; MetalTexture differentSize(large,tcw,0);
+			if (isolated.findRenderTargetAlias(differentSize, tcw)) throw RendererException("Metal RTT differently sized view used an alias");
+			const u32 savedTextControl = TEXT_CONTROL; TEXT_CONTROL = 1;
+			TCW strided = tcw; strided.StrideSel = 1;
+			const bool wrongStride = isolated.findRenderTargetAlias(view, strided) != nullptr;
+			TEXT_CONTROL = savedTextControl;
+			if (wrongStride) throw RendererException("Metal RTT incompatible row stride used an alias");
+			isolated.publishRenderTarget(*source, control, dimension * 2, Rect({1,0},{dimension-1,dimension}));
+			if (isolated.findRenderTargetAlias(view,tcw)) throw RendererException("Metal RTT partial write published a full alias");
+			isolated.publishRenderTarget(*source, control, dimension * 4, Rect({0,0},{dimension,dimension}));
+			if (isolated.findRenderTargetAlias(view,tcw)) throw RendererException("Metal RTT packed rows published a full alias");
+			isolated.publishRenderTarget(*source, control, dimension * 2, Rect({0,0},{dimension,dimension}));
+			source->dirty = 1; const u32 currentFrame = FrameCount; FrameCount = 200;
+			isolated.CollectCleanup(); FrameCount = currentFrame;
+			if (isolated.findRenderTargetAlias(view,tcw)) throw RendererException("Metal RTT lookup survived source collection");
+			isolated.Clear();
+		}
+		VramLockedWriteOffset(address); memcpy(&vram[address], saved.data(), saved.size());
+		config::EmulateFramebuffer = savedEmulate; FrameCount = savedFrameCount;
+		NOTICE_LOG(RENDERER, "Metal validation PASS: %u RTT format-alias pairs against VRAM packing/decoding, RGB/alpha, cache hits, generation updates, CPU invalidation and incompatible-layout/collection guards (%s)", pairs, perPixel ? "OIT" : "standard");
+	}
 	fixture.globClip = {64, 48}; fixture.tileClip = fixture.fbClip = Rect({0, 0}, {64, 48});
 	for (auto& v : fixture.verts) { v.x /= 10; v.y /= 10; }
 	fixture.fb_W_SOF1 = 0x1000; fixture.fb_W_LINESTRIDE = 16; fixture.fb_W_CTRL.fb_packmode = 1;

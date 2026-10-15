@@ -47,6 +47,11 @@ struct MetalOITNode
 	float depth;
 	u32 next, sequence, metadata;
 };
+struct MetalOITDenseNode { u32 color0; float depth; u32 sequence, polygon; };
+struct MetalOITDenseColorNode { u32 color0; float depth; u32 sequence; };
+struct MetalOITPackedNode { u32 color0; float depth; u32 next, sequence; };
+static_assert(sizeof(MetalOITPackedNode) == 16 && offsetof(MetalOITPackedNode, sequence) == 12, "Metal packed linked OIT node ABI");
+static_assert(sizeof(MetalOITDenseNode) == 16 && sizeof(MetalOITDenseColorNode) == 12, "Metal dense OIT node ABI");
 struct MetalOITPoly
 {
 	// Low bits are unused by OIT blending: bit 0 shadow, bit 1 two volumes.
@@ -70,6 +75,12 @@ static constexpr u32 MetalVertexMaterialFlags = (1u << 0) | (1u << 2) | (1u << 3
 // Fragment shading and MaterialVarying use no Naomi2/light-off controls;
 // those affect vertex calculations only. Bit 10 selects non-unit trilinear
 // weighting in the fragment; it does not affect the varying layout.
+// Runtime-only blend proof; deliberately absent from material specialization.
+static constexpr u32 MetalOITZeroAlphaNoOp = 1u << 19;
+static constexpr u32 MetalOITDense = 1u << 20;
+static constexpr u32 MetalOITDenseColor = 1u << 21;
+static constexpr u32 MetalOITDensePacked = 1u << 22;
+static constexpr u32 MetalOITPackedList = 1u << 23;
 static constexpr u32 MetalFragmentMaterialFlags = ((1u << 19) - 1)
 	& ~((1u << 5) | (1u << 14));
 
@@ -796,6 +807,42 @@ fragment DepthFragment mod_depth_fragment(ModVarying in [[stage_in]], constant P
     return {pvrDepth(in.reciprocal, p)};
 }
 
+// A rendered 16-bit VRAM word may be sampled through another pixel format.
+// Quantize with framebuffer-write rules, then reinterpret the same bits; a
+// channel swizzle or a texture-cache key substitution is not equivalent.
+uint rttComponent(uint value, uint bits, bool truncate) {
+    uint shift = 8u - bits;
+    return truncate ? value >> shift : min((value + (1u << (shift - 1u))) >> shift, (1u << bits) - 1u);
+}
+kernel void rtt_reinterpret(constant uint4& control [[buffer(0)]],
+                            texture2d<float, access::read> source [[texture(0)]],
+                            texture2d<float, access::write> output [[texture(1)]],
+                            uint2 xy [[thread_position_in_grid]]) {
+    if (xy.x >= output.get_width() || xy.y >= output.get_height()) return;
+    uint4 c = uint4(round(clamp(source.read(xy), 0.0f, 1.0f) * 255.0f));
+    uint mode = control.x & 7u;
+    bool truncate = control.z != 0 && (control.x & 8u) != 0;
+    uint word;
+    if (mode == 1u) word = (rttComponent(c.r, 5, truncate) << 11) | (rttComponent(c.g, 6, truncate) << 5) | rttComponent(c.b, 5, truncate);
+    else if (mode == 2u) word = (rttComponent(c.a, 4, truncate) << 12) | (rttComponent(c.r, 4, truncate) << 8) | (rttComponent(c.g, 4, truncate) << 4) | rttComponent(c.b, 4, truncate);
+    else {
+        uint alpha = mode == 0u ? (control.x >> 8) & 0x80u : (c.a >= ((control.x >> 16) & 255u) ? 0x80u : 0u);
+        word = (alpha << 8) | (rttComponent(c.r, 5, truncate) << 10) | (rttComponent(c.g, 5, truncate) << 5) | rttComponent(c.b, 5, truncate);
+    }
+    uint4 color;
+    if (control.y == 1u) {
+        uint r = (word >> 11) & 31u, g = (word >> 5) & 63u, b = word & 31u;
+        color = uint4((r << 3) | (r >> 2), (g << 2) | (g >> 4), (b << 3) | (b >> 2), 255);
+    } else if (control.y == 2u) color = uint4((word >> 8) & 15u, (word >> 4) & 15u, word & 15u, word >> 12) * 17u;
+    else {
+        uint r = (word >> 10) & 31u, g = (word >> 5) & 31u, b = word & 31u;
+        color = uint4((r << 3) | (r >> 2), (g << 3) | (g >> 2), (b << 3) | (b >> 2), (word & 0x8000u) ? 255u : 0u);
+    }
+    // Match the texture decoder's bit replication, including packed-format
+    // sampling, rather than introducing another floating normalization.
+    output.write(float4(color) / 255.0f, xy);
+}
+
 struct Node {
     uint color0;
     float depth;
@@ -804,6 +851,11 @@ struct Node {
     // the two low stencil/accumulator bits; sequence stays a full uint.
     atomic_uint metadata;
 };
+struct DenseNode { uint color0; float depth; uint sequence, polygon; };
+struct DenseColorNode { uint color0; float depth; uint sequence; };
+struct PackedNode { uint color0; float depth; uint next, sequence; };
+static_assert(sizeof(PackedNode) == 16, "Metal packed linked OIT node ABI");
+static_assert(sizeof(DenseNode) == 16 && sizeof(DenseColorNode) == 12, "Metal dense OIT node ABI");
 struct OITPoly { uint tsp0, tsp1; };
 static_assert(sizeof(Node) == 20, "Metal OIT node ABI");
 static_assert(sizeof(OITPoly) == 8, "Metal OIT polygon ABI");
@@ -823,6 +875,26 @@ void publishOITNode(device Node& n, uint index, uint2 xy, float z, uint sequence
     n.depth = z; n.sequence = sequence;
     atomic_store_explicit(&n.metadata, p.polyIndex << 2, memory_order_relaxed);
     n.next = atomic_exchange_explicit(heads + xy.y * f.width + xy.x, index, memory_order_relaxed);
+}
+// Dense passes have a proven per-pixel layer bound and no modifiers. Each
+// atomic reserves a unique pixel-local slot, without a global allocator or
+// a linked-list pointer. Separate planes retain adjacent-pixel coalescing.
+void publishDenseOIT(uint2 xy, float z, uint sequence, uint color, constant Frame& f,
+                     constant Poly& p, device Node *nodes, device atomic_uint *heads, device atomic_uint *counter) {
+    uint layer = atomic_fetch_add_explicit(heads + xy.y * f.width + xy.x, 1u, memory_order_relaxed) + 1u;
+    if (layer >= f.maxLayers) { atomic_fetch_or_explicit(counter + 1, 2u, memory_order_relaxed); return; }
+    uint area = f.oitTile.z * f.oitTile.w;
+    uint index = layer * area + (xy.y - f.oitTile.y) * f.oitTile.z + xy.x - f.oitTile.x;
+    if (p.flags & ((1u << 21) | (1u << 22))) reinterpret_cast<device DenseColorNode *>(nodes)[index] = {color, z, sequence};
+    else reinterpret_cast<device DenseNode *>(nodes)[index] = {color, z, sequence, p.polyIndex};
+}
+// With no modifiers, the host either proves that sequence retains the full
+// polygon identity or selects a source-over resolver which never needs it.
+void publishPackedOIT(uint index, uint2 xy, float z, uint sequence, uint color, constant Frame& f,
+                      device Node *nodes, device atomic_uint *heads) {
+    device PackedNode& node = reinterpret_cast<device PackedNode *>(nodes)[index];
+    node.color0 = color; node.depth = z; node.sequence = sequence;
+    node.next = atomic_exchange_explicit(heads + xy.y * f.width + xy.x, index, memory_order_relaxed);
 }
 template<bool Specialized> void oitFragment(Varying in, constant Frame& f, constant Poly& p,
                              device Node *nodes, device atomic_uint *heads, device atomic_uint *counter, device uint *colors1,
@@ -846,8 +918,23 @@ template<bool Specialized> void oitFragment(Varying in, constant Frame& f, const
     float4 c0 = 0, c1 = 0;
     if (color0Needed) c0 = shade<Specialized>(in, 0, f, p, false, tex0, s0, fog, palette);
     if (color1Needed) c1 = shade<Specialized>(in, 1, f, p, false, tex1, s1, fog, palette);
+    // The host proves source-alpha blending with destination factor one or
+    // one-minus-source-alpha, without either secondary accumulator, in both areas.
+    // Keep implicit sampling before this discard so derivatives are preserved.
+    if ((p.flags & (1u << 19)) && all(isfinite(c0)) && (packColor(c0) >> 24) == 0
+        && (!flag<Specialized>(p, 6) || (all(isfinite(c1)) && (packColor(c1) >> 24) == 0))) {
+        discard_fragment(); return;
+    }
+    if (p.flags & (1u << 20)) {
+        publishDenseOIT(xy, z, in.sequence, color0Needed ? packColor(c0) : 0u, f, p, nodes, heads, counter);
+        return;
+    }
     uint index = allocateOITNode(f, counter);
     if (index == 0xffffffffu) return;
+    if (p.flags & (1u << 23)) {
+        publishPackedOIT(index, xy, z, in.sequence, color0Needed ? packColor(c0) : 0u, f, nodes, heads);
+        return;
+    }
     device Node& n = nodes[index];
     if (color0Needed) n.color0 = packColor(c0);
     if (color1Needed) colors1[index] = packColor(c1);
@@ -863,8 +950,16 @@ fragment void oit_position_fragment(OITPositionVarying in [[stage_in]], constant
     uint2 xy = uint2(in.position.xy);
     float z = pvrDepth(in.reciprocal, p);
     if (z < depth.read(xy)) { discard_fragment(); return; }
+    if (p.flags & (1u << 20)) {
+        publishDenseOIT(xy, z, in.sequence, 0u, f, p, nodes, heads, counter);
+        return;
+    }
     uint index = allocateOITNode(f, counter);
     if (index == 0xffffffffu) return;
+    if (p.flags & (1u << 23)) {
+        publishPackedOIT(index, xy, z, in.sequence, 0u, f, nodes, heads);
+        return;
+    }
     publishOITNode(nodes[index], index, xy, z, in.sequence, f, p, heads);
 }
 fragment void oit_fragment(Varying in [[stage_in]], constant Frame& f [[buffer(1)]], constant Poly& p [[buffer(2)]],
@@ -929,7 +1024,7 @@ bool oitSortsAfter(const device Node& previous, float depth, uint sequence) {
     float previousDepth = previous.depth;
     return previousDepth > depth || (previousDepth == depth && previous.sequence > sequence);
 }
-template<uint Layers, bool ResetHeads = false>
+template<uint Layers, bool ResetHeads = false, bool SourceOver = false, bool Dense = false, bool Packed = false>
 void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *heads,
                      device atomic_uint *counter, const device OITPoly *polygons, const device uint *colors1, texture2d<float, access::read> input,
                      texture2d<float, access::write> output, uint2 xy) {
@@ -938,15 +1033,29 @@ void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *
         xy += f.oitTile.xy;
     }
     if (xy.x >= f.width || xy.y >= f.height) return;
+    constexpr bool Compact = SourceOver || Packed;
+    const device DenseNode *denseNodes = reinterpret_cast<const device DenseNode *>(nodes);
+    const device DenseColorNode *denseColors = reinterpret_cast<const device DenseColorNode *>(nodes);
+    const device PackedNode *packedNodes = reinterpret_cast<const device PackedNode *>(nodes);
+    const uint area = f.oitTile.z * f.oitTile.w;
+    const uint local = (xy.y-f.oitTile.y)*f.oitTile.z + xy.x-f.oitTile.x;
     uint list[Layers], count = 0, sortedBegin = 0;
+    constexpr bool CacheKeys = SourceOver && Layers <= 32;
+    ulong keys[CacheKeys ? Layers : 1];
+    uint opaqueBegin = 0;
+    bool hasOpaque = false;
     // The incoming key is already loaded. Keep the sorted suffix's last key
     // locally instead of rereading that Node for every append/search decision.
     float tailDepth = 0;
     uint tailSequence = 0;
     uint index = atomic_load_explicit(heads + xy.y * f.width + xy.x, memory_order_relaxed);
+    const uint denseCount = Dense && index != 0xffffffffu ? min(index + 1u, f.maxLayers) : 0u;
+    if (Dense) index = denseCount ? (denseCount - 1u) * area + local : 0xffffffffu;
     while (index != 0xffffffffu && count < min(f.maxLayers, Layers)) {
-        float depth = nodes[index].depth;
-        uint sequence = nodes[index].sequence;
+        float depth = Dense ? (Compact ? denseColors[index].depth : denseNodes[index].depth) : Packed ? packedNodes[index].depth : nodes[index].depth;
+        uint sequence = Dense ? (Compact ? denseColors[index].sequence : denseNodes[index].sequence) : Packed ? packedNodes[index].sequence : nodes[index].sequence;
+        uint depthBits = as_type<uint>(depth == 0 ? 0.0f : depth);
+        ulong key = (ulong((depthBits & 0x80000000u) ? ~depthBits : depthBits ^ 0x80000000u) << 32) | sequence;
         uint position = count;
         if (isnan(depth)) {
             // Linear insertion never crosses a NaN: comparisons stop at it.
@@ -959,22 +1068,44 @@ void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *
             uint first = sortedBegin, last = count - 1;
             while (first < last) {
                 uint middle = first + (last - first) / 2;
-                if (oitSortsAfter(nodes[list[middle]], depth, sequence)) last = middle;
+                const uint previous = list[middle];
+                const float previousDepth = Dense ? (Compact ? denseColors[previous].depth : denseNodes[previous].depth) : Packed ? packedNodes[previous].depth : nodes[previous].depth;
+                const uint previousSequence = Dense ? (Compact ? denseColors[previous].sequence : denseNodes[previous].sequence) : Packed ? packedNodes[previous].sequence : nodes[previous].sequence;
+                if (CacheKeys ? keys[middle] > key : (previousDepth > depth || (previousDepth == depth && previousSequence > sequence))) last = middle;
                 else first = middle + 1;
             }
             position = first;
-            for (uint j = count; j > position; --j) list[j] = list[j - 1];
+            for (uint j = count; j > position; --j) {
+                list[j] = list[j - 1];
+                if (CacheKeys) keys[j] = keys[j - 1];
+            }
         }
         // An insertion before the tail leaves it unchanged. A NaN appends
         // and starts an empty suffix, whose first subsequent key replaces it.
         if (position == count) { tailDepth = depth; tailSequence = sequence; }
-        list[position] = index; ++count; index = nodes[index].next;
+        if (SourceOver) {
+            // Keep the last fully opaque source in final sorted order. It
+            // replaces every earlier contribution, even across a NaN sort
+            // barrier. Still traverse/count/sort the same bounded node list.
+            if (hasOpaque && position <= opaqueBegin) ++opaqueBegin;
+            if (((Dense ? denseColors[index].color0 : Packed ? packedNodes[index].color0 : nodes[index].color0) >> 24) == 255u && (!hasOpaque || position > opaqueBegin)) {
+                opaqueBegin = position; hasOpaque = true;
+            }
+        }
+        if (CacheKeys) keys[position] = key;
+        list[position] = index; ++count;
+        index = Dense ? (count < denseCount ? (denseCount - 1u - count) * area + local : 0xffffffffu) : Packed ? packedNodes[index].next : nodes[index].next;
     }
     if (index != 0xffffffffu) atomic_fetch_or_explicit(counter + 1, 2u, memory_order_relaxed);
     float4 color = input.read(xy), secondary = 0;
-    for (uint i = 0; i < count; i++) {
-        device Node& n = nodes[list[i]];
-        uint metadata = atomic_load_explicit(&n.metadata, memory_order_relaxed);
+    for (uint i = SourceOver && hasOpaque ? opaqueBegin : 0; i < count; i++) {
+        if (SourceOver) {
+            float4 src = unpackColor(Dense ? denseColors[list[i]].color0 : Packed ? packedNodes[list[i]].color0 : nodes[list[i]].color0);
+            color = clamp(src * src.a + color * (1 - src.a), 0.0f, 1.0f);
+            continue;
+        }
+        uint metadata = Packed ? ((Dense ? denseColors[list[i]].sequence : packedNodes[list[i]].sequence) >> 17) << 2
+            : Dense ? denseNodes[list[i]].polygon << 2 : atomic_load_explicit(&nodes[list[i]].metadata, memory_order_relaxed);
         uint polygonIndex = metadata >> 2;
         uint tsp0 = polygons[polygonIndex].tsp0;
         bool shadow = (metadata & 2) != 0;
@@ -986,7 +1117,7 @@ void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *
             // exists only for two-volume polygons; single-volume renders bind
             // a dummy buffer and never access this stream.
             if (area) src = unpackColor(colors1[list[i]]);
-            else src = unpackColor(n.color0);
+            else src = unpackColor(Dense ? (Compact ? denseColors[list[i]].color0 : denseNodes[list[i]].color0) : Packed ? packedNodes[list[i]].color0 : nodes[list[i]].color0);
         }
         if (shadow && !area && !(tsp & (1u << 25))) src.rgb *= f.shadeScale;
         float4 dst = (tsp & (1u << 24)) ? secondary : color;
@@ -1020,7 +1151,67 @@ kernel void oit_resolve_##layers##_reset(constant Frame& f [[buffer(1)]], device
     device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
     const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
     texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
-    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); }
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_source_over(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_source_over(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_dense(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_dense(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_dense_source_over(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_dense_source_over(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_dense_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, false, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_dense_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, false, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, false, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_source_over_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, true, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, false, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_source_over_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, true, false, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); }
 OIT_RESOLVE_KERNEL(1)
 OIT_RESOLVE_KERNEL(2)
 OIT_RESOLVE_KERNEL(4)
