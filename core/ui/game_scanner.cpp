@@ -166,8 +166,14 @@ void GameScanner::fetch_game_list()
 				if (!dcbios.empty())
 					game_list.insert(game_list.begin(), { i18n::T("Dreamcast BIOS") });
 			}
-			if (running)
+			const bool completed = running;
+			if (completed)
 				scan_done = true;
 			running = false;
+			if (completed)
+			{
+				if (const auto callback = changeCallback.load())
+					callback();
+			}
 		});
 }

@@ -27,6 +27,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <atomic>
 
 struct GameMedia;
 
@@ -36,6 +37,8 @@ public:
 	GameBoxart getBoxartAndLoad(const GameMedia& media);
 	GameBoxart getBoxart(const GameMedia& media);
 	void term();
+	void setChangeCallback(void (*callback)()) { changeCallback.store(callback); }
+	void continueFetch() { if (fetching.valid()) fetching.wait(); fetchBoxart(); }
 
 private:
 	void loadDatabase();
@@ -63,6 +66,7 @@ private:
 
 	std::vector<GameBoxart> toFetch;
 	std::future<void> fetching;
+	std::atomic<void (*)()> changeCallback{nullptr};
 
 	static constexpr char const *DB_NAME = "flycast-gamedb.json";
 };
