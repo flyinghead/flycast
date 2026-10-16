@@ -1371,11 +1371,19 @@ void MetalOITScreenDrawer::EndFrame()
 		return;
 	frameStarted = false;
 	if (currentCommandBuffer != nil) {
-		// Hand the command buffer to the pool — it commits it as part of
-		// EndFrame and rotates the ring index. Mirrors what MetalScreen
-		// Drawer::EndRenderPass does after [encoder endEncoding].
-		commandPool->EndFrame();
-		aspectRatio = getOutputFramebufferAspectRatio();
+		if (emulateFramebuffer) {
+			// Present() shows the frame from VRAM (presentFramebuffer), so
+			// copy the slot just rendered back there. Appends its blits to
+			// this frame's command buffer, then commits and waits.
+			// Vulkan: OITScreenDrawer::EndFrame.
+			scaleAndWriteFramebuffer(colorAttachments[framebufferIndex]);
+		} else {
+			// Hand the command buffer to the pool — it commits it as part of
+			// EndFrame and rotates the ring index. Mirrors what MetalScreen
+			// Drawer::EndRenderPass does after [encoder endEncoding].
+			commandPool->EndFrame();
+			aspectRatio = getOutputFramebufferAspectRatio();
+		}
 		frameRendered = true;
 	}
 	currentCommandBuffer = nil;

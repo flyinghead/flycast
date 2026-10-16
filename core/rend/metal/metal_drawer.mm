@@ -1097,7 +1097,7 @@ id<MTLRenderCommandEncoder> MetalScreenDrawer::BeginRenderPass() {
 	return currentEncoder;
 }
 
-void MetalScreenDrawer::scaleAndWriteFramebuffer(id<MTLTexture> finalTexture)
+void MetalBaseDrawer::scaleAndWriteFramebuffer(id<MTLTexture> finalTexture)
 {
 	u32 width = rendContext->globClip.x;
 	u32 height = rendContext->globClip.y;
@@ -1140,7 +1140,8 @@ void MetalScreenDrawer::scaleAndWriteFramebuffer(id<MTLTexture> finalTexture)
 						 sourceSlice:0
 						 sourceLevel:0
 						sourceOrigin:MTLOriginMake(0, 0, 0)
-						  sourceSize:MTLSizeMake(std::min(width, scaledW), std::min(height, scaledH), 1)
+						  sourceSize:MTLSizeMake(std::min({ width, scaledW, (u32)finalTexture.width }),
+												 std::min({ height, scaledH, (u32)finalTexture.height }), 1)
 						   toTexture:scaledTexture
 					destinationSlice:0
 					destinationLevel:0
@@ -1180,11 +1181,15 @@ void MetalScreenDrawer::scaleAndWriteFramebuffer(id<MTLTexture> finalTexture)
 	id<MTLCommandBuffer> commandBuffer = commandPool->Allocate();
 	id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
 
+	// The OIT drawer's attachments are sized from its viewport, not from
+	// globClip, so bound the copy by the source too: an oversized sourceSize
+	// is a validation error.
 	[blitEncoder copyFromTexture:finalTexture
 					 sourceSlice:0
 					 sourceLevel:0
 					sourceOrigin:MTLOriginMake(0, 0, 0)
-					  sourceSize:MTLSizeMake(width, height, 1)
+					  sourceSize:MTLSizeMake(std::min(width, (u32)finalTexture.width),
+											 std::min(height, (u32)finalTexture.height), 1)
 					   toTexture:readableTexture
 				destinationSlice:0
 				destinationLevel:0
