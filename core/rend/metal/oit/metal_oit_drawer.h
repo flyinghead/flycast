@@ -268,6 +268,7 @@ public:
 
 	void Term()
 	{
+		releaseReadbackTextures();
 		regularPipelineManager_.reset();
 		screenPipelineManager.reset();
 		MetalOITDrawer::Term();

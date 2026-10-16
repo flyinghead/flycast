@@ -270,12 +270,44 @@ protected:
 			   : MTLCullModeNone;
 	}
 
+	// Framebuffer emulation: copies the rendered frame back into VRAM so
+	// presentFramebuffer() can show it. Shared by both screen drawers, like
+	// Vulkan's BaseDrawer::scaleAndWriteFramebuffer. Commits the current
+	// frame's command buffer and waits for it (EndFrameAndWait).
+	void scaleAndWriteFramebuffer(id<MTLTexture> finalTexture);
+
+	void releaseReadbackTextures() {
+		cachedScaledTexture = nil;
+		cachedScaledWidth = cachedScaledHeight = 0;
+		cachedReadableTexture = nil;
+		cachedReadableWidth = cachedReadableHeight = 0;
+	}
+
 	MTLScissorRect baseScissor {};
 	MTLScissorRect currentScissor {};
 	TransformMatrix matrices { true };
 	MetalCommandPool *commandPool = nullptr;
 	std::vector<std::unique_ptr<MetalBufferData>> mainBuffers;
 	rend_context *rendContext = nullptr;
+
+private:
+	// Framebuffer-emulation readback scratch; a member for the same reason as
+	// MetalTextureDrawer::rttReadback -- scaleAndWriteFramebuffer() runs every
+	// frame under EmulateFramebuffer and was allocating ~1.2MB per call.
+	PixelBuffer<u32> fbReadback;
+
+	// The two MTLTextures scaleAndWriteFramebuffer() needs, cached across
+	// frames. Both were allocated per call, which is a good deal more expensive
+	// than the malloc above. Safe to reuse: the only consumer is the blit that
+	// commandPool->EndFrameAndWait() synchronizes before getBytes, so the GPU
+	// is provably done with last frame's copy before this frame touches it.
+	// Reallocated only when the surface dimensions change.
+	id<MTLTexture> cachedScaledTexture = nil;
+	u32 cachedScaledWidth = 0;
+	u32 cachedScaledHeight = 0;
+	id<MTLTexture> cachedReadableTexture = nil;
+	u32 cachedReadableWidth = 0;
+	u32 cachedReadableHeight = 0;
 };
 
 class MetalDrawer : public MetalBaseDrawer
@@ -421,7 +453,6 @@ public:
 
 protected:
 	id<MTLRenderCommandEncoder> BeginRenderPass() override;
-	void scaleAndWriteFramebuffer(id<MTLTexture> finalTexture);
 
 private:
 	void cleanupFramebuffers() {
@@ -457,30 +488,6 @@ private:
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
 	bool emulateFramebuffer = false;
-	// Framebuffer-emulation readback scratch; a member for the same reason as
-	// MetalTextureDrawer::rttReadback -- scaleAndWriteFramebuffer() runs every
-	// frame under EmulateFramebuffer and was allocating ~1.2MB per call.
-	PixelBuffer<u32> fbReadback;
-
-	// The two MTLTextures scaleAndWriteFramebuffer() needs, cached across
-	// frames. Both were allocated per call, which is a good deal more expensive
-	// than the malloc above. Safe to reuse: the only consumer is the blit that
-	// commandPool->EndFrameAndWait() synchronizes before getBytes, so the GPU
-	// is provably done with last frame's copy before this frame touches it.
-	// Reallocated only when the surface dimensions change.
-	id<MTLTexture> cachedScaledTexture = nil;
-	u32 cachedScaledWidth = 0;
-	u32 cachedScaledHeight = 0;
-	id<MTLTexture> cachedReadableTexture = nil;
-	u32 cachedReadableWidth = 0;
-	u32 cachedReadableHeight = 0;
-
-	void releaseReadbackTextures() {
-		cachedScaledTexture = nil;
-		cachedScaledWidth = cachedScaledHeight = 0;
-		cachedReadableTexture = nil;
-		cachedReadableWidth = cachedReadableHeight = 0;
-	}
 };
 
 class MetalTextureDrawer : public MetalDrawer
