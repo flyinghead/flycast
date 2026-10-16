@@ -219,6 +219,12 @@ void gui_settings_video()
         ShowHelpMarker(T("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."));
 		OptionCheckbox(T("Integer Scaling"), config::IntegerScale, T("Scales the output by the maximum integer multiple allowed by the display resolution."));
 		OptionCheckbox(T("Linear Interpolation"), config::LinearInterpolation, T("Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."));
+#ifdef USE_METALFX
+		if (renderApi == Metal)
+			OptionCheckbox(T("MetalFX Upscaling"), config::MetalFXUpscale,
+					T("Upscales the output to the window size with MetalFX spatial upscaling. Works best with a low internal resolution. "
+					"Requires macOS 13 and a supported GPU. Has no effect otherwise."));
+#endif
 #ifndef TARGET_IPHONE
     	OptionCheckbox(T("VSync"), config::VSync, T("Synchronizes the frame rate with the screen refresh rate. Recommended"));
     	ImGui::Indent();

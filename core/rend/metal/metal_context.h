@@ -25,6 +25,9 @@
 #include "wsi/context.h"
 #include "metal_quad.h"
 #include "metal_overlay.h"
+#ifdef USE_METALFX
+#include "metal_upscaler.h"
+#endif
 
 class MetalContext : public GraphicsContext
 {
@@ -76,6 +79,12 @@ private:
 	bool init();
 	void term();
 	void CreateSwapChain();
+	id<MTLCommandBuffer> currentCommandBuffer();
+	void getFrameRect(float aspectRatio, float& x, float& y, float& w, float& h) const;
+#ifdef USE_METALFX
+	void getUpscaleRect(float aspectRatio, u32& x, u32& y, u32& w, u32& h) const;
+	void UpscaleFrame(id<MTLTexture> texture, float aspectRatio);
+#endif
 	void DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio);
 
 	bool HasSurfaceDimensionChanged() const;
@@ -108,6 +117,14 @@ private:
 	id<MTLTexture> lastFrameTexture = nil;
 	MTLViewport lastFrameViewport;
 	float lastFrameAR = 0.f;
+
+#ifdef USE_METALFX
+	MetalUpscaler upscaler;
+	// lastFrameTexture upscaled to its on-screen size, or nil
+	id<MTLTexture> upscaledTexture = nil;
+	// Set while Present() repeats the last frame
+	bool presentingDupeFrame = false;
+#endif
 
 	id<MTLDevice> device = nil;
 	id<MTLCommandQueue> queue = nil;

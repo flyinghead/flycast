@@ -28,6 +28,7 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
 
 MetalContext *MetalContext::contextInstance;
 
@@ -111,6 +112,9 @@ bool MetalContext::init()
 
 	[layer setDevice:device];
 	queue = [device newCommandQueue];
+#ifdef USE_METALFX
+	upscaler.Init(device);
+#endif
 
 	shaderManager = std::make_unique<MetalShaders>();
 	quadPipeline = std::make_unique<MetalQuadPipeline>(true, false);
@@ -142,6 +146,9 @@ bool MetalContext::recreateSwapChainIfNeeded()
 	{
 		CreateSwapChain();
 		lastFrameTexture = nil;
+#ifdef USE_METALFX
+		upscaledTexture = nil;
+#endif
 		return true;
 	}
 	else
@@ -175,6 +182,11 @@ void MetalContext::BeginRenderPass()
 	[colorAttachment setStoreAction:MTLStoreActionStore];
 	[colorAttachment setClearColor:MTLClearColorMake(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.0f)];
 
+	commandEncoder = [currentCommandBuffer() renderCommandEncoderWithDescriptor:renderPassDescriptor];
+}
+
+id<MTLCommandBuffer> MetalContext::currentCommandBuffer()
+{
 	if (currentImage >= commandBuffers.size())
 		commandBuffers.resize(currentImage + 1);
 
@@ -182,8 +194,7 @@ void MetalContext::BeginRenderPass()
 		commandBuffers[currentImage] = [queue commandBuffer];
 		[commandBuffers[currentImage] setLabel:@"Render Frame"];
 	}
-
-	commandEncoder = [commandBuffers[currentImage] renderCommandEncoderWithDescriptor:renderPassDescriptor];
+	return commandBuffers[currentImage];
 }
 
 void MetalContext::NewFrame()
@@ -222,8 +233,16 @@ void MetalContext::Present()
 	if (renderDone)
 	{
 		if (lastFrameTexture != nil && IsValid() && !gui_is_open())
+		{
+#ifdef USE_METALFX
+			presentingDupeFrame = true;
+#endif
 			for (int i = 1; i < swapInterval; i++)
 				PresentFrame(lastFrameTexture, lastFrameViewport, lastFrameAR);
+#ifdef USE_METALFX
+			presentingDupeFrame = false;
+#endif
+		}
 		renderDone = false;
 	}
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
@@ -234,17 +253,19 @@ void MetalContext::Present()
 	if (resized) {
 		CreateSwapChain();
 		lastFrameTexture = nil;
+#ifdef USE_METALFX
+		upscaledTexture = nil;
+#endif
 	}
 }
 
-void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio)
+// Fit the content aspect ratio into the drawable
+void MetalContext::getFrameRect(float aspectRatio, float& viewportX, float& viewportY, float& viewportWidth, float& viewportHeight) const
 {
-	// Fit the content aspect ratio into the drawable
 	float drawableWidth = (float)width;
 	float drawableHeight = (float)height;
 	float screenAR = drawableWidth / drawableHeight;
 
-	float viewportWidth, viewportHeight, viewportX, viewportY;
 	if (screenAR >= aspectRatio) {
 		// Screen is wider than content: pillarbox
 		viewportHeight = drawableHeight;
@@ -258,6 +279,71 @@ void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float
 		viewportX = 0;
 		viewportY = (drawableHeight - viewportHeight) / 2.0f;
 	}
+}
+
+#ifdef USE_METALFX
+// Same as getFrameRect() in whole pixels, so that the upscaled frame is drawn 1:1
+void MetalContext::getUpscaleRect(float aspectRatio, u32& x, u32& y, u32& w, u32& h) const
+{
+	float fx, fy, fw, fh;
+	getFrameRect(aspectRatio, fx, fy, fw, fh);
+	w = std::min((u32)std::lround(fw), width);
+	h = std::min((u32)std::lround(fh), height);
+	x = (width - w) / 2;
+	y = (height - h) / 2;
+}
+
+void MetalContext::UpscaleFrame(id<MTLTexture> texture, float aspectRatio)
+{
+	// A repeated frame reuses the previous upscale
+	if (presentingDupeFrame && upscaledTexture != nil)
+		return;
+	upscaledTexture = nil;
+	if (!config::MetalFXUpscale || !upscaler.IsSupported())
+	{
+		upscaler.Reset();
+		return;
+	}
+	// Do it now rather than in BeginRenderPass so that the output size is up to date
+	recreateSwapChainIfNeeded();
+	// lastFrameTexture is reset if the swap chain was recreated
+	if (!IsValid() || lastFrameTexture == nil || aspectRatio <= 0.f)
+		return;
+
+	u32 x, y, w, h;
+	getUpscaleRect(aspectRatio, x, y, w, h);
+	// The frame is rotated when drawn
+	if (config::Rotate90)
+		std::swap(w, h);
+	upscaledTexture = upscaler.Upscale(currentCommandBuffer(), texture, w, h);
+}
+#endif
+
+void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio)
+{
+	float viewportWidth, viewportHeight, viewportX, viewportY;
+	getFrameRect(aspectRatio, viewportX, viewportY, viewportWidth, viewportHeight);
+
+	bool upscaled = false;
+#ifdef USE_METALFX
+	// Use the upscaled frame if it still matches the frame size
+	if (upscaledTexture != nil && config::MetalFXUpscale)
+	{
+		u32 x, y, w, h;
+		getUpscaleRect(aspectRatio, x, y, w, h);
+		const u32 texWidth = (u32)(config::Rotate90 ? upscaledTexture.height : upscaledTexture.width);
+		const u32 texHeight = (u32)(config::Rotate90 ? upscaledTexture.width : upscaledTexture.height);
+		if (texWidth == w && texHeight == h)
+		{
+			texture = upscaledTexture;
+			viewportX = x;
+			viewportY = y;
+			viewportWidth = w;
+			viewportHeight = h;
+			upscaled = true;
+		}
+	}
+#endif
 
 	MetalQuadVertex vtx[4] {
 			{ -1, -1, 0, 0, 1 },  // bottom-left
@@ -297,7 +383,8 @@ void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float
 		scissor.height = height - scissor.y;
 	[commandEncoder setScissorRect:scissor];
 
-	const bool nearest = config::TextureFiltering == 1 || !config::LinearInterpolation;
+	// The upscaled frame is drawn 1:1
+	const bool nearest = upscaled || config::TextureFiltering == 1 || !config::LinearInterpolation;
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandEncoder, texture, vtx, nearest);
 	else
@@ -319,6 +406,10 @@ void MetalContext::PresentFrame(id<MTLTexture> texture, MTLViewport viewport, fl
 	{
 		NewFrame();
 		gui_draw_osd();
+#ifdef USE_METALFX
+		// MetalFX is encoded before the render pass, in the same command buffer
+		UpscaleFrame(texture, aspectRatio);
+#endif
 		BeginRenderPass();
 
 		// BeginRenderPass leaves a nil encoder when no drawable was available
@@ -343,6 +434,10 @@ void MetalContext::PresentLastFrame()
 void MetalContext::term()
 {
 	lastFrameTexture = nil;
+#ifdef USE_METALFX
+	upscaledTexture = nil;
+	upscaler.Term();
+#endif
 	currentDrawable = nil;
 	imguiDriver.reset();
 	if (overlay)
