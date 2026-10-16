@@ -30,6 +30,9 @@ set(METAL_SOURCES
         oit/metal_oit_shaders.h
         "${IMGUI_BACKENDS_DIR}/imgui_impl_metal.h"
         "${IMGUI_BACKENDS_DIR}/imgui_impl_metal.mm")
+if(USE_METALFX)
+    list(APPEND METAL_SOURCES metal_upscaler.h metal_upscaler.mm)
+endif()
 target_sources(${PROJECT_NAME} PRIVATE ${METAL_SOURCES})
 
 # The Metal renderer and the imgui Metal backend rely on ARC
@@ -39,3 +42,9 @@ set_source_files_properties(${METAL_SOURCES} TARGET_DIRECTORY ${PROJECT_NAME}
 find_library(METAL_FRAMEWORK Metal REQUIRED)
 find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${METAL_FRAMEWORK} ${QUARTZCORE_FRAMEWORK})
+
+if(USE_METALFX)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_METALFX)
+    # MetalFX needs macOS 13. Weak link it so that the app still starts on older versions.
+    target_link_options(${PROJECT_NAME} PRIVATE "SHELL:-weak_framework MetalFX")
+endif()

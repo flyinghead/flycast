@@ -25,6 +25,9 @@
 #include "wsi/context.h"
 #include "metal_quad.h"
 #include "metal_overlay.h"
+#ifdef USE_METALFX
+#include "metal_upscaler.h"
+#endif
 
 #ifdef VIDEO_ROUTING
 // Syphon, implemented by the macOS shell
@@ -82,6 +85,12 @@ private:
 	bool init();
 	void term();
 	void CreateSwapChain();
+	id<MTLCommandBuffer> currentCommandBuffer();
+	void getFrameRect(float aspectRatio, float& x, float& y, float& w, float& h) const;
+#ifdef USE_METALFX
+	void getUpscaleRect(float aspectRatio, u32& x, u32& y, u32& w, u32& h) const;
+	void UpscaleFrame(id<MTLTexture> texture, float aspectRatio);
+#endif
 	void DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio);
 	void RenderVideoRouting();
 
@@ -118,6 +127,13 @@ private:
 
 	// Scaled copy of the frame sent by video routing
 	id<MTLTexture> videoRoutingTexture = nil;
+#ifdef USE_METALFX
+	MetalUpscaler upscaler;
+	// lastFrameTexture upscaled to its on-screen size, or nil
+	id<MTLTexture> upscaledTexture = nil;
+	// Set while Present() repeats the last frame
+	bool presentingDupeFrame = false;
+#endif
 
 	id<MTLDevice> device = nil;
 	id<MTLCommandQueue> queue = nil;
