@@ -60,6 +60,9 @@ public:
 		return false;
 	}
 
+	bool hasPerPixel() override {
+		return true;
+	}
 	bool recreateSwapChainIfNeeded();
 
 	// True if the device supports the packed 16-bit pixel formats (A1BGR5, B5G6R5, ABGR4).

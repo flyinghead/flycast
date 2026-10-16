@@ -209,11 +209,19 @@ constant bool dithering [[function_constant(14)]];
 // When true, fs_main appends a fragment to the OIT per-pixel linked list
 // instead of writing the colour to the framebuffer.
 constant bool pp_oit_mode [[function_constant(15)]];
+// Opaque depth for the collect's manual depth test kept in tile memory
+// (Apple GPUs): OP/PT draws also write their depth to colour attachment 1, and
+// the collect reads it back with framebuffer fetch. When false the collect
+// reads a copy of the depth attachment bound at texture 4 instead.
+constant bool oit_tile_depth [[function_constant(16)]];
 
 constant bool has_fog_table = pp_fog_ctrl != 2;
 constant bool has_palette = pp_palette != 0;
 constant bool is_flat = pp_gouraud == 0;
 constant bool is_not_flat = !is_flat;
+constant bool oit_depth_out   = oit_tile_depth && !pp_oit_mode;
+constant bool oit_depth_fetch = oit_tile_depth && pp_oit_mode;
+constant bool oit_depth_tex   = !oit_tile_depth && pp_oit_mode;
 
 struct FragmentShaderUniforms
 {
@@ -248,7 +256,24 @@ struct VertexOut
 struct FragmentOut
 {
 	float4 color [[color(0)]];
+	// Tile-memory opaque depth, R32Float. Masked out (writeMask None) for
+	// every draw that doesn't write the depth attachment.
+	float opaque_depth [[color(1), function_constant(oit_depth_out)]];
 	float depth [[depth(any)]];
+};
+
+// fs_main_early: OIT collect draws that must be stencil-tested before the
+// fragment function runs. No [[depth]] output, which [[early_fragment_tests]]
+// forbids.
+struct FragmentOutEarly
+{
+	float4 color [[color(0)]];
+};
+
+struct FragmentResult
+{
+	float4 color;
+	float depth;
 };
 
 float fog_mode2(float w, constant FragmentShaderUniforms& uniforms,
@@ -325,25 +350,45 @@ float4 palette_pixel_bilinear(texture2d<float> texture, sampler texture_sampler,
 	return mix(temp0, temp1, weight.y);
 }
 
-fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderUniforms& uniforms [[buffer(0)]],
-							 constant PushBlock& push_constants [[buffer(1)]],
-							 texture2d<float> tex [[texture(0), function_constant(pp_texture)]], sampler tex_sampler [[sampler(0), function_constant(pp_texture)]],
-							 texture2d<float> fog_table [[texture(2), function_constant(has_fog_table)]], sampler fog_table_sampler [[sampler(2), function_constant(has_fog_table)]],
-							 texture2d<float> palette [[texture(3), function_constant(has_palette)]], sampler palette_sampler [[sampler(3), function_constant(has_palette)]],
-							 // OIT collect bindings — only required when pp_oit_mode is true.
-							 // The drawer must bind buffers 2-5 on the collect render encoder for the
-							 // collect pass to function correctly. Non-OIT pipelines never see
-							 // these parameters (function_constant gating elides them entirely).
-							 device atomic_uint*       oit_counter   [[buffer(2), function_constant(pp_oit_mode)]],
-							 device OITPixel*          oit_pixels    [[buffer(3), function_constant(pp_oit_mode)]],
-							 device atomic_uint*       oit_head      [[buffer(4), function_constant(pp_oit_mode)]],
-							 constant OITViewportUniforms& oit_vp    [[buffer(5), function_constant(pp_oit_mode)]])
+inline FragmentResult fs_impl(VertexOut in, constant FragmentShaderUniforms& uniforms,
+							  constant PushBlock& push_constants,
+							  texture2d<float> tex, sampler tex_sampler,
+							  texture2d<float> fog_table, sampler fog_table_sampler,
+							  texture2d<float> palette, sampler palette_sampler,
+							  device atomic_uint* oit_counter, device OITPixel* oit_pixels,
+							  device atomic_uint* oit_head, constant OITViewportUniforms& oit_vp,
+							  float oit_opaque_depth)
 {
+	float w;
+
+	if (div_pos_z) {
+		w = 100000.0 / in.vtx_uv.z;
+	} else {
+		w = 100000.0 * in.vtx_uv.z;
+	}
+
+	float depth = log2(1.0 + max(w, -0.999999)) / 34.0;
+
+	if (pp_oit_mode) {
+		// OIT collect: manual depth test against the opaque + punch-through
+		// depth (GEqual, as the autosort depth state), before anything else so
+		// occluded fragments skip the texturing below. The hardware test can't
+		// do this: fs_main writes [[depth]], so it runs late, after the
+		// a-buffer append has already happened. Matches Vulkan's
+		// subpassLoad(DepthTex) test in oit_shaders.cpp.
+		if (depth < oit_opaque_depth) {
+			discard_fragment();
+			return FragmentResult { float4(0.0), depth };
+		}
+	}
+
 	// Clip inside the box
 	if (pp_clip_inside) {
 		if (in.position.x >= push_constants.clip_test.x && in.position.x <= push_constants.clip_test.z
-			&& in.position.y >= push_constants.clip_test.y && in.position.y <= push_constants.clip_test.w)
+			&& in.position.y >= push_constants.clip_test.y && in.position.y <= push_constants.clip_test.w) {
 			discard_fragment();
+			return FragmentResult { float4(0.0), depth };
+		}
 	}
 
 	float4 color;
@@ -433,16 +478,6 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 		color.a = 1.0;
 	}
 
-	float w;
-
-	if (div_pos_z) {
-		w = 100000.0 / in.vtx_uv.z;
-	} else {
-		w = 100000.0 * in.vtx_uv.z;
-	}
-
-	float depth = log2(1.0 + max(w, -0.999999)) / 34.0;
-
 	if (dithering) {
 		constexpr float dither_table[16] = {
 			5, 13,  7, 15,
@@ -462,6 +497,7 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 		// list; the resolve pass will sort by depth and back-to-front
 		// blend.
 		//
+		// (The manual depth test against the opaque depth ran at the top.)
 		// Step 1: atomically allocate a slot in the pixel buffer.
 		uint idx = atomic_fetch_add_explicit(oit_counter, 1u, memory_order_relaxed);
 		if (idx >= oit_vp.pixelBufferSize) {
@@ -471,7 +507,7 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 			// Matches the Vulkan OIT behaviour at
 			// core/rend/vulkan/oit/oit_shaders.cpp:123.
 			discard_fragment();
-			return FragmentOut { float4(0.0), depth };
+			return FragmentResult { float4(0.0), depth };
 		}
 
 		// Step 2: compute the per-pixel head-pointer cell.
@@ -496,12 +532,72 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 		oit_pixels[idx].next    = prev_head;
 
 		// The pipeline's colour writeMask is None for the OIT collect
-		// pass — the return value is discarded. We still return a valid
-		// FragmentOut so Metal can validate the function signature.
-		return FragmentOut { float4(0.0), depth };
+		// pass — the return value is discarded.
+		return FragmentResult { float4(0.0), depth };
 	}
 
-	return FragmentOut { color, depth };
+	return FragmentResult { color, depth };
+}
+
+#define FS_MAIN_ARGS \
+	VertexOut in [[stage_in]], constant FragmentShaderUniforms& uniforms [[buffer(0)]], \
+	constant PushBlock& push_constants [[buffer(1)]], \
+	texture2d<float> tex [[texture(0), function_constant(pp_texture)]], sampler tex_sampler [[sampler(0), function_constant(pp_texture)]], \
+	texture2d<float> fog_table [[texture(2), function_constant(has_fog_table)]], sampler fog_table_sampler [[sampler(2), function_constant(has_fog_table)]], \
+	texture2d<float> palette [[texture(3), function_constant(has_palette)]], sampler palette_sampler [[sampler(3), function_constant(has_palette)]], \
+	/* OIT collect bindings, only present when pp_oit_mode is true. The drawer */ \
+	/* binds buffers 2-5 on the collect encoder; non-OIT pipelines never see */ \
+	/* these parameters (function_constant gating elides them entirely). */ \
+	device atomic_uint*       oit_counter   [[buffer(2), function_constant(pp_oit_mode)]], \
+	device OITPixel*          oit_pixels    [[buffer(3), function_constant(pp_oit_mode)]], \
+	device atomic_uint*       oit_head      [[buffer(4), function_constant(pp_oit_mode)]], \
+	constant OITViewportUniforms& oit_vp    [[buffer(5), function_constant(pp_oit_mode)]], \
+	/* Opaque + punch-through depth for the collect's manual depth test: */ \
+	/* framebuffer fetch of the tile-memory copy, or a blitted depth copy. */ \
+	float                     oit_opaque_fetch [[color(1), function_constant(oit_depth_fetch)]], \
+	depth2d<float>            oit_opaque_tex   [[texture(4), function_constant(oit_depth_tex)]]
+
+inline float oit_opaque_depth(VertexOut in, float fetched, depth2d<float> tex)
+{
+	if (oit_depth_fetch)
+		return fetched;
+	if (oit_depth_tex)
+		return tex.read(uint2(in.position.xy));
+	return 0.0;
+}
+
+#define FS_IMPL_CALL \
+	fs_impl(in, uniforms, push_constants, tex, tex_sampler, fog_table, fog_table_sampler, \
+			palette, palette_sampler, oit_counter, oit_pixels, oit_head, oit_vp, \
+			oit_opaque_depth(in, oit_opaque_fetch, oit_opaque_tex))
+
+fragment FragmentOut fs_main(FS_MAIN_ARGS)
+{
+	FragmentResult r = FS_IMPL_CALL;
+	FragmentOut out;
+	out.color = r.color;
+	out.depth = r.depth;
+	// The depth attachment stores the fragment depth clamped to [0, 1]; keep
+	// the tile copy bit-identical to it.
+	if (oit_depth_out)
+		out.opaque_depth = saturate(r.depth);
+	return out;
+}
+
+// OIT collect of the two-volume translucent polys. Each parameter set is
+// drawn gated on the modifier-volume stencil mark (area 1 inside, area 2
+// outside). fs_main writes [[depth]], which forces the depth/stencil tests to
+// run after the fragment function — after the a-buffer append — so a rejected
+// fragment was collected anyway. Here the stencil test runs first and only
+// fragments of the right area reach the append. Depth is still tested in
+// fs_impl (the hardware compare is Always: position.z isn't the log depth).
+[[early_fragment_tests]]
+fragment FragmentOutEarly fs_main_early(FS_MAIN_ARGS)
+{
+	FragmentResult r = FS_IMPL_CALL;
+	FragmentOutEarly out;
+	out.color = r.color;
+	return out;
 }
 )";
 
@@ -1224,10 +1320,12 @@ id<MTLFunction> MetalShaders::compileShader(const MetalFragmentShaderParams &par
 	[fragmentShaderConstants setConstantValue:&params.divPosZ type:MTLDataTypeBool atIndex:13];
 	[fragmentShaderConstants setConstantValue:&params.dithering type:MTLDataTypeBool atIndex:14];
 	[fragmentShaderConstants setConstantValue:&params.oitMode type:MTLDataTypeBool atIndex:15];
+	[fragmentShaderConstants setConstantValue:&params.oitTileDepth type:MTLDataTypeBool atIndex:16];
 
 	NSError* error = nil;
 
-	id<MTLFunction> function = [fragmentShaderLibrary newFunctionWithName:@"fs_main" constantValues:fragmentShaderConstants error:&error];
+	NSString *name = params.oitMode && params.earlyFragmentTests ? @"fs_main_early" : @"fs_main";
+	id<MTLFunction> function = [fragmentShaderLibrary newFunctionWithName:name constantValues:fragmentShaderConstants error:&error];
 
 	if (!function) {
 		ERROR_LOG(RENDERER, "compileShader(fragment): %s", metalErrorString(error));

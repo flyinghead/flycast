@@ -21,6 +21,11 @@ set(METAL_SOURCES
         metal_shaders.mm
         metal_texture.h
         metal_texture.mm
+        oit/metal_oit_buffer.h
+        oit/metal_oit_drawer.h
+        oit/metal_oit_drawer.mm
+        oit/metal_oit_pipeline.h
+        oit/metal_oit_shaders.h
         "${IMGUI_BACKENDS_DIR}/imgui_impl_metal.h"
         "${IMGUI_BACKENDS_DIR}/imgui_impl_metal.mm")
 target_sources(${PROJECT_NAME} PRIVATE ${METAL_SOURCES})

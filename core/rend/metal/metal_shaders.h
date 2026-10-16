@@ -59,6 +59,13 @@ struct MetalFragmentShaderParams
 	bool dithering;
 	// When true, fs_main is specialised for the OIT collect pass (linked-list append).
 	bool oitMode = false;
+	// OIT drawers on Apple GPUs keep the opaque depth in tile memory (colour
+	// attachment 1): OP/PT variants write it, collect variants read it with
+	// framebuffer fetch instead of sampling a depth copy at texture 4.
+	bool oitTileDepth = false;
+	// Collect only: use the [[early_fragment_tests]] entry point (fs_main_early)
+	// so the stencil test rejects fragments before the a-buffer append.
+	bool earlyFragmentTests = false;
 
 	u32 hash()
 	{
@@ -67,7 +74,7 @@ struct MetalFragmentShaderParams
 			| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
 			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13)
 			| ((u32)palette << 14) | ((u32)divPosZ << 16) | ((u32)dithering << 17)
-			| ((u32)oitMode << 18);
+			| ((u32)oitMode << 18) | ((u32)oitTileDepth << 19) | ((u32)earlyFragmentTests << 20);
 	}
 };
 

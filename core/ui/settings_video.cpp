@@ -68,6 +68,10 @@ void gui_settings_video()
 		renderApi = Metal;
 		perPixel = false;
 		break;
+	case RenderType::Metal_OIT:
+		renderApi = Metal;
+		perPixel = true;
+		break;
 	}
 	constexpr int apiCount = 0
 		#ifdef USE_VULKAN
@@ -480,7 +484,7 @@ void gui_settings_video()
     	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
     	break;
     case Metal:
-    	config::RendererType = RenderType::Metal;
+    	config::RendererType = perPixel ? RenderType::Metal_OIT : RenderType::Metal;
     	break;
     }
 }

@@ -103,6 +103,7 @@ enum class RenderType {
 	DirectX11 = 2,
 	DirectX11_OIT = 6,
 	Metal = 7,
+	Metal_OIT = 8,
 };
 
 static inline bool isOpenGL(RenderType renderType)  {
@@ -115,7 +116,7 @@ static inline bool isDirectX(RenderType renderType) {
 	return renderType == RenderType::DirectX9 || renderType == RenderType::DirectX11 || renderType == RenderType::DirectX11_OIT;
 }
 static inline bool isMetal(RenderType renderType) {
-	return renderType == RenderType::Metal;
+	return renderType == RenderType::Metal || renderType == RenderType::Metal_OIT;
 }
 
 enum class KeyboardLayout {
