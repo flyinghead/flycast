@@ -55,6 +55,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/pvr/elan.h"
 #include "hw/maple/maple_if.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/Renderer_if.h"
@@ -2466,6 +2467,19 @@ size_t retro_get_memory_size(unsigned type)
 size_t retro_serialize_size()
 {
 	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
+	// A frontend may size its buffer once, but a state grows and shrinks with the
+	// devices plugged in and the frames being drawn. Report the memory regions plus
+	// the allowance GGPO makes for everything else. System SP cartridges add
+	// memory that isn't counted here.
+	if (!settings.platform.isSystemSP())
+	{
+		size_t size = settings.platform.ram_size + settings.platform.vram_size
+				+ settings.platform.aram_size;
+		if (settings.platform.isNaomi2())
+			size += elan::ERAM_SIZE;
+		return size + (settings.platform.isNaomi() ? 20_MB : 10_MB);
+	}
+
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
