@@ -441,6 +441,8 @@ void retro_deinit()
 	emu.term();
 #endif
 	libretro_supports_bitmasks = false;
+	led_state_cb = NULL;
+	memset(retro_led_state, 0, sizeof(retro_led_state));
 	categoriesSupported = false;
 	platformIsDreamcast = true;
 	platformIsArcade = false;
