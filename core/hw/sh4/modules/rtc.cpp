@@ -4,8 +4,16 @@
 #include "hw/hwreg.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "modules.h"
+#include "hw/sh4/sh4_sched.h"
 
 RTCRegisters rtc;
+
+// R64CNT is a free-running 7-bit counter incremented at 128 Hz: bit 0 is the
+// 64 Hz bit and bit 6 the 1 Hz bit, so it wraps once per second.
+static u8 read_R64CNT(u32 addr)
+{
+	return (u8)((sh4_sched_now64() / (SH4_MAIN_CLOCK / 128)) & 0x7F);
+}
 
 void RTCRegisters::init()
 {
@@ -14,7 +22,7 @@ void RTCRegisters::init()
 	// NAOMI reads from at least RTC_R64CNT
 
 	//RTC R64CNT 0xFFC80000 0x1FC80000 8 Held Held Held Held Pclk
-	setReadOnly<RTC_R64CNT_addr, u8>();
+	setReadOnly<RTC_R64CNT_addr, u8>(read_R64CNT);
 
 	//RTC RSECCNT H'FFC8 0004 H'1FC8 0004 8 Held Held Held Held Pclk
 	setRW<RTC_RSECCNT_addr, u8, 0x7f>();
