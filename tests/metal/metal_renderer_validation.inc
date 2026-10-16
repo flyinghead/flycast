@@ -656,6 +656,92 @@ void MetalRenderer::validateSynthetic()
 	fixture.render_passes[0].autosort = true;
 	check("sorted alpha", 127, 0, 128);
 	if (perPixel) {
+		const auto savedVertices = fixture.verts;
+		const auto savedOpaque = fixture.global_param_op;
+		const auto savedPunch = fixture.global_param_pt;
+		const auto savedPasses = fixture.render_passes;
+		const bool savedNative = config::NativeDepthInterpolation;
+		const int64_t savedBudget = config::PixelBufferSize;
+		const u32 savedAlpha = PT_ALPHA_REF;
+		MetalTexture checker; checker.tex_type = TextureType::_8888;
+		std::array<u8,8*8*4> texels{};
+		for (unsigned i=0;i<64;++i) {
+			texels[i*4]=37;texels[i*4+1]=211;texels[i*4+2]=59;
+			texels[i*4+3]=i%3 ? 255 : 0;
+		}
+		checker.UploadToGPU(8,8,texels.data(),false);
+		config::PixelBufferSize = 64*48*MetalOITNodeBudgetStride;
+		PT_ALPHA_REF = 128;
+		unsigned pairs=0;
+		for (bool native : {false,true}) for (bool punch : {false,true})
+		for (u32 mode=0;mode<8;++mode) for (bool write : {false,true}) {
+			config::NativeDepthInterpolation=native;
+			fixture.global_param_op[0].isp.DepthMode=mode;
+			fixture.global_param_op[0].isp.ZWriteDis=!write;
+			fixture.global_param_pt.clear();fixture.render_passes[0].pt_count=0;
+			if (punch) {
+				PolyParam pt=tr;pt.pcw.Texture=1;pt.texture=&checker;
+				fixture.global_param_pt.push_back(pt);fixture.render_passes[0].pt_count=1;
+			}
+			for (unsigned i=0;i<8;++i) {
+				auto& v=fixture.verts[i];v.z=i<4 ? .25f*(i+1) : .3f*(i-3);
+				v.u=i&1 ? .9375f : .0625f;v.v=i&2 ? .9375f : .0625f;
+			}
+			disableOITDepthSharing=disableOITHeadReuse=true;
+			if(!Render())throw RendererException("Metal separate-depth reference failed");
+			std::vector<u8> reference;context()->readTexture(screen,reference);
+			if(shadowDepth==depth)throw RendererException("Metal depth reference unexpectedly shared storage");
+			disableOITDepthSharing=disableOITHeadReuse=false;
+			if(!Render())throw RendererException("Metal shared-depth render failed");
+			std::vector<u8> candidate;context()->readTexture(screen,candidate);
+			if(shadowDepth!=depth || candidate!=reference)
+				throw RendererException("Metal shared opaque depth changed production pixels");
+			++pairs;
+		}
+		fixture.verts=savedVertices;fixture.global_param_op=savedOpaque;
+		fixture.global_param_pt=savedPunch;fixture.render_passes=savedPasses;
+		config::NativeDepthInterpolation=savedNative;PT_ALPHA_REF=savedAlpha;
+		// A later sorted pass consumes the preceding translucent depths.
+		// It must keep an independent opaque/shadow history.
+		fixture.global_param_tr.push_back(tr);
+		fixture.render_passes.push_back(fixture.render_passes[0]);
+		fixture.render_passes.back().tr_count=2;
+		disableOITDepthSharing=disableOITHeadReuse=true;
+		if(!Render())throw RendererException("Metal multipass depth reference failed");
+		std::vector<u8> multipassReference;context()->readTexture(screen,multipassReference);
+		disableOITDepthSharing=disableOITHeadReuse=false;
+		if(!Render())throw RendererException("Metal multipass depth fallback failed");
+		std::vector<u8> multipassCandidate;context()->readTexture(screen,multipassCandidate);
+		if(shadowDepth==depth || multipassReference!=multipassCandidate)
+			throw RendererException("Metal later sorted pass lost its independent depth history");
+		fixture.global_param_tr.resize(1);fixture.render_passes=savedPasses;
+		// The tiled resolve already clears heads. Exercise skipped clears,
+		// buffer growth, shrinking, queued reuse and abandoned encoded work.
+		for (unsigned i=0;i<9;++i) {
+			fixture.framebufferWidth=i==3 ? 80 : 64;fixture.framebufferHeight=i==3 ? 60 : 48;
+			const u64 before=oitHeadClearCount;
+			const NSUInteger bytes=NSUInteger(fixture.framebufferWidth)*fixture.framebufferHeight*sizeof(u32);
+			const bool known=clearedOITHeadBytes>=bytes;
+			if(!Render())throw RendererException("Metal head reuse render failed");
+			if(oitHeadClearCount!=before+(known ? 0 : 1))
+				throw RendererException("Metal cleared-head prefix proof was not respected");
+			if(i==5) {
+				{ auto abandoned=context()->beginRenderCommands([abort=renderAbort]{abort->canceled=true;},true); }
+				recoverCanceledRender();
+				if(clearedOITHeadBytes)throw RendererException("Metal abandoned batch retained an OIT head proof");
+			} else {
+				std::vector<u8> pixels;context()->readTexture(screen,pixels);
+				const u8 *p=pixels.data()+(size_t(fixture.framebufferHeight/2)*fixture.framebufferWidth+fixture.framebufferWidth/2)*4;
+				if(std::abs(int(p[0])-127)>1 || std::abs(int(p[2])-128)>1)
+					throw RendererException("Metal head reuse, resizing or cancellation corrupted output");
+			}
+		}
+		fixture.framebufferWidth=64;fixture.framebufferHeight=48;
+		config::PixelBufferSize=savedBudget;
+		NOTICE_LOG(RENDERER,"Metal validation PASS: %u exact shared-depth image pairs, every depth mode, Z writes, punch-through and native interpolation",pairs);
+		NOTICE_LOG(RENDERER,"Metal validation PASS: OIT cleared-head reuse, resize growth/shrink and abandoned batch recovery");
+	}
+	if (perPixel) {
 		// The linked-list renderer is an independent reference for dense
 		// storage: exercise every blend/accumulator combination, not only
 		// source-over colors, and compare the entire production framebuffer.
@@ -694,9 +780,11 @@ void MetalRenderer::validateSynthetic()
 			}
 			config::PixelBufferSize = savedBudget;
 			disableDenseOIT=true; disablePackedOIT=true;
+			disableOITDepthSharing=disableOITHeadReuse=true;
 			if(!Render())throw RendererException("Metal linked OIT blend reference failed");
 			std::vector<u8> reference;context()->readTexture(screen,reference);
 			disablePackedOIT=false;
+			disableOITDepthSharing=disableOITHeadReuse=false;
 			if(!Render())throw RendererException("Metal packed linked OIT render failed");
 			if(!(drawState.uniforms.flags & MetalOITPackedList))throw RendererException("Metal fixture did not use packed linked storage");
 			std::vector<u8> linked;context()->readTexture(screen,linked);
@@ -829,6 +917,7 @@ void MetalRenderer::validateSynthetic()
 		tr.pcw.Shadow = 1; fixture.global_param_tr.push_back(tr); fixture.render_passes[0].tr_count = 1;
 		fixture.global_param_mvo_tr.push_back(mv); fixture.render_passes[0].mvo_tr_count = 1;
 		check("translucent production modifiers", 127, 0, int(std::round(128 * FPU_SHAD_SCALE.scale_factor / 256.f)));
+		if(shadowDepth==depth)throw RendererException("Metal modifier consumer used shared opaque depth");
 		if (context()->device().rasterOrderGroupsSupported) {
 			const auto savedTriangles = fixture.modtrig;
 			const auto savedOpaqueVolumes = fixture.global_param_mvo;

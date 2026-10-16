@@ -174,12 +174,14 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	bool screenRendered = false;
 	bool colorModifiers = false, oitModifiers = false, denseOIT = false, denseColorOIT = false, densePackedOIT = false;
 	bool packedListOIT = false;
+	NSUInteger clearedOITHeadBytes = 0;
 	struct PassState {
 		bool sortedFragments, colorModifiers, oitModifiers, resetOITHeads;
 	};
 	std::vector<PassState> passStates;
 	size_t shadowDepthPassCount = 0;
 	bool frameTimings = false;
+	u64 profilingLimit = 900;
 	u64 profilingFrame = 0;
 	u64 profilingProcess = 0;
 	u32 profilingBoundEligible = 0, profilingBoundActive = 0;
@@ -196,12 +198,12 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	};
 	std::array<FrameResources, MetalContext::RenderBatchSlots> frameResources;
 	size_t nextFrameResource = 0, currentFrameResource = 0;
-	struct RenderAbortState { bool canceled = false; };
+	struct RenderAbortState { std::atomic<bool> canceled{false}; };
 	std::shared_ptr<RenderAbortState> renderAbort = std::make_shared<RenderAbortState>();
 	void recoverCanceledRender()
 	{
-		if (!renderAbort->canceled) return;
-		renderAbort->canceled = false;
+		if (!renderAbort->canceled.exchange(false)) return;
+		clearedOITHeadBytes = 0;
 		resetTextureCache = updateFogTable = updatePalette = true;
 		// A canceled batch may include earlier renders whose image was already
 		// recorded as pending. Keep the previously presented image available.
@@ -241,6 +243,8 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	bool disableOITBounds = false;
 	bool disableDenseOIT = false;
 	bool disablePackedOIT = false;
+	bool disableOITDepthSharing = false, disableOITHeadReuse = false;
+	u64 oitHeadClearCount = 0;
 #endif
 	float conservativeDepthBound(const PolyParam& poly, u32 first, u32 count, bool *colourCoordinates = nullptr) const
 	{
@@ -1540,7 +1544,9 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 				options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked];
 		const NSUInteger color1Bytes = frame.capacity * sizeof(u32);
 		if (oitColors1 && oitColors1.length != color1Bytes) oitColors1 = nil;
+		const id<MTLBuffer> previousHeads = heads;
 		reserveBuffer(headBytes, heads, MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked);
+		if (heads != previousHeads) clearedOITHeadBytes = 0;
 		if (!resources.counter)
 			resources.counter = [context()->device() newBufferWithLength:8 options:MTLResourceStorageModeShared];
 		counter = resources.counter;
@@ -1593,10 +1599,14 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	{
 		FCMetal4ComputeEncoder * b = [cb transferEncoder];
 		if (!b) throw RendererException("Metal OIT clear encoder allocation failed");
+#ifdef METAL_RENDERER_TESTS
+		++oitHeadClearCount;
+#endif
 		const NSUInteger activeHeadBytes = NSUInteger(frame.width) * frame.height * sizeof(u32);
 		[b fillBuffer:heads range:NSMakeRange(0, activeHeadBytes) value:255];
 		[b fillBuffer:counter range:NSMakeRange(0, 4) value:0];
 		[b endEncoding];
+		clearedOITHeadBytes = activeHeadBytes;
 	}
 	void resolveFramebuffer(FCMetal4Commands * cb, bool finalPass, FrameResources& resources, bool oit, bool resetHeads = false,
 		id<MTLTexture> tiledOutput = nil, const metal_oit::Tile *tile = nullptr, u32 layerBound = 0, bool sourceOver = false, bool dense = false, bool packed = false)
@@ -1799,6 +1809,7 @@ public:
 			pipelineSelection = {};
 			pipelineResults = std::make_shared<PipelineResults>();
 			frameTimings = config::loadBool("log", "MetalFrameTiming", false);
+			profilingLimit = std::max(1, config::loadInt("log", "MetalFrameTimingLimit", 900));
 			profilingProcess = 0;
 			static_assert(sizeof(N2Light) == 112 && sizeof(N2LightModel) == 1888, "Metal Naomi2 light ABI");
 			N2LightModel empty{};
@@ -1903,6 +1914,7 @@ public:
 		backgroundColorCleared = initialColorClear = false;
 		skipBackgroundDepth = false;
 		colorModifiers = oitModifiers = denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
+		clearedOITHeadBytes = 0;
 		passStates.clear();
 		shadowDepthPassCount = 0;
 		lightOffsets.clear();
@@ -1946,7 +1958,7 @@ public:
 	{
 		@autoreleasepool {
 			const u64 processNumber = frameTimings ? ++profilingProcess : 0;
-			const bool profile = frameTimings && processNumber <= 900;
+			const bool profile = frameTimings && processNumber <= profilingLimit;
 			const auto started = profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 			{
 				recoverCanceledRender();
@@ -2002,7 +2014,7 @@ public:
 			// of every polygon draw and one shader choice stable for that frame.
 			collectMaterialPipelines();
 			const u64 frameNumber = frameTimings ? ++profilingFrame : 0;
-			const bool profile = frameTimings && frameNumber <= 900;
+			const bool profile = frameTimings && frameNumber <= profilingLimit;
 			profilingBoundEligible = profilingBoundActive = 0;
 			profilingUVEligible = profilingUVActive = 0;
 			const auto started = profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
@@ -2014,6 +2026,31 @@ public:
 			FlightTicket ticket{sem};
 			resources.polyUniformCursor = 0;
 			FCMetal4Commands * cb = commands.buffer();
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+			id<MTL4CounterHeap> traceHeap = nil;
+			NSMutableArray<NSString *> *traceLabels = [NSMutableArray new];
+			if (metal_capture::analyzeOIT()) {
+				MTL4CounterHeapDescriptor *desc = [MTL4CounterHeapDescriptor new]; desc.type = MTL4CounterHeapTypeTimestamp; desc.count = 1024;
+				traceHeap = [context()->device() newCounterHeapWithDescriptor:desc error:nil];
+			}
+			auto traceGPU = [&](NSString *label) {
+				if (!traceHeap || traceLabels.count >= 1024) return;
+				[cb.native writeTimestampIntoHeap:traceHeap atIndex:traceLabels.count]; [traceLabels addObject:label];
+			};
+			traceGPU(@"begin");
+			if (traceHeap) {
+				NOTICE_LOG(RENDERER,"Deep trace frame %llu RTT %d size %u %u verts %zu idx %zu mods %zu passes %zu",(unsigned long long)frameNumber,rc->isRTT,rc->framebufferWidth,rc->framebufferHeight,rc->verts.size(),rc->idx.size(),rc->modtrig.size(),rc->render_passes.size());
+				unsigned kind = 0;
+				for (const auto *list : {&rc->global_param_op,&rc->global_param_pt,&rc->global_param_tr}) {
+					for (size_t i=0;i<list->size();++i) {const auto& poly=(*list)[i];if(poly.count<3)continue;
+						NOTICE_LOG(RENDERER,"Deep poly frame %llu list %u index %zu count %u pcw %08x isp %08x tsp %08x tcw %08x",(unsigned long long)frameNumber,kind,i,poly.count,poly.pcw.full,poly.isp.full,poly.tsp.full,poly.tcw.full);
+					} ++kind;
+				}
+			}
+#else
+			const auto traceGPU = [](NSString *) {};
+#endif
+
 			// Build all per-render resources before encoding. The Metal 4 submission
 			// owner retains bound resources, including prior RTT feedback images.
 			frame = {}; denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
@@ -2047,6 +2084,17 @@ public:
 			// Shadow depth feeds OIT's manual test; its stencil feeds modifier
 			// colors. Without either consumer in this render, skip that whole path.
 			const bool useShadowDepth = shadowDepthPassCount != 0;
+			// The first pass's color depth equals its opaque prepass depth.
+			// A modifier consumer or later OIT/depth consumer needs the original
+			// independent depth history and therefore retains the separate path.
+			bool shareOITDepth = useShadowDepth && !useModifiers && shadowDepthPassCount == 1
+				&& passStates.front().sortedFragments;
+#ifdef METAL_RENDERER_TESTS
+			shareOITDepth &= !disableOITDepthSharing;
+#endif
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+			shareOITDepth &= !std::getenv("FLYCAST_METAL_DISABLE_OIT_DEPTH_SHARING");
+#endif
 			const bool useResolve = perPixel && (frame.dithering || useOIT);
 			prepareLights(resources);
 			prepareNaomi2(resources);
@@ -2091,7 +2139,12 @@ public:
 			// Retained standard depth/stencil still requires the original draw.
 			skipBackgroundDepth = backgroundColorCleared && rc->global_param_op.front().isp.ZWriteDis
 				&& (perPixel || !continueDepth);
-			if (useShadowDepth) {
+			if (shareOITDepth) {
+				// With no modifier consumer and only the first logical pass
+				// reading opaque depth, color rasterization produces that same
+				// depth. Store it before the separate OIT capture encoder reads it.
+				shadowDepth = depth; shadowStencil = nil;
+			} else if (useShadowDepth) {
 				shadowDepth = attachment(resources.shadowDepth, MTLPixelFormatDepth32Float_Stencil8,
 					MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsagePixelFormatView);
 				if (!resources.shadowStencil || resources.shadowStencil.parentTexture != shadowDepth)
@@ -2108,8 +2161,12 @@ public:
 			if (useOIT) { makeOITBuffers(resources); memset(counter.contents, 0, 8); }
 			prepareFrameUniforms(resources);
 			id<MTLBuffer> diagnostics = useOIT ? counter : nil;
+			const auto abortState = renderAbort;
 			[cb addCompletedHandler:^(FCMetal4Commands * done) {
-				if (done.status == FCMetal4StatusError) ERROR_LOG(RENDERER, "Metal render: %s", done.error.localizedDescription.UTF8String);
+				if (done.status == FCMetal4StatusError) {
+					abortState->canceled = true;
+					ERROR_LOG(RENDERER, "Metal render: %s", done.error.localizedDescription.UTF8String);
+				}
 				if (diagnostics) {
 					u32 status = ((u32 *)diagnostics.contents)[1];
 					if (status) WARN_LOG(RENDERER, "Metal OIT limit reached: %s%s", status & 1 ? "pixel buffer " : "", status & 2 ? "layers" : "");
@@ -2161,7 +2218,7 @@ public:
 				if (perPixel) {
 					const bool shadowDepthNeeded = passIndex < shadowDepthPassCount;
 					const bool retainShadowDepth = passIndex + 1 < shadowDepthPassCount;
-					if (shadowDepthNeeded) {
+					if (shadowDepthNeeded && !shareOITDepth) {
 						// Retain preceding depths when a later logical pass has a
 						// consumer, including passes which currently have none.
 						e = encoder(cb, RenderAttachments::DepthOnly, false, passIndex == 0,
@@ -2169,7 +2226,7 @@ public:
 						drawList(e, rc->global_param_op, previous.op_count, pass.op_count, ListType_Opaque, false, PolyPass::Depth);
 						drawList(e, rc->global_param_pt, previous.pt_count, pass.pt_count, ListType_Punch_Through, false, PolyPass::Depth);
 						drawModifiers(cb, e, rc->global_param_mvo, previous.mvo_count, pass.mvo_count, false);
-						[e endEncoding];
+						[e endEncoding]; traceGPU(@"shadow-depth");
 					}
 					// Initialize color before its first draw, including when the
 					// shadow path or the color list is empty.
@@ -2179,7 +2236,7 @@ public:
 						colorOnlyEncoder = encoder(cb, RenderAttachments::ColorDepth,
 							passIndex == 0 && clear, passIndex == 0, false, nil, false);
 					e = shadowDepthNeeded ? encoder(cb, RenderAttachments::ColorDepth, passIndex == 0 && clear,
-						passIndex == 0, false, nil, !finalPass) : colorOnlyEncoder;
+						passIndex == 0, false, nil, !finalPass || shareOITDepth) : colorOnlyEncoder;
 					drawList(e, rc->global_param_op, previous.op_count, pass.op_count, ListType_Opaque, false, PolyPass::Color0);
 					drawList(e, rc->global_param_pt, previous.pt_count, pass.pt_count, ListType_Punch_Through, false, PolyPass::Color0);
 					if (!passResolve) {
@@ -2188,11 +2245,25 @@ public:
 						drawList(e, rc->global_param_tr, previous.tr_count, pass.tr_count, ListType_Translucent, false, PolyPass::Color0);
 						if (shadowDepthNeeded || finalPass) [e endEncoding];
 					} else if (sortedFragments) {
-						[e endEncoding];
-						// Every render initializes independently, including after
-						// resize, cancellation or an earlier failed command buffer.
-						// Subsequent OIT passes consume the preceding resolve's reset.
-						if (firstOITPass) { clearOIT(cb); firstOITPass = false; }
+						[e endEncoding]; traceGPU(@"opaque-and-punch-color");
+						// Reuse only the prefix reset by an already encoded resolve.
+						// Buffer growth, cancellation and GPU failure invalidate it.
+						// No extra reset work is added to otherwise final passes.
+						bool reuseHeads = true;
+#ifdef METAL_RENDERER_TESTS
+						reuseHeads = !disableOITHeadReuse;
+#endif
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+						reuseHeads &= !std::getenv("FLYCAST_METAL_DISABLE_OIT_HEAD_REUSE");
+#endif
+						if (firstOITPass) {
+							const NSUInteger bytes = NSUInteger(frame.width) * frame.height * sizeof(u32);
+							if (!reuseHeads || clearedOITHeadBytes < bytes) clearOIT(cb);
+							firstOITPass = false;
+						}
+						// All subsequent publications may dirty the active prefix.
+						// Publish a new proof only after encoding every tile's reset.
+						clearedOITHeadBytes = 0; traceGPU(@"clear-heads");
 						u32 layerBound;
 						// Only the OIT modifier path can change node shadow/area bits.
 						// Mixed blending or active modifiers use the general resolver.
@@ -2217,6 +2288,7 @@ public:
 						const auto tiles = oitTiles(previous.tr_count,pass.tr_count,layerBound,denseOIT,sourceOver || densePackedOIT,linkedCapacity);
 						packedListOIT = packedListAllowed && !denseOIT;
 						const bool tiled = tiles.size() > 1;
+						const bool resetHeads = tiled || passStates[passIndex].resetOITHeads;
 						id<MTLTexture> tiledOutput = nil;
 						if (tiled) {
 							const MTLTextureUsage usage = MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite | MTLTextureUsageRenderTarget;
@@ -2239,14 +2311,21 @@ public:
 							}
 
 							drawList(e, rc->global_param_tr, previous.tr_count, pass.tr_count, ListType_Translucent, false, PolyPass::OIT);
-							[e endEncoding]; e = nil;
+							[e endEncoding]; e = nil; traceGPU(@"OIT-fragments");
 							if (pass.mv_op_tr_shared) drawModifiers(cb, e, rc->global_param_mvo, previous.mvo_count, pass.mvo_count, true);
 							else drawModifiers(cb, e, rc->global_param_mvo_tr, previous.mvo_tr_count, pass.mvo_tr_count, true);
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+							metal_capture::analyzeOIT(context(),cb,frame,nodes,heads,tile,unsigned(passIndex),
+								denseOIT ? 2u : packedListOIT ? 1u : 0u,packedListOIT ? linkedCapacity : frame.capacity);
+#endif
+							traceGPU(@"analysis-and-modifiers");
 							// Reclaim nodes after each disjoint tile. Every tile reads
 							// the same opaque input and writes its own output pixels.
-								resolveFramebuffer(cb, finalPass, resources, true, tiled || passStates[passIndex].resetOITHeads,
+							resolveFramebuffer(cb, finalPass, resources, true, resetHeads,
 									tiledOutput, tiled || denseOIT ? &tile : nullptr, layerBound, sourceOver, denseOIT, packedListOIT || (denseOIT && densePackedOIT));
+							traceGPU(@"OIT-resolve");
 						}
+						if (resetHeads) clearedOITHeadBytes = NSUInteger(frame.width) * frame.height * sizeof(u32);
 						denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
 						oitRasterTile = {};
 						if (tiledOutput) target = tiledOutput;
@@ -2291,6 +2370,18 @@ public:
 				previous = pass;
 			}
 			if (standardEncoder && !keepStandardRaster) commands.endRasterEncoder();
+			traceGPU(@"render-end");
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+			if (traceHeap) {
+				NSArray<NSString *> *labels = [traceLabels copy]; const u64 frequency = [context()->device() queryTimestampFrequency];
+				[cb addCompletedHandler:^(FCMetal4Commands *) {
+					NSData *data = [traceHeap resolveCounterRange:NSMakeRange(0,labels.count)];
+					if (!data || !frequency || data.length<labels.count*sizeof(MTL4TimestampHeapEntry)) return;
+					const auto *entries=static_cast<const MTL4TimestampHeapEntry *>(data.bytes);
+					for(NSUInteger i=1;i<labels.count;++i) NOTICE_LOG(RENDERER,"Deep GPU frame %llu phase %s ms %.6f",(unsigned long long)frameNumber,labels[i].UTF8String,double(entries[i].timestamp-entries[i-1].timestamp)*1000/frequency);
+				}];
+			}
+#endif
 			std::unique_ptr<MetalContext::TextureReadback> readback;
 			glm::ivec2 framebufferSize{};
 			Rect framebufferClip;
