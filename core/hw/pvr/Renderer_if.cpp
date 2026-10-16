@@ -268,7 +268,7 @@ private:
 		if (renderer->Present())
 		{
 			presented = true;
-			if (!config::ThreadedRendering && !ggpo::active())
+			if (!config::ThreadedRendering && !config::VblankPacing && !ggpo::active())
 				emu.getSh4Executor()->Stop();
 #ifdef LIBRETRO
 			retro_rend_present();
