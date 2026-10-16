@@ -68,13 +68,20 @@ protected:
 
 	void Term()
 	{
+		ReleaseBuffers();
+		opaqueDepthCopy = nil;
+		opaqueDepthTile = nil;
+		resolveDepthStencil = nil;
+	}
+
+	/// Drop the ping-pong attachments and resolve background so the next
+	/// MakeBuffers() allocates them at exactly the requested size.
+	void ReleaseBuffers()
+	{
 		for (auto &tex : colorAttachments) tex = nil;
 		for (auto &tex : depthAttachments) tex = nil;
 		for (auto &fb  : tempPassDescriptors) fb = nil;
 		resolveBackground = nil;
-		opaqueDepthCopy = nil;
-		opaqueDepthTile = nil;
-		resolveDepthStencil = nil;
 		maxWidth  = 0;
 		maxHeight = 0;
 	}
@@ -263,6 +270,12 @@ public:
 		}
 		MetalOITDrawer::Init(screenPipelineManager.get(), oitBuffers, samplers,
 							 regularPipelineManager_.get());
+		// MakeBuffers only ever grows the attachments, but the screen drawer
+		// presents (and under EmulateFramebuffer reads back) its whole color
+		// attachment, so it must match the viewport exactly. Vulkan's
+		// OITScreenDrawer::Init recreates its framebuffers at the new extent.
+		if (vp.width != viewport.width || vp.height != viewport.height)
+			ReleaseBuffers();
 		viewport = vp;
 	}
 
