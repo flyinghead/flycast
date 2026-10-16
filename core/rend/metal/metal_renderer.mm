@@ -34,6 +34,9 @@ void BaseMetalRenderer::Term()
 {
 	WaitIdle();
 	MetalContext::Instance()->PresentFrame(nil, MTLViewport {}, 0);
+#ifdef VIDEO_ROUTING
+	os_VideoRoutingTermMetal();
+#endif
 	texCommandPool.Term();
 	fbCommandPool.Term();
 	textureCache.Clear();
