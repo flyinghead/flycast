@@ -34,6 +34,14 @@ static void do_pvr_dma()
 	}
 	DEBUG_LOG(PVR, "PVR-DMA %x %s %x len %x", src, SB_PDDIR ? "<-" : "->", dst, len);
 
+	// Don't read or write past the end of system RAM or VRAM
+	const u32 maxLen = std::min(RAM_SIZE - (src & RAM_MASK), VRAM_SIZE - (dst & VRAM_MASK));
+	if (len > maxLen)
+	{
+		WARN_LOG(PVR, "PVR-DMA: clamping len %x -> %x (src %x dst %x)", len, maxLen, src, dst);
+		len = maxLen;
+	}
+
 	if (SB_PDDIR)
 		//PVR -> System
 		WriteMemBlock_nommu_dma(src, dst, len);
