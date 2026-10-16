@@ -1235,7 +1235,29 @@ kernel void framebuffer_finish(constant Frame& f [[buffer(1)]],
     output.write(color, xy);
 }
 
-struct QuadUniform { float4 color; uint rotate, ignoreAlpha; };
+)MSL"
+#ifdef FLYCAST_FRAME_CAPTURE_TESTS
+R"MSL(// Offline capture builds only: measure actual stored layers before resolving.
+kernel void oit_analysis(constant Frame& f [[buffer(1)]], device const Node *nodes [[buffer(4)]],
+    device const uint *heads [[buffer(5)]], device uint *lengths [[buffer(6)]],
+    constant uint& layout [[buffer(7)]], uint2 local [[thread_position_in_grid]]) {
+    if (local.x >= f.oitTile.z || local.y >= f.oitTile.w) return;
+    uint2 xy = local + f.oitTile.xy;
+    uint head = heads[xy.y * f.width + xy.x];
+    uint count = 0;
+    if (layout == 2) count = head + 1u;
+    else {
+        while (head != 0xffffffffu && count < 4096u && head < f.capacity) {
+            ++count;
+            head = layout == 1 ? reinterpret_cast<device const PackedNode *>(nodes)[head].next : nodes[head].next;
+        }
+    }
+    lengths[local.y * f.oitTile.z + local.x] = count;
+}
+
+)MSL"
+#endif
+R"MSL(struct QuadUniform { float4 color; uint rotate, ignoreAlpha; };
 struct QuadVarying { float4 position [[position]]; float2 uv; };
 vertex QuadVarying quad_vertex(uint id [[vertex_id]], constant QuadUniform& u [[buffer(0)]]) {
     float2 uv = float2(id & 1, id >> 1);

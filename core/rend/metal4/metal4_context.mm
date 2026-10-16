@@ -156,6 +156,7 @@ struct MetalContext::Impl
 	std::array<CompositionSlot, 7> compositions;
 	size_t nextComposition = 0;
 	bool frameTimings = false;
+	u64 profilingLimit = 900;
 	bool presentationTimings = false;
 	u64 profilingFrame = 0;
 	u64 profilingSubmission = 0;
@@ -446,6 +447,7 @@ MetalContext::MetalContext(void *window, void *display)
 		quadPipeline(true); quadPipeline(false);
 		resize();
 		impl->frameTimings = config::loadBool("log", "MetalFrameTiming", false);
+		impl->profilingLimit = std::max(1, config::loadInt("log", "MetalFrameTimingLimit", 900));
 		// Drawable feedback is independently selectable: collecting presented
 		// times may affect the compositor's scheduling during GPU profiling.
 		impl->presentationTimings = config::loadBool("log", "MetalPresentTiming", impl->frameTimings);
@@ -613,7 +615,7 @@ MetalContext::RenderCommands MetalContext::beginRenderCommands(std::function<voi
 	// Establish a movable scope owner before detaching the pending batch.
 	// No additional per-render heap allocation is needed for this owner.
 	RenderCommands commands(cb, impl->submissions, available, std::move(canceledBatch));
-	if (impl->frameTimings && impl->profilingSubmission < 900)
+	if (impl->frameTimings && impl->profilingSubmission < impl->profilingLimit)
 		commands.timingSubmission = ++impl->profilingSubmission;
 	impl->textureUpdates = nil;
 	return commands;
