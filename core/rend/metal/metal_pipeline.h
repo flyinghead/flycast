@@ -33,7 +33,12 @@ enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 class MetalPipelineManager
 {
 public:
-	explicit MetalPipelineManager(MetalShaders *shaderManager);
+	/// oitTileDepth: pipelines for the OIT drawers' render pass on Apple GPUs,
+	/// which carries the opaque depth in colour attachment 1 (R32Float, tile
+	/// memory). Every pipeline used in that pass declares the attachment; only
+	/// draws that write the depth attachment write it. The non-OIT renderer
+	/// constructs this with false and its pipelines are unchanged.
+	explicit MetalPipelineManager(MetalShaders *shaderManager, bool oitTileDepth = false);
 	virtual ~MetalPipelineManager() = default;
 
 	void term()
@@ -316,8 +321,20 @@ private:
 	std::map<u64, id<MTLDepthStencilState>> depthStencilStates;
 	std::map<u32, id<MTLDepthStencilState>> depthPassDepthStencilStates;
 
+	/// Declare colour attachment 1 for the OIT tile-memory opaque depth.
+	void setOitDepthAttachment(MTLRenderPipelineDescriptor *descriptor, bool writeDepth) const
+	{
+		if (!oitTileDepth)
+			return;
+		auto attachment = [descriptor colorAttachments][1];
+		[attachment setPixelFormat:MTLPixelFormatR32Float];
+		[attachment setBlendingEnabled:NO];
+		[attachment setWriteMask:writeDepth ? MTLColorWriteMaskRed : MTLColorWriteMaskNone];
+	}
+
 protected:
 	MetalShaders *shaderManager;
+	bool oitTileDepth = false;
 };
 
 static const MTLCompareFunction depthOps[] =

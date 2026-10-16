@@ -331,3 +331,137 @@ Renderer* rend_Metal()
 {
 	return new MetalRenderer();
 }
+
+// ---------------------------------------------------------------------------
+// Order-Independent Transparency (per-pixel sorting) Metal renderer.
+// Port of core/rend/vulkan/oit: translucent fragments are collected into a
+// per-pixel linked list, then sorted and blended in a final resolve pass.
+// ---------------------------------------------------------------------------
+
+#include "oit/metal_oit_buffer.h"
+#include "oit/metal_oit_pipeline.h"
+#include "oit/metal_oit_drawer.h"
+
+// The OIT frame is waited on before presenting (see Render() below).
+//
+// MetalCommandPool::Init creates its OWN command queue, and
+// MetalContext::PresentFrame builds its command buffer from MetalContext's
+// queue. Metal does not order work across separate queues, and nothing
+// synchronized the two, so the present could sample the color attachment while
+// the OIT frame was still writing it. The resolve, which composites the whole
+// translucent layer, is the LAST thing written each frame, so losing that race
+// yields the opaque-only image: background intact, translucent layer missing
+// for that frame. That was the strobing BIOS logo and the flickering texture
+// layer over 3D scenes, and it hit OIT far harder than the regular renderer
+// because collect+resolve makes the GPU frame long enough to lose the race
+// often. Waiting removes the flicker.
+//
+// The bounded CPU wait in WaitForLastFrame (200ms timeout) is used rather than
+// a GPU-side encodeWaitForEvent: a cross-queue GPU wait on an event that never
+// gets signalled would hang the GPU, and the pool has a known phantom-event
+// path. Costs a CPU/GPU serialization point per frame on the OIT path only.
+
+class OITMetalRenderer : public MetalRenderer
+{
+public:
+	bool Init() override
+	{
+		if (!MetalRenderer::Init())
+			return false;
+		if (viewport.width > 0 && viewport.height > 0)
+			oitBuffers.Init((int)viewport.width, (int)viewport.height);
+
+		// The OIT pipeline manager + MSL library are owned by
+		// MetalOITScreenDrawer (its screenPipelineManager). No standalone
+		// copy needed — that would just compile the same MSL twice.
+		oitScreenDrawer.Init(&shaderManager, &oitBuffers, viewport, &oitSamplers);
+		oitScreenDrawer.SetCommandPool(&texCommandPool);
+		oitTextureDrawer.Init(&shaderManager, &oitBuffers, &textureCache, &oitSamplers);
+		oitTextureDrawer.SetCommandPool(&texCommandPool);
+		oitEmulateFramebuffer = config::EmulateFramebuffer;
+
+		return true;
+	}
+
+	void Term() override
+	{
+		oitScreenDrawer.Term();
+		oitTextureDrawer.Term();
+		oitSamplers.term();
+		oitBuffers.Term();
+		MetalRenderer::Term();
+	}
+
+	void Process(TA_context* ctx) override
+	{
+		if (oitEmulateFramebuffer != config::EmulateFramebuffer)
+		{
+			oitScreenDrawer.EndFrame();
+			WaitIdle();
+			oitScreenDrawer.Term();
+			oitScreenDrawer.Init(&shaderManager, &oitBuffers, viewport, &oitSamplers);
+			oitScreenDrawer.SetCommandPool(&texCommandPool);
+			oitEmulateFramebuffer = config::EmulateFramebuffer;
+		}
+		else if (ctx->rend.isRTT) {
+			oitScreenDrawer.EndFrame();
+		}
+		BaseMetalRenderer::Process(ctx);
+	}
+
+	bool Render() override
+	{
+		if (viewport.width <= 0 || viewport.height <= 0)
+			return MetalRenderer::Render();
+
+		if (rendContext->isRTT) {
+			oitTextureDrawer.setRendContext(rendContext);
+			oitTextureDrawer.NewFrame();
+			oitTextureDrawer.Draw(fogTexture.get(), paletteTexture.get());
+			oitTextureDrawer.EndFrame();
+			return false;
+		}
+
+		oitScreenDrawer.setRendContext(rendContext);
+		oitScreenDrawer.NewFrame();
+		oitScreenDrawer.Draw(fogTexture.get(), paletteTexture.get());
+		// EndFrame/PresentFrame happen in Present() below — matches the
+		// non-OIT lifecycle where Render only fills the command buffer.
+		//
+		// Same GPU-completion-before-RENDER_DONE invariant as
+		// MetalRenderer::Render() above, and the cross-queue present fix
+		// described at the top of this file. Unconditional: the OIT screen
+		// drawer shares texCommandPool, so end the frame now (commits via
+		// commandPool->EndFrame()) and block on the committed buffer's
+		// MTLSharedEvent before returning. That both keeps renderEnd.Set() in
+		// PvrMessageQueue::render() from releasing the SH4 thread early and
+		// stops MetalContext's present queue sampling the attachment mid-write.
+		// Present()->PresentFrame() is re-entrant here: its EndFrame() is a
+		// no-op (frameStarted now false) and frameRendered stays set, so the
+		// frame still presents.
+		oitScreenDrawer.EndFrame();
+		texCommandPool.WaitForLastFrame();
+		return true;
+	}
+
+	bool Present() override
+	{
+		if (clearLastFrame)
+			return false;
+		if (config::EmulateFramebuffer || framebufferRendered)
+			return presentFramebuffer();
+		return oitScreenDrawer.PresentFrame();
+	}
+
+protected:
+	MetalOITBuffers oitBuffers;
+	MetalSamplers oitSamplers;
+	MetalOITScreenDrawer oitScreenDrawer;
+	MetalOITTextureDrawer oitTextureDrawer;
+	bool oitEmulateFramebuffer = false;
+};
+
+Renderer* rend_OITMetal()
+{
+	return new OITMetalRenderer();
+}

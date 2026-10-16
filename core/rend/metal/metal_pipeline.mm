@@ -22,8 +22,9 @@
 #include "metal_context.h"
 #include "metal_renderer.h"
 
-MetalPipelineManager::MetalPipelineManager(MetalShaders *shaderManager) {
+MetalPipelineManager::MetalPipelineManager(MetalShaders *shaderManager, bool oitTileDepth) {
 	this->shaderManager = shaderManager;
+	this->oitTileDepth = oitTileDepth;
 }
 
 void MetalPipelineManager::CreateBlitPassPipeline() {
@@ -83,6 +84,7 @@ void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, bool naomi2) {
 	[attachment setAlphaBlendOperation:MTLBlendOperationAdd];
 	[attachment setWriteMask:mode != ModVolMode::Final ? MTLColorWriteMaskNone : MTLColorWriteMaskAll];
 	[attachment setPixelFormat:MTLPixelFormatBGRA8Unorm];
+	setOitDepthAttachment(descriptor, false);
 
 	[descriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
 	[descriptor setStencilAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
@@ -125,6 +127,7 @@ void MetalPipelineManager::CreateDepthPassPipeline(bool naomi2)
 	// pixelFormat (MTLPixelFormatInvalid) does not match the framebuffer's". The
 	// depth-pass shares the main color pass, so set it like the other pipelines.
 	[attachment setPixelFormat:MTLPixelFormatBGRA8Unorm];
+	setOitDepthAttachment(descriptor, false);
 
 	// REQUIRED: this pipeline's fragment shader writes depth, so the descriptor
 	// MUST declare the depth/stencil attachment format — otherwise Metal refuses
@@ -171,6 +174,12 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
 	[attachment setAlphaBlendOperation:MTLBlendOperationAdd];
 	[attachment setWriteMask:MTLColorWriteMaskAll];
 	[attachment setPixelFormat:MTLPixelFormatBGRA8Unorm];
+	// The tile-memory opaque depth must equal the depth attachment, so write it
+	// exactly when this draw writes depth (same rule as CreateDepthStencilState).
+	// Colour and depth writes pass the same depth/stencil tests.
+	const bool writesDepth = !sortTriangles
+		&& (listType == ListType_Punch_Through || !pp.isp.ZWriteDis);
+	setOitDepthAttachment(descriptor, writesDepth);
 
 	[descriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
 	[descriptor setStencilAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
@@ -199,6 +208,7 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
 	fragParams.palette = gpuPalette;
 	fragParams.divPosZ = divPosZ;
 	fragParams.dithering = dithering;
+	fragParams.oitTileDepth = oitTileDepth && writesDepth;
 
 	id<MTLFunction> vertexFn = shaderManager->GetVertexShader(vertParams);
 	id<MTLFunction> fragmentFn = shaderManager->GetFragmentShader(fragParams);
