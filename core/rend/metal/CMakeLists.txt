@@ -11,6 +11,8 @@ set(METAL_SOURCES
         metal_drawer.h
         metal_drawer.mm
         metal_driver.h
+        metal_overlay.h
+        metal_overlay.mm
         metal_pipeline.h
         metal_pipeline.mm
         metal_quad.h

@@ -24,6 +24,7 @@
 #include "rend/transform_matrix.h"
 #include "wsi/context.h"
 #include "metal_quad.h"
+#include "metal_overlay.h"
 
 class MetalContext : public GraphicsContext
 {
@@ -101,6 +102,7 @@ private:
 	std::unique_ptr<MetalQuadPipeline> quadRotatePipeline;
 	std::unique_ptr<MetalQuadDrawer> quadDrawer;
 	std::unique_ptr<MetalQuadDrawer> quadRotateDrawer;
+	std::unique_ptr<MetalOverlay> overlay;
 	std::unique_ptr<MetalShaders> shaderManager;
 
 	id<MTLTexture> lastFrameTexture = nil;

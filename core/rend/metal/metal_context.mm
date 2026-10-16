@@ -66,6 +66,7 @@ void MetalContext::CreateSwapChain()
 	quadDrawer->Init(quadPipeline.get());
 	quadRotatePipeline->Init(shaderManager.get());
 	quadRotateDrawer->Init(quadRotatePipeline.get());
+	overlay->Init(quadPipelineWithAlpha.get());
 
 	currentImage = 2;
 
@@ -117,6 +118,7 @@ bool MetalContext::init()
 	quadDrawer = std::make_unique<MetalQuadDrawer>();
 	quadRotatePipeline = std::make_unique<MetalQuadPipeline>(true, true);
 	quadRotateDrawer = std::make_unique<MetalQuadDrawer>();
+	overlay = std::make_unique<MetalOverlay>();
 
 #ifdef USE_SDL
 	sdl_update_display_metrics((SDL_Window *)window, SDL_WINDOW_METAL);
@@ -324,6 +326,7 @@ void MetalContext::PresentFrame(id<MTLTexture> texture, MTLViewport viewport, fl
 		{
 			if (lastFrameTexture != nil) // Might have been nullified if swap chain recreated
 				DrawFrame(texture, viewport, aspectRatio);
+			overlay->Draw(commandEncoder, width, height, settings.display.uiScale, config::FloatVMUs, true);
 			imguiDriver->renderDrawData(ImGui::GetDrawData(), false);
 		}
 		EndFrame();
@@ -342,6 +345,9 @@ void MetalContext::term()
 	lastFrameTexture = nil;
 	currentDrawable = nil;
 	imguiDriver.reset();
+	if (overlay)
+		overlay->Term();
+	overlay.reset();
 	quadDrawer.reset();
 	quadPipeline.reset();
 	quadPipelineWithAlpha.reset();
