@@ -239,10 +239,26 @@ void os_VideoRoutingTermGL()
 	syphonGLServer = NULL;
 }
 
+#if defined(USE_VULKAN) || defined(USE_METAL)
+// Used by the Vulkan and Metal renderers
+static SyphonMetalServer* syphonMtlServer;
+
+static void createSyphonMetalServer(id<MTLDevice> device)
+{
+	int boardID = config::loadInt("naomi", "BoardId");
+	syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:device options:nil];
+}
+
+static void termSyphonMetalServer()
+{
+	[syphonMtlServer stop];
+	[syphonMtlServer release];
+	syphonMtlServer = NULL;
+}
+#endif
+
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan.h"
-
-static SyphonMetalServer* syphonMtlServer;
 
 void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
 {
@@ -252,8 +268,7 @@ void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Imag
 		auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
 		device.exportMetalObjectsEXT(&objectsInfo);
 		
-		int boardID = config::loadInt("naomi", "BoardId");
-		syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
+		createSyphonMetalServer(deviceInfo.mtlDevice);
 	}
 	
 	auto textureInfo = vk::ExportMetalTextureInfoEXT(image);
@@ -269,9 +284,24 @@ void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Imag
 
 void os_VideoRoutingTermVk()
 {
-	[syphonMtlServer stop];
-	[syphonMtlServer release];
-	syphonMtlServer = NULL;
+	termSyphonMetalServer();
+}
+#endif
+
+#ifdef USE_METAL
+void os_VideoRoutingPublishFrameTexture(id<MTLTexture> texture, id<MTLCommandBuffer> commandBuffer, float x, float y, float w, float h)
+{
+	if (syphonMtlServer != NULL && syphonMtlServer.device != texture.device)
+		termSyphonMetalServer();
+	if (syphonMtlServer == NULL)
+		createSyphonMetalServer(texture.device);
+
+	[syphonMtlServer publishFrameTexture:texture onCommandBuffer:commandBuffer imageRegion:NSMakeRect(x, y, w, h) flipped:YES];
+}
+
+void os_VideoRoutingTermMetal()
+{
+	termSyphonMetalServer();
 }
 #endif
 

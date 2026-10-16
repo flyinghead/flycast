@@ -26,6 +26,12 @@
 #include "metal_quad.h"
 #include "metal_overlay.h"
 
+#ifdef VIDEO_ROUTING
+// Syphon, implemented by the macOS shell
+void os_VideoRoutingPublishFrameTexture(id<MTLTexture> texture, id<MTLCommandBuffer> commandBuffer, float x, float y, float w, float h);
+void os_VideoRoutingTermMetal();
+#endif
+
 class MetalContext : public GraphicsContext
 {
 public:
@@ -77,6 +83,7 @@ private:
 	void term();
 	void CreateSwapChain();
 	void DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio);
+	void RenderVideoRouting();
 
 	bool HasSurfaceDimensionChanged() const;
 	void SetWindowSize(u32 width, u32 height);
@@ -108,6 +115,9 @@ private:
 	id<MTLTexture> lastFrameTexture = nil;
 	MTLViewport lastFrameViewport;
 	float lastFrameAR = 0.f;
+
+	// Scaled copy of the frame sent by video routing
+	id<MTLTexture> videoRoutingTexture = nil;
 
 	id<MTLDevice> device = nil;
 	id<MTLCommandQueue> queue = nil;

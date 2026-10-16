@@ -206,7 +206,10 @@ void MetalContext::EndFrame()
 	commandEncoder = nil;
 
 	if (currentDrawable != nil)
+	{
+		RenderVideoRouting();
 		[commandBuffers[currentImage] presentDrawable:currentDrawable];
+	}
 
 	// Don't wait for completion. Triple buffering (currentImage % 3) keeps in-flight frames apart.
 	[commandBuffers[currentImage] commit];
@@ -306,6 +309,60 @@ void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float
 	[commandEncoder popDebugGroup];
 }
 
+// Sends the presented image, UI included, to Syphon
+void MetalContext::RenderVideoRouting()
+{
+#ifdef VIDEO_ROUTING
+	if (!config::VideoRouting)
+	{
+		videoRoutingTexture = nil;
+		os_VideoRoutingTermMetal();
+		return;
+	}
+	id<MTLTexture> source = currentDrawable.texture;
+	int targetWidth = config::VideoRoutingScale ? config::VideoRoutingVRes * width / height : width;
+	int targetHeight = config::VideoRoutingScale ? config::VideoRoutingVRes : height;
+	targetWidth = std::clamp(targetWidth, 1, 16384);
+	targetHeight = std::clamp(targetHeight, 1, 16384);
+	if ((u32)targetWidth == width && (u32)targetHeight == height)
+	{
+		videoRoutingTexture = nil;
+		os_VideoRoutingPublishFrameTexture(source, commandBuffers[currentImage], 0, 0, width, height);
+		return;
+	}
+	// Scale the image to the requested size
+	if (videoRoutingTexture == nil || videoRoutingTexture.width != (NSUInteger)targetWidth
+			|| videoRoutingTexture.height != (NSUInteger)targetHeight)
+	{
+		MTLTextureDescriptor *desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:source.pixelFormat
+				width:targetWidth height:targetHeight mipmapped:NO];
+		desc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+		desc.storageMode = MTLStorageModePrivate;
+		videoRoutingTexture = [device newTextureWithDescriptor:desc];
+		[videoRoutingTexture setLabel:@"Video Routing"];
+	}
+	MTLRenderPassDescriptor *passDesc = [[MTLRenderPassDescriptor alloc] init];
+	passDesc.colorAttachments[0].texture = videoRoutingTexture;
+	passDesc.colorAttachments[0].loadAction = MTLLoadActionDontCare;
+	passDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
+	id<MTLRenderCommandEncoder> encoder = [commandBuffers[currentImage] renderCommandEncoderWithDescriptor:passDesc];
+	[encoder setLabel:@"Video Routing Scale"];
+	if (quadPipeline->BindPipeline(encoder))
+	{
+		MetalQuadVertex vtx[4] {
+				{ -1, -1, 0, 0, 1 },
+				{  1, -1, 0, 1, 1 },
+				{ -1,  1, 0, 0, 0 },
+				{  1,  1, 0, 1, 0 },
+		};
+		[encoder setViewport:MTLViewport{ 0, 0, (double)targetWidth, (double)targetHeight, 0, 1 }];
+		quadDrawer->Draw(encoder, source, vtx, false);
+	}
+	[encoder endEncoding];
+	os_VideoRoutingPublishFrameTexture(videoRoutingTexture, commandBuffers[currentImage], 0, 0, targetWidth, targetHeight);
+#endif
+}
+
 void MetalContext::PresentFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio)
 {
 	// nextDrawable returns an autoreleased object. Drain it every frame so the layer's
@@ -343,6 +400,10 @@ void MetalContext::PresentLastFrame()
 void MetalContext::term()
 {
 	lastFrameTexture = nil;
+	videoRoutingTexture = nil;
+#ifdef VIDEO_ROUTING
+	os_VideoRoutingTermMetal();
+#endif
 	currentDrawable = nil;
 	imguiDriver.reset();
 	if (overlay)
