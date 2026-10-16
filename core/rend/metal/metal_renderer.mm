@@ -422,6 +422,7 @@ public:
 			return false;
 		}
 
+		resize(rendContext->framebufferWidth, rendContext->framebufferHeight);
 		oitScreenDrawer.setRendContext(rendContext);
 		oitScreenDrawer.NewFrame();
 		oitScreenDrawer.Draw(fogTexture.get(), paletteTexture.get());
@@ -454,6 +455,28 @@ public:
 	}
 
 protected:
+	// Port of OITVulkanRenderer::resize: the screen drawer renders at the
+	// PVR framebuffer size scaled by rend.Resolution, which Renderer_if
+	// computes into framebufferWidth/Height. Without this the OIT viewport
+	// stayed at BaseMetalRenderer's 640x480 default.
+	//
+	// No GPU wait needed here (BaseMetalRenderer::WaitIdle is a stub): every
+	// screen Render() ends with EndFrame() + WaitForLastFrame() and every RTT
+	// frame with EndFrameAndWait(), so nothing is still writing the old
+	// a-buffer or attachments, and command buffers retain what they reference.
+	//
+	// Skips MetalRenderer::resize on purpose: that re-inits the regular
+	// screen drawer, which this renderer never draws with.
+	void resize(int w, int h) override
+	{
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
+		BaseMetalRenderer::resize(w, h);
+		// The a-buffer head-pointer array is one u32 per pixel.
+		oitBuffers.Init(w, h);
+		oitScreenDrawer.Init(&shaderManager, &oitBuffers, viewport, &oitSamplers);
+	}
+
 	MetalOITBuffers oitBuffers;
 	MetalSamplers oitSamplers;
 	MetalOITScreenDrawer oitScreenDrawer;

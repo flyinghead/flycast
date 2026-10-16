@@ -107,12 +107,12 @@ bool MetalOITDrawer::Draw(const MetalTexture *fogTexture,
 	if (firstFrameAfterInit) {
 		id<MTLBlitCommandEncoder> blit = [currentCommandBuffer blitCommandEncoder];
 		id<MTLBuffer> head = oitBuffers->getAbufferPointer();
-		if (head != nil) {
-			NSUInteger fillBytes = (NSUInteger)w * (NSUInteger)h * sizeof(uint32_t);
-			if (fillBytes > [head length])
-				fillBytes = [head length];
-			[blit fillBuffer:head range:NSMakeRange(0, fillBytes) value:0xFF];
-		}
+		// Fill the whole buffer, not just this frame's w*h: it is sized for
+		// the largest target seen so far and shared with the other drawer,
+		// and each pass indexes it with its own width as the stride. Cells
+		// left at their initial zero would read as a link to pixel entry 0.
+		if (head != nil)
+			[blit fillBuffer:head range:NSMakeRange(0, [head length]) value:0xFF];
 		[blit endEncoding];
 	}
 
@@ -850,6 +850,12 @@ void MetalOITDrawer::drawTranslucentDepthOnly(id<MTLRenderCommandEncoder> encode
 
 void MetalOITDrawer::MakeBuffers(int width, int height)
 {
+	// The per-pixel OIT storage is shared by the screen and RTT drawers, so
+	// grow it even when this drawer's own attachments are already big enough
+	// (Vulkan OITDrawer::MakeBuffers does the same). No-op unless it grows.
+	if (oitBuffers != nullptr)
+		oitBuffers->Init(width, height);
+
 	if (width <= maxWidth && height <= maxHeight)
 		return;
 	id<MTLDevice> device = MetalContext::Instance()->GetDevice();
@@ -903,10 +909,6 @@ void MetalOITDrawer::MakeBuffers(int width, int height)
 	maxWidth  = width;
 	maxHeight = height;
 	clearNeeded.assign(2, true);
-
-	// Ensure the OIT per-pixel storage grew along with the framebuffer.
-	if (oitBuffers != nullptr)
-		oitBuffers->Init(width, height);
 }
 
 // ----- MetalOITDrawer: main buffer upload ---------------------------------
