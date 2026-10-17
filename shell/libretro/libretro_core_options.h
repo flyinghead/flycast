@@ -839,6 +839,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      "Discard Video and Animated Textures",
+      NULL,
+      "Skip dumping video (YUV) and already updated textures.",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       "Dump Replaced Textures",
       NULL,

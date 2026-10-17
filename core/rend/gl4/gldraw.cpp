@@ -519,7 +519,6 @@ void gl4CreateTextures(int width, int height)
 void OpenGL4Renderer::drawStrips(int width, int height)
 {
 	checkOverflowAndReset();
-	framebuffers[0]->bind();
 	if (!gl.rendContext->isRTT)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
@@ -527,6 +526,7 @@ void OpenGL4Renderer::drawStrips(int width, int height)
 		if (gl.rendContext->clearFramebuffer)
 		{
 			// Clear framebuffer
+			framebuffers[1]->bind();
 			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
@@ -537,7 +537,6 @@ void OpenGL4Renderer::drawStrips(int width, int height)
 			outputFB->bind(GL_READ_FRAMEBUFFER);
 			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 			glCheck();
-			framebuffers[0]->bind();
 		}
 		if (gl4ShaderUniforms.base_clipping.enabled)
 			glcache.Enable(GL_SCISSOR_TEST);
@@ -545,6 +544,7 @@ void OpenGL4Renderer::drawStrips(int width, int height)
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
+	framebuffers[0]->bind();
 	glcache.DepthMask(GL_TRUE);
 	glClearDepthf(0.f);
 	glcache.StencilMask(0xFF);
