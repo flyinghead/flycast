@@ -441,6 +441,8 @@ void retro_deinit()
 	emu.term();
 #endif
 	libretro_supports_bitmasks = false;
+	led_state_cb = NULL;
+	memset(retro_led_state, 0, sizeof(retro_led_state));
 	categoriesSupported = false;
 	platformIsDreamcast = true;
 	platformIsArcade = false;
@@ -3912,7 +3914,7 @@ static bool read_m3u(const char *file)
 		log_cb(RETRO_LOG_ERROR, "Could not read file\n");
 		return false;
 	}
-
+	unsigned disk_index = 0;
 	while (filestream_gets(f, line, sizeof(line)) && disk_index <= disk_paths.size())
 	{
 		if (line[0] == '#')

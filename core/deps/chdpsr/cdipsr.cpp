@@ -4,11 +4,6 @@
 #include <errno.h>
 #include "cdipsr.h"
 
-// Global variables
-
-unsigned long temp_value;
-
-
 /////////////////////////////////////////////////////////////////////////////
 
 unsigned long ask_type(hostfs::File *fsource, long header_position)
@@ -16,6 +11,7 @@ unsigned long ask_type(hostfs::File *fsource, long header_position)
 
 unsigned char filename_length;
 unsigned long track_mode;
+uint32_t temp_value = 0;
 
     fsource->seek(header_position, SEEK_SET);
     fsource->read(&temp_value, 4, 1);
@@ -43,6 +39,7 @@ bool CDI_read_track (hostfs::File *fsource, image_s *image, track_s *track)
 
      unsigned char TRACK_START_MARK[10] = { 0, 0, 0x01, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF };
      unsigned char current_start_mark[10];
+     uint32_t temp_value = 0;
 
          fsource->read(&temp_value, 4, 1);
          if (temp_value != 0)

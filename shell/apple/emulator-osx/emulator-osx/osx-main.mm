@@ -76,7 +76,19 @@ static void emu_flycast_term()
 extern "C" int SDL_main(int argc, char *argv[])
 {
     char *home = getenv("HOME");
-    if (home != NULL)
+    const char *configOverride = getenv("FLYCAST_CONFIG_DIR");
+    if (configOverride != nullptr && *configOverride != '\0')
+    {
+        // Isolate portable installations and renderer validation from user settings.
+        std::string config_dir(configOverride);
+        mkdir(config_dir.c_str(), 0755);
+        set_user_config_dir(config_dir);
+        add_system_data_dir(config_dir);
+        config_dir += "/data/";
+        mkdir(config_dir.c_str(), 0755);
+        set_user_data_dir(config_dir);
+    }
+    else if (home != NULL)
     {
         std::string config_dir = std::string(home) + "/.flycast/";
 		if (!file_exists(config_dir))
@@ -218,6 +230,7 @@ void os_RunInstance(int argc, const char *argv[])
 
 #import <Syphon/Syphon.h>
 #import <cfg/cfg.h>
+#ifdef USE_OPENGL
 static SyphonOpenGLServer* syphonGLServer;
 
 void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
@@ -238,6 +251,7 @@ void os_VideoRoutingTermGL()
 	[syphonGLServer release];
 	syphonGLServer = NULL;
 }
+#endif
 
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan.h"

@@ -27,11 +27,13 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp
+        src/input/MouseTest.cpp
         src/input/InputDefTest.cpp
         src/input/InputMappingConfigFileTest.cpp
         src/input/InputSetTest.cpp
         src/input/SDLControllerMappingTest.cpp
         src/oslib/I18nTest.cpp
+        src/util/Md5SumTest.cpp
         src/util/PeriodicThreadTest.cpp
         src/util/TsQueueTest.cpp
         src/util/WorkerThreadTest.cpp)

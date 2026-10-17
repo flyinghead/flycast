@@ -1891,7 +1891,6 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
-		die("Invalid maple device type");
 		break;
 	}
 	return nullptr;

@@ -19,6 +19,9 @@
 #pragma once
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
+#ifdef USE_METAL
+#include "rend/metal4/metal4_support.h"
+#endif
 #ifdef LIBRETRO
 #include <libretro.h>
 #endif
@@ -407,24 +410,48 @@ extern Option<bool> VmuSound;
 // Rendering
 
 class RendererOption : public Option<RenderType> {
+    static constexpr RenderType fallbackRenderer() {
+#if defined(USE_DX11)
+        return RenderType::DirectX11;
+#elif defined(USE_DX9)
+        return RenderType::DirectX9;
+#elif defined(USE_OPENGL)
+        return RenderType::OpenGL;
+#else
+        return RenderType::Vulkan;
+#endif
+    }
+    static RenderType defaultRenderer() {
+#ifdef USE_METAL
+        if (metal4OSAvailable())
+            return RenderType::Metal;
+#endif
+        return fallbackRenderer();
+    }
 public:
 #ifdef LIBRETRO
 	RendererOption() : Option<RenderType>("",
 #else
 	RendererOption() : Option<RenderType>("pvr.rend",
 #endif
-#if defined(USE_DX11)
-			RenderType::DirectX11
-#elif defined(USE_DX9)
-			RenderType::DirectX9
-#elif !defined(USE_OPENGL)
-			RenderType::Vulkan
-#else
-			RenderType::OpenGL
-#endif
+			defaultRenderer()
 		) {}
 
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
+
+	void load() override {
+		Option<RenderType>::load();
+#if defined(TARGET_MAC)
+		// Settings can be shared with the arm64 slice (or copied from another
+		// Mac). Keep older systems and Intel on an available backend.
+		if (isMetal(value)
+#ifdef USE_METAL
+                && !metal4Available()
+#endif
+        )
+			set(fallbackRenderer());
+#endif
+	}
 
 	void reset() override {
 		// don't reset the value to avoid quick switching when starting a game
@@ -474,6 +501,9 @@ extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
 extern Option<bool> IntegerScale;
 extern Option<bool> LinearInterpolation;
+#ifdef USE_METAL
+extern Option<bool> MetalFXSpatial;
+#endif
 extern Option<bool> VSync;
 extern Option<int64_t> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;
