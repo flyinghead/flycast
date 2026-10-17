@@ -9,6 +9,9 @@
 #if defined(USE_VULKAN)
 #include <SDL_vulkan.h>
 #endif
+#if defined(USE_METAL)
+#include <SDL_metal.h>
+#endif
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -682,6 +685,11 @@ bool sdl_update_display_metrics(SDL_Window *window, u32 windowFlags)
 #ifdef USE_OPENGL
 	if (windowFlags & SDL_WINDOW_OPENGL)
 		SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	else
+#endif
+#ifdef USE_METAL
+	if (windowFlags & SDL_WINDOW_METAL)
+		SDL_Metal_GetDrawableSize(window, &settings.display.width, &settings.display.height);
 	else
 #endif
 	{

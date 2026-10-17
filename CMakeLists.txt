@@ -38,7 +38,11 @@ if(APPLE)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum macOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
 	endif()
-	set(ZLIB_LIBRARY "-lz" CACHE STRING "Use generic linker flag for Xcode to support multiple SDKs")
+	if(CMAKE_GENERATOR STREQUAL "Xcode")
+		# Ninja/Makefiles treat this as a file dependency of the final link and fail
+		# with "no known rule to make -lz"; only the Xcode generator needs it.
+		set(ZLIB_LIBRARY "-lz" CACHE STRING "Use generic linker flag for Xcode to support multiple SDKs")
+	endif()
 endif()
 
 if(LIBRETRO)
@@ -90,6 +94,8 @@ option(USE_HOST_LIBCHDR "Use host libchdr" OFF)
 option(USE_HOST_LIBJUICE "Use host libjuice" OFF)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
+option(USE_METAL "Build with Metal support (macOS only)" ON)
+option(USE_METALFX "Build the Metal renderer with MetalFX upscaling (macOS 13 or later at runtime)" OFF)
 set(MOLTENVK_DYLIB "" CACHE FILEPATH "Path to macOS MoltenVK dylib for macOS Vulkan builds")
 option(USE_DX9 "Build with Direct3D 9 support" ON)
 option(USE_DX11 "Build with Direct3D 11 support" ON)
@@ -111,6 +117,10 @@ option(USE_DREAMLINK_DEVICES "Use DreamLink devices" ON)
 
 if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
+endif()
+
+if(NOT APPLE OR IOS OR LIBRETRO)
+	set(USE_METAL OFF CACHE BOOL "Force metal off" FORCE)
 endif()
 
 if(WEBOS)
@@ -1409,6 +1419,9 @@ if(NOT LIBRETRO)
 		else()
 
 			add_subdirectory(core/deps/Syphon)
+			# Syphon's prefix header is meant for its own sources. Don't let it propagate:
+			# flycast would get a C++-only PCH that can't be used for .mm files.
+			set_target_properties(Syphon PROPERTIES INTERFACE_PRECOMPILE_HEADERS "")
 			target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
