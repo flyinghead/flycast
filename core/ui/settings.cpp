@@ -104,6 +104,8 @@ static void gui_settings_advanced()
 			DisabledScope scope(game_started);
 			OptionCheckbox(T("Dreamcast 32MB RAM Mod"), config::RamMod32MB,
 					T("Enables 32MB RAM Mod for Dreamcast. May affect compatibility"));
+			OptionCheckbox(T("Dreamcast 16MB VRAM Mod"), config::VramMod16MB,
+					T("Gives the Dreamcast 16MB of video RAM instead of 8MB. Only games patched to probe for it use the extra memory"));
 		}
         OptionCheckbox(T("Dump Textures"), config::DumpTextures,
         		T("Dump all textures into data/texdump/<game id>"));

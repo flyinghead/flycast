@@ -493,6 +493,7 @@ extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
 extern Option<bool> RamMod32MB;
+extern Option<bool> VramMod16MB;
 
 extern Option<bool> OpenGlChecks;
 

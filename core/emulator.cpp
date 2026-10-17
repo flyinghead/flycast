@@ -455,7 +455,10 @@ static void setPlatform(int platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
 		settings.platform.ram_size = config::RamMod32MB ? 32_MB : 16_MB;
-		settings.platform.vram_size = 8_MB;
+		// The PVR code already handles 16 MB (NAOMI / NAOMI 2 / System SP use it); on a Dreamcast
+		// it only removes the 8 MB mirror at 0x04800000 / 0x05800000, which is exactly what a game
+		// probes to find out whether the extra memory is there.
+		settings.platform.vram_size = config::VramMod16MB ? 16_MB : 8_MB;
 		settings.platform.aram_size = 2_MB;
 		settings.platform.bios_size = 2_MB;
 		settings.platform.flash_size = 128_KB;

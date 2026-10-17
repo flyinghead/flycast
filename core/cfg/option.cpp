@@ -137,6 +137,7 @@ Option<bool> GDBWaitForConnection("Debug.GDBWaitForConnection");
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
 Option<bool> RamMod32MB("Dreamcast.RamMod32MB", false);
+Option<bool> VramMod16MB("Dreamcast.VramMod16MB", false);	// 16 MB VRAM, as on NAOMI
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 
