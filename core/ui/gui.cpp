@@ -891,9 +891,10 @@ static void gui_display_content()
     static ImGuiTextFilter filter;
     IconButton settingsBtn(ICON_FA_GEAR, T("Settings"));
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
+	IconButton exitBtn(ICON_FA_POWER_OFF, T("Exit"));
 	ImGui::SameLine(0, uiScaled(32));
 	filter.Draw(T("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x
-			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
+			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - exitBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
@@ -910,8 +911,13 @@ static void gui_display_content()
 		if (exitBtn.realize())
 			dc_exit();
 		ImGui::SameLine();
-#else
+#elif defined(__ANDROID__) || defined(TARGET_IPHONE)
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width());
+#else
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - exitBtn.width());
+		if (exitBtn.realize())
+			dc_exit();
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
 #endif
 		if (settingsBtn.realize())
 			gui_setState(GuiState::Settings);
