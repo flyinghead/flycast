@@ -556,7 +556,8 @@ extern Option<int> VirtualGamepadTransparency;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
 extern std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices;
-extern Option<bool> PerGameVmu;
+extern Option<int> PerGameVmu;	// 0 -> Disabled, 1 -> VMU A1, 2 -> All VMUs
+extern Option<std::vector<std::string>, false> PerGameVmuPrefix;
 #ifdef _WIN32
 extern Option<bool, false> UseRawInput;
 #else
