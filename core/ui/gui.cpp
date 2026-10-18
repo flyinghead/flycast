@@ -908,18 +908,19 @@ static void gui_display_content()
     	ImGui::SameLine();
 		if (ImGui::Button(T("Load...")))
 			gui_load_game();
-		ImGui::SameLine();
 #endif
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
-		ImGui::SameLine();
-		if (exitBtn.realize())
-			dc_exit();
 		ImGui::SameLine();
 #else
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width());
 #endif
 		if (settingsBtn.realize())
 			gui_setState(GuiState::Settings);
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
+		ImGui::SameLine();
+		if (exitBtn.realize())
+			dc_exit();
+#endif
     }
     else
     {
