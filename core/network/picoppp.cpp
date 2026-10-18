@@ -54,8 +54,10 @@ extern "C" {
 #include "hw/bba/bba.h"
 
 #include <unordered_map>
+#include <deque>
 #include <mutex>
 #include <future>
+#include <vector>
 
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
@@ -1176,14 +1178,40 @@ static void closeDumpFile()
 		pcapngDump = nullptr;
 	}
 }
+// Frames sent by the emulated BBA arrive on the emulation thread. picotcp is
+// built without PICO_SUPPORT_MUTEX, so pico_queue_protect() does nothing and
+// calling pico_stack_recv() here corrupts the device queue that the pico
+// thread is draining. Queue the frames and feed them from the pico thread.
+static std::mutex ethInMutex;
+static std::deque<std::vector<u8>> ethInQueue;
+constexpr size_t ETH_IN_QUEUE_MAX = 256;
+
 static void pico_receive_eth_frame(const u8 *frame, u32 size)
 {
 	if (pico_dev == nullptr) {
 		start_pico();
 	}
 	else {
-		dumpFrame(frame, size);
-		pico_stack_recv(pico_dev, (u8 *)frame, size);
+		std::lock_guard<std::mutex> _(ethInMutex);
+		if (ethInQueue.size() < ETH_IN_QUEUE_MAX)
+			ethInQueue.emplace_back(frame, frame + size);
+	}
+}
+
+// Called on the pico thread
+static void feed_eth_frames()
+{
+	std::deque<std::vector<u8>> frames;
+	{
+		std::lock_guard<std::mutex> _(ethInMutex);
+		frames.swap(ethInQueue);
+	}
+	if (pico_dev == nullptr)
+		return;
+	for (auto& frame : frames)
+	{
+		dumpFrame(frame.data(), frame.size());
+		pico_stack_recv(pico_dev, frame.data(), frame.size());
 	}
 }
 
@@ -1198,6 +1226,7 @@ static void picoTick(const std::error_code& ec, asio::steady_timer *timer)
 		ERROR_LOG(NETWORK, "picoTick timer error: %s", ec.message().c_str());
 		return;
 	}
+	feed_eth_frames();
 	pico_stack_tick();
 	timer->expires_at(timer->expiry() + asio::chrono::milliseconds(PICO_TICK_MS));
 	timer->async_wait(std::bind(picoTick, asio::placeholders::error, timer));
@@ -1459,6 +1488,8 @@ static void stop_pico()
 	emu.setNetworkState(false);
 	pico_thread_running = false;
 	pico_thread.stop();
+	std::lock_guard<std::mutex> _(ethInMutex);
+	ethInQueue.clear();
 }
 
 // picotcp mutex implementation
