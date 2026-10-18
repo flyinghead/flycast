@@ -85,12 +85,17 @@ void dc_deserialize(Deserializer& deser)
 
 	naomi_Deserialize(deser);
 
-	deser >> config::Broadcast.get();
-	verify(config::Broadcast >= 0 && config::Broadcast <= 4);
-	deser >> config::Cable.get();
-	verify(config::Cable >= 0 && config::Cable <= 3);
-	deser >> config::Region.get();
-	verify(config::Region >= 0 && config::Region <= 3);
+	// Validate before applying: a corrupt or incompatible state shouldn't
+	// abort the process or leave invalid settings behind.
+	int broadcast, cable, region;
+	deser >> broadcast;
+	deser >> cable;
+	deser >> region;
+	if (broadcast < 0 || broadcast > 4 || cable < 0 || cable > 3 || region < 0 || region > 3)
+		throw Deserializer::Exception("Invalid broadcast, cable or region");
+	config::Broadcast.get() = broadcast;
+	config::Cable.get() = cable;
+	config::Region.get() = region;
 
 	naomi_cart_deserialize(deser);
 	reios_deserialize(deser);

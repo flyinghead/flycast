@@ -98,10 +98,15 @@ void Sh4Interpreter::Step()
 
 void Sh4Interpreter::Reset(bool hard)
 {
+	ctx = &p_sh4rcb->cntx;
 	verify(!ctx->CpuRunning);
 
 	if (hard)
 	{
+		// in case ram base has changed
+		sh4cycles.init(ctx);
+		icache.init(ctx);
+		ocache.init(ctx);
 		int schedNext = ctx->sh4_sched_next;
 		memset(ctx, 0, sizeof(*ctx));
 		ctx->sh4_sched_next = schedNext;

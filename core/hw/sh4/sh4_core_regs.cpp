@@ -131,6 +131,9 @@ static void setHostRoundingMode(u32 roundingMode, u32 denorm2zero)
 //called when fpscr is changed and we must check for reg banks etc..
 void DYNACALL Sh4Context::UpdateFPSCR(Sh4Context *ctx)
 {
+	// The FPU exception cause field is cleared by the next FPU instruction on real hardware.
+	// FPU instructions don't update it here, so a cause bit written by the guest would stick forever.
+	ctx->fpscr.full &= ~0x3f000u;
 	if (ctx->fpscr.FR != ctx->old_fpscr.FR)
 		// FPU bank change
 		std::swap(ctx->xf, ctx->fr);
