@@ -684,7 +684,7 @@ void WccfCameraImpl::findPlayerName(Player& player)
 		valueCheck = 0x0c1b7948;
 		size = 0x1c;
 		break;
-	case '3': // 2004-2005 TODO wccf310j, wccf331j, wccf341j
+	case '3': // 2004-2005 TODO wccf310j, wccf331j
 		if (settings.content.fileName[5] == '2')
 		{
 			// 322e
@@ -699,13 +699,31 @@ void WccfCameraImpl::findPlayerName(Player& player)
 			valueCheck = 0x0c1c8ff0;
 			size = 0x24;
 		}
+		else if (settings.content.fileName[5] == '4')
+		{
+			// 341j
+			playerTable = 0x0c216f2c;
+			valueCheck = 0x0c1d85a8;
+			size = 0x24;
+		}
 		else {
 			return;
 		}
 		break;
-	case '4': // 2005-2006 TODO wccf400j
-		playerTable = 0x0c20b448;
-		valueCheck = 0x0c1ce448;
+	case '4': // 2005-2006
+		if (settings.content.fileName[5] == '0') {
+			// 400j
+			playerTable = 0x0c21e4a8;
+			valueCheck = 0x0c1dd5e0;
+		}
+		else if (settings.content.fileName[5] == '2') {
+			// 420e
+			playerTable = 0x0c20b448;
+			valueCheck = 0x0c1ce448;
+		}
+		else {
+			return;
+		}
 		size = 0x24;
 		break;
 	default:
@@ -991,8 +1009,6 @@ void WccfCameraImpl::OnSetup()
 				 * TODO
 				 * wccf234j: (2002-2003)
 				 * wccf310j: (2004-2005)
-				 * wccf331j: (2004-2005, v1.1)
-				 * wccf400j: (2005-2006)
 				 */
 				u32 offset;
 				switch (settings.content.fileName[4])
@@ -1007,12 +1023,23 @@ void WccfCameraImpl::OnSetup()
 					break;
 				case '3':
 					// file "data/model/sprite_card_data.bin"
-					// wccf322e and wccf331e have same offset
-					offset = 0x34A4A00 + idx * 0x5b00;
+					if (settings.content.fileName[7] == 'j')
+						// wccf341j, wccf310j?
+						offset = 0x3489A00;
+					else
+						// wccf322e and wccf331e have same offset
+						offset = 0x34A4A00;
+					offset += idx * 0x5b00;
 					break;
 				case '4':
 					// file "data/model/sprite_card_data.bin"
-					offset = 0x3726480 + idx * 0x1800;
+					if (settings.content.fileName[5] == '0')
+						// 400j
+						offset = 0x370B480;
+					else
+						// 420e
+						offset = 0x3726480;
+					offset += idx * 0x1800;
 					break;
 				default:
 					rep = Reply::stockReply(Reply::not_found);
