@@ -61,8 +61,11 @@ void *readConst(u32 addr, bool& ismem, u32 sz)
 	else
 	{
 		ismem = true;
-		addr <<= iirf;
-		addr >>= iirf;
+		// Only the low bits of iirf hold the mask shift. Shifting a 32-bit value by the
+		// whole tagged pointer is undefined, and GCC 16 on 32-bit ARM drops the
+		// address entirely (every access hits offset 0).
+		addr <<= (iirf & HANDLER_MAX);
+		addr >>= (iirf & HANDLER_MAX);
 
 		return &(((u8 *)ptr)[addr]);
 	}
@@ -94,8 +97,11 @@ void *writeConst(u32 addr, bool& ismem, u32 sz)
 	else
 	{
 		ismem = true;
-		addr <<= iirf;
-		addr >>= iirf;
+		// Only the low bits of iirf hold the mask shift. Shifting a 32-bit value by the
+		// whole tagged pointer is undefined, and GCC 16 on 32-bit ARM drops the
+		// address entirely (every access hits offset 0).
+		addr <<= (iirf & HANDLER_MAX);
+		addr >>= (iirf & HANDLER_MAX);
 
 		return &(((u8 *)ptr)[addr]);
 	}
@@ -112,8 +118,11 @@ T DYNACALL readt(u32 addr)
 
 	if (likely(ptr != nullptr))
 	{
-		addr <<= iirf;
-		addr >>= iirf;
+		// Only the low bits of iirf hold the mask shift. Shifting a 32-bit value by the
+		// whole tagged pointer is undefined, and GCC 16 on 32-bit ARM drops the
+		// address entirely (every access hits offset 0).
+		addr <<= (iirf & HANDLER_MAX);
+		addr >>= (iirf & HANDLER_MAX);
 
 		return *(T *)&((u8 *)ptr)[addr];
 	}
@@ -156,8 +165,11 @@ void DYNACALL writet(u32 addr, T data)
 
 	if (likely(ptr != nullptr))
 	{
-		addr <<= iirf;
-		addr >>= iirf;
+		// Only the low bits of iirf hold the mask shift. Shifting a 32-bit value by the
+		// whole tagged pointer is undefined, and GCC 16 on 32-bit ARM drops the
+		// address entirely (every access hits offset 0).
+		addr <<= (iirf & HANDLER_MAX);
+		addr >>= (iirf & HANDLER_MAX);
 
 		*(T *)&((u8 *)ptr)[addr] = data;
 	}
