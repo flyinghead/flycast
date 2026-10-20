@@ -206,6 +206,10 @@ elseif(LIBRETRO)
 		if(NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 		endif()
+		if(NOT WIN32)
+			# keep bundled libs like glslang from binding to the frontend's copies
+			target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--version-script,${CMAKE_CURRENT_SOURCE_DIR}/shell/libretro/link.T")
+		endif()
 	endif()
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro"
 	  XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
