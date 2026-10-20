@@ -55,6 +55,8 @@
 #include "hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/naomi/systemsp.h"
+#include "hw/pvr/elan.h"
 #include "hw/maple/maple_if.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/Renderer_if.h"
@@ -2500,22 +2502,16 @@ size_t retro_get_memory_size(unsigned type)
 size_t retro_serialize_size()
 {
 	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
-	std::lock_guard<std::mutex> lock(mtx_serialization);
-
-	if (!first_run)
-		try {
-			emu.stop();
-		} catch (const FlycastException& e) {
-			ERROR_LOG(COMMON, "%s", e.what());
-			return 0;
-		}
-
-	Serializer ser;
-	dc_serialize(ser);
-	if (!first_run)
-		emu.start();
-
-	return ser.size();
+	// A frontend may size its buffer once, but a state grows and shrinks with the
+	// devices plugged in and the frames being drawn. Report the memory regions plus
+	// the allowance GGPO makes for everything else, Naomi's for System SP too.
+	size_t size = settings.platform.ram_size + settings.platform.vram_size
+			+ settings.platform.aram_size;
+	if (settings.platform.isNaomi2())
+		size += elan::ERAM_SIZE;
+	if (settings.platform.isSystemSP() && systemsp::SystemSpCart::Instance != nullptr)
+		size += systemsp::SystemSpCart::Instance->getSerializedMediaSize();
+	return size + (settings.platform.isNaomi() || settings.platform.isSystemSP() ? 20_MB : 10_MB);
 }
 
 bool retro_serialize(void *data, size_t size)

@@ -172,6 +172,8 @@ public:
 
 	void Serialize(Serializer &ser) const override;
 	void Deserialize(Deserializer &deser) override;
+	// The media is loaded into memory-backed RAM, so a savestate holds all of it
+	u32 getSerializedMediaSize() const { return mediaName != nullptr ? RomSize : 0; }
 
 	bool GetBootId(RomBootID *bootId) override
 	{
