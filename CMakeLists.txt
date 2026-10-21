@@ -1408,19 +1408,24 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 
-			add_subdirectory(core/deps/Syphon)
-			target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
-				$<TARGET_FILE_DIR:flycast>/../Resources/)
-			target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
-
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
-					shell/apple/common/util.mm
-					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.h
-					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.mm
-					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
+					shell/apple/common/util.mm)
+			# The app's main() lives in SDLApplicationDelegate.mm; the test binary
+			# gets its main() from gtest_main and stubs the rest (tests/src/test_stubs.cpp).
+			if(NOT BUILD_TESTING)
+				add_subdirectory(core/deps/Syphon)
+				target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
+					$<TARGET_FILE_DIR:flycast>/../Resources/)
+				target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+
+				target_sources(${PROJECT_NAME} PRIVATE
+						shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.h
+						shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.mm
+						shell/apple/emulator-osx/emulator-osx/osx-main.mm)
+			endif()
 			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
 			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
 			source_group("Resources" FILES ${ASSETS})
