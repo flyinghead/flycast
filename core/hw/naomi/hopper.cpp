@@ -23,6 +23,7 @@
 #include "hw/sh4/modules/modules.h"
 #include "serialize.h"
 #include "oslib/oslib.h"
+#include "oslib/storage.h"
 #include "emulator.h"
 #include "cfg/option.h"
 
@@ -44,15 +45,15 @@ public:
 		EventManager::listen(Event::Pause, handleEvent, this);
 
 		std::string path = getConfigFileName();
-		FILE *f = fopen(path.c_str(), "rb");
+		hostfs::File *f = hostfs::storage().openFile(path, "rb");
 		if (f == nullptr) {
 			INFO_LOG(NAOMI, "Hopper config not found at %s", path.c_str());
 		}
 		else
 		{
 			u8 data[4096];
-			size_t len = fread(data, 1, sizeof(data), f);
-			fclose(f);
+			size_t len = f->read(data, 1, sizeof(data));
+			delete f;
 			verify(len < sizeof(data));
 			if (len <= 0) {
 				ERROR_LOG(NAOMI, "Hopper config empty or I/O error: %s", path.c_str());
@@ -141,7 +142,7 @@ public:
 	void saveConfig() const
 	{
 		std::string path = getConfigFileName();
-		FILE *f = fopen(path.c_str(), "wb");
+		hostfs::File *f = hostfs::storage().openFile(path, "wb");
 		if (f == nullptr) {
 			ERROR_LOG(NAOMI, "Can't save hopper config to %s", path.c_str());
 			return;
@@ -152,8 +153,8 @@ public:
 		ser = Serializer(data.get(), ser.size());
 		serializeConfig(ser);
 
-		size_t len = fwrite(data.get(), 1, ser.size(), f);
-		fclose(f);
+		size_t len = f->write(data.get(), 1, ser.size());
+		delete f;
 		if (len != ser.size())
 			ERROR_LOG(NAOMI, "Hopper config I/O error: %s", path.c_str());
 	}

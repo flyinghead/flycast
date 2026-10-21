@@ -349,7 +349,7 @@ u8 vmu_default[] = {
 
 struct maple_sega_vmu: maple_base
 {
-	FILE *file = nullptr;
+	hostfs::File *file = nullptr;
 	u8 flash_data[128_KB];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
@@ -403,11 +403,11 @@ struct maple_sega_vmu: maple_base
 	{
 		if (file == nullptr)
 			return false;
-		if (std::fseek(file, 0, SEEK_SET) != 0) {
+		if (file->seek(0, SEEK_SET) != 0) {
 			ERROR_LOG(MAPLE, "VMU %s: I/O error", logical_port);
 			return false;
 		}
-		if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1) {
+		if (file->write(flash_data, sizeof(flash_data), 1) != 1) {
 			ERROR_LOG(MAPLE, "Failed to write the VMU %s to disk", logical_port);
 			return false;
 		}
@@ -437,6 +437,7 @@ struct maple_sega_vmu: maple_base
         std::string rpath = hostfs::getVmuPath(logical_port, false);
         // this might be a storage url
         hostfs::File *rfile = hostfs::storage().openFile(rpath, "rb");
+        bool loadedFromExistingFile = rfile != nullptr;
         if (rfile == nullptr) {
             INFO_LOG(MAPLE, "Unable to open VMU file \"%s\", creating new file", rpath.c_str());
         }
@@ -448,19 +449,20 @@ struct maple_sega_vmu: maple_base
         }
         // Open or create the vmu file to save to
         std::string wpath = hostfs::getVmuPath(logical_port, true);
-        file = nowide::fopen(wpath.c_str(), "rb+");
+        file = hostfs::storage().openFile(wpath, "r+b");
         if (file == nullptr)
         {
-            file = nowide::fopen(wpath.c_str(), "wb+");
+            file = hostfs::storage().openFile(wpath, "w+b");
 			if (file == nullptr) {
                 ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", wpath.c_str());
 			}
-			else if (rfile != nullptr)
+			else if (loadedFromExistingFile)
 			{
 				// VMU file is being renamed so save it fully now
 				// and delete the old file
 				if (fullSave())
-					nowide::remove(rpath.c_str());
+					if (!hostfs::storage().remove(rpath))
+						WARN_LOG(MAPLE, "Failed to delete old VMU file '%s'", rpath.c_str());
 			}
         }
 
@@ -477,7 +479,7 @@ struct maple_sega_vmu: maple_base
 	~maple_sega_vmu() override
 	{
 		if (file != nullptr)
-			std::fclose(file);
+			delete file;
 		memset(lcd_data, 0, sizeof(lcd_data));
 		updateMapleLinkScreen();
 	}
@@ -703,8 +705,8 @@ struct maple_sega_vmu: maple_base
 								if (!fullSave())
 									return MDRE_FileError;
 							}
-							else if (std::fseek(file, write_adr, SEEK_SET) != 0
-									|| std::fwrite(&flash_data[write_adr], write_len, 1, file) != 1)
+							else if (file->seek(write_adr, SEEK_SET) != 0
+									|| file->write(&flash_data[write_adr], write_len, 1) != 1)
 							{
 								ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
 								return MDRE_FileError; // I/O error
@@ -1909,7 +1911,7 @@ struct MapleLinkVmu : public maple_sega_vmu
 
 		// Ensure file is not being used
 		if (file != nullptr) {
-			std::fclose(file);
+			delete file;
 			file = nullptr;
 		}
 
