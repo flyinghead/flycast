@@ -21,8 +21,48 @@
 #include "hw/holly/holly_intc.h"
 #include "network/netservice.h"
 #include "serialize.h"
+#include "hw/sh4/sh4_sched.h"
+#include <atomic>
+#include <deque>
+#include <mutex>
+#include <vector>
 
 static RTL8139State *rtl8139device;
+
+// The network backends (picotcp, DCNet) deliver frames from their own
+// threads, but the RTL8139 model and the SH-4 interrupt controller belong to
+// the emulation thread: raising the receive interrupt from another thread
+// races with SIIDRebuild() and can leave stray pending interrupts, which
+// the guest sees as an unhandled IRQ. Queue the frames here and hand them
+// to the chip from the SH-4 scheduler.
+static std::mutex rxMutex;
+static std::deque<std::vector<u8>> rxQueue;
+static std::atomic<bool> rxPending;
+static int rxSchedId = -1;
+constexpr size_t RX_QUEUE_MAX = 64;
+constexpr int RX_POLL_CYCLES = SH4_MAIN_CLOCK / 10000;	// 100 us
+
+static int rxDeliver(int tag, int cycles, int jitter, void *arg)
+{
+	if (rxPending.load(std::memory_order_acquire) && rtl8139device != nullptr)
+	{
+		std::lock_guard<std::mutex> _(rxMutex);
+		while (!rxQueue.empty() && rtl8139_can_receive(rtl8139device))
+		{
+			rtl8139_receive(rtl8139device, rxQueue.front().data(), rxQueue.front().size());
+			rxQueue.pop_front();
+		}
+		rxPending = !rxQueue.empty();
+	}
+	return RX_POLL_CYCLES;
+}
+
+static void rxClear()
+{
+	std::lock_guard<std::mutex> _(rxMutex);
+	rxQueue.clear();
+	rxPending = false;
+}
 
 // 1400 - 1600 GAPSPCI bridge registers
 // 1600 - 1700 standard PCI config
@@ -74,6 +114,10 @@ void bba_Init()
 	memset(&GAPS_regs[0], 0, sizeof(GAPS_regs));
 	memcpy(&GAPS_regs[0], "GAPSPCI_BRIDGE_2", 0x10);
 	memcpy(&GAPS_regs[0x1c], "SEGA", 4);
+
+	rxClear();
+	rxSchedId = sh4_sched_register(0, rxDeliver);
+	sh4_sched_request(rxSchedId, RX_POLL_CYCLES);
 }
 
 void bba_Term()
@@ -84,6 +128,12 @@ void bba_Term()
 		rtl8139_destroy(rtl8139device);
 		rtl8139device = nullptr;
 	}
+	if (rxSchedId != -1)
+	{
+		sh4_sched_unregister(rxSchedId);
+		rxSchedId = -1;
+	}
+	rxClear();
 }
 
 void bba_Reset(bool hard)
@@ -92,6 +142,11 @@ void bba_Reset(bool hard)
 	{
 		bba_Term();
 		bba_Init();
+	}
+	else if (rxSchedId != -1)
+	{
+		// sh4_sched_reset() has just cancelled every request
+		sh4_sched_request(rxSchedId, RX_POLL_CYCLES);
 	}
 }
 
@@ -214,13 +269,16 @@ ssize_t qemu_send_packet(RTL8139State *s, const uint8_t *buf, int size)
 	return size;
 }
 
+// Called from the network threads
 int bba_recv_frame(const u8 *data, u32 len)
 {
 	if (len < 6 || len > MAX_ETH_FRAME_SIZE)
 		return 0;
-	if (!rtl8139_can_receive(rtl8139device))
+	std::lock_guard<std::mutex> _(rxMutex);
+	if (rxQueue.size() >= RX_QUEUE_MAX)
 		return 0;
-	rtl8139_receive(rtl8139device, data, len);
+	rxQueue.emplace_back(data, data + len);
+	rxPending.store(true, std::memory_order_release);
 
 	return 1;
 }
@@ -250,6 +308,9 @@ void bba_Deserialize(Deserializer& deser)
 	deser >> GAPS_ram;
 	deser >> dmaOffset;
 	deser >> interruptPending;
+	rxClear();
+	if (rxSchedId != -1)
+		sh4_sched_request(rxSchedId, RX_POLL_CYCLES);
     // returns true if the receiver is enabled and the network stack must be started
     if (rtl8139_deserialize(rtl8139device, deser))
         net::modbba::start();
