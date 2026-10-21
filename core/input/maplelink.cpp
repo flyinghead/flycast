@@ -18,8 +18,17 @@
 #include "cfg/option.h"
 #include "hw/maple/maple_if.h"
 
-std::array<std::array<std::list<MapleLink::Ptr>, 2>, 4> MapleLink::Links;
-std::mutex MapleLink::Mutex;
+std::mutex& MapleLink::mutex()
+{
+	static std::mutex *m = new std::mutex();
+	return *m;
+}
+
+MapleLink::LinkTable& MapleLink::links()
+{
+	static LinkTable *l = new LinkTable();
+	return *l;
+}
 
 namespace
 {
@@ -44,10 +53,10 @@ GameState GameState::instance;
 std::size_t MapleLink::activeLinkCount(int bus) const
 {
 	std::size_t count = 0;
-	if (bus >= 0 && bus < (int)Links.size())
+	if (bus >= 0 && bus < (int)links().size())
 	{
-		std::lock_guard<std::mutex> _(Mutex);
-		for (const std::list<MapleLink::Ptr>& list : Links[bus]) {
+		std::lock_guard<std::mutex> _(mutex());
+		for (const std::list<MapleLink::Ptr>& list : links()[bus]) {
 			if (!list.empty() && list.front().get() == this)
 				++count;
 		}
@@ -61,22 +70,22 @@ bool MapleLink::isGameStarted() const {
 
 void MapleLink::registerLink(int bus, int port)
 {
-	if (bus >= 0 && bus < (int)Links.size()
-			&& port >= 0 && port < (int)Links[0].size())
+	if (bus >= 0 && bus < (int)links().size()
+			&& port >= 0 && port < (int)links()[0].size())
 	{
 		if (this->bus != bus) {
 			this->bus = bus;
 			this->ports = 0;
 		}
 		this->ports |= 1 << port;
-		std::lock_guard<std::mutex> _(Mutex);
-		Links[bus][port].push_front(shared_from_this());
+		std::lock_guard<std::mutex> _(mutex());
+		links()[bus][port].push_front(shared_from_this());
 	}
 }
 void MapleLink::unregisterLink(int bus, int port)
 {
-	if (bus >= 0 && bus < (int)Links.size()
-			&& port >= 0 && port < (int)Links[0].size())
+	if (bus >= 0 && bus < (int)links().size()
+			&& port >= 0 && port < (int)links()[0].size())
 	{
 		if (this->bus != bus) {
 			this->bus = -1;
@@ -85,15 +94,15 @@ void MapleLink::unregisterLink(int bus, int port)
 		else {
 			this->ports &= ~(1 << port);
 		}
-		std::lock_guard<std::mutex> _(Mutex);
-		Links[bus][port].remove_if([this](const Ptr& item) { return item.get() == this; });
+		std::lock_guard<std::mutex> _(mutex());
+		links()[bus][port].remove_if([this](const Ptr& item) { return item.get() == this; });
 	}
 }
 
 bool MapleLink::StorageEnabled()
 {
-	std::lock_guard<std::mutex> _(Mutex);
-	for (const auto& ports : Links)
+	std::lock_guard<std::mutex> _(mutex());
+	for (const auto& ports : links())
 	{
 		for (const std::list<MapleLink::Ptr>& list : ports)
 			if (!list.empty() && list.front()->storageEnabled())
