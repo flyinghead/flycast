@@ -75,6 +75,7 @@ void dc_deserialize(Deserializer& deser)
 	sh4::deserialize(deser);
 
 	deser >> config::EmulateBBA.get();
+	bba_Reset(true);
 	if (config::EmulateBBA)
 		bba_Deserialize(deser);
 	ModemDeserialize(deser);

@@ -22,6 +22,7 @@
 #include "network/netservice.h"
 #include "serialize.h"
 #include "hw/sh4/sh4_sched.h"
+#include "cfg/option.h"
 #include <atomic>
 #include <deque>
 #include <mutex>
@@ -40,7 +41,7 @@ static std::deque<std::vector<u8>> rxQueue;
 static std::atomic<bool> rxPending;
 static int rxSchedId = -1;
 constexpr size_t RX_QUEUE_MAX = 64;
-constexpr int RX_POLL_CYCLES = SH4_MAIN_CLOCK / 10000;	// 100 us
+constexpr int RX_POLL_CYCLES = 1_sh4ms;
 
 static int rxDeliver(int tag, int cycles, int jitter, void *arg)
 {
@@ -105,7 +106,7 @@ void pci_set_irq(PCIDevice *pci_dev, int level)
 	setInterrupt();
 }
 
-void bba_Init()
+static void bba_Init()
 {
 	NICConf nicConf = { 0xc, 0xa, 0xf, 0xe, 0, 0 };
 	rtl8139device = rtl8139_init(&nicConf);
@@ -141,12 +142,8 @@ void bba_Reset(bool hard)
 	if (hard)
 	{
 		bba_Term();
-		bba_Init();
-	}
-	else if (rxSchedId != -1)
-	{
-		// sh4_sched_reset() has just cancelled every request
-		sh4_sched_request(rxSchedId, RX_POLL_CYCLES);
+		if (config::EmulateBBA && (settings.platform.isConsole() || settings.platform.isAtomiswave()))
+			bba_Init();
 	}
 }
 
@@ -308,9 +305,6 @@ void bba_Deserialize(Deserializer& deser)
 	deser >> GAPS_ram;
 	deser >> dmaOffset;
 	deser >> interruptPending;
-	rxClear();
-	if (rxSchedId != -1)
-		sh4_sched_request(rxSchedId, RX_POLL_CYCLES);
     // returns true if the receiver is enabled and the network stack must be started
     if (rtl8139_deserialize(rtl8139device, deser))
         net::modbba::start();

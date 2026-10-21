@@ -19,7 +19,6 @@
 #pragma once
 #include "types.h"
 
-void bba_Init();
 void bba_Term();
 void bba_Reset(bool hard);
 u32 bba_ReadMem(u32 addr, u32 sz);
