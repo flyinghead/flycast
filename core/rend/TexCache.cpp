@@ -640,16 +640,19 @@ bool BaseTextureCacheData::Update()
 			// xBRZ scaling
 			if (textureUpscaling)
 			{
+				// xBRZ only supports scale factors 2 to 6. Out of range, scale() returns
+				// without writing the destination buffer.
+				const int factor = std::clamp((int)config::TextureUpscale, 2, 6);
 				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(width * config::TextureUpscale, height * config::TextureUpscale);
+				tmp_buf.init(width * factor, height * factor);
 
 				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
 					// Alpha channel formats. Palettes with alpha are already handled
 					has_alpha = true;
-				UpscalexBRZ(config::TextureUpscale, pb32.data(), tmp_buf.data(), width, height, has_alpha);
+				UpscalexBRZ(factor, pb32.data(), tmp_buf.data(), width, height, has_alpha);
 				pb32.steal_data(tmp_buf);
-				upscaled_w *= config::TextureUpscale;
-				upscaled_h *= config::TextureUpscale;
+				upscaled_w *= factor;
+				upscaled_h *= factor;
 			}
 		}
 		temp_tex_buffer = pb32.data();

@@ -252,6 +252,8 @@ extern "C" {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_AR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_AR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_AR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_AR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_AR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_AR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_AR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_AR NULL
@@ -277,27 +279,27 @@ extern "C" {
 #define OPTION_VAL_70_AR NULL
 #define OPTION_VAL_80_AR NULL
 #define OPTION_VAL_90_AR NULL
-#define OPTION_VAL_100_O48_AR NULL
-#define OPTION_VAL_110_O48_AR NULL
-#define OPTION_VAL_120_O48_AR NULL
-#define OPTION_VAL_130_O48_AR NULL
-#define OPTION_VAL_140_O48_AR NULL
-#define OPTION_VAL_150_O48_AR NULL
-#define OPTION_VAL_160_O48_AR NULL
-#define OPTION_VAL_170_O48_AR NULL
-#define OPTION_VAL_180_O48_AR NULL
-#define OPTION_VAL_190_O48_AR NULL
-#define OPTION_VAL_200_O48_AR NULL
-#define OPTION_VAL_210_O48_AR NULL
-#define OPTION_VAL_220_O48_AR NULL
-#define OPTION_VAL_230_O48_AR NULL
-#define OPTION_VAL_240_O48_AR NULL
-#define OPTION_VAL_250_O48_AR NULL
-#define OPTION_VAL_260_O48_AR NULL
-#define OPTION_VAL_270_O48_AR NULL
-#define OPTION_VAL_280_O48_AR NULL
-#define OPTION_VAL_290_O48_AR NULL
-#define OPTION_VAL_300_O48_AR NULL
+#define OPTION_VAL_100_O49_AR NULL
+#define OPTION_VAL_110_O49_AR NULL
+#define OPTION_VAL_120_O49_AR NULL
+#define OPTION_VAL_130_O49_AR NULL
+#define OPTION_VAL_140_O49_AR NULL
+#define OPTION_VAL_150_O49_AR NULL
+#define OPTION_VAL_160_O49_AR NULL
+#define OPTION_VAL_170_O49_AR NULL
+#define OPTION_VAL_180_O49_AR NULL
+#define OPTION_VAL_190_O49_AR NULL
+#define OPTION_VAL_200_O49_AR NULL
+#define OPTION_VAL_210_O49_AR NULL
+#define OPTION_VAL_220_O49_AR NULL
+#define OPTION_VAL_230_O49_AR NULL
+#define OPTION_VAL_240_O49_AR NULL
+#define OPTION_VAL_250_O49_AR NULL
+#define OPTION_VAL_260_O49_AR NULL
+#define OPTION_VAL_270_O49_AR NULL
+#define OPTION_VAL_280_O49_AR NULL
+#define OPTION_VAL_290_O49_AR NULL
+#define OPTION_VAL_300_O49_AR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AR NULL
 #define OPTION_VAL_WHITE_AR NULL
 #define OPTION_VAL_RED_AR "أحمر"
@@ -1166,6 +1168,20 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_AR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_AR,
       NULL,
@@ -1272,27 +1288,27 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O48_AR },
-         { "110%", OPTION_VAL_110_O48_AR },
-         { "120%", OPTION_VAL_120_O48_AR },
-         { "130%", OPTION_VAL_130_O48_AR },
-         { "140%", OPTION_VAL_140_O48_AR },
-         { "150%", OPTION_VAL_150_O48_AR },
-         { "160%", OPTION_VAL_160_O48_AR },
-         { "170%", OPTION_VAL_170_O48_AR },
-         { "180%", OPTION_VAL_180_O48_AR },
-         { "190%", OPTION_VAL_190_O48_AR },
-         { "200%", OPTION_VAL_200_O48_AR },
-         { "210%", OPTION_VAL_210_O48_AR },
-         { "220%", OPTION_VAL_220_O48_AR },
-         { "230%", OPTION_VAL_230_O48_AR },
-         { "240%", OPTION_VAL_240_O48_AR },
-         { "250%", OPTION_VAL_250_O48_AR },
-         { "260%", OPTION_VAL_260_O48_AR },
-         { "270%", OPTION_VAL_270_O48_AR },
-         { "280%", OPTION_VAL_280_O48_AR },
-         { "290%", OPTION_VAL_290_O48_AR },
-         { "300%", OPTION_VAL_300_O48_AR },
+         { "100%", OPTION_VAL_100_O49_AR },
+         { "110%", OPTION_VAL_110_O49_AR },
+         { "120%", OPTION_VAL_120_O49_AR },
+         { "130%", OPTION_VAL_130_O49_AR },
+         { "140%", OPTION_VAL_140_O49_AR },
+         { "150%", OPTION_VAL_150_O49_AR },
+         { "160%", OPTION_VAL_160_O49_AR },
+         { "170%", OPTION_VAL_170_O49_AR },
+         { "180%", OPTION_VAL_180_O49_AR },
+         { "190%", OPTION_VAL_190_O49_AR },
+         { "200%", OPTION_VAL_200_O49_AR },
+         { "210%", OPTION_VAL_210_O49_AR },
+         { "220%", OPTION_VAL_220_O49_AR },
+         { "230%", OPTION_VAL_230_O49_AR },
+         { "240%", OPTION_VAL_240_O49_AR },
+         { "250%", OPTION_VAL_250_O49_AR },
+         { "260%", OPTION_VAL_260_O49_AR },
+         { "270%", OPTION_VAL_270_O49_AR },
+         { "280%", OPTION_VAL_280_O49_AR },
+         { "290%", OPTION_VAL_290_O49_AR },
+         { "300%", OPTION_VAL_300_O49_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1690,7 +1706,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O48_AR },
+         { "100%", OPTION_VAL_100_O49_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1841,7 +1857,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O48_AR },
+         { "100%", OPTION_VAL_100_O49_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1992,7 +2008,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O48_AR },
+         { "100%", OPTION_VAL_100_O49_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -2143,7 +2159,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O48_AR },
+         { "100%", OPTION_VAL_100_O49_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -2278,7 +2294,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
-#define OPTION_VAL_2_O27_AST NULL
+#define OPTION_VAL_2_O27_AST "x2"
 #define OPTION_VAL_4_AST "x4"
 #define OPTION_VAL_6_AST "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AST NULL
@@ -2352,6 +2368,8 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_AST NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_AST NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_AST NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_AST NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_AST NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_AST NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_AST NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_AST NULL
@@ -2377,27 +2395,27 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_70_AST NULL
 #define OPTION_VAL_80_AST NULL
 #define OPTION_VAL_90_AST NULL
-#define OPTION_VAL_100_O48_AST NULL
-#define OPTION_VAL_110_O48_AST NULL
-#define OPTION_VAL_120_O48_AST NULL
-#define OPTION_VAL_130_O48_AST NULL
-#define OPTION_VAL_140_O48_AST NULL
-#define OPTION_VAL_150_O48_AST NULL
-#define OPTION_VAL_160_O48_AST NULL
-#define OPTION_VAL_170_O48_AST NULL
-#define OPTION_VAL_180_O48_AST NULL
-#define OPTION_VAL_190_O48_AST NULL
-#define OPTION_VAL_200_O48_AST NULL
-#define OPTION_VAL_210_O48_AST NULL
-#define OPTION_VAL_220_O48_AST NULL
-#define OPTION_VAL_230_O48_AST NULL
-#define OPTION_VAL_240_O48_AST NULL
-#define OPTION_VAL_250_O48_AST NULL
-#define OPTION_VAL_260_O48_AST NULL
-#define OPTION_VAL_270_O48_AST NULL
-#define OPTION_VAL_280_O48_AST NULL
-#define OPTION_VAL_290_O48_AST NULL
-#define OPTION_VAL_300_O48_AST NULL
+#define OPTION_VAL_100_O49_AST NULL
+#define OPTION_VAL_110_O49_AST NULL
+#define OPTION_VAL_120_O49_AST NULL
+#define OPTION_VAL_130_O49_AST NULL
+#define OPTION_VAL_140_O49_AST NULL
+#define OPTION_VAL_150_O49_AST NULL
+#define OPTION_VAL_160_O49_AST NULL
+#define OPTION_VAL_170_O49_AST NULL
+#define OPTION_VAL_180_O49_AST NULL
+#define OPTION_VAL_190_O49_AST NULL
+#define OPTION_VAL_200_O49_AST NULL
+#define OPTION_VAL_210_O49_AST NULL
+#define OPTION_VAL_220_O49_AST NULL
+#define OPTION_VAL_230_O49_AST NULL
+#define OPTION_VAL_240_O49_AST NULL
+#define OPTION_VAL_250_O49_AST NULL
+#define OPTION_VAL_260_O49_AST NULL
+#define OPTION_VAL_270_O49_AST NULL
+#define OPTION_VAL_280_O49_AST NULL
+#define OPTION_VAL_290_O49_AST NULL
+#define OPTION_VAL_300_O49_AST NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AST NULL
 #define OPTION_VAL_WHITE_AST "Blancu"
 #define OPTION_VAL_RED_AST "Coloráu"
@@ -3266,6 +3284,20 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_AST,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_AST,
       NULL,
@@ -3372,27 +3404,27 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O48_AST },
-         { "110%", OPTION_VAL_110_O48_AST },
-         { "120%", OPTION_VAL_120_O48_AST },
-         { "130%", OPTION_VAL_130_O48_AST },
-         { "140%", OPTION_VAL_140_O48_AST },
-         { "150%", OPTION_VAL_150_O48_AST },
-         { "160%", OPTION_VAL_160_O48_AST },
-         { "170%", OPTION_VAL_170_O48_AST },
-         { "180%", OPTION_VAL_180_O48_AST },
-         { "190%", OPTION_VAL_190_O48_AST },
-         { "200%", OPTION_VAL_200_O48_AST },
-         { "210%", OPTION_VAL_210_O48_AST },
-         { "220%", OPTION_VAL_220_O48_AST },
-         { "230%", OPTION_VAL_230_O48_AST },
-         { "240%", OPTION_VAL_240_O48_AST },
-         { "250%", OPTION_VAL_250_O48_AST },
-         { "260%", OPTION_VAL_260_O48_AST },
-         { "270%", OPTION_VAL_270_O48_AST },
-         { "280%", OPTION_VAL_280_O48_AST },
-         { "290%", OPTION_VAL_290_O48_AST },
-         { "300%", OPTION_VAL_300_O48_AST },
+         { "100%", OPTION_VAL_100_O49_AST },
+         { "110%", OPTION_VAL_110_O49_AST },
+         { "120%", OPTION_VAL_120_O49_AST },
+         { "130%", OPTION_VAL_130_O49_AST },
+         { "140%", OPTION_VAL_140_O49_AST },
+         { "150%", OPTION_VAL_150_O49_AST },
+         { "160%", OPTION_VAL_160_O49_AST },
+         { "170%", OPTION_VAL_170_O49_AST },
+         { "180%", OPTION_VAL_180_O49_AST },
+         { "190%", OPTION_VAL_190_O49_AST },
+         { "200%", OPTION_VAL_200_O49_AST },
+         { "210%", OPTION_VAL_210_O49_AST },
+         { "220%", OPTION_VAL_220_O49_AST },
+         { "230%", OPTION_VAL_230_O49_AST },
+         { "240%", OPTION_VAL_240_O49_AST },
+         { "250%", OPTION_VAL_250_O49_AST },
+         { "260%", OPTION_VAL_260_O49_AST },
+         { "270%", OPTION_VAL_270_O49_AST },
+         { "280%", OPTION_VAL_280_O49_AST },
+         { "290%", OPTION_VAL_290_O49_AST },
+         { "300%", OPTION_VAL_300_O49_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3790,7 +3822,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O48_AST },
+         { "100%", OPTION_VAL_100_O49_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3941,7 +3973,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O48_AST },
+         { "100%", OPTION_VAL_100_O49_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -4092,7 +4124,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O48_AST },
+         { "100%", OPTION_VAL_100_O49_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -4243,7 +4275,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O48_AST },
+         { "100%", OPTION_VAL_100_O49_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -4452,6 +4484,8 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BE "Здымаць дамп тэкстур"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_BE "Пры кожным выкарыстанні гульнёй новай тэкстуры яна будзе захоўвацца ў файл .png у тэчцы 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_BE NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BE "Мёртвая зона аналагавага стыку"
@@ -4477,27 +4511,27 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_70_BE "70 %"
 #define OPTION_VAL_80_BE "80 %"
 #define OPTION_VAL_90_BE "90 %"
-#define OPTION_VAL_100_O48_BE NULL
-#define OPTION_VAL_110_O48_BE NULL
-#define OPTION_VAL_120_O48_BE NULL
-#define OPTION_VAL_130_O48_BE NULL
-#define OPTION_VAL_140_O48_BE NULL
-#define OPTION_VAL_150_O48_BE NULL
-#define OPTION_VAL_160_O48_BE NULL
-#define OPTION_VAL_170_O48_BE NULL
-#define OPTION_VAL_180_O48_BE NULL
-#define OPTION_VAL_190_O48_BE NULL
-#define OPTION_VAL_200_O48_BE NULL
-#define OPTION_VAL_210_O48_BE NULL
-#define OPTION_VAL_220_O48_BE NULL
-#define OPTION_VAL_230_O48_BE NULL
-#define OPTION_VAL_240_O48_BE NULL
-#define OPTION_VAL_250_O48_BE NULL
-#define OPTION_VAL_260_O48_BE NULL
-#define OPTION_VAL_270_O48_BE NULL
-#define OPTION_VAL_280_O48_BE NULL
-#define OPTION_VAL_290_O48_BE NULL
-#define OPTION_VAL_300_O48_BE NULL
+#define OPTION_VAL_100_O49_BE "100 %"
+#define OPTION_VAL_110_O49_BE "110 %"
+#define OPTION_VAL_120_O49_BE "120 %"
+#define OPTION_VAL_130_O49_BE "130 %"
+#define OPTION_VAL_140_O49_BE "140 %"
+#define OPTION_VAL_150_O49_BE "150 %"
+#define OPTION_VAL_160_O49_BE "160 %"
+#define OPTION_VAL_170_O49_BE "170 %"
+#define OPTION_VAL_180_O49_BE "180 %"
+#define OPTION_VAL_190_O49_BE "190 %"
+#define OPTION_VAL_200_O49_BE "200 %"
+#define OPTION_VAL_210_O49_BE "210 %"
+#define OPTION_VAL_220_O49_BE "220 %"
+#define OPTION_VAL_230_O49_BE "230 %"
+#define OPTION_VAL_240_O49_BE "240 %"
+#define OPTION_VAL_250_O49_BE "250 %"
+#define OPTION_VAL_260_O49_BE "260 %"
+#define OPTION_VAL_270_O49_BE "270 %"
+#define OPTION_VAL_280_O49_BE "280 %"
+#define OPTION_VAL_290_O49_BE "290 %"
+#define OPTION_VAL_300_O49_BE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE "Адлюстраванне прыцэла пісталета 1"
 #define OPTION_VAL_WHITE_BE "Белы"
 #define OPTION_VAL_RED_BE "Чырвоная"
@@ -5366,6 +5400,20 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_BE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_BE,
       NULL,
@@ -5472,27 +5520,27 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O48_BE },
-         { "110%", OPTION_VAL_110_O48_BE },
-         { "120%", OPTION_VAL_120_O48_BE },
-         { "130%", OPTION_VAL_130_O48_BE },
-         { "140%", OPTION_VAL_140_O48_BE },
-         { "150%", OPTION_VAL_150_O48_BE },
-         { "160%", OPTION_VAL_160_O48_BE },
-         { "170%", OPTION_VAL_170_O48_BE },
-         { "180%", OPTION_VAL_180_O48_BE },
-         { "190%", OPTION_VAL_190_O48_BE },
-         { "200%", OPTION_VAL_200_O48_BE },
-         { "210%", OPTION_VAL_210_O48_BE },
-         { "220%", OPTION_VAL_220_O48_BE },
-         { "230%", OPTION_VAL_230_O48_BE },
-         { "240%", OPTION_VAL_240_O48_BE },
-         { "250%", OPTION_VAL_250_O48_BE },
-         { "260%", OPTION_VAL_260_O48_BE },
-         { "270%", OPTION_VAL_270_O48_BE },
-         { "280%", OPTION_VAL_280_O48_BE },
-         { "290%", OPTION_VAL_290_O48_BE },
-         { "300%", OPTION_VAL_300_O48_BE },
+         { "100%", OPTION_VAL_100_O49_BE },
+         { "110%", OPTION_VAL_110_O49_BE },
+         { "120%", OPTION_VAL_120_O49_BE },
+         { "130%", OPTION_VAL_130_O49_BE },
+         { "140%", OPTION_VAL_140_O49_BE },
+         { "150%", OPTION_VAL_150_O49_BE },
+         { "160%", OPTION_VAL_160_O49_BE },
+         { "170%", OPTION_VAL_170_O49_BE },
+         { "180%", OPTION_VAL_180_O49_BE },
+         { "190%", OPTION_VAL_190_O49_BE },
+         { "200%", OPTION_VAL_200_O49_BE },
+         { "210%", OPTION_VAL_210_O49_BE },
+         { "220%", OPTION_VAL_220_O49_BE },
+         { "230%", OPTION_VAL_230_O49_BE },
+         { "240%", OPTION_VAL_240_O49_BE },
+         { "250%", OPTION_VAL_250_O49_BE },
+         { "260%", OPTION_VAL_260_O49_BE },
+         { "270%", OPTION_VAL_270_O49_BE },
+         { "280%", OPTION_VAL_280_O49_BE },
+         { "290%", OPTION_VAL_290_O49_BE },
+         { "300%", OPTION_VAL_300_O49_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5890,7 +5938,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O48_BE },
+         { "100%", OPTION_VAL_100_O49_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -6041,7 +6089,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O48_BE },
+         { "100%", OPTION_VAL_100_O49_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -6192,7 +6240,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O48_BE },
+         { "100%", OPTION_VAL_100_O49_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -6343,7 +6391,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O48_BE },
+         { "100%", OPTION_VAL_100_O49_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -6552,6 +6600,8 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_BG NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BG NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_BG NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_BG NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_BG NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_BG NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_BG NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BG NULL
@@ -6577,27 +6627,27 @@ struct retro_core_options_v2 options_be = {
 #define OPTION_VAL_70_BG NULL
 #define OPTION_VAL_80_BG NULL
 #define OPTION_VAL_90_BG NULL
-#define OPTION_VAL_100_O48_BG NULL
-#define OPTION_VAL_110_O48_BG NULL
-#define OPTION_VAL_120_O48_BG NULL
-#define OPTION_VAL_130_O48_BG NULL
-#define OPTION_VAL_140_O48_BG NULL
-#define OPTION_VAL_150_O48_BG NULL
-#define OPTION_VAL_160_O48_BG NULL
-#define OPTION_VAL_170_O48_BG NULL
-#define OPTION_VAL_180_O48_BG NULL
-#define OPTION_VAL_190_O48_BG NULL
-#define OPTION_VAL_200_O48_BG NULL
-#define OPTION_VAL_210_O48_BG NULL
-#define OPTION_VAL_220_O48_BG NULL
-#define OPTION_VAL_230_O48_BG NULL
-#define OPTION_VAL_240_O48_BG NULL
-#define OPTION_VAL_250_O48_BG NULL
-#define OPTION_VAL_260_O48_BG NULL
-#define OPTION_VAL_270_O48_BG NULL
-#define OPTION_VAL_280_O48_BG NULL
-#define OPTION_VAL_290_O48_BG NULL
-#define OPTION_VAL_300_O48_BG NULL
+#define OPTION_VAL_100_O49_BG NULL
+#define OPTION_VAL_110_O49_BG NULL
+#define OPTION_VAL_120_O49_BG NULL
+#define OPTION_VAL_130_O49_BG NULL
+#define OPTION_VAL_140_O49_BG NULL
+#define OPTION_VAL_150_O49_BG NULL
+#define OPTION_VAL_160_O49_BG NULL
+#define OPTION_VAL_170_O49_BG NULL
+#define OPTION_VAL_180_O49_BG NULL
+#define OPTION_VAL_190_O49_BG NULL
+#define OPTION_VAL_200_O49_BG NULL
+#define OPTION_VAL_210_O49_BG NULL
+#define OPTION_VAL_220_O49_BG NULL
+#define OPTION_VAL_230_O49_BG NULL
+#define OPTION_VAL_240_O49_BG NULL
+#define OPTION_VAL_250_O49_BG NULL
+#define OPTION_VAL_260_O49_BG NULL
+#define OPTION_VAL_270_O49_BG NULL
+#define OPTION_VAL_280_O49_BG NULL
+#define OPTION_VAL_290_O49_BG NULL
+#define OPTION_VAL_300_O49_BG NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BG NULL
 #define OPTION_VAL_WHITE_BG NULL
 #define OPTION_VAL_RED_BG NULL
@@ -7466,6 +7516,20 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_BG,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_BG,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_BG,
       NULL,
@@ -7572,27 +7636,27 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "70%",  OPTION_VAL_70_BG },
          { "80%",  OPTION_VAL_80_BG },
          { "90%",  OPTION_VAL_90_BG },
-         { "100%", OPTION_VAL_100_O48_BG },
-         { "110%", OPTION_VAL_110_O48_BG },
-         { "120%", OPTION_VAL_120_O48_BG },
-         { "130%", OPTION_VAL_130_O48_BG },
-         { "140%", OPTION_VAL_140_O48_BG },
-         { "150%", OPTION_VAL_150_O48_BG },
-         { "160%", OPTION_VAL_160_O48_BG },
-         { "170%", OPTION_VAL_170_O48_BG },
-         { "180%", OPTION_VAL_180_O48_BG },
-         { "190%", OPTION_VAL_190_O48_BG },
-         { "200%", OPTION_VAL_200_O48_BG },
-         { "210%", OPTION_VAL_210_O48_BG },
-         { "220%", OPTION_VAL_220_O48_BG },
-         { "230%", OPTION_VAL_230_O48_BG },
-         { "240%", OPTION_VAL_240_O48_BG },
-         { "250%", OPTION_VAL_250_O48_BG },
-         { "260%", OPTION_VAL_260_O48_BG },
-         { "270%", OPTION_VAL_270_O48_BG },
-         { "280%", OPTION_VAL_280_O48_BG },
-         { "290%", OPTION_VAL_290_O48_BG },
-         { "300%", OPTION_VAL_300_O48_BG },
+         { "100%", OPTION_VAL_100_O49_BG },
+         { "110%", OPTION_VAL_110_O49_BG },
+         { "120%", OPTION_VAL_120_O49_BG },
+         { "130%", OPTION_VAL_130_O49_BG },
+         { "140%", OPTION_VAL_140_O49_BG },
+         { "150%", OPTION_VAL_150_O49_BG },
+         { "160%", OPTION_VAL_160_O49_BG },
+         { "170%", OPTION_VAL_170_O49_BG },
+         { "180%", OPTION_VAL_180_O49_BG },
+         { "190%", OPTION_VAL_190_O49_BG },
+         { "200%", OPTION_VAL_200_O49_BG },
+         { "210%", OPTION_VAL_210_O49_BG },
+         { "220%", OPTION_VAL_220_O49_BG },
+         { "230%", OPTION_VAL_230_O49_BG },
+         { "240%", OPTION_VAL_240_O49_BG },
+         { "250%", OPTION_VAL_250_O49_BG },
+         { "260%", OPTION_VAL_260_O49_BG },
+         { "270%", OPTION_VAL_270_O49_BG },
+         { "280%", OPTION_VAL_280_O49_BG },
+         { "290%", OPTION_VAL_290_O49_BG },
+         { "300%", OPTION_VAL_300_O49_BG },
          { NULL,   NULL },
       },
       "100%",
@@ -7990,7 +8054,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "70%",  OPTION_VAL_70_BG },
          { "80%",  OPTION_VAL_80_BG },
          { "90%",  OPTION_VAL_90_BG },
-         { "100%", OPTION_VAL_100_O48_BG },
+         { "100%", OPTION_VAL_100_O49_BG },
          { NULL,   NULL },
       },
       "100%",
@@ -8141,7 +8205,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "70%",  OPTION_VAL_70_BG },
          { "80%",  OPTION_VAL_80_BG },
          { "90%",  OPTION_VAL_90_BG },
-         { "100%", OPTION_VAL_100_O48_BG },
+         { "100%", OPTION_VAL_100_O49_BG },
          { NULL,   NULL },
       },
       "100%",
@@ -8292,7 +8356,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "70%",  OPTION_VAL_70_BG },
          { "80%",  OPTION_VAL_80_BG },
          { "90%",  OPTION_VAL_90_BG },
-         { "100%", OPTION_VAL_100_O48_BG },
+         { "100%", OPTION_VAL_100_O49_BG },
          { NULL,   NULL },
       },
       "100%",
@@ -8443,7 +8507,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "70%",  OPTION_VAL_70_BG },
          { "80%",  OPTION_VAL_80_BG },
          { "90%",  OPTION_VAL_90_BG },
-         { "100%", OPTION_VAL_100_O48_BG },
+         { "100%", OPTION_VAL_100_O49_BG },
          { NULL,   NULL },
       },
       "100%",
@@ -8492,8 +8556,8 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CA "Habilita el botó SERVICE per jocs arcade, per accedir a la configuració de la màquina."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA "Estableix els jocs de NAOMI com a gratuïts"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA "Modifica la configuració de monedes del joc a partides gratuïtes."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_CA NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_CA NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_CA "Límit de monedes"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_CA "Desactiva l'inserció de monedes després del límit definit."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA "Emulació de l'adaptador Broadband"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA "Emula l'adaptador de banda ampla per cable Ethernet en compte del mòdem (es requereix reinici)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CA "Habilitat UPnP"
@@ -8652,6 +8716,8 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CA "Carrega les textures personalitzades a l'inici. Pot millorar el rendiment però augment l'ús de memòria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CA "Abocar textures"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CA "Cada vegada que un joc faci servir una nova textura, aquesta es desarà en un fitxer .png a la carpeta 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CA "Descarta el vídeo i les textures animades"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CA "Omet l'abocament de vídeo (YUV) i de les textures actualitzades."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CA "Substitueix les textures"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CA "Sempre aboca les textures que son reemplaçades per les textures personalitzades."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CA "Zona morta palanca analògica"
@@ -8677,27 +8743,27 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_70_CA NULL
 #define OPTION_VAL_80_CA NULL
 #define OPTION_VAL_90_CA NULL
-#define OPTION_VAL_100_O48_CA NULL
-#define OPTION_VAL_110_O48_CA NULL
-#define OPTION_VAL_120_O48_CA NULL
-#define OPTION_VAL_130_O48_CA NULL
-#define OPTION_VAL_140_O48_CA NULL
-#define OPTION_VAL_150_O48_CA NULL
-#define OPTION_VAL_160_O48_CA NULL
-#define OPTION_VAL_170_O48_CA NULL
-#define OPTION_VAL_180_O48_CA NULL
-#define OPTION_VAL_190_O48_CA NULL
-#define OPTION_VAL_200_O48_CA NULL
-#define OPTION_VAL_210_O48_CA NULL
-#define OPTION_VAL_220_O48_CA NULL
-#define OPTION_VAL_230_O48_CA NULL
-#define OPTION_VAL_240_O48_CA NULL
-#define OPTION_VAL_250_O48_CA NULL
-#define OPTION_VAL_260_O48_CA NULL
-#define OPTION_VAL_270_O48_CA NULL
-#define OPTION_VAL_280_O48_CA NULL
-#define OPTION_VAL_290_O48_CA NULL
-#define OPTION_VAL_300_O48_CA NULL
+#define OPTION_VAL_100_O49_CA NULL
+#define OPTION_VAL_110_O49_CA NULL
+#define OPTION_VAL_120_O49_CA NULL
+#define OPTION_VAL_130_O49_CA NULL
+#define OPTION_VAL_140_O49_CA NULL
+#define OPTION_VAL_150_O49_CA NULL
+#define OPTION_VAL_160_O49_CA NULL
+#define OPTION_VAL_170_O49_CA NULL
+#define OPTION_VAL_180_O49_CA NULL
+#define OPTION_VAL_190_O49_CA NULL
+#define OPTION_VAL_200_O49_CA NULL
+#define OPTION_VAL_210_O49_CA NULL
+#define OPTION_VAL_220_O49_CA NULL
+#define OPTION_VAL_230_O49_CA NULL
+#define OPTION_VAL_240_O49_CA NULL
+#define OPTION_VAL_250_O49_CA NULL
+#define OPTION_VAL_260_O49_CA NULL
+#define OPTION_VAL_270_O49_CA NULL
+#define OPTION_VAL_280_O49_CA NULL
+#define OPTION_VAL_290_O49_CA NULL
+#define OPTION_VAL_300_O49_CA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CA "Mostra el punt de mira de la pistola 1"
 #define OPTION_VAL_WHITE_CA "Blanc"
 #define OPTION_VAL_RED_CA "Vermell"
@@ -9566,6 +9632,20 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CA,
       NULL,
@@ -9672,27 +9752,27 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O48_CA },
-         { "110%", OPTION_VAL_110_O48_CA },
-         { "120%", OPTION_VAL_120_O48_CA },
-         { "130%", OPTION_VAL_130_O48_CA },
-         { "140%", OPTION_VAL_140_O48_CA },
-         { "150%", OPTION_VAL_150_O48_CA },
-         { "160%", OPTION_VAL_160_O48_CA },
-         { "170%", OPTION_VAL_170_O48_CA },
-         { "180%", OPTION_VAL_180_O48_CA },
-         { "190%", OPTION_VAL_190_O48_CA },
-         { "200%", OPTION_VAL_200_O48_CA },
-         { "210%", OPTION_VAL_210_O48_CA },
-         { "220%", OPTION_VAL_220_O48_CA },
-         { "230%", OPTION_VAL_230_O48_CA },
-         { "240%", OPTION_VAL_240_O48_CA },
-         { "250%", OPTION_VAL_250_O48_CA },
-         { "260%", OPTION_VAL_260_O48_CA },
-         { "270%", OPTION_VAL_270_O48_CA },
-         { "280%", OPTION_VAL_280_O48_CA },
-         { "290%", OPTION_VAL_290_O48_CA },
-         { "300%", OPTION_VAL_300_O48_CA },
+         { "100%", OPTION_VAL_100_O49_CA },
+         { "110%", OPTION_VAL_110_O49_CA },
+         { "120%", OPTION_VAL_120_O49_CA },
+         { "130%", OPTION_VAL_130_O49_CA },
+         { "140%", OPTION_VAL_140_O49_CA },
+         { "150%", OPTION_VAL_150_O49_CA },
+         { "160%", OPTION_VAL_160_O49_CA },
+         { "170%", OPTION_VAL_170_O49_CA },
+         { "180%", OPTION_VAL_180_O49_CA },
+         { "190%", OPTION_VAL_190_O49_CA },
+         { "200%", OPTION_VAL_200_O49_CA },
+         { "210%", OPTION_VAL_210_O49_CA },
+         { "220%", OPTION_VAL_220_O49_CA },
+         { "230%", OPTION_VAL_230_O49_CA },
+         { "240%", OPTION_VAL_240_O49_CA },
+         { "250%", OPTION_VAL_250_O49_CA },
+         { "260%", OPTION_VAL_260_O49_CA },
+         { "270%", OPTION_VAL_270_O49_CA },
+         { "280%", OPTION_VAL_280_O49_CA },
+         { "290%", OPTION_VAL_290_O49_CA },
+         { "300%", OPTION_VAL_300_O49_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -10090,7 +10170,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O48_CA },
+         { "100%", OPTION_VAL_100_O49_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -10241,7 +10321,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O48_CA },
+         { "100%", OPTION_VAL_100_O49_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -10392,7 +10472,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O48_CA },
+         { "100%", OPTION_VAL_100_O49_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -10543,7 +10623,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O48_CA },
+         { "100%", OPTION_VAL_100_O49_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -10592,8 +10672,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CHS "为街机游戏启用 SERVICE 按钮，以进入机柜设置。"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHS "将 NAOMI 游戏设为免费游玩"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHS "修改游戏的投币设置，使其变为免费游玩模式。"
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_CHS NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_CHS "硬币数量限制"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_CHS "在达到硬币数量限制后禁用插入硬币。"
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHS "宽带适配器模拟"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS "模拟以太网宽带适配器而非调制解调器。（需重启）"
 #define CORE_OPTION_NAME_UPNP_LABEL_CHS "启用 UPnP"
@@ -10752,6 +10832,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CHS "游戏启动时预先加载自定义纹理贴图。这可能提升性能，但会增加内存占用。"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CHS "转储纹理"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CHS "每当游戏使用一个新纹理时，它将被保存为一个 .png 文件，存放于 'system/dc/texdump/<游戏ID>/' 文件夹中。"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CHS "丢弃视频和动画纹理"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CHS "跳过转储视频的 YUV 数据和已更新纹理。"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHS "转储已被替换的纹理"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CHS "总是转储已经被自定义纹理替换的原始纹理"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CHS "模拟摇杆死区"
@@ -10777,27 +10859,27 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_70_CHS NULL
 #define OPTION_VAL_80_CHS NULL
 #define OPTION_VAL_90_CHS NULL
-#define OPTION_VAL_100_O48_CHS NULL
-#define OPTION_VAL_110_O48_CHS NULL
-#define OPTION_VAL_120_O48_CHS NULL
-#define OPTION_VAL_130_O48_CHS NULL
-#define OPTION_VAL_140_O48_CHS NULL
-#define OPTION_VAL_150_O48_CHS NULL
-#define OPTION_VAL_160_O48_CHS NULL
-#define OPTION_VAL_170_O48_CHS NULL
-#define OPTION_VAL_180_O48_CHS NULL
-#define OPTION_VAL_190_O48_CHS NULL
-#define OPTION_VAL_200_O48_CHS NULL
-#define OPTION_VAL_210_O48_CHS NULL
-#define OPTION_VAL_220_O48_CHS NULL
-#define OPTION_VAL_230_O48_CHS NULL
-#define OPTION_VAL_240_O48_CHS NULL
-#define OPTION_VAL_250_O48_CHS NULL
-#define OPTION_VAL_260_O48_CHS NULL
-#define OPTION_VAL_270_O48_CHS NULL
-#define OPTION_VAL_280_O48_CHS NULL
-#define OPTION_VAL_290_O48_CHS NULL
-#define OPTION_VAL_300_O48_CHS NULL
+#define OPTION_VAL_100_O49_CHS NULL
+#define OPTION_VAL_110_O49_CHS NULL
+#define OPTION_VAL_120_O49_CHS NULL
+#define OPTION_VAL_130_O49_CHS NULL
+#define OPTION_VAL_140_O49_CHS NULL
+#define OPTION_VAL_150_O49_CHS NULL
+#define OPTION_VAL_160_O49_CHS NULL
+#define OPTION_VAL_170_O49_CHS NULL
+#define OPTION_VAL_180_O49_CHS NULL
+#define OPTION_VAL_190_O49_CHS NULL
+#define OPTION_VAL_200_O49_CHS NULL
+#define OPTION_VAL_210_O49_CHS NULL
+#define OPTION_VAL_220_O49_CHS NULL
+#define OPTION_VAL_230_O49_CHS NULL
+#define OPTION_VAL_240_O49_CHS NULL
+#define OPTION_VAL_250_O49_CHS NULL
+#define OPTION_VAL_260_O49_CHS NULL
+#define OPTION_VAL_270_O49_CHS NULL
+#define OPTION_VAL_280_O49_CHS NULL
+#define OPTION_VAL_290_O49_CHS NULL
+#define OPTION_VAL_300_O49_CHS NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHS "光枪 1 准星显示"
 #define OPTION_VAL_WHITE_CHS "白色"
 #define OPTION_VAL_RED_CHS "红色"
@@ -11666,6 +11748,20 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CHS,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHS,
       NULL,
@@ -11772,27 +11868,27 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O48_CHS },
-         { "110%", OPTION_VAL_110_O48_CHS },
-         { "120%", OPTION_VAL_120_O48_CHS },
-         { "130%", OPTION_VAL_130_O48_CHS },
-         { "140%", OPTION_VAL_140_O48_CHS },
-         { "150%", OPTION_VAL_150_O48_CHS },
-         { "160%", OPTION_VAL_160_O48_CHS },
-         { "170%", OPTION_VAL_170_O48_CHS },
-         { "180%", OPTION_VAL_180_O48_CHS },
-         { "190%", OPTION_VAL_190_O48_CHS },
-         { "200%", OPTION_VAL_200_O48_CHS },
-         { "210%", OPTION_VAL_210_O48_CHS },
-         { "220%", OPTION_VAL_220_O48_CHS },
-         { "230%", OPTION_VAL_230_O48_CHS },
-         { "240%", OPTION_VAL_240_O48_CHS },
-         { "250%", OPTION_VAL_250_O48_CHS },
-         { "260%", OPTION_VAL_260_O48_CHS },
-         { "270%", OPTION_VAL_270_O48_CHS },
-         { "280%", OPTION_VAL_280_O48_CHS },
-         { "290%", OPTION_VAL_290_O48_CHS },
-         { "300%", OPTION_VAL_300_O48_CHS },
+         { "100%", OPTION_VAL_100_O49_CHS },
+         { "110%", OPTION_VAL_110_O49_CHS },
+         { "120%", OPTION_VAL_120_O49_CHS },
+         { "130%", OPTION_VAL_130_O49_CHS },
+         { "140%", OPTION_VAL_140_O49_CHS },
+         { "150%", OPTION_VAL_150_O49_CHS },
+         { "160%", OPTION_VAL_160_O49_CHS },
+         { "170%", OPTION_VAL_170_O49_CHS },
+         { "180%", OPTION_VAL_180_O49_CHS },
+         { "190%", OPTION_VAL_190_O49_CHS },
+         { "200%", OPTION_VAL_200_O49_CHS },
+         { "210%", OPTION_VAL_210_O49_CHS },
+         { "220%", OPTION_VAL_220_O49_CHS },
+         { "230%", OPTION_VAL_230_O49_CHS },
+         { "240%", OPTION_VAL_240_O49_CHS },
+         { "250%", OPTION_VAL_250_O49_CHS },
+         { "260%", OPTION_VAL_260_O49_CHS },
+         { "270%", OPTION_VAL_270_O49_CHS },
+         { "280%", OPTION_VAL_280_O49_CHS },
+         { "290%", OPTION_VAL_290_O49_CHS },
+         { "300%", OPTION_VAL_300_O49_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -12190,7 +12286,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O48_CHS },
+         { "100%", OPTION_VAL_100_O49_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -12341,7 +12437,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O48_CHS },
+         { "100%", OPTION_VAL_100_O49_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -12492,7 +12588,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O48_CHS },
+         { "100%", OPTION_VAL_100_O49_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -12643,7 +12739,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O48_CHS },
+         { "100%", OPTION_VAL_100_O49_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -12778,7 +12874,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_O27_CHT NULL
+#define OPTION_VAL_2_O27_CHT "2倍"
 #define OPTION_VAL_4_CHT "4倍"
 #define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
@@ -12852,6 +12948,8 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CHT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CHT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CHT NULL
@@ -12877,27 +12975,27 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_70_CHT NULL
 #define OPTION_VAL_80_CHT NULL
 #define OPTION_VAL_90_CHT NULL
-#define OPTION_VAL_100_O48_CHT NULL
-#define OPTION_VAL_110_O48_CHT NULL
-#define OPTION_VAL_120_O48_CHT NULL
-#define OPTION_VAL_130_O48_CHT NULL
-#define OPTION_VAL_140_O48_CHT NULL
-#define OPTION_VAL_150_O48_CHT NULL
-#define OPTION_VAL_160_O48_CHT NULL
-#define OPTION_VAL_170_O48_CHT NULL
-#define OPTION_VAL_180_O48_CHT NULL
-#define OPTION_VAL_190_O48_CHT NULL
-#define OPTION_VAL_200_O48_CHT NULL
-#define OPTION_VAL_210_O48_CHT NULL
-#define OPTION_VAL_220_O48_CHT NULL
-#define OPTION_VAL_230_O48_CHT NULL
-#define OPTION_VAL_240_O48_CHT NULL
-#define OPTION_VAL_250_O48_CHT NULL
-#define OPTION_VAL_260_O48_CHT NULL
-#define OPTION_VAL_270_O48_CHT NULL
-#define OPTION_VAL_280_O48_CHT NULL
-#define OPTION_VAL_290_O48_CHT NULL
-#define OPTION_VAL_300_O48_CHT NULL
+#define OPTION_VAL_100_O49_CHT NULL
+#define OPTION_VAL_110_O49_CHT NULL
+#define OPTION_VAL_120_O49_CHT NULL
+#define OPTION_VAL_130_O49_CHT NULL
+#define OPTION_VAL_140_O49_CHT NULL
+#define OPTION_VAL_150_O49_CHT NULL
+#define OPTION_VAL_160_O49_CHT NULL
+#define OPTION_VAL_170_O49_CHT NULL
+#define OPTION_VAL_180_O49_CHT NULL
+#define OPTION_VAL_190_O49_CHT NULL
+#define OPTION_VAL_200_O49_CHT NULL
+#define OPTION_VAL_210_O49_CHT NULL
+#define OPTION_VAL_220_O49_CHT NULL
+#define OPTION_VAL_230_O49_CHT NULL
+#define OPTION_VAL_240_O49_CHT NULL
+#define OPTION_VAL_250_O49_CHT NULL
+#define OPTION_VAL_260_O49_CHT NULL
+#define OPTION_VAL_270_O49_CHT NULL
+#define OPTION_VAL_280_O49_CHT NULL
+#define OPTION_VAL_290_O49_CHT NULL
+#define OPTION_VAL_300_O49_CHT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHT NULL
 #define OPTION_VAL_WHITE_CHT "白色"
 #define OPTION_VAL_RED_CHT "紅色"
@@ -13766,6 +13864,20 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CHT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CHT,
       NULL,
@@ -13872,27 +13984,27 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O48_CHT },
-         { "110%", OPTION_VAL_110_O48_CHT },
-         { "120%", OPTION_VAL_120_O48_CHT },
-         { "130%", OPTION_VAL_130_O48_CHT },
-         { "140%", OPTION_VAL_140_O48_CHT },
-         { "150%", OPTION_VAL_150_O48_CHT },
-         { "160%", OPTION_VAL_160_O48_CHT },
-         { "170%", OPTION_VAL_170_O48_CHT },
-         { "180%", OPTION_VAL_180_O48_CHT },
-         { "190%", OPTION_VAL_190_O48_CHT },
-         { "200%", OPTION_VAL_200_O48_CHT },
-         { "210%", OPTION_VAL_210_O48_CHT },
-         { "220%", OPTION_VAL_220_O48_CHT },
-         { "230%", OPTION_VAL_230_O48_CHT },
-         { "240%", OPTION_VAL_240_O48_CHT },
-         { "250%", OPTION_VAL_250_O48_CHT },
-         { "260%", OPTION_VAL_260_O48_CHT },
-         { "270%", OPTION_VAL_270_O48_CHT },
-         { "280%", OPTION_VAL_280_O48_CHT },
-         { "290%", OPTION_VAL_290_O48_CHT },
-         { "300%", OPTION_VAL_300_O48_CHT },
+         { "100%", OPTION_VAL_100_O49_CHT },
+         { "110%", OPTION_VAL_110_O49_CHT },
+         { "120%", OPTION_VAL_120_O49_CHT },
+         { "130%", OPTION_VAL_130_O49_CHT },
+         { "140%", OPTION_VAL_140_O49_CHT },
+         { "150%", OPTION_VAL_150_O49_CHT },
+         { "160%", OPTION_VAL_160_O49_CHT },
+         { "170%", OPTION_VAL_170_O49_CHT },
+         { "180%", OPTION_VAL_180_O49_CHT },
+         { "190%", OPTION_VAL_190_O49_CHT },
+         { "200%", OPTION_VAL_200_O49_CHT },
+         { "210%", OPTION_VAL_210_O49_CHT },
+         { "220%", OPTION_VAL_220_O49_CHT },
+         { "230%", OPTION_VAL_230_O49_CHT },
+         { "240%", OPTION_VAL_240_O49_CHT },
+         { "250%", OPTION_VAL_250_O49_CHT },
+         { "260%", OPTION_VAL_260_O49_CHT },
+         { "270%", OPTION_VAL_270_O49_CHT },
+         { "280%", OPTION_VAL_280_O49_CHT },
+         { "290%", OPTION_VAL_290_O49_CHT },
+         { "300%", OPTION_VAL_300_O49_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -14290,7 +14402,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O48_CHT },
+         { "100%", OPTION_VAL_100_O49_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -14441,7 +14553,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O48_CHT },
+         { "100%", OPTION_VAL_100_O49_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -14592,7 +14704,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O48_CHT },
+         { "100%", OPTION_VAL_100_O49_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -14743,7 +14855,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O48_CHT },
+         { "100%", OPTION_VAL_100_O49_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -14952,6 +15064,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CS "Načíst vlastní textury při spuštění hry. Může zlepšit výkon, ale zvyšuje využití paměti."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CS "Skladiště Textur"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CS "Pokaždé, když hra použije novou texturu, uloží ji jako soubor .png do složky 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CS NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CS NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CS "Vymazat nahrazené textury"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CS "Vždy vymažte textury, které již byly nahrazeny vlastními texturami."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CS "Analogova Páčka Mrtvé Zóny"
@@ -14977,27 +15091,27 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_70_CS NULL
 #define OPTION_VAL_80_CS NULL
 #define OPTION_VAL_90_CS NULL
-#define OPTION_VAL_100_O48_CS NULL
-#define OPTION_VAL_110_O48_CS NULL
-#define OPTION_VAL_120_O48_CS NULL
-#define OPTION_VAL_130_O48_CS NULL
-#define OPTION_VAL_140_O48_CS NULL
-#define OPTION_VAL_150_O48_CS NULL
-#define OPTION_VAL_160_O48_CS NULL
-#define OPTION_VAL_170_O48_CS NULL
-#define OPTION_VAL_180_O48_CS NULL
-#define OPTION_VAL_190_O48_CS NULL
-#define OPTION_VAL_200_O48_CS NULL
-#define OPTION_VAL_210_O48_CS NULL
-#define OPTION_VAL_220_O48_CS NULL
-#define OPTION_VAL_230_O48_CS NULL
-#define OPTION_VAL_240_O48_CS NULL
-#define OPTION_VAL_250_O48_CS NULL
-#define OPTION_VAL_260_O48_CS NULL
-#define OPTION_VAL_270_O48_CS NULL
-#define OPTION_VAL_280_O48_CS NULL
-#define OPTION_VAL_290_O48_CS NULL
-#define OPTION_VAL_300_O48_CS NULL
+#define OPTION_VAL_100_O49_CS NULL
+#define OPTION_VAL_110_O49_CS NULL
+#define OPTION_VAL_120_O49_CS NULL
+#define OPTION_VAL_130_O49_CS NULL
+#define OPTION_VAL_140_O49_CS NULL
+#define OPTION_VAL_150_O49_CS NULL
+#define OPTION_VAL_160_O49_CS NULL
+#define OPTION_VAL_170_O49_CS NULL
+#define OPTION_VAL_180_O49_CS NULL
+#define OPTION_VAL_190_O49_CS NULL
+#define OPTION_VAL_200_O49_CS NULL
+#define OPTION_VAL_210_O49_CS NULL
+#define OPTION_VAL_220_O49_CS NULL
+#define OPTION_VAL_230_O49_CS NULL
+#define OPTION_VAL_240_O49_CS NULL
+#define OPTION_VAL_250_O49_CS NULL
+#define OPTION_VAL_260_O49_CS NULL
+#define OPTION_VAL_270_O49_CS NULL
+#define OPTION_VAL_280_O49_CS NULL
+#define OPTION_VAL_290_O49_CS NULL
+#define OPTION_VAL_300_O49_CS NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 1"
 #define OPTION_VAL_WHITE_CS "Bílá"
 #define OPTION_VAL_RED_CS "Červený"
@@ -15866,6 +15980,20 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CS,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CS,
       NULL,
@@ -15972,27 +16100,27 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O48_CS },
-         { "110%", OPTION_VAL_110_O48_CS },
-         { "120%", OPTION_VAL_120_O48_CS },
-         { "130%", OPTION_VAL_130_O48_CS },
-         { "140%", OPTION_VAL_140_O48_CS },
-         { "150%", OPTION_VAL_150_O48_CS },
-         { "160%", OPTION_VAL_160_O48_CS },
-         { "170%", OPTION_VAL_170_O48_CS },
-         { "180%", OPTION_VAL_180_O48_CS },
-         { "190%", OPTION_VAL_190_O48_CS },
-         { "200%", OPTION_VAL_200_O48_CS },
-         { "210%", OPTION_VAL_210_O48_CS },
-         { "220%", OPTION_VAL_220_O48_CS },
-         { "230%", OPTION_VAL_230_O48_CS },
-         { "240%", OPTION_VAL_240_O48_CS },
-         { "250%", OPTION_VAL_250_O48_CS },
-         { "260%", OPTION_VAL_260_O48_CS },
-         { "270%", OPTION_VAL_270_O48_CS },
-         { "280%", OPTION_VAL_280_O48_CS },
-         { "290%", OPTION_VAL_290_O48_CS },
-         { "300%", OPTION_VAL_300_O48_CS },
+         { "100%", OPTION_VAL_100_O49_CS },
+         { "110%", OPTION_VAL_110_O49_CS },
+         { "120%", OPTION_VAL_120_O49_CS },
+         { "130%", OPTION_VAL_130_O49_CS },
+         { "140%", OPTION_VAL_140_O49_CS },
+         { "150%", OPTION_VAL_150_O49_CS },
+         { "160%", OPTION_VAL_160_O49_CS },
+         { "170%", OPTION_VAL_170_O49_CS },
+         { "180%", OPTION_VAL_180_O49_CS },
+         { "190%", OPTION_VAL_190_O49_CS },
+         { "200%", OPTION_VAL_200_O49_CS },
+         { "210%", OPTION_VAL_210_O49_CS },
+         { "220%", OPTION_VAL_220_O49_CS },
+         { "230%", OPTION_VAL_230_O49_CS },
+         { "240%", OPTION_VAL_240_O49_CS },
+         { "250%", OPTION_VAL_250_O49_CS },
+         { "260%", OPTION_VAL_260_O49_CS },
+         { "270%", OPTION_VAL_270_O49_CS },
+         { "280%", OPTION_VAL_280_O49_CS },
+         { "290%", OPTION_VAL_290_O49_CS },
+         { "300%", OPTION_VAL_300_O49_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -16390,7 +16518,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O48_CS },
+         { "100%", OPTION_VAL_100_O49_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -16541,7 +16669,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O48_CS },
+         { "100%", OPTION_VAL_100_O49_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -16692,7 +16820,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O48_CS },
+         { "100%", OPTION_VAL_100_O49_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -16843,7 +16971,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O48_CS },
+         { "100%", OPTION_VAL_100_O49_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -17052,6 +17180,8 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CY NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CY NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CY NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CY NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CY NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CY NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CY NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CY NULL
@@ -17077,27 +17207,27 @@ struct retro_core_options_v2 options_cs = {
 #define OPTION_VAL_70_CY NULL
 #define OPTION_VAL_80_CY NULL
 #define OPTION_VAL_90_CY NULL
-#define OPTION_VAL_100_O48_CY NULL
-#define OPTION_VAL_110_O48_CY NULL
-#define OPTION_VAL_120_O48_CY NULL
-#define OPTION_VAL_130_O48_CY NULL
-#define OPTION_VAL_140_O48_CY NULL
-#define OPTION_VAL_150_O48_CY NULL
-#define OPTION_VAL_160_O48_CY NULL
-#define OPTION_VAL_170_O48_CY NULL
-#define OPTION_VAL_180_O48_CY NULL
-#define OPTION_VAL_190_O48_CY NULL
-#define OPTION_VAL_200_O48_CY NULL
-#define OPTION_VAL_210_O48_CY NULL
-#define OPTION_VAL_220_O48_CY NULL
-#define OPTION_VAL_230_O48_CY NULL
-#define OPTION_VAL_240_O48_CY NULL
-#define OPTION_VAL_250_O48_CY NULL
-#define OPTION_VAL_260_O48_CY NULL
-#define OPTION_VAL_270_O48_CY NULL
-#define OPTION_VAL_280_O48_CY NULL
-#define OPTION_VAL_290_O48_CY NULL
-#define OPTION_VAL_300_O48_CY NULL
+#define OPTION_VAL_100_O49_CY NULL
+#define OPTION_VAL_110_O49_CY NULL
+#define OPTION_VAL_120_O49_CY NULL
+#define OPTION_VAL_130_O49_CY NULL
+#define OPTION_VAL_140_O49_CY NULL
+#define OPTION_VAL_150_O49_CY NULL
+#define OPTION_VAL_160_O49_CY NULL
+#define OPTION_VAL_170_O49_CY NULL
+#define OPTION_VAL_180_O49_CY NULL
+#define OPTION_VAL_190_O49_CY NULL
+#define OPTION_VAL_200_O49_CY NULL
+#define OPTION_VAL_210_O49_CY NULL
+#define OPTION_VAL_220_O49_CY NULL
+#define OPTION_VAL_230_O49_CY NULL
+#define OPTION_VAL_240_O49_CY NULL
+#define OPTION_VAL_250_O49_CY NULL
+#define OPTION_VAL_260_O49_CY NULL
+#define OPTION_VAL_270_O49_CY NULL
+#define OPTION_VAL_280_O49_CY NULL
+#define OPTION_VAL_290_O49_CY NULL
+#define OPTION_VAL_300_O49_CY NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CY NULL
 #define OPTION_VAL_WHITE_CY NULL
 #define OPTION_VAL_RED_CY "Coch"
@@ -17966,6 +18096,20 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_CY,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CY,
       NULL,
@@ -18072,27 +18216,27 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O48_CY },
-         { "110%", OPTION_VAL_110_O48_CY },
-         { "120%", OPTION_VAL_120_O48_CY },
-         { "130%", OPTION_VAL_130_O48_CY },
-         { "140%", OPTION_VAL_140_O48_CY },
-         { "150%", OPTION_VAL_150_O48_CY },
-         { "160%", OPTION_VAL_160_O48_CY },
-         { "170%", OPTION_VAL_170_O48_CY },
-         { "180%", OPTION_VAL_180_O48_CY },
-         { "190%", OPTION_VAL_190_O48_CY },
-         { "200%", OPTION_VAL_200_O48_CY },
-         { "210%", OPTION_VAL_210_O48_CY },
-         { "220%", OPTION_VAL_220_O48_CY },
-         { "230%", OPTION_VAL_230_O48_CY },
-         { "240%", OPTION_VAL_240_O48_CY },
-         { "250%", OPTION_VAL_250_O48_CY },
-         { "260%", OPTION_VAL_260_O48_CY },
-         { "270%", OPTION_VAL_270_O48_CY },
-         { "280%", OPTION_VAL_280_O48_CY },
-         { "290%", OPTION_VAL_290_O48_CY },
-         { "300%", OPTION_VAL_300_O48_CY },
+         { "100%", OPTION_VAL_100_O49_CY },
+         { "110%", OPTION_VAL_110_O49_CY },
+         { "120%", OPTION_VAL_120_O49_CY },
+         { "130%", OPTION_VAL_130_O49_CY },
+         { "140%", OPTION_VAL_140_O49_CY },
+         { "150%", OPTION_VAL_150_O49_CY },
+         { "160%", OPTION_VAL_160_O49_CY },
+         { "170%", OPTION_VAL_170_O49_CY },
+         { "180%", OPTION_VAL_180_O49_CY },
+         { "190%", OPTION_VAL_190_O49_CY },
+         { "200%", OPTION_VAL_200_O49_CY },
+         { "210%", OPTION_VAL_210_O49_CY },
+         { "220%", OPTION_VAL_220_O49_CY },
+         { "230%", OPTION_VAL_230_O49_CY },
+         { "240%", OPTION_VAL_240_O49_CY },
+         { "250%", OPTION_VAL_250_O49_CY },
+         { "260%", OPTION_VAL_260_O49_CY },
+         { "270%", OPTION_VAL_270_O49_CY },
+         { "280%", OPTION_VAL_280_O49_CY },
+         { "290%", OPTION_VAL_290_O49_CY },
+         { "300%", OPTION_VAL_300_O49_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -18490,7 +18634,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O48_CY },
+         { "100%", OPTION_VAL_100_O49_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -18641,7 +18785,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O48_CY },
+         { "100%", OPTION_VAL_100_O49_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -18792,7 +18936,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O48_CY },
+         { "100%", OPTION_VAL_100_O49_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -18943,7 +19087,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O48_CY },
+         { "100%", OPTION_VAL_100_O49_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -19152,6 +19296,8 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_DA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_DA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_DA NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_DA NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_DA NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_DA NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_DA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_DA NULL
@@ -19177,27 +19323,27 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_70_DA NULL
 #define OPTION_VAL_80_DA NULL
 #define OPTION_VAL_90_DA NULL
-#define OPTION_VAL_100_O48_DA NULL
-#define OPTION_VAL_110_O48_DA NULL
-#define OPTION_VAL_120_O48_DA NULL
-#define OPTION_VAL_130_O48_DA NULL
-#define OPTION_VAL_140_O48_DA NULL
-#define OPTION_VAL_150_O48_DA NULL
-#define OPTION_VAL_160_O48_DA NULL
-#define OPTION_VAL_170_O48_DA NULL
-#define OPTION_VAL_180_O48_DA NULL
-#define OPTION_VAL_190_O48_DA NULL
-#define OPTION_VAL_200_O48_DA NULL
-#define OPTION_VAL_210_O48_DA NULL
-#define OPTION_VAL_220_O48_DA NULL
-#define OPTION_VAL_230_O48_DA NULL
-#define OPTION_VAL_240_O48_DA NULL
-#define OPTION_VAL_250_O48_DA NULL
-#define OPTION_VAL_260_O48_DA NULL
-#define OPTION_VAL_270_O48_DA NULL
-#define OPTION_VAL_280_O48_DA NULL
-#define OPTION_VAL_290_O48_DA NULL
-#define OPTION_VAL_300_O48_DA NULL
+#define OPTION_VAL_100_O49_DA NULL
+#define OPTION_VAL_110_O49_DA NULL
+#define OPTION_VAL_120_O49_DA NULL
+#define OPTION_VAL_130_O49_DA NULL
+#define OPTION_VAL_140_O49_DA NULL
+#define OPTION_VAL_150_O49_DA NULL
+#define OPTION_VAL_160_O49_DA NULL
+#define OPTION_VAL_170_O49_DA NULL
+#define OPTION_VAL_180_O49_DA NULL
+#define OPTION_VAL_190_O49_DA NULL
+#define OPTION_VAL_200_O49_DA NULL
+#define OPTION_VAL_210_O49_DA NULL
+#define OPTION_VAL_220_O49_DA NULL
+#define OPTION_VAL_230_O49_DA NULL
+#define OPTION_VAL_240_O49_DA NULL
+#define OPTION_VAL_250_O49_DA NULL
+#define OPTION_VAL_260_O49_DA NULL
+#define OPTION_VAL_270_O49_DA NULL
+#define OPTION_VAL_280_O49_DA NULL
+#define OPTION_VAL_290_O49_DA NULL
+#define OPTION_VAL_300_O49_DA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DA NULL
 #define OPTION_VAL_WHITE_DA NULL
 #define OPTION_VAL_RED_DA NULL
@@ -20066,6 +20212,20 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_DA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_DA,
       NULL,
@@ -20172,27 +20332,27 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O48_DA },
-         { "110%", OPTION_VAL_110_O48_DA },
-         { "120%", OPTION_VAL_120_O48_DA },
-         { "130%", OPTION_VAL_130_O48_DA },
-         { "140%", OPTION_VAL_140_O48_DA },
-         { "150%", OPTION_VAL_150_O48_DA },
-         { "160%", OPTION_VAL_160_O48_DA },
-         { "170%", OPTION_VAL_170_O48_DA },
-         { "180%", OPTION_VAL_180_O48_DA },
-         { "190%", OPTION_VAL_190_O48_DA },
-         { "200%", OPTION_VAL_200_O48_DA },
-         { "210%", OPTION_VAL_210_O48_DA },
-         { "220%", OPTION_VAL_220_O48_DA },
-         { "230%", OPTION_VAL_230_O48_DA },
-         { "240%", OPTION_VAL_240_O48_DA },
-         { "250%", OPTION_VAL_250_O48_DA },
-         { "260%", OPTION_VAL_260_O48_DA },
-         { "270%", OPTION_VAL_270_O48_DA },
-         { "280%", OPTION_VAL_280_O48_DA },
-         { "290%", OPTION_VAL_290_O48_DA },
-         { "300%", OPTION_VAL_300_O48_DA },
+         { "100%", OPTION_VAL_100_O49_DA },
+         { "110%", OPTION_VAL_110_O49_DA },
+         { "120%", OPTION_VAL_120_O49_DA },
+         { "130%", OPTION_VAL_130_O49_DA },
+         { "140%", OPTION_VAL_140_O49_DA },
+         { "150%", OPTION_VAL_150_O49_DA },
+         { "160%", OPTION_VAL_160_O49_DA },
+         { "170%", OPTION_VAL_170_O49_DA },
+         { "180%", OPTION_VAL_180_O49_DA },
+         { "190%", OPTION_VAL_190_O49_DA },
+         { "200%", OPTION_VAL_200_O49_DA },
+         { "210%", OPTION_VAL_210_O49_DA },
+         { "220%", OPTION_VAL_220_O49_DA },
+         { "230%", OPTION_VAL_230_O49_DA },
+         { "240%", OPTION_VAL_240_O49_DA },
+         { "250%", OPTION_VAL_250_O49_DA },
+         { "260%", OPTION_VAL_260_O49_DA },
+         { "270%", OPTION_VAL_270_O49_DA },
+         { "280%", OPTION_VAL_280_O49_DA },
+         { "290%", OPTION_VAL_290_O49_DA },
+         { "300%", OPTION_VAL_300_O49_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -20590,7 +20750,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O48_DA },
+         { "100%", OPTION_VAL_100_O49_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -20741,7 +20901,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O48_DA },
+         { "100%", OPTION_VAL_100_O49_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -20892,7 +21052,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O48_DA },
+         { "100%", OPTION_VAL_100_O49_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -21043,7 +21203,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O48_DA },
+         { "100%", OPTION_VAL_100_O49_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -21092,8 +21252,8 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DE "Aktiviert den SERVICE-Knopf für Arcadespiele, um die Cabineteinstellungen aufzurufen."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DE "NAOMI-Spiele auf kostenloses Spiel setzen"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DE "Ändert die Münzeinstellungen des Spiels zu kostenlos."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_DE NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_DE NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_DE "Münzlimit"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_DE "Münzeinwurf nach Erreichen des festgelegten Limits deaktivieren."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE "Breitbandadapter-Emulation"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE "Den Ethernet-Breitbandadapter anstelle des Modems emulieren. (Neustart erforderlich)"
 #define CORE_OPTION_NAME_UPNP_LABEL_DE "UPnP aktivieren"
@@ -21102,33 +21262,33 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_DCNET_INFO_0_DE "Den DCNet-Cloud-Service für den Dreamcast-Internetzugang nutzen."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE "Interne Auflösung"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DE "Rendering-Auflösung ändern."
-#define OPTION_VAL_320X240_DE "320×240 (Halb)"
-#define OPTION_VAL_640X480_DE "640×480 (Nativ)"
-#define OPTION_VAL_800X600_DE "800×600 (×1,25)"
-#define OPTION_VAL_960X720_DE "960×720 (×1,5)"
+#define OPTION_VAL_320X240_DE "320 × 240 (Halb)"
+#define OPTION_VAL_640X480_DE "640 × 480 (Nativ)"
+#define OPTION_VAL_800X600_DE "800 × 600 (×1,25)"
+#define OPTION_VAL_960X720_DE "960 × 720 (×1,5)"
 #define OPTION_VAL_1024X768_DE "1024×768 (×1,6)"
-#define OPTION_VAL_1280X960_DE "1280×960 (×2)"
-#define OPTION_VAL_1440X1080_DE "1440×1080 (×2,25)"
-#define OPTION_VAL_1600X1200_DE "1600×1200 (×2,5)"
-#define OPTION_VAL_1920X1440_DE "1920×1440 (×3)"
-#define OPTION_VAL_2560X1920_DE "2560×1920 (×4)"
-#define OPTION_VAL_2880X2160_DE "2880×2160 (×4,5)"
-#define OPTION_VAL_3200X2400_DE "3200×2400 (×5)"
-#define OPTION_VAL_3840X2880_DE "3840×2880 (×6)"
-#define OPTION_VAL_4480X3360_DE "4480×3360 (×7)"
-#define OPTION_VAL_5120X3840_DE "5120×3840 (×8)"
-#define OPTION_VAL_5760X4320_DE "5760×4320 (×9)"
-#define OPTION_VAL_6400X4800_DE "6400×4800 (×10)"
-#define OPTION_VAL_7040X5280_DE "7040×5280 (×11)"
-#define OPTION_VAL_7680X5760_DE "7680×5760 (×12)"
-#define OPTION_VAL_8320X6240_DE "8320×6240 (×13)"
-#define OPTION_VAL_8960X6720_DE "8960×6720 (×14)"
-#define OPTION_VAL_9600X7200_DE "9600×7200 (×15)"
-#define OPTION_VAL_10240X7680_DE "10240×7680 (×6)"
-#define OPTION_VAL_10880X8160_DE "10880×8160 (×17)"
-#define OPTION_VAL_11520X8640_DE "11520×8640 (×18)"
-#define OPTION_VAL_12160X9120_DE "12160×9120 (×19)"
-#define OPTION_VAL_12800X9600_DE "12800×9600 (×20)"
+#define OPTION_VAL_1280X960_DE "1280 × 960 (×2)"
+#define OPTION_VAL_1440X1080_DE "1440 × 1080 (×2,25)"
+#define OPTION_VAL_1600X1200_DE "1600 × 1200 (×2,5)"
+#define OPTION_VAL_1920X1440_DE "1920 × 1440 (×3)"
+#define OPTION_VAL_2560X1920_DE "2560 × 1920 (×4)"
+#define OPTION_VAL_2880X2160_DE "2880 × 2160 (×4,5)"
+#define OPTION_VAL_3200X2400_DE "3200 × 2400 (×5)"
+#define OPTION_VAL_3840X2880_DE "3840 × 2880 (×6)"
+#define OPTION_VAL_4480X3360_DE "4480 × 3360 (×7)"
+#define OPTION_VAL_5120X3840_DE "5120 × 3840 (×8)"
+#define OPTION_VAL_5760X4320_DE "5760 × 4320 (×9)"
+#define OPTION_VAL_6400X4800_DE "6400 × 4800 (×10)"
+#define OPTION_VAL_7040X5280_DE "7040 × 5280 (×11)"
+#define OPTION_VAL_7680X5760_DE "7680 × 5760 (×12)"
+#define OPTION_VAL_8320X6240_DE "8320 × 6240 (×13)"
+#define OPTION_VAL_8960X6720_DE "8960 × 6720 (×14)"
+#define OPTION_VAL_9600X7200_DE "9600 × 7200 (×15)"
+#define OPTION_VAL_10240X7680_DE "10240 × 7680 (×6)"
+#define OPTION_VAL_10880X8160_DE "10880 × 8160 (×17)"
+#define OPTION_VAL_11520X8640_DE "11520 × 8640 (×18)"
+#define OPTION_VAL_12160X9120_DE "12160 × 9120 (×19)"
+#define OPTION_VAL_12800X9600_DE "12800 × 9600 (×20)"
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_DE "Kabeltyp"
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_DE "Das Ausgabesignalkabel: „TV (Composite)“ ist das am weitesten unterstützte."
 #define OPTION_VAL_VGA_DE NULL
@@ -21178,7 +21338,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DE "Nachbearbeitung des gerenderten Bildes zur Simulation von Effekten speziell für PowerVR2-GPU und analoge Videosignale."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DE "Texturen hochskalieren (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DE "Verbessert handgezeichnete 2D-Pixelgrafiken. Sollte nur mit 2D-Pixelspielen verwendet werden."
-#define OPTION_VAL_2_O27_DE NULL
+#define OPTION_VAL_2_O27_DE "2×"
 #define OPTION_VAL_4_DE "4×"
 #define OPTION_VAL_6_DE "6×"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DE "Texturhochskalierung Max. gefilterte Größe"
@@ -21252,6 +21412,8 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_DE "Eigene Texturen beim Start von Spielen vorabladen. Dies kann die Leistung verbessern, erhöht jedoch den Speicherverbrauch."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_DE "Texturen dumpen"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_DE "Jedes Mal, wenn eine neue Textur vom Spiel verwendet wird, wird sie als .png-Datei im Ordner „system/dc/texdump/<game-id>/“ gespeichert."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_DE "Videotexturen und animierte Texturen verwerfen"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_DE "Das Dumpen von Videodaten (YUV) und bereits aktualisierten Texturen überspringen."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_DE "Ersetzte Texturen aus Speicher entfernen"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_DE "Bereits durch eigene, ersetzte Texturen immer aus dem Speicher entfernen."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_DE "Analog-Stick Totzone"
@@ -21277,27 +21439,27 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_70_DE "70 %"
 #define OPTION_VAL_80_DE "80 %"
 #define OPTION_VAL_90_DE "90 %"
-#define OPTION_VAL_100_O48_DE NULL
-#define OPTION_VAL_110_O48_DE NULL
-#define OPTION_VAL_120_O48_DE NULL
-#define OPTION_VAL_130_O48_DE NULL
-#define OPTION_VAL_140_O48_DE NULL
-#define OPTION_VAL_150_O48_DE NULL
-#define OPTION_VAL_160_O48_DE NULL
-#define OPTION_VAL_170_O48_DE NULL
-#define OPTION_VAL_180_O48_DE NULL
-#define OPTION_VAL_190_O48_DE NULL
-#define OPTION_VAL_200_O48_DE NULL
-#define OPTION_VAL_210_O48_DE NULL
-#define OPTION_VAL_220_O48_DE NULL
-#define OPTION_VAL_230_O48_DE NULL
-#define OPTION_VAL_240_O48_DE NULL
-#define OPTION_VAL_250_O48_DE NULL
-#define OPTION_VAL_260_O48_DE NULL
-#define OPTION_VAL_270_O48_DE NULL
-#define OPTION_VAL_280_O48_DE NULL
-#define OPTION_VAL_290_O48_DE NULL
-#define OPTION_VAL_300_O48_DE NULL
+#define OPTION_VAL_100_O49_DE "100 %"
+#define OPTION_VAL_110_O49_DE "110 %"
+#define OPTION_VAL_120_O49_DE "120 %"
+#define OPTION_VAL_130_O49_DE "130 %"
+#define OPTION_VAL_140_O49_DE "140 %"
+#define OPTION_VAL_150_O49_DE "150 %"
+#define OPTION_VAL_160_O49_DE "160 %"
+#define OPTION_VAL_170_O49_DE "170 %"
+#define OPTION_VAL_180_O49_DE "180 %"
+#define OPTION_VAL_190_O49_DE "190 %"
+#define OPTION_VAL_200_O49_DE "200 %"
+#define OPTION_VAL_210_O49_DE "210 %"
+#define OPTION_VAL_220_O49_DE "220 %"
+#define OPTION_VAL_230_O49_DE "230 %"
+#define OPTION_VAL_240_O49_DE "240 %"
+#define OPTION_VAL_250_O49_DE "250 %"
+#define OPTION_VAL_260_O49_DE "260 %"
+#define OPTION_VAL_270_O49_DE "270 %"
+#define OPTION_VAL_280_O49_DE "280 %"
+#define OPTION_VAL_290_O49_DE "290 %"
+#define OPTION_VAL_300_O49_DE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 1"
 #define OPTION_VAL_WHITE_DE "Weiß"
 #define OPTION_VAL_RED_DE "Rot"
@@ -22166,6 +22328,20 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_DE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_DE,
       NULL,
@@ -22272,27 +22448,27 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O48_DE },
-         { "110%", OPTION_VAL_110_O48_DE },
-         { "120%", OPTION_VAL_120_O48_DE },
-         { "130%", OPTION_VAL_130_O48_DE },
-         { "140%", OPTION_VAL_140_O48_DE },
-         { "150%", OPTION_VAL_150_O48_DE },
-         { "160%", OPTION_VAL_160_O48_DE },
-         { "170%", OPTION_VAL_170_O48_DE },
-         { "180%", OPTION_VAL_180_O48_DE },
-         { "190%", OPTION_VAL_190_O48_DE },
-         { "200%", OPTION_VAL_200_O48_DE },
-         { "210%", OPTION_VAL_210_O48_DE },
-         { "220%", OPTION_VAL_220_O48_DE },
-         { "230%", OPTION_VAL_230_O48_DE },
-         { "240%", OPTION_VAL_240_O48_DE },
-         { "250%", OPTION_VAL_250_O48_DE },
-         { "260%", OPTION_VAL_260_O48_DE },
-         { "270%", OPTION_VAL_270_O48_DE },
-         { "280%", OPTION_VAL_280_O48_DE },
-         { "290%", OPTION_VAL_290_O48_DE },
-         { "300%", OPTION_VAL_300_O48_DE },
+         { "100%", OPTION_VAL_100_O49_DE },
+         { "110%", OPTION_VAL_110_O49_DE },
+         { "120%", OPTION_VAL_120_O49_DE },
+         { "130%", OPTION_VAL_130_O49_DE },
+         { "140%", OPTION_VAL_140_O49_DE },
+         { "150%", OPTION_VAL_150_O49_DE },
+         { "160%", OPTION_VAL_160_O49_DE },
+         { "170%", OPTION_VAL_170_O49_DE },
+         { "180%", OPTION_VAL_180_O49_DE },
+         { "190%", OPTION_VAL_190_O49_DE },
+         { "200%", OPTION_VAL_200_O49_DE },
+         { "210%", OPTION_VAL_210_O49_DE },
+         { "220%", OPTION_VAL_220_O49_DE },
+         { "230%", OPTION_VAL_230_O49_DE },
+         { "240%", OPTION_VAL_240_O49_DE },
+         { "250%", OPTION_VAL_250_O49_DE },
+         { "260%", OPTION_VAL_260_O49_DE },
+         { "270%", OPTION_VAL_270_O49_DE },
+         { "280%", OPTION_VAL_280_O49_DE },
+         { "290%", OPTION_VAL_290_O49_DE },
+         { "300%", OPTION_VAL_300_O49_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -22690,7 +22866,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O48_DE },
+         { "100%", OPTION_VAL_100_O49_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -22841,7 +23017,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O48_DE },
+         { "100%", OPTION_VAL_100_O49_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -22992,7 +23168,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O48_DE },
+         { "100%", OPTION_VAL_100_O49_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -23143,7 +23319,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O48_DE },
+         { "100%", OPTION_VAL_100_O49_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -23352,6 +23528,8 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_EL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_EL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_EL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_EL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_EL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_EL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EL NULL
@@ -23377,27 +23555,27 @@ struct retro_core_options_v2 options_de = {
 #define OPTION_VAL_70_EL NULL
 #define OPTION_VAL_80_EL "το 80%"
 #define OPTION_VAL_90_EL NULL
-#define OPTION_VAL_100_O48_EL NULL
-#define OPTION_VAL_110_O48_EL NULL
-#define OPTION_VAL_120_O48_EL NULL
-#define OPTION_VAL_130_O48_EL NULL
-#define OPTION_VAL_140_O48_EL NULL
-#define OPTION_VAL_150_O48_EL NULL
-#define OPTION_VAL_160_O48_EL NULL
-#define OPTION_VAL_170_O48_EL NULL
-#define OPTION_VAL_180_O48_EL NULL
-#define OPTION_VAL_190_O48_EL NULL
-#define OPTION_VAL_200_O48_EL NULL
-#define OPTION_VAL_210_O48_EL NULL
-#define OPTION_VAL_220_O48_EL NULL
-#define OPTION_VAL_230_O48_EL NULL
-#define OPTION_VAL_240_O48_EL NULL
-#define OPTION_VAL_250_O48_EL NULL
-#define OPTION_VAL_260_O48_EL NULL
-#define OPTION_VAL_270_O48_EL NULL
-#define OPTION_VAL_280_O48_EL NULL
-#define OPTION_VAL_290_O48_EL NULL
-#define OPTION_VAL_300_O48_EL NULL
+#define OPTION_VAL_100_O49_EL NULL
+#define OPTION_VAL_110_O49_EL NULL
+#define OPTION_VAL_120_O49_EL NULL
+#define OPTION_VAL_130_O49_EL NULL
+#define OPTION_VAL_140_O49_EL NULL
+#define OPTION_VAL_150_O49_EL NULL
+#define OPTION_VAL_160_O49_EL NULL
+#define OPTION_VAL_170_O49_EL NULL
+#define OPTION_VAL_180_O49_EL NULL
+#define OPTION_VAL_190_O49_EL NULL
+#define OPTION_VAL_200_O49_EL NULL
+#define OPTION_VAL_210_O49_EL NULL
+#define OPTION_VAL_220_O49_EL NULL
+#define OPTION_VAL_230_O49_EL NULL
+#define OPTION_VAL_240_O49_EL NULL
+#define OPTION_VAL_250_O49_EL NULL
+#define OPTION_VAL_260_O49_EL NULL
+#define OPTION_VAL_270_O49_EL NULL
+#define OPTION_VAL_280_O49_EL NULL
+#define OPTION_VAL_290_O49_EL NULL
+#define OPTION_VAL_300_O49_EL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EL NULL
 #define OPTION_VAL_WHITE_EL NULL
 #define OPTION_VAL_RED_EL "Κόκκινο"
@@ -24266,6 +24444,20 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_EL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_EL,
       NULL,
@@ -24372,27 +24564,27 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O48_EL },
-         { "110%", OPTION_VAL_110_O48_EL },
-         { "120%", OPTION_VAL_120_O48_EL },
-         { "130%", OPTION_VAL_130_O48_EL },
-         { "140%", OPTION_VAL_140_O48_EL },
-         { "150%", OPTION_VAL_150_O48_EL },
-         { "160%", OPTION_VAL_160_O48_EL },
-         { "170%", OPTION_VAL_170_O48_EL },
-         { "180%", OPTION_VAL_180_O48_EL },
-         { "190%", OPTION_VAL_190_O48_EL },
-         { "200%", OPTION_VAL_200_O48_EL },
-         { "210%", OPTION_VAL_210_O48_EL },
-         { "220%", OPTION_VAL_220_O48_EL },
-         { "230%", OPTION_VAL_230_O48_EL },
-         { "240%", OPTION_VAL_240_O48_EL },
-         { "250%", OPTION_VAL_250_O48_EL },
-         { "260%", OPTION_VAL_260_O48_EL },
-         { "270%", OPTION_VAL_270_O48_EL },
-         { "280%", OPTION_VAL_280_O48_EL },
-         { "290%", OPTION_VAL_290_O48_EL },
-         { "300%", OPTION_VAL_300_O48_EL },
+         { "100%", OPTION_VAL_100_O49_EL },
+         { "110%", OPTION_VAL_110_O49_EL },
+         { "120%", OPTION_VAL_120_O49_EL },
+         { "130%", OPTION_VAL_130_O49_EL },
+         { "140%", OPTION_VAL_140_O49_EL },
+         { "150%", OPTION_VAL_150_O49_EL },
+         { "160%", OPTION_VAL_160_O49_EL },
+         { "170%", OPTION_VAL_170_O49_EL },
+         { "180%", OPTION_VAL_180_O49_EL },
+         { "190%", OPTION_VAL_190_O49_EL },
+         { "200%", OPTION_VAL_200_O49_EL },
+         { "210%", OPTION_VAL_210_O49_EL },
+         { "220%", OPTION_VAL_220_O49_EL },
+         { "230%", OPTION_VAL_230_O49_EL },
+         { "240%", OPTION_VAL_240_O49_EL },
+         { "250%", OPTION_VAL_250_O49_EL },
+         { "260%", OPTION_VAL_260_O49_EL },
+         { "270%", OPTION_VAL_270_O49_EL },
+         { "280%", OPTION_VAL_280_O49_EL },
+         { "290%", OPTION_VAL_290_O49_EL },
+         { "300%", OPTION_VAL_300_O49_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -24790,7 +24982,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O48_EL },
+         { "100%", OPTION_VAL_100_O49_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -24941,7 +25133,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O48_EL },
+         { "100%", OPTION_VAL_100_O49_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -25092,7 +25284,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O48_EL },
+         { "100%", OPTION_VAL_100_O49_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -25243,7 +25435,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O48_EL },
+         { "100%", OPTION_VAL_100_O49_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -25452,6 +25644,8 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_EN NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EN NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_EN NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_EN NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_EN NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_EN NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_EN NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EN "Analogue Stick Dead-zone"
@@ -25477,27 +25671,27 @@ struct retro_core_options_v2 options_el = {
 #define OPTION_VAL_70_EN NULL
 #define OPTION_VAL_80_EN NULL
 #define OPTION_VAL_90_EN NULL
-#define OPTION_VAL_100_O48_EN NULL
-#define OPTION_VAL_110_O48_EN NULL
-#define OPTION_VAL_120_O48_EN NULL
-#define OPTION_VAL_130_O48_EN NULL
-#define OPTION_VAL_140_O48_EN NULL
-#define OPTION_VAL_150_O48_EN NULL
-#define OPTION_VAL_160_O48_EN NULL
-#define OPTION_VAL_170_O48_EN NULL
-#define OPTION_VAL_180_O48_EN NULL
-#define OPTION_VAL_190_O48_EN NULL
-#define OPTION_VAL_200_O48_EN NULL
-#define OPTION_VAL_210_O48_EN NULL
-#define OPTION_VAL_220_O48_EN NULL
-#define OPTION_VAL_230_O48_EN NULL
-#define OPTION_VAL_240_O48_EN NULL
-#define OPTION_VAL_250_O48_EN NULL
-#define OPTION_VAL_260_O48_EN NULL
-#define OPTION_VAL_270_O48_EN NULL
-#define OPTION_VAL_280_O48_EN NULL
-#define OPTION_VAL_290_O48_EN NULL
-#define OPTION_VAL_300_O48_EN NULL
+#define OPTION_VAL_100_O49_EN NULL
+#define OPTION_VAL_110_O49_EN NULL
+#define OPTION_VAL_120_O49_EN NULL
+#define OPTION_VAL_130_O49_EN NULL
+#define OPTION_VAL_140_O49_EN NULL
+#define OPTION_VAL_150_O49_EN NULL
+#define OPTION_VAL_160_O49_EN NULL
+#define OPTION_VAL_170_O49_EN NULL
+#define OPTION_VAL_180_O49_EN NULL
+#define OPTION_VAL_190_O49_EN NULL
+#define OPTION_VAL_200_O49_EN NULL
+#define OPTION_VAL_210_O49_EN NULL
+#define OPTION_VAL_220_O49_EN NULL
+#define OPTION_VAL_230_O49_EN NULL
+#define OPTION_VAL_240_O49_EN NULL
+#define OPTION_VAL_250_O49_EN NULL
+#define OPTION_VAL_260_O49_EN NULL
+#define OPTION_VAL_270_O49_EN NULL
+#define OPTION_VAL_280_O49_EN NULL
+#define OPTION_VAL_290_O49_EN NULL
+#define OPTION_VAL_300_O49_EN NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EN NULL
 #define OPTION_VAL_WHITE_EN NULL
 #define OPTION_VAL_RED_EN NULL
@@ -26366,6 +26560,20 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_EN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_EN,
       NULL,
@@ -26472,27 +26680,27 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O48_EN },
-         { "110%", OPTION_VAL_110_O48_EN },
-         { "120%", OPTION_VAL_120_O48_EN },
-         { "130%", OPTION_VAL_130_O48_EN },
-         { "140%", OPTION_VAL_140_O48_EN },
-         { "150%", OPTION_VAL_150_O48_EN },
-         { "160%", OPTION_VAL_160_O48_EN },
-         { "170%", OPTION_VAL_170_O48_EN },
-         { "180%", OPTION_VAL_180_O48_EN },
-         { "190%", OPTION_VAL_190_O48_EN },
-         { "200%", OPTION_VAL_200_O48_EN },
-         { "210%", OPTION_VAL_210_O48_EN },
-         { "220%", OPTION_VAL_220_O48_EN },
-         { "230%", OPTION_VAL_230_O48_EN },
-         { "240%", OPTION_VAL_240_O48_EN },
-         { "250%", OPTION_VAL_250_O48_EN },
-         { "260%", OPTION_VAL_260_O48_EN },
-         { "270%", OPTION_VAL_270_O48_EN },
-         { "280%", OPTION_VAL_280_O48_EN },
-         { "290%", OPTION_VAL_290_O48_EN },
-         { "300%", OPTION_VAL_300_O48_EN },
+         { "100%", OPTION_VAL_100_O49_EN },
+         { "110%", OPTION_VAL_110_O49_EN },
+         { "120%", OPTION_VAL_120_O49_EN },
+         { "130%", OPTION_VAL_130_O49_EN },
+         { "140%", OPTION_VAL_140_O49_EN },
+         { "150%", OPTION_VAL_150_O49_EN },
+         { "160%", OPTION_VAL_160_O49_EN },
+         { "170%", OPTION_VAL_170_O49_EN },
+         { "180%", OPTION_VAL_180_O49_EN },
+         { "190%", OPTION_VAL_190_O49_EN },
+         { "200%", OPTION_VAL_200_O49_EN },
+         { "210%", OPTION_VAL_210_O49_EN },
+         { "220%", OPTION_VAL_220_O49_EN },
+         { "230%", OPTION_VAL_230_O49_EN },
+         { "240%", OPTION_VAL_240_O49_EN },
+         { "250%", OPTION_VAL_250_O49_EN },
+         { "260%", OPTION_VAL_260_O49_EN },
+         { "270%", OPTION_VAL_270_O49_EN },
+         { "280%", OPTION_VAL_280_O49_EN },
+         { "290%", OPTION_VAL_290_O49_EN },
+         { "300%", OPTION_VAL_300_O49_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -26890,7 +27098,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O48_EN },
+         { "100%", OPTION_VAL_100_O49_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -27041,7 +27249,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O48_EN },
+         { "100%", OPTION_VAL_100_O49_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -27192,7 +27400,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O48_EN },
+         { "100%", OPTION_VAL_100_O49_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -27343,7 +27551,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O48_EN },
+         { "100%", OPTION_VAL_100_O49_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -27552,6 +27760,8 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_EO "Antaŭŝargi proprajn teksturojn ĉe starto de ludo. Povus plibonigi rendimenton sed pliigas uzon de memoro."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EO "Elŝuti teksturojn"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_EO "Ĉiam, kiam nova teksturo estas uzata de la ludo, ĝi estos konservita kiel dosiero .png en la dosierujo \"system/dc/texdump/<identigilo-de-ludo>/\"."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_EO NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_EO NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_EO "Ŝuti anstataŭigitaj teksturoj"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_EO "Ĉiam ŝuti teksturojn, kiuj jam estas anstataŭigitaj de propraj teksturoj."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EO "Analogstanga malviva zono"
@@ -27577,27 +27787,27 @@ struct retro_core_options_v2 options_en = {
 #define OPTION_VAL_70_EO NULL
 #define OPTION_VAL_80_EO NULL
 #define OPTION_VAL_90_EO NULL
-#define OPTION_VAL_100_O48_EO NULL
-#define OPTION_VAL_110_O48_EO NULL
-#define OPTION_VAL_120_O48_EO NULL
-#define OPTION_VAL_130_O48_EO NULL
-#define OPTION_VAL_140_O48_EO NULL
-#define OPTION_VAL_150_O48_EO NULL
-#define OPTION_VAL_160_O48_EO NULL
-#define OPTION_VAL_170_O48_EO NULL
-#define OPTION_VAL_180_O48_EO NULL
-#define OPTION_VAL_190_O48_EO NULL
-#define OPTION_VAL_200_O48_EO NULL
-#define OPTION_VAL_210_O48_EO NULL
-#define OPTION_VAL_220_O48_EO NULL
-#define OPTION_VAL_230_O48_EO NULL
-#define OPTION_VAL_240_O48_EO NULL
-#define OPTION_VAL_250_O48_EO NULL
-#define OPTION_VAL_260_O48_EO NULL
-#define OPTION_VAL_270_O48_EO NULL
-#define OPTION_VAL_280_O48_EO NULL
-#define OPTION_VAL_290_O48_EO NULL
-#define OPTION_VAL_300_O48_EO NULL
+#define OPTION_VAL_100_O49_EO NULL
+#define OPTION_VAL_110_O49_EO NULL
+#define OPTION_VAL_120_O49_EO NULL
+#define OPTION_VAL_130_O49_EO NULL
+#define OPTION_VAL_140_O49_EO NULL
+#define OPTION_VAL_150_O49_EO NULL
+#define OPTION_VAL_160_O49_EO NULL
+#define OPTION_VAL_170_O49_EO NULL
+#define OPTION_VAL_180_O49_EO NULL
+#define OPTION_VAL_190_O49_EO NULL
+#define OPTION_VAL_200_O49_EO NULL
+#define OPTION_VAL_210_O49_EO NULL
+#define OPTION_VAL_220_O49_EO NULL
+#define OPTION_VAL_230_O49_EO NULL
+#define OPTION_VAL_240_O49_EO NULL
+#define OPTION_VAL_250_O49_EO NULL
+#define OPTION_VAL_260_O49_EO NULL
+#define OPTION_VAL_270_O49_EO NULL
+#define OPTION_VAL_280_O49_EO NULL
+#define OPTION_VAL_290_O49_EO NULL
+#define OPTION_VAL_300_O49_EO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EO "Montri pafilan celilon 1"
 #define OPTION_VAL_WHITE_EO "Blanka"
 #define OPTION_VAL_RED_EO "Ruĝa"
@@ -28466,6 +28676,20 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_EO,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_EO,
       NULL,
@@ -28572,27 +28796,27 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O48_EO },
-         { "110%", OPTION_VAL_110_O48_EO },
-         { "120%", OPTION_VAL_120_O48_EO },
-         { "130%", OPTION_VAL_130_O48_EO },
-         { "140%", OPTION_VAL_140_O48_EO },
-         { "150%", OPTION_VAL_150_O48_EO },
-         { "160%", OPTION_VAL_160_O48_EO },
-         { "170%", OPTION_VAL_170_O48_EO },
-         { "180%", OPTION_VAL_180_O48_EO },
-         { "190%", OPTION_VAL_190_O48_EO },
-         { "200%", OPTION_VAL_200_O48_EO },
-         { "210%", OPTION_VAL_210_O48_EO },
-         { "220%", OPTION_VAL_220_O48_EO },
-         { "230%", OPTION_VAL_230_O48_EO },
-         { "240%", OPTION_VAL_240_O48_EO },
-         { "250%", OPTION_VAL_250_O48_EO },
-         { "260%", OPTION_VAL_260_O48_EO },
-         { "270%", OPTION_VAL_270_O48_EO },
-         { "280%", OPTION_VAL_280_O48_EO },
-         { "290%", OPTION_VAL_290_O48_EO },
-         { "300%", OPTION_VAL_300_O48_EO },
+         { "100%", OPTION_VAL_100_O49_EO },
+         { "110%", OPTION_VAL_110_O49_EO },
+         { "120%", OPTION_VAL_120_O49_EO },
+         { "130%", OPTION_VAL_130_O49_EO },
+         { "140%", OPTION_VAL_140_O49_EO },
+         { "150%", OPTION_VAL_150_O49_EO },
+         { "160%", OPTION_VAL_160_O49_EO },
+         { "170%", OPTION_VAL_170_O49_EO },
+         { "180%", OPTION_VAL_180_O49_EO },
+         { "190%", OPTION_VAL_190_O49_EO },
+         { "200%", OPTION_VAL_200_O49_EO },
+         { "210%", OPTION_VAL_210_O49_EO },
+         { "220%", OPTION_VAL_220_O49_EO },
+         { "230%", OPTION_VAL_230_O49_EO },
+         { "240%", OPTION_VAL_240_O49_EO },
+         { "250%", OPTION_VAL_250_O49_EO },
+         { "260%", OPTION_VAL_260_O49_EO },
+         { "270%", OPTION_VAL_270_O49_EO },
+         { "280%", OPTION_VAL_280_O49_EO },
+         { "290%", OPTION_VAL_290_O49_EO },
+         { "300%", OPTION_VAL_300_O49_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -28990,7 +29214,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O48_EO },
+         { "100%", OPTION_VAL_100_O49_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -29141,7 +29365,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O48_EO },
+         { "100%", OPTION_VAL_100_O49_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -29292,7 +29516,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O48_EO },
+         { "100%", OPTION_VAL_100_O49_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -29443,7 +29667,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O48_EO },
+         { "100%", OPTION_VAL_100_O49_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -29492,8 +29716,8 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_ES "Activa el botón SERVICE para los juegos para recreativas/arcades, con el que acceder a la configuración del mueble."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ES "Partidas gratuitas en NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ES "Modifica la configuración de monedas del juego a partidas gratuitas."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_ES NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_ES NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_ES "Límite de monedas"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_ES "Desactiva la introducción de monedas al alcanzar un límite definido."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ES "Emulación del Broadband Adapter (BBA)"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ES "Emula el adaptador de banda ancha por Ethernet en lugar del módem (es necesario reiniciar)."
 #define CORE_OPTION_NAME_UPNP_LABEL_ES "Activar UPnP"
@@ -29652,6 +29876,8 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_ES "Carga las texturas personalizadas al ejecutar un juego. Podría mejorar el rendimiento, pero aumentará el consumo de memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_ES "Volcar texturas"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_ES "Cada vez que aparezca una textura nueva en el juego, se guardará en formato .PNG dentro de la carpeta «system/dc/texdump/<id-del-juego>/»."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_ES "Omitir vídeos y texturas animadas"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_ES "Omite el volcado de vídeos (formato YUV) y de texturas que ya hayan sido actualizadas."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_ES "Volcar texturas ya reemplazadas"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_ES "Vuelca siempre las texturas que ya hayan sido reemplazadas por otras personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_ES "Zona muerta del stick analógico"
@@ -29677,27 +29903,27 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_70_ES "70 %"
 #define OPTION_VAL_80_ES "80 %"
 #define OPTION_VAL_90_ES "90 %"
-#define OPTION_VAL_100_O48_ES NULL
-#define OPTION_VAL_110_O48_ES NULL
-#define OPTION_VAL_120_O48_ES NULL
-#define OPTION_VAL_130_O48_ES NULL
-#define OPTION_VAL_140_O48_ES NULL
-#define OPTION_VAL_150_O48_ES NULL
-#define OPTION_VAL_160_O48_ES NULL
-#define OPTION_VAL_170_O48_ES NULL
-#define OPTION_VAL_180_O48_ES NULL
-#define OPTION_VAL_190_O48_ES NULL
-#define OPTION_VAL_200_O48_ES NULL
-#define OPTION_VAL_210_O48_ES NULL
-#define OPTION_VAL_220_O48_ES NULL
-#define OPTION_VAL_230_O48_ES NULL
-#define OPTION_VAL_240_O48_ES NULL
-#define OPTION_VAL_250_O48_ES NULL
-#define OPTION_VAL_260_O48_ES NULL
-#define OPTION_VAL_270_O48_ES NULL
-#define OPTION_VAL_280_O48_ES NULL
-#define OPTION_VAL_290_O48_ES NULL
-#define OPTION_VAL_300_O48_ES NULL
+#define OPTION_VAL_100_O49_ES "100 %"
+#define OPTION_VAL_110_O49_ES "110 %"
+#define OPTION_VAL_120_O49_ES "120 %"
+#define OPTION_VAL_130_O49_ES "130 %"
+#define OPTION_VAL_140_O49_ES "140 %"
+#define OPTION_VAL_150_O49_ES "150 %"
+#define OPTION_VAL_160_O49_ES "160 %"
+#define OPTION_VAL_170_O49_ES "170 %"
+#define OPTION_VAL_180_O49_ES "180 %"
+#define OPTION_VAL_190_O49_ES "190 %"
+#define OPTION_VAL_200_O49_ES "200 %"
+#define OPTION_VAL_210_O49_ES "210 %"
+#define OPTION_VAL_220_O49_ES "220 %"
+#define OPTION_VAL_230_O49_ES "230 %"
+#define OPTION_VAL_240_O49_ES "240 %"
+#define OPTION_VAL_250_O49_ES "250 %"
+#define OPTION_VAL_260_O49_ES "260 %"
+#define OPTION_VAL_270_O49_ES "270 %"
+#define OPTION_VAL_280_O49_ES "280 %"
+#define OPTION_VAL_290_O49_ES "290 %"
+#define OPTION_VAL_300_O49_ES "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ES "Mostrar punto de mira del arma 1"
 #define OPTION_VAL_WHITE_ES "Blanco"
 #define OPTION_VAL_RED_ES "Rojo"
@@ -30566,6 +30792,20 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_ES,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_ES,
       NULL,
@@ -30672,27 +30912,27 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O48_ES },
-         { "110%", OPTION_VAL_110_O48_ES },
-         { "120%", OPTION_VAL_120_O48_ES },
-         { "130%", OPTION_VAL_130_O48_ES },
-         { "140%", OPTION_VAL_140_O48_ES },
-         { "150%", OPTION_VAL_150_O48_ES },
-         { "160%", OPTION_VAL_160_O48_ES },
-         { "170%", OPTION_VAL_170_O48_ES },
-         { "180%", OPTION_VAL_180_O48_ES },
-         { "190%", OPTION_VAL_190_O48_ES },
-         { "200%", OPTION_VAL_200_O48_ES },
-         { "210%", OPTION_VAL_210_O48_ES },
-         { "220%", OPTION_VAL_220_O48_ES },
-         { "230%", OPTION_VAL_230_O48_ES },
-         { "240%", OPTION_VAL_240_O48_ES },
-         { "250%", OPTION_VAL_250_O48_ES },
-         { "260%", OPTION_VAL_260_O48_ES },
-         { "270%", OPTION_VAL_270_O48_ES },
-         { "280%", OPTION_VAL_280_O48_ES },
-         { "290%", OPTION_VAL_290_O48_ES },
-         { "300%", OPTION_VAL_300_O48_ES },
+         { "100%", OPTION_VAL_100_O49_ES },
+         { "110%", OPTION_VAL_110_O49_ES },
+         { "120%", OPTION_VAL_120_O49_ES },
+         { "130%", OPTION_VAL_130_O49_ES },
+         { "140%", OPTION_VAL_140_O49_ES },
+         { "150%", OPTION_VAL_150_O49_ES },
+         { "160%", OPTION_VAL_160_O49_ES },
+         { "170%", OPTION_VAL_170_O49_ES },
+         { "180%", OPTION_VAL_180_O49_ES },
+         { "190%", OPTION_VAL_190_O49_ES },
+         { "200%", OPTION_VAL_200_O49_ES },
+         { "210%", OPTION_VAL_210_O49_ES },
+         { "220%", OPTION_VAL_220_O49_ES },
+         { "230%", OPTION_VAL_230_O49_ES },
+         { "240%", OPTION_VAL_240_O49_ES },
+         { "250%", OPTION_VAL_250_O49_ES },
+         { "260%", OPTION_VAL_260_O49_ES },
+         { "270%", OPTION_VAL_270_O49_ES },
+         { "280%", OPTION_VAL_280_O49_ES },
+         { "290%", OPTION_VAL_290_O49_ES },
+         { "300%", OPTION_VAL_300_O49_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -31090,7 +31330,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O48_ES },
+         { "100%", OPTION_VAL_100_O49_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -31241,7 +31481,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O48_ES },
+         { "100%", OPTION_VAL_100_O49_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -31392,7 +31632,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O48_ES },
+         { "100%", OPTION_VAL_100_O49_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -31543,7 +31783,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O48_ES },
+         { "100%", OPTION_VAL_100_O49_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -31752,6 +31992,8 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_FA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_FA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_FA NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_FA NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_FA NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_FA NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_FA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FA NULL
@@ -31777,27 +32019,27 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_70_FA NULL
 #define OPTION_VAL_80_FA NULL
 #define OPTION_VAL_90_FA NULL
-#define OPTION_VAL_100_O48_FA NULL
-#define OPTION_VAL_110_O48_FA NULL
-#define OPTION_VAL_120_O48_FA NULL
-#define OPTION_VAL_130_O48_FA NULL
-#define OPTION_VAL_140_O48_FA NULL
-#define OPTION_VAL_150_O48_FA NULL
-#define OPTION_VAL_160_O48_FA NULL
-#define OPTION_VAL_170_O48_FA NULL
-#define OPTION_VAL_180_O48_FA NULL
-#define OPTION_VAL_190_O48_FA NULL
-#define OPTION_VAL_200_O48_FA NULL
-#define OPTION_VAL_210_O48_FA NULL
-#define OPTION_VAL_220_O48_FA NULL
-#define OPTION_VAL_230_O48_FA NULL
-#define OPTION_VAL_240_O48_FA NULL
-#define OPTION_VAL_250_O48_FA NULL
-#define OPTION_VAL_260_O48_FA NULL
-#define OPTION_VAL_270_O48_FA NULL
-#define OPTION_VAL_280_O48_FA NULL
-#define OPTION_VAL_290_O48_FA NULL
-#define OPTION_VAL_300_O48_FA NULL
+#define OPTION_VAL_100_O49_FA NULL
+#define OPTION_VAL_110_O49_FA NULL
+#define OPTION_VAL_120_O49_FA NULL
+#define OPTION_VAL_130_O49_FA NULL
+#define OPTION_VAL_140_O49_FA NULL
+#define OPTION_VAL_150_O49_FA NULL
+#define OPTION_VAL_160_O49_FA NULL
+#define OPTION_VAL_170_O49_FA NULL
+#define OPTION_VAL_180_O49_FA NULL
+#define OPTION_VAL_190_O49_FA NULL
+#define OPTION_VAL_200_O49_FA NULL
+#define OPTION_VAL_210_O49_FA NULL
+#define OPTION_VAL_220_O49_FA NULL
+#define OPTION_VAL_230_O49_FA NULL
+#define OPTION_VAL_240_O49_FA NULL
+#define OPTION_VAL_250_O49_FA NULL
+#define OPTION_VAL_260_O49_FA NULL
+#define OPTION_VAL_270_O49_FA NULL
+#define OPTION_VAL_280_O49_FA NULL
+#define OPTION_VAL_290_O49_FA NULL
+#define OPTION_VAL_300_O49_FA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FA NULL
 #define OPTION_VAL_WHITE_FA NULL
 #define OPTION_VAL_RED_FA NULL
@@ -32666,6 +32908,20 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_FA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_FA,
       NULL,
@@ -32772,27 +33028,27 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O48_FA },
-         { "110%", OPTION_VAL_110_O48_FA },
-         { "120%", OPTION_VAL_120_O48_FA },
-         { "130%", OPTION_VAL_130_O48_FA },
-         { "140%", OPTION_VAL_140_O48_FA },
-         { "150%", OPTION_VAL_150_O48_FA },
-         { "160%", OPTION_VAL_160_O48_FA },
-         { "170%", OPTION_VAL_170_O48_FA },
-         { "180%", OPTION_VAL_180_O48_FA },
-         { "190%", OPTION_VAL_190_O48_FA },
-         { "200%", OPTION_VAL_200_O48_FA },
-         { "210%", OPTION_VAL_210_O48_FA },
-         { "220%", OPTION_VAL_220_O48_FA },
-         { "230%", OPTION_VAL_230_O48_FA },
-         { "240%", OPTION_VAL_240_O48_FA },
-         { "250%", OPTION_VAL_250_O48_FA },
-         { "260%", OPTION_VAL_260_O48_FA },
-         { "270%", OPTION_VAL_270_O48_FA },
-         { "280%", OPTION_VAL_280_O48_FA },
-         { "290%", OPTION_VAL_290_O48_FA },
-         { "300%", OPTION_VAL_300_O48_FA },
+         { "100%", OPTION_VAL_100_O49_FA },
+         { "110%", OPTION_VAL_110_O49_FA },
+         { "120%", OPTION_VAL_120_O49_FA },
+         { "130%", OPTION_VAL_130_O49_FA },
+         { "140%", OPTION_VAL_140_O49_FA },
+         { "150%", OPTION_VAL_150_O49_FA },
+         { "160%", OPTION_VAL_160_O49_FA },
+         { "170%", OPTION_VAL_170_O49_FA },
+         { "180%", OPTION_VAL_180_O49_FA },
+         { "190%", OPTION_VAL_190_O49_FA },
+         { "200%", OPTION_VAL_200_O49_FA },
+         { "210%", OPTION_VAL_210_O49_FA },
+         { "220%", OPTION_VAL_220_O49_FA },
+         { "230%", OPTION_VAL_230_O49_FA },
+         { "240%", OPTION_VAL_240_O49_FA },
+         { "250%", OPTION_VAL_250_O49_FA },
+         { "260%", OPTION_VAL_260_O49_FA },
+         { "270%", OPTION_VAL_270_O49_FA },
+         { "280%", OPTION_VAL_280_O49_FA },
+         { "290%", OPTION_VAL_290_O49_FA },
+         { "300%", OPTION_VAL_300_O49_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -33190,7 +33446,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O48_FA },
+         { "100%", OPTION_VAL_100_O49_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -33341,7 +33597,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O48_FA },
+         { "100%", OPTION_VAL_100_O49_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -33492,7 +33748,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O48_FA },
+         { "100%", OPTION_VAL_100_O49_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -33643,7 +33899,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O48_FA },
+         { "100%", OPTION_VAL_100_O49_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -33852,6 +34108,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_FI NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_FI NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_FI NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_FI NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_FI NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_FI NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_FI NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FI NULL
@@ -33877,27 +34135,27 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_70_FI "70 %"
 #define OPTION_VAL_80_FI "80 %"
 #define OPTION_VAL_90_FI "90 %"
-#define OPTION_VAL_100_O48_FI NULL
-#define OPTION_VAL_110_O48_FI NULL
-#define OPTION_VAL_120_O48_FI NULL
-#define OPTION_VAL_130_O48_FI NULL
-#define OPTION_VAL_140_O48_FI NULL
-#define OPTION_VAL_150_O48_FI NULL
-#define OPTION_VAL_160_O48_FI NULL
-#define OPTION_VAL_170_O48_FI NULL
-#define OPTION_VAL_180_O48_FI NULL
-#define OPTION_VAL_190_O48_FI NULL
-#define OPTION_VAL_200_O48_FI NULL
-#define OPTION_VAL_210_O48_FI NULL
-#define OPTION_VAL_220_O48_FI NULL
-#define OPTION_VAL_230_O48_FI NULL
-#define OPTION_VAL_240_O48_FI NULL
-#define OPTION_VAL_250_O48_FI NULL
-#define OPTION_VAL_260_O48_FI NULL
-#define OPTION_VAL_270_O48_FI NULL
-#define OPTION_VAL_280_O48_FI NULL
-#define OPTION_VAL_290_O48_FI NULL
-#define OPTION_VAL_300_O48_FI NULL
+#define OPTION_VAL_100_O49_FI "100 %"
+#define OPTION_VAL_110_O49_FI "110 %"
+#define OPTION_VAL_120_O49_FI "120 %"
+#define OPTION_VAL_130_O49_FI "130 %"
+#define OPTION_VAL_140_O49_FI "140 %"
+#define OPTION_VAL_150_O49_FI "150 %"
+#define OPTION_VAL_160_O49_FI "160 %"
+#define OPTION_VAL_170_O49_FI "170 %"
+#define OPTION_VAL_180_O49_FI "180 %"
+#define OPTION_VAL_190_O49_FI "190 %"
+#define OPTION_VAL_200_O49_FI "200 %"
+#define OPTION_VAL_210_O49_FI "210 %"
+#define OPTION_VAL_220_O49_FI "220 %"
+#define OPTION_VAL_230_O49_FI "230 %"
+#define OPTION_VAL_240_O49_FI "240 %"
+#define OPTION_VAL_250_O49_FI "250 %"
+#define OPTION_VAL_260_O49_FI "260 %"
+#define OPTION_VAL_270_O49_FI "270 %"
+#define OPTION_VAL_280_O49_FI "280 %"
+#define OPTION_VAL_290_O49_FI "290 %"
+#define OPTION_VAL_300_O49_FI "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FI NULL
 #define OPTION_VAL_WHITE_FI "Valkoinen"
 #define OPTION_VAL_RED_FI "Punainen"
@@ -34766,6 +35024,20 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_FI,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_FI,
       NULL,
@@ -34872,27 +35144,27 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O48_FI },
-         { "110%", OPTION_VAL_110_O48_FI },
-         { "120%", OPTION_VAL_120_O48_FI },
-         { "130%", OPTION_VAL_130_O48_FI },
-         { "140%", OPTION_VAL_140_O48_FI },
-         { "150%", OPTION_VAL_150_O48_FI },
-         { "160%", OPTION_VAL_160_O48_FI },
-         { "170%", OPTION_VAL_170_O48_FI },
-         { "180%", OPTION_VAL_180_O48_FI },
-         { "190%", OPTION_VAL_190_O48_FI },
-         { "200%", OPTION_VAL_200_O48_FI },
-         { "210%", OPTION_VAL_210_O48_FI },
-         { "220%", OPTION_VAL_220_O48_FI },
-         { "230%", OPTION_VAL_230_O48_FI },
-         { "240%", OPTION_VAL_240_O48_FI },
-         { "250%", OPTION_VAL_250_O48_FI },
-         { "260%", OPTION_VAL_260_O48_FI },
-         { "270%", OPTION_VAL_270_O48_FI },
-         { "280%", OPTION_VAL_280_O48_FI },
-         { "290%", OPTION_VAL_290_O48_FI },
-         { "300%", OPTION_VAL_300_O48_FI },
+         { "100%", OPTION_VAL_100_O49_FI },
+         { "110%", OPTION_VAL_110_O49_FI },
+         { "120%", OPTION_VAL_120_O49_FI },
+         { "130%", OPTION_VAL_130_O49_FI },
+         { "140%", OPTION_VAL_140_O49_FI },
+         { "150%", OPTION_VAL_150_O49_FI },
+         { "160%", OPTION_VAL_160_O49_FI },
+         { "170%", OPTION_VAL_170_O49_FI },
+         { "180%", OPTION_VAL_180_O49_FI },
+         { "190%", OPTION_VAL_190_O49_FI },
+         { "200%", OPTION_VAL_200_O49_FI },
+         { "210%", OPTION_VAL_210_O49_FI },
+         { "220%", OPTION_VAL_220_O49_FI },
+         { "230%", OPTION_VAL_230_O49_FI },
+         { "240%", OPTION_VAL_240_O49_FI },
+         { "250%", OPTION_VAL_250_O49_FI },
+         { "260%", OPTION_VAL_260_O49_FI },
+         { "270%", OPTION_VAL_270_O49_FI },
+         { "280%", OPTION_VAL_280_O49_FI },
+         { "290%", OPTION_VAL_290_O49_FI },
+         { "300%", OPTION_VAL_300_O49_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -35290,7 +35562,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O48_FI },
+         { "100%", OPTION_VAL_100_O49_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -35441,7 +35713,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O48_FI },
+         { "100%", OPTION_VAL_100_O49_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -35592,7 +35864,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O48_FI },
+         { "100%", OPTION_VAL_100_O49_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -35743,7 +36015,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O48_FI },
+         { "100%", OPTION_VAL_100_O49_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -35792,8 +36064,8 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FR "Active le bouton SERVICE pour les jeux d'arcade, pour entrer dans les paramètres de la borne."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FR "Définir les jeux NAOMI en Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FR "Modifier les réglages de pièces du jeu en mode gratuit."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_FR NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_FR NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_FR "Limite de pièces"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_FR "Désactiver l'insertion de pièces avant d'avoir atteint la limite définie."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR "Émulation de l'adaptateur haut débit"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR "Émuler l'adaptateur haut débit Ethernet au lieu du modem. (Redémarrage requis)"
 #define CORE_OPTION_NAME_UPNP_LABEL_FR "Activer l'UPnP"
@@ -35878,7 +36150,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FR "Améliorer les graphismes en pixels 2D dessinés à la main. Devrait être utilisé uniquement avec les jeux en 2D pixelisés."
-#define OPTION_VAL_2_O27_FR NULL
+#define OPTION_VAL_2_O27_FR "x2"
 #define OPTION_VAL_4_FR "x4"
 #define OPTION_VAL_6_FR "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FR "Facteur maximal du filtre d'agrandissement de textures"
@@ -35952,17 +36224,19 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_FR "Précharge les textures personnalisées au lancement du jeu. Peut améliorer les performances mais augmente l'utilisation de la mémoire."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_FR "Importer les textures"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_FR "Chaque fois qu'une nouvelle texture est utilisée par le jeu, elle sera sauvegardée en tant que fichier .png dans le dossier 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_FR "Ignorer les vidéos et les textures animées"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_FR "Ignorer l'importation de la vidéo (YUV) et des textures déjà mises à jour."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_FR "Importer les textures remplacées"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_FR "Toujours importer les textures qui sont déjà remplacées par des textures personnalisées."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FR "Deadzone du stick analogique"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_FR "Sélectionner la distance à laquelle vous devez pousser le stick analogique avant que ne commence son traitement."
-#define OPTION_VAL_0_FR NULL
-#define OPTION_VAL_5_FR NULL
-#define OPTION_VAL_10_FR NULL
-#define OPTION_VAL_15_FR NULL
-#define OPTION_VAL_20_FR NULL
-#define OPTION_VAL_25_FR NULL
-#define OPTION_VAL_30_FR NULL
+#define OPTION_VAL_0_FR "0 %"
+#define OPTION_VAL_5_FR "5 %"
+#define OPTION_VAL_10_FR "10 %"
+#define OPTION_VAL_15_FR "15 %"
+#define OPTION_VAL_20_FR "20 %"
+#define OPTION_VAL_25_FR "25 %"
+#define OPTION_VAL_30_FR "30 %"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_FR "Deadzone des gâchettes"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_FR "Sélectionner combien vous devez appuyer sur la gâchette avant que ne commence son traitement."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_FR "Gâchettes numériques"
@@ -35972,32 +36246,32 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FR "Afficher les réglages du pistolet"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FR "Activer la configuration des options d'affichage du viseur des pistolets. REMARQUE : le menu rapide devrait être réouvert pour que ce paramètre prenne effet."
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FR "Mise à l'échelle du viseur de pistolet"
-#define OPTION_VAL_50_FR NULL
-#define OPTION_VAL_60_FR NULL
-#define OPTION_VAL_70_FR NULL
-#define OPTION_VAL_80_FR NULL
-#define OPTION_VAL_90_FR NULL
-#define OPTION_VAL_100_O48_FR NULL
-#define OPTION_VAL_110_O48_FR NULL
-#define OPTION_VAL_120_O48_FR NULL
-#define OPTION_VAL_130_O48_FR NULL
-#define OPTION_VAL_140_O48_FR NULL
-#define OPTION_VAL_150_O48_FR NULL
-#define OPTION_VAL_160_O48_FR NULL
-#define OPTION_VAL_170_O48_FR NULL
-#define OPTION_VAL_180_O48_FR NULL
-#define OPTION_VAL_190_O48_FR NULL
-#define OPTION_VAL_200_O48_FR NULL
-#define OPTION_VAL_210_O48_FR NULL
-#define OPTION_VAL_220_O48_FR NULL
-#define OPTION_VAL_230_O48_FR NULL
-#define OPTION_VAL_240_O48_FR NULL
-#define OPTION_VAL_250_O48_FR NULL
-#define OPTION_VAL_260_O48_FR NULL
-#define OPTION_VAL_270_O48_FR NULL
-#define OPTION_VAL_280_O48_FR NULL
-#define OPTION_VAL_290_O48_FR NULL
-#define OPTION_VAL_300_O48_FR NULL
+#define OPTION_VAL_50_FR "50 %"
+#define OPTION_VAL_60_FR "60 %"
+#define OPTION_VAL_70_FR "70 %"
+#define OPTION_VAL_80_FR "80 %"
+#define OPTION_VAL_90_FR "90 %"
+#define OPTION_VAL_100_O49_FR "100 %"
+#define OPTION_VAL_110_O49_FR "110 %"
+#define OPTION_VAL_120_O49_FR "120 %"
+#define OPTION_VAL_130_O49_FR "130 %"
+#define OPTION_VAL_140_O49_FR "140 %"
+#define OPTION_VAL_150_O49_FR "150 %"
+#define OPTION_VAL_160_O49_FR "160 %"
+#define OPTION_VAL_170_O49_FR "170 %"
+#define OPTION_VAL_180_O49_FR "180 %"
+#define OPTION_VAL_190_O49_FR "190 %"
+#define OPTION_VAL_200_O49_FR "200 %"
+#define OPTION_VAL_210_O49_FR "210 %"
+#define OPTION_VAL_220_O49_FR "220 %"
+#define OPTION_VAL_230_O49_FR "230 %"
+#define OPTION_VAL_240_O49_FR "240 %"
+#define OPTION_VAL_250_O49_FR "250 %"
+#define OPTION_VAL_260_O49_FR "260 %"
+#define OPTION_VAL_270_O49_FR "270 %"
+#define OPTION_VAL_280_O49_FR "280 %"
+#define OPTION_VAL_290_O49_FR "290 %"
+#define OPTION_VAL_300_O49_FR "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FR "Afficher le viseur du pistolet 1"
 #define OPTION_VAL_WHITE_FR "Blanc"
 #define OPTION_VAL_RED_FR "Rouge"
@@ -36077,7 +36351,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_LIGHT_YELLOW_2_27_FR "Jaune clair (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_FR "Couleur des pixels éteints de l'écran du VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_FR "Opacité de l'écran du VMU 1"
-#define OPTION_VAL_40_FR NULL
+#define OPTION_VAL_40_FR "40 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FR "Affichage de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FR "Position de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FR "Taille de l'écran du VMU 2"
@@ -36866,6 +37140,20 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_FR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_FR,
       NULL,
@@ -36972,27 +37260,27 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O48_FR },
-         { "110%", OPTION_VAL_110_O48_FR },
-         { "120%", OPTION_VAL_120_O48_FR },
-         { "130%", OPTION_VAL_130_O48_FR },
-         { "140%", OPTION_VAL_140_O48_FR },
-         { "150%", OPTION_VAL_150_O48_FR },
-         { "160%", OPTION_VAL_160_O48_FR },
-         { "170%", OPTION_VAL_170_O48_FR },
-         { "180%", OPTION_VAL_180_O48_FR },
-         { "190%", OPTION_VAL_190_O48_FR },
-         { "200%", OPTION_VAL_200_O48_FR },
-         { "210%", OPTION_VAL_210_O48_FR },
-         { "220%", OPTION_VAL_220_O48_FR },
-         { "230%", OPTION_VAL_230_O48_FR },
-         { "240%", OPTION_VAL_240_O48_FR },
-         { "250%", OPTION_VAL_250_O48_FR },
-         { "260%", OPTION_VAL_260_O48_FR },
-         { "270%", OPTION_VAL_270_O48_FR },
-         { "280%", OPTION_VAL_280_O48_FR },
-         { "290%", OPTION_VAL_290_O48_FR },
-         { "300%", OPTION_VAL_300_O48_FR },
+         { "100%", OPTION_VAL_100_O49_FR },
+         { "110%", OPTION_VAL_110_O49_FR },
+         { "120%", OPTION_VAL_120_O49_FR },
+         { "130%", OPTION_VAL_130_O49_FR },
+         { "140%", OPTION_VAL_140_O49_FR },
+         { "150%", OPTION_VAL_150_O49_FR },
+         { "160%", OPTION_VAL_160_O49_FR },
+         { "170%", OPTION_VAL_170_O49_FR },
+         { "180%", OPTION_VAL_180_O49_FR },
+         { "190%", OPTION_VAL_190_O49_FR },
+         { "200%", OPTION_VAL_200_O49_FR },
+         { "210%", OPTION_VAL_210_O49_FR },
+         { "220%", OPTION_VAL_220_O49_FR },
+         { "230%", OPTION_VAL_230_O49_FR },
+         { "240%", OPTION_VAL_240_O49_FR },
+         { "250%", OPTION_VAL_250_O49_FR },
+         { "260%", OPTION_VAL_260_O49_FR },
+         { "270%", OPTION_VAL_270_O49_FR },
+         { "280%", OPTION_VAL_280_O49_FR },
+         { "290%", OPTION_VAL_290_O49_FR },
+         { "300%", OPTION_VAL_300_O49_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -37390,7 +37678,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O48_FR },
+         { "100%", OPTION_VAL_100_O49_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -37541,7 +37829,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O48_FR },
+         { "100%", OPTION_VAL_100_O49_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -37692,7 +37980,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O48_FR },
+         { "100%", OPTION_VAL_100_O49_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -37843,7 +38131,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O48_FR },
+         { "100%", OPTION_VAL_100_O49_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -37892,8 +38180,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GA "Cumasaíonn sé an cnaipe SERVICE le haghaidh cluichí stuara, chun socruithe caibinéid a iontráil."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GA "Socraigh Cluichí NAOMI go Súgradh Saor in Aisce"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GA "Athraigh socruithe mona an chluiche le haghaidh súgartha saor in aisce."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_GA NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_GA NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_GA "Teorainn Bonn"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_GA "Díchumasaigh cur isteach monaí tar éis na teorann sainithe."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GA "Aithris Oiriúntóra Leathanbhanda"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GA "Déan aithris ar an oiriúntóir leathanbhanda Ethernet in ionad an mhóideim. (Atosú Riachtanach)"
 #define CORE_OPTION_NAME_UPNP_LABEL_GA "Cumasaigh UPnP"
@@ -38052,6 +38340,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_GA "Réamhlódáil uigeachtaí saincheaptha ag tús an chluiche. Féadfaidh sé feidhmíocht a fheabhsú ach méadaíonn sé úsáid cuimhne."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GA "Uigeachtaí Dumpála"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GA "Gach uair a úsáideann an cluiche uigeacht nua, sábhálfar í mar chomhad .png sa bhfillteán 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_GA "Caith amach físeáin agus uigeachtaí beoite"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_GA "Ná déan dumpáil ar an bhfíseán (YUV) ná ar na huigeachtaí atá nuashonraithe cheana féin."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GA "Uigeachtaí Athsholáthraithe Dumpála"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GA "Dumpáil uigeachtaí atá curtha ina n-áit cheana féin le huigeachtaí saincheaptha i gcónaí."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GA "Crios Marbh Bata Analógach"
@@ -38077,27 +38367,27 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_70_GA NULL
 #define OPTION_VAL_80_GA NULL
 #define OPTION_VAL_90_GA NULL
-#define OPTION_VAL_100_O48_GA NULL
-#define OPTION_VAL_110_O48_GA NULL
-#define OPTION_VAL_120_O48_GA NULL
-#define OPTION_VAL_130_O48_GA NULL
-#define OPTION_VAL_140_O48_GA NULL
-#define OPTION_VAL_150_O48_GA NULL
-#define OPTION_VAL_160_O48_GA NULL
-#define OPTION_VAL_170_O48_GA NULL
-#define OPTION_VAL_180_O48_GA NULL
-#define OPTION_VAL_190_O48_GA NULL
-#define OPTION_VAL_200_O48_GA NULL
-#define OPTION_VAL_210_O48_GA NULL
-#define OPTION_VAL_220_O48_GA NULL
-#define OPTION_VAL_230_O48_GA NULL
-#define OPTION_VAL_240_O48_GA NULL
-#define OPTION_VAL_250_O48_GA NULL
-#define OPTION_VAL_260_O48_GA NULL
-#define OPTION_VAL_270_O48_GA NULL
-#define OPTION_VAL_280_O48_GA NULL
-#define OPTION_VAL_290_O48_GA NULL
-#define OPTION_VAL_300_O48_GA NULL
+#define OPTION_VAL_100_O49_GA NULL
+#define OPTION_VAL_110_O49_GA NULL
+#define OPTION_VAL_120_O49_GA NULL
+#define OPTION_VAL_130_O49_GA NULL
+#define OPTION_VAL_140_O49_GA NULL
+#define OPTION_VAL_150_O49_GA NULL
+#define OPTION_VAL_160_O49_GA NULL
+#define OPTION_VAL_170_O49_GA NULL
+#define OPTION_VAL_180_O49_GA NULL
+#define OPTION_VAL_190_O49_GA NULL
+#define OPTION_VAL_200_O49_GA NULL
+#define OPTION_VAL_210_O49_GA NULL
+#define OPTION_VAL_220_O49_GA NULL
+#define OPTION_VAL_230_O49_GA NULL
+#define OPTION_VAL_240_O49_GA NULL
+#define OPTION_VAL_250_O49_GA NULL
+#define OPTION_VAL_260_O49_GA NULL
+#define OPTION_VAL_270_O49_GA NULL
+#define OPTION_VAL_280_O49_GA NULL
+#define OPTION_VAL_290_O49_GA NULL
+#define OPTION_VAL_300_O49_GA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GA "Taispeáin Croslíne don Ghunna 1"
 #define OPTION_VAL_WHITE_GA "Bán"
 #define OPTION_VAL_RED_GA "Dearg"
@@ -38966,6 +39256,20 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_GA,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_GA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GA,
       NULL,
@@ -39072,27 +39376,27 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
          { "70%",  OPTION_VAL_70_GA },
          { "80%",  OPTION_VAL_80_GA },
          { "90%",  OPTION_VAL_90_GA },
-         { "100%", OPTION_VAL_100_O48_GA },
-         { "110%", OPTION_VAL_110_O48_GA },
-         { "120%", OPTION_VAL_120_O48_GA },
-         { "130%", OPTION_VAL_130_O48_GA },
-         { "140%", OPTION_VAL_140_O48_GA },
-         { "150%", OPTION_VAL_150_O48_GA },
-         { "160%", OPTION_VAL_160_O48_GA },
-         { "170%", OPTION_VAL_170_O48_GA },
-         { "180%", OPTION_VAL_180_O48_GA },
-         { "190%", OPTION_VAL_190_O48_GA },
-         { "200%", OPTION_VAL_200_O48_GA },
-         { "210%", OPTION_VAL_210_O48_GA },
-         { "220%", OPTION_VAL_220_O48_GA },
-         { "230%", OPTION_VAL_230_O48_GA },
-         { "240%", OPTION_VAL_240_O48_GA },
-         { "250%", OPTION_VAL_250_O48_GA },
-         { "260%", OPTION_VAL_260_O48_GA },
-         { "270%", OPTION_VAL_270_O48_GA },
-         { "280%", OPTION_VAL_280_O48_GA },
-         { "290%", OPTION_VAL_290_O48_GA },
-         { "300%", OPTION_VAL_300_O48_GA },
+         { "100%", OPTION_VAL_100_O49_GA },
+         { "110%", OPTION_VAL_110_O49_GA },
+         { "120%", OPTION_VAL_120_O49_GA },
+         { "130%", OPTION_VAL_130_O49_GA },
+         { "140%", OPTION_VAL_140_O49_GA },
+         { "150%", OPTION_VAL_150_O49_GA },
+         { "160%", OPTION_VAL_160_O49_GA },
+         { "170%", OPTION_VAL_170_O49_GA },
+         { "180%", OPTION_VAL_180_O49_GA },
+         { "190%", OPTION_VAL_190_O49_GA },
+         { "200%", OPTION_VAL_200_O49_GA },
+         { "210%", OPTION_VAL_210_O49_GA },
+         { "220%", OPTION_VAL_220_O49_GA },
+         { "230%", OPTION_VAL_230_O49_GA },
+         { "240%", OPTION_VAL_240_O49_GA },
+         { "250%", OPTION_VAL_250_O49_GA },
+         { "260%", OPTION_VAL_260_O49_GA },
+         { "270%", OPTION_VAL_270_O49_GA },
+         { "280%", OPTION_VAL_280_O49_GA },
+         { "290%", OPTION_VAL_290_O49_GA },
+         { "300%", OPTION_VAL_300_O49_GA },
          { NULL,   NULL },
       },
       "100%",
@@ -39490,7 +39794,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
          { "70%",  OPTION_VAL_70_GA },
          { "80%",  OPTION_VAL_80_GA },
          { "90%",  OPTION_VAL_90_GA },
-         { "100%", OPTION_VAL_100_O48_GA },
+         { "100%", OPTION_VAL_100_O49_GA },
          { NULL,   NULL },
       },
       "100%",
@@ -39641,7 +39945,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
          { "70%",  OPTION_VAL_70_GA },
          { "80%",  OPTION_VAL_80_GA },
          { "90%",  OPTION_VAL_90_GA },
-         { "100%", OPTION_VAL_100_O48_GA },
+         { "100%", OPTION_VAL_100_O49_GA },
          { NULL,   NULL },
       },
       "100%",
@@ -39792,7 +40096,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
          { "70%",  OPTION_VAL_70_GA },
          { "80%",  OPTION_VAL_80_GA },
          { "90%",  OPTION_VAL_90_GA },
-         { "100%", OPTION_VAL_100_O48_GA },
+         { "100%", OPTION_VAL_100_O49_GA },
          { NULL,   NULL },
       },
       "100%",
@@ -39943,7 +40247,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
          { "70%",  OPTION_VAL_70_GA },
          { "80%",  OPTION_VAL_80_GA },
          { "90%",  OPTION_VAL_90_GA },
-         { "100%", OPTION_VAL_100_O48_GA },
+         { "100%", OPTION_VAL_100_O49_GA },
          { NULL,   NULL },
       },
       "100%",
@@ -40152,6 +40456,8 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_GL "Precarga as texturas personalizadas ao iniciar o xogo. Pode mellorar o rendemento, pero aumenta o uso de memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL "Cada vez que o xogo use unha textura nova, gardarase como ficheiro .png no cartafol 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_GL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_GL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GL "Exportar texturas substituídas"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL "Exporta sempre as texturas que xa foron substituídas por texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta panca analóxica"
@@ -40177,27 +40483,27 @@ struct retro_core_options_v2 options_ga = {
 #define OPTION_VAL_70_GL NULL
 #define OPTION_VAL_80_GL NULL
 #define OPTION_VAL_90_GL NULL
-#define OPTION_VAL_100_O48_GL NULL
-#define OPTION_VAL_110_O48_GL NULL
-#define OPTION_VAL_120_O48_GL NULL
-#define OPTION_VAL_130_O48_GL NULL
-#define OPTION_VAL_140_O48_GL NULL
-#define OPTION_VAL_150_O48_GL NULL
-#define OPTION_VAL_160_O48_GL NULL
-#define OPTION_VAL_170_O48_GL NULL
-#define OPTION_VAL_180_O48_GL NULL
-#define OPTION_VAL_190_O48_GL NULL
-#define OPTION_VAL_200_O48_GL NULL
-#define OPTION_VAL_210_O48_GL NULL
-#define OPTION_VAL_220_O48_GL NULL
-#define OPTION_VAL_230_O48_GL NULL
-#define OPTION_VAL_240_O48_GL NULL
-#define OPTION_VAL_250_O48_GL NULL
-#define OPTION_VAL_260_O48_GL NULL
-#define OPTION_VAL_270_O48_GL NULL
-#define OPTION_VAL_280_O48_GL NULL
-#define OPTION_VAL_290_O48_GL NULL
-#define OPTION_VAL_300_O48_GL NULL
+#define OPTION_VAL_100_O49_GL NULL
+#define OPTION_VAL_110_O49_GL NULL
+#define OPTION_VAL_120_O49_GL NULL
+#define OPTION_VAL_130_O49_GL NULL
+#define OPTION_VAL_140_O49_GL NULL
+#define OPTION_VAL_150_O49_GL NULL
+#define OPTION_VAL_160_O49_GL NULL
+#define OPTION_VAL_170_O49_GL NULL
+#define OPTION_VAL_180_O49_GL NULL
+#define OPTION_VAL_190_O49_GL NULL
+#define OPTION_VAL_200_O49_GL NULL
+#define OPTION_VAL_210_O49_GL NULL
+#define OPTION_VAL_220_O49_GL NULL
+#define OPTION_VAL_230_O49_GL NULL
+#define OPTION_VAL_240_O49_GL NULL
+#define OPTION_VAL_250_O49_GL NULL
+#define OPTION_VAL_260_O49_GL NULL
+#define OPTION_VAL_270_O49_GL NULL
+#define OPTION_VAL_280_O49_GL NULL
+#define OPTION_VAL_290_O49_GL NULL
+#define OPTION_VAL_300_O49_GL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 1"
 #define OPTION_VAL_WHITE_GL "Branco"
 #define OPTION_VAL_RED_GL "Vermello"
@@ -41066,6 +41372,20 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_GL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GL,
       NULL,
@@ -41172,27 +41492,27 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O48_GL },
-         { "110%", OPTION_VAL_110_O48_GL },
-         { "120%", OPTION_VAL_120_O48_GL },
-         { "130%", OPTION_VAL_130_O48_GL },
-         { "140%", OPTION_VAL_140_O48_GL },
-         { "150%", OPTION_VAL_150_O48_GL },
-         { "160%", OPTION_VAL_160_O48_GL },
-         { "170%", OPTION_VAL_170_O48_GL },
-         { "180%", OPTION_VAL_180_O48_GL },
-         { "190%", OPTION_VAL_190_O48_GL },
-         { "200%", OPTION_VAL_200_O48_GL },
-         { "210%", OPTION_VAL_210_O48_GL },
-         { "220%", OPTION_VAL_220_O48_GL },
-         { "230%", OPTION_VAL_230_O48_GL },
-         { "240%", OPTION_VAL_240_O48_GL },
-         { "250%", OPTION_VAL_250_O48_GL },
-         { "260%", OPTION_VAL_260_O48_GL },
-         { "270%", OPTION_VAL_270_O48_GL },
-         { "280%", OPTION_VAL_280_O48_GL },
-         { "290%", OPTION_VAL_290_O48_GL },
-         { "300%", OPTION_VAL_300_O48_GL },
+         { "100%", OPTION_VAL_100_O49_GL },
+         { "110%", OPTION_VAL_110_O49_GL },
+         { "120%", OPTION_VAL_120_O49_GL },
+         { "130%", OPTION_VAL_130_O49_GL },
+         { "140%", OPTION_VAL_140_O49_GL },
+         { "150%", OPTION_VAL_150_O49_GL },
+         { "160%", OPTION_VAL_160_O49_GL },
+         { "170%", OPTION_VAL_170_O49_GL },
+         { "180%", OPTION_VAL_180_O49_GL },
+         { "190%", OPTION_VAL_190_O49_GL },
+         { "200%", OPTION_VAL_200_O49_GL },
+         { "210%", OPTION_VAL_210_O49_GL },
+         { "220%", OPTION_VAL_220_O49_GL },
+         { "230%", OPTION_VAL_230_O49_GL },
+         { "240%", OPTION_VAL_240_O49_GL },
+         { "250%", OPTION_VAL_250_O49_GL },
+         { "260%", OPTION_VAL_260_O49_GL },
+         { "270%", OPTION_VAL_270_O49_GL },
+         { "280%", OPTION_VAL_280_O49_GL },
+         { "290%", OPTION_VAL_290_O49_GL },
+         { "300%", OPTION_VAL_300_O49_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -41590,7 +41910,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O48_GL },
+         { "100%", OPTION_VAL_100_O49_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -41741,7 +42061,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O48_GL },
+         { "100%", OPTION_VAL_100_O49_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -41892,7 +42212,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O48_GL },
+         { "100%", OPTION_VAL_100_O49_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -42043,7 +42363,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O48_GL },
+         { "100%", OPTION_VAL_100_O49_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -42252,6 +42572,8 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_HE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HE NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_HE NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_HE NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HE NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_HE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HE NULL
@@ -42277,27 +42599,27 @@ struct retro_core_options_v2 options_gl = {
 #define OPTION_VAL_70_HE NULL
 #define OPTION_VAL_80_HE NULL
 #define OPTION_VAL_90_HE NULL
-#define OPTION_VAL_100_O48_HE NULL
-#define OPTION_VAL_110_O48_HE NULL
-#define OPTION_VAL_120_O48_HE NULL
-#define OPTION_VAL_130_O48_HE NULL
-#define OPTION_VAL_140_O48_HE NULL
-#define OPTION_VAL_150_O48_HE NULL
-#define OPTION_VAL_160_O48_HE NULL
-#define OPTION_VAL_170_O48_HE NULL
-#define OPTION_VAL_180_O48_HE NULL
-#define OPTION_VAL_190_O48_HE NULL
-#define OPTION_VAL_200_O48_HE NULL
-#define OPTION_VAL_210_O48_HE NULL
-#define OPTION_VAL_220_O48_HE NULL
-#define OPTION_VAL_230_O48_HE NULL
-#define OPTION_VAL_240_O48_HE NULL
-#define OPTION_VAL_250_O48_HE NULL
-#define OPTION_VAL_260_O48_HE NULL
-#define OPTION_VAL_270_O48_HE NULL
-#define OPTION_VAL_280_O48_HE NULL
-#define OPTION_VAL_290_O48_HE NULL
-#define OPTION_VAL_300_O48_HE NULL
+#define OPTION_VAL_100_O49_HE NULL
+#define OPTION_VAL_110_O49_HE NULL
+#define OPTION_VAL_120_O49_HE NULL
+#define OPTION_VAL_130_O49_HE NULL
+#define OPTION_VAL_140_O49_HE NULL
+#define OPTION_VAL_150_O49_HE NULL
+#define OPTION_VAL_160_O49_HE NULL
+#define OPTION_VAL_170_O49_HE NULL
+#define OPTION_VAL_180_O49_HE NULL
+#define OPTION_VAL_190_O49_HE NULL
+#define OPTION_VAL_200_O49_HE NULL
+#define OPTION_VAL_210_O49_HE NULL
+#define OPTION_VAL_220_O49_HE NULL
+#define OPTION_VAL_230_O49_HE NULL
+#define OPTION_VAL_240_O49_HE NULL
+#define OPTION_VAL_250_O49_HE NULL
+#define OPTION_VAL_260_O49_HE NULL
+#define OPTION_VAL_270_O49_HE NULL
+#define OPTION_VAL_280_O49_HE NULL
+#define OPTION_VAL_290_O49_HE NULL
+#define OPTION_VAL_300_O49_HE NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HE NULL
 #define OPTION_VAL_WHITE_HE NULL
 #define OPTION_VAL_RED_HE NULL
@@ -43166,6 +43488,20 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_HE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HE,
       NULL,
@@ -43272,27 +43608,27 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O48_HE },
-         { "110%", OPTION_VAL_110_O48_HE },
-         { "120%", OPTION_VAL_120_O48_HE },
-         { "130%", OPTION_VAL_130_O48_HE },
-         { "140%", OPTION_VAL_140_O48_HE },
-         { "150%", OPTION_VAL_150_O48_HE },
-         { "160%", OPTION_VAL_160_O48_HE },
-         { "170%", OPTION_VAL_170_O48_HE },
-         { "180%", OPTION_VAL_180_O48_HE },
-         { "190%", OPTION_VAL_190_O48_HE },
-         { "200%", OPTION_VAL_200_O48_HE },
-         { "210%", OPTION_VAL_210_O48_HE },
-         { "220%", OPTION_VAL_220_O48_HE },
-         { "230%", OPTION_VAL_230_O48_HE },
-         { "240%", OPTION_VAL_240_O48_HE },
-         { "250%", OPTION_VAL_250_O48_HE },
-         { "260%", OPTION_VAL_260_O48_HE },
-         { "270%", OPTION_VAL_270_O48_HE },
-         { "280%", OPTION_VAL_280_O48_HE },
-         { "290%", OPTION_VAL_290_O48_HE },
-         { "300%", OPTION_VAL_300_O48_HE },
+         { "100%", OPTION_VAL_100_O49_HE },
+         { "110%", OPTION_VAL_110_O49_HE },
+         { "120%", OPTION_VAL_120_O49_HE },
+         { "130%", OPTION_VAL_130_O49_HE },
+         { "140%", OPTION_VAL_140_O49_HE },
+         { "150%", OPTION_VAL_150_O49_HE },
+         { "160%", OPTION_VAL_160_O49_HE },
+         { "170%", OPTION_VAL_170_O49_HE },
+         { "180%", OPTION_VAL_180_O49_HE },
+         { "190%", OPTION_VAL_190_O49_HE },
+         { "200%", OPTION_VAL_200_O49_HE },
+         { "210%", OPTION_VAL_210_O49_HE },
+         { "220%", OPTION_VAL_220_O49_HE },
+         { "230%", OPTION_VAL_230_O49_HE },
+         { "240%", OPTION_VAL_240_O49_HE },
+         { "250%", OPTION_VAL_250_O49_HE },
+         { "260%", OPTION_VAL_260_O49_HE },
+         { "270%", OPTION_VAL_270_O49_HE },
+         { "280%", OPTION_VAL_280_O49_HE },
+         { "290%", OPTION_VAL_290_O49_HE },
+         { "300%", OPTION_VAL_300_O49_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -43690,7 +44026,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O48_HE },
+         { "100%", OPTION_VAL_100_O49_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -43841,7 +44177,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O48_HE },
+         { "100%", OPTION_VAL_100_O49_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -43992,7 +44328,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O48_HE },
+         { "100%", OPTION_VAL_100_O49_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -44143,7 +44479,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O48_HE },
+         { "100%", OPTION_VAL_100_O49_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -44352,6 +44688,8 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_HR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_HR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_HR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_HR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HR "Mrtva zona analogne palice"
@@ -44377,27 +44715,27 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_70_HR NULL
 #define OPTION_VAL_80_HR NULL
 #define OPTION_VAL_90_HR NULL
-#define OPTION_VAL_100_O48_HR NULL
-#define OPTION_VAL_110_O48_HR NULL
-#define OPTION_VAL_120_O48_HR NULL
-#define OPTION_VAL_130_O48_HR NULL
-#define OPTION_VAL_140_O48_HR NULL
-#define OPTION_VAL_150_O48_HR NULL
-#define OPTION_VAL_160_O48_HR NULL
-#define OPTION_VAL_170_O48_HR NULL
-#define OPTION_VAL_180_O48_HR NULL
-#define OPTION_VAL_190_O48_HR NULL
-#define OPTION_VAL_200_O48_HR NULL
-#define OPTION_VAL_210_O48_HR NULL
-#define OPTION_VAL_220_O48_HR NULL
-#define OPTION_VAL_230_O48_HR NULL
-#define OPTION_VAL_240_O48_HR NULL
-#define OPTION_VAL_250_O48_HR NULL
-#define OPTION_VAL_260_O48_HR NULL
-#define OPTION_VAL_270_O48_HR NULL
-#define OPTION_VAL_280_O48_HR NULL
-#define OPTION_VAL_290_O48_HR NULL
-#define OPTION_VAL_300_O48_HR NULL
+#define OPTION_VAL_100_O49_HR NULL
+#define OPTION_VAL_110_O49_HR NULL
+#define OPTION_VAL_120_O49_HR NULL
+#define OPTION_VAL_130_O49_HR NULL
+#define OPTION_VAL_140_O49_HR NULL
+#define OPTION_VAL_150_O49_HR NULL
+#define OPTION_VAL_160_O49_HR NULL
+#define OPTION_VAL_170_O49_HR NULL
+#define OPTION_VAL_180_O49_HR NULL
+#define OPTION_VAL_190_O49_HR NULL
+#define OPTION_VAL_200_O49_HR NULL
+#define OPTION_VAL_210_O49_HR NULL
+#define OPTION_VAL_220_O49_HR NULL
+#define OPTION_VAL_230_O49_HR NULL
+#define OPTION_VAL_240_O49_HR NULL
+#define OPTION_VAL_250_O49_HR NULL
+#define OPTION_VAL_260_O49_HR NULL
+#define OPTION_VAL_270_O49_HR NULL
+#define OPTION_VAL_280_O49_HR NULL
+#define OPTION_VAL_290_O49_HR NULL
+#define OPTION_VAL_300_O49_HR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HR "Prikaz nišana pištolja 1"
 #define OPTION_VAL_WHITE_HR NULL
 #define OPTION_VAL_RED_HR NULL
@@ -45266,6 +45604,20 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_HR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HR,
       NULL,
@@ -45372,27 +45724,27 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O48_HR },
-         { "110%", OPTION_VAL_110_O48_HR },
-         { "120%", OPTION_VAL_120_O48_HR },
-         { "130%", OPTION_VAL_130_O48_HR },
-         { "140%", OPTION_VAL_140_O48_HR },
-         { "150%", OPTION_VAL_150_O48_HR },
-         { "160%", OPTION_VAL_160_O48_HR },
-         { "170%", OPTION_VAL_170_O48_HR },
-         { "180%", OPTION_VAL_180_O48_HR },
-         { "190%", OPTION_VAL_190_O48_HR },
-         { "200%", OPTION_VAL_200_O48_HR },
-         { "210%", OPTION_VAL_210_O48_HR },
-         { "220%", OPTION_VAL_220_O48_HR },
-         { "230%", OPTION_VAL_230_O48_HR },
-         { "240%", OPTION_VAL_240_O48_HR },
-         { "250%", OPTION_VAL_250_O48_HR },
-         { "260%", OPTION_VAL_260_O48_HR },
-         { "270%", OPTION_VAL_270_O48_HR },
-         { "280%", OPTION_VAL_280_O48_HR },
-         { "290%", OPTION_VAL_290_O48_HR },
-         { "300%", OPTION_VAL_300_O48_HR },
+         { "100%", OPTION_VAL_100_O49_HR },
+         { "110%", OPTION_VAL_110_O49_HR },
+         { "120%", OPTION_VAL_120_O49_HR },
+         { "130%", OPTION_VAL_130_O49_HR },
+         { "140%", OPTION_VAL_140_O49_HR },
+         { "150%", OPTION_VAL_150_O49_HR },
+         { "160%", OPTION_VAL_160_O49_HR },
+         { "170%", OPTION_VAL_170_O49_HR },
+         { "180%", OPTION_VAL_180_O49_HR },
+         { "190%", OPTION_VAL_190_O49_HR },
+         { "200%", OPTION_VAL_200_O49_HR },
+         { "210%", OPTION_VAL_210_O49_HR },
+         { "220%", OPTION_VAL_220_O49_HR },
+         { "230%", OPTION_VAL_230_O49_HR },
+         { "240%", OPTION_VAL_240_O49_HR },
+         { "250%", OPTION_VAL_250_O49_HR },
+         { "260%", OPTION_VAL_260_O49_HR },
+         { "270%", OPTION_VAL_270_O49_HR },
+         { "280%", OPTION_VAL_280_O49_HR },
+         { "290%", OPTION_VAL_290_O49_HR },
+         { "300%", OPTION_VAL_300_O49_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -45790,7 +46142,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O48_HR },
+         { "100%", OPTION_VAL_100_O49_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -45941,7 +46293,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O48_HR },
+         { "100%", OPTION_VAL_100_O49_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -46092,7 +46444,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O48_HR },
+         { "100%", OPTION_VAL_100_O49_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -46243,7 +46595,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O48_HR },
+         { "100%", OPTION_VAL_100_O49_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -46452,6 +46804,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_HU "A játék indításakor előre betölti az egyéni textúrákat. Javíthatja a teljesítményt, de növeli a memóriahasználatot."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU "Textúrák lementése"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HU "A textúrák lementése .png fájlként a 'system/dc/texdump/<game-id>/' mappába, amint a játék új textúrát használ."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_HU NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_HU NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HU "Lecserélt textúrák kimentése"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_HU "Az egyéni textúrák által lecserélt textúrák kiírása."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU "Analóg kar holtsávja"
@@ -46477,27 +46831,27 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_70_HU NULL
 #define OPTION_VAL_80_HU NULL
 #define OPTION_VAL_90_HU NULL
-#define OPTION_VAL_100_O48_HU NULL
-#define OPTION_VAL_110_O48_HU NULL
-#define OPTION_VAL_120_O48_HU NULL
-#define OPTION_VAL_130_O48_HU NULL
-#define OPTION_VAL_140_O48_HU NULL
-#define OPTION_VAL_150_O48_HU NULL
-#define OPTION_VAL_160_O48_HU NULL
-#define OPTION_VAL_170_O48_HU NULL
-#define OPTION_VAL_180_O48_HU NULL
-#define OPTION_VAL_190_O48_HU NULL
-#define OPTION_VAL_200_O48_HU NULL
-#define OPTION_VAL_210_O48_HU NULL
-#define OPTION_VAL_220_O48_HU NULL
-#define OPTION_VAL_230_O48_HU NULL
-#define OPTION_VAL_240_O48_HU NULL
-#define OPTION_VAL_250_O48_HU NULL
-#define OPTION_VAL_260_O48_HU NULL
-#define OPTION_VAL_270_O48_HU NULL
-#define OPTION_VAL_280_O48_HU NULL
-#define OPTION_VAL_290_O48_HU NULL
-#define OPTION_VAL_300_O48_HU NULL
+#define OPTION_VAL_100_O49_HU NULL
+#define OPTION_VAL_110_O49_HU NULL
+#define OPTION_VAL_120_O49_HU NULL
+#define OPTION_VAL_130_O49_HU NULL
+#define OPTION_VAL_140_O49_HU NULL
+#define OPTION_VAL_150_O49_HU NULL
+#define OPTION_VAL_160_O49_HU NULL
+#define OPTION_VAL_170_O49_HU NULL
+#define OPTION_VAL_180_O49_HU NULL
+#define OPTION_VAL_190_O49_HU NULL
+#define OPTION_VAL_200_O49_HU NULL
+#define OPTION_VAL_210_O49_HU NULL
+#define OPTION_VAL_220_O49_HU NULL
+#define OPTION_VAL_230_O49_HU NULL
+#define OPTION_VAL_240_O49_HU NULL
+#define OPTION_VAL_250_O49_HU NULL
+#define OPTION_VAL_260_O49_HU NULL
+#define OPTION_VAL_270_O49_HU NULL
+#define OPTION_VAL_280_O49_HU NULL
+#define OPTION_VAL_290_O49_HU NULL
+#define OPTION_VAL_300_O49_HU NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU "1. fénypisztoly célkeresztjének megjelenítése"
 #define OPTION_VAL_WHITE_HU "Fehér"
 #define OPTION_VAL_RED_HU "Vörös"
@@ -47366,6 +47720,20 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_HU,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HU,
       NULL,
@@ -47472,27 +47840,27 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O48_HU },
-         { "110%", OPTION_VAL_110_O48_HU },
-         { "120%", OPTION_VAL_120_O48_HU },
-         { "130%", OPTION_VAL_130_O48_HU },
-         { "140%", OPTION_VAL_140_O48_HU },
-         { "150%", OPTION_VAL_150_O48_HU },
-         { "160%", OPTION_VAL_160_O48_HU },
-         { "170%", OPTION_VAL_170_O48_HU },
-         { "180%", OPTION_VAL_180_O48_HU },
-         { "190%", OPTION_VAL_190_O48_HU },
-         { "200%", OPTION_VAL_200_O48_HU },
-         { "210%", OPTION_VAL_210_O48_HU },
-         { "220%", OPTION_VAL_220_O48_HU },
-         { "230%", OPTION_VAL_230_O48_HU },
-         { "240%", OPTION_VAL_240_O48_HU },
-         { "250%", OPTION_VAL_250_O48_HU },
-         { "260%", OPTION_VAL_260_O48_HU },
-         { "270%", OPTION_VAL_270_O48_HU },
-         { "280%", OPTION_VAL_280_O48_HU },
-         { "290%", OPTION_VAL_290_O48_HU },
-         { "300%", OPTION_VAL_300_O48_HU },
+         { "100%", OPTION_VAL_100_O49_HU },
+         { "110%", OPTION_VAL_110_O49_HU },
+         { "120%", OPTION_VAL_120_O49_HU },
+         { "130%", OPTION_VAL_130_O49_HU },
+         { "140%", OPTION_VAL_140_O49_HU },
+         { "150%", OPTION_VAL_150_O49_HU },
+         { "160%", OPTION_VAL_160_O49_HU },
+         { "170%", OPTION_VAL_170_O49_HU },
+         { "180%", OPTION_VAL_180_O49_HU },
+         { "190%", OPTION_VAL_190_O49_HU },
+         { "200%", OPTION_VAL_200_O49_HU },
+         { "210%", OPTION_VAL_210_O49_HU },
+         { "220%", OPTION_VAL_220_O49_HU },
+         { "230%", OPTION_VAL_230_O49_HU },
+         { "240%", OPTION_VAL_240_O49_HU },
+         { "250%", OPTION_VAL_250_O49_HU },
+         { "260%", OPTION_VAL_260_O49_HU },
+         { "270%", OPTION_VAL_270_O49_HU },
+         { "280%", OPTION_VAL_280_O49_HU },
+         { "290%", OPTION_VAL_290_O49_HU },
+         { "300%", OPTION_VAL_300_O49_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -47890,7 +48258,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O48_HU },
+         { "100%", OPTION_VAL_100_O49_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -48041,7 +48409,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O48_HU },
+         { "100%", OPTION_VAL_100_O49_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -48192,7 +48560,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O48_HU },
+         { "100%", OPTION_VAL_100_O49_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -48343,7 +48711,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O48_HU },
+         { "100%", OPTION_VAL_100_O49_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -48552,6 +48920,8 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_ID NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_ID "Dump Tekstur"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_ID NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_ID NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_ID NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_ID NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_ID NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_ID NULL
@@ -48577,27 +48947,27 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_70_ID NULL
 #define OPTION_VAL_80_ID NULL
 #define OPTION_VAL_90_ID NULL
-#define OPTION_VAL_100_O48_ID NULL
-#define OPTION_VAL_110_O48_ID NULL
-#define OPTION_VAL_120_O48_ID NULL
-#define OPTION_VAL_130_O48_ID NULL
-#define OPTION_VAL_140_O48_ID NULL
-#define OPTION_VAL_150_O48_ID NULL
-#define OPTION_VAL_160_O48_ID NULL
-#define OPTION_VAL_170_O48_ID NULL
-#define OPTION_VAL_180_O48_ID NULL
-#define OPTION_VAL_190_O48_ID NULL
-#define OPTION_VAL_200_O48_ID NULL
-#define OPTION_VAL_210_O48_ID NULL
-#define OPTION_VAL_220_O48_ID NULL
-#define OPTION_VAL_230_O48_ID NULL
-#define OPTION_VAL_240_O48_ID NULL
-#define OPTION_VAL_250_O48_ID NULL
-#define OPTION_VAL_260_O48_ID NULL
-#define OPTION_VAL_270_O48_ID NULL
-#define OPTION_VAL_280_O48_ID NULL
-#define OPTION_VAL_290_O48_ID NULL
-#define OPTION_VAL_300_O48_ID NULL
+#define OPTION_VAL_100_O49_ID NULL
+#define OPTION_VAL_110_O49_ID NULL
+#define OPTION_VAL_120_O49_ID NULL
+#define OPTION_VAL_130_O49_ID NULL
+#define OPTION_VAL_140_O49_ID NULL
+#define OPTION_VAL_150_O49_ID NULL
+#define OPTION_VAL_160_O49_ID NULL
+#define OPTION_VAL_170_O49_ID NULL
+#define OPTION_VAL_180_O49_ID NULL
+#define OPTION_VAL_190_O49_ID NULL
+#define OPTION_VAL_200_O49_ID NULL
+#define OPTION_VAL_210_O49_ID NULL
+#define OPTION_VAL_220_O49_ID NULL
+#define OPTION_VAL_230_O49_ID NULL
+#define OPTION_VAL_240_O49_ID NULL
+#define OPTION_VAL_250_O49_ID NULL
+#define OPTION_VAL_260_O49_ID NULL
+#define OPTION_VAL_270_O49_ID NULL
+#define OPTION_VAL_280_O49_ID NULL
+#define OPTION_VAL_290_O49_ID NULL
+#define OPTION_VAL_300_O49_ID NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ID NULL
 #define OPTION_VAL_WHITE_ID "Putih"
 #define OPTION_VAL_RED_ID NULL
@@ -49466,6 +49836,20 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_ID,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_ID,
       NULL,
@@ -49572,27 +49956,27 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O48_ID },
-         { "110%", OPTION_VAL_110_O48_ID },
-         { "120%", OPTION_VAL_120_O48_ID },
-         { "130%", OPTION_VAL_130_O48_ID },
-         { "140%", OPTION_VAL_140_O48_ID },
-         { "150%", OPTION_VAL_150_O48_ID },
-         { "160%", OPTION_VAL_160_O48_ID },
-         { "170%", OPTION_VAL_170_O48_ID },
-         { "180%", OPTION_VAL_180_O48_ID },
-         { "190%", OPTION_VAL_190_O48_ID },
-         { "200%", OPTION_VAL_200_O48_ID },
-         { "210%", OPTION_VAL_210_O48_ID },
-         { "220%", OPTION_VAL_220_O48_ID },
-         { "230%", OPTION_VAL_230_O48_ID },
-         { "240%", OPTION_VAL_240_O48_ID },
-         { "250%", OPTION_VAL_250_O48_ID },
-         { "260%", OPTION_VAL_260_O48_ID },
-         { "270%", OPTION_VAL_270_O48_ID },
-         { "280%", OPTION_VAL_280_O48_ID },
-         { "290%", OPTION_VAL_290_O48_ID },
-         { "300%", OPTION_VAL_300_O48_ID },
+         { "100%", OPTION_VAL_100_O49_ID },
+         { "110%", OPTION_VAL_110_O49_ID },
+         { "120%", OPTION_VAL_120_O49_ID },
+         { "130%", OPTION_VAL_130_O49_ID },
+         { "140%", OPTION_VAL_140_O49_ID },
+         { "150%", OPTION_VAL_150_O49_ID },
+         { "160%", OPTION_VAL_160_O49_ID },
+         { "170%", OPTION_VAL_170_O49_ID },
+         { "180%", OPTION_VAL_180_O49_ID },
+         { "190%", OPTION_VAL_190_O49_ID },
+         { "200%", OPTION_VAL_200_O49_ID },
+         { "210%", OPTION_VAL_210_O49_ID },
+         { "220%", OPTION_VAL_220_O49_ID },
+         { "230%", OPTION_VAL_230_O49_ID },
+         { "240%", OPTION_VAL_240_O49_ID },
+         { "250%", OPTION_VAL_250_O49_ID },
+         { "260%", OPTION_VAL_260_O49_ID },
+         { "270%", OPTION_VAL_270_O49_ID },
+         { "280%", OPTION_VAL_280_O49_ID },
+         { "290%", OPTION_VAL_290_O49_ID },
+         { "300%", OPTION_VAL_300_O49_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -49990,7 +50374,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O48_ID },
+         { "100%", OPTION_VAL_100_O49_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -50141,7 +50525,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O48_ID },
+         { "100%", OPTION_VAL_100_O49_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -50292,7 +50676,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O48_ID },
+         { "100%", OPTION_VAL_100_O49_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -50443,7 +50827,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O48_ID },
+         { "100%", OPTION_VAL_100_O49_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -50652,6 +51036,8 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_IT "Precarica texture personalizzate all'avvio del gioco. Può migliorare le prestazioni, ma aumenta l'utilizzo della memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_IT "Scarica Texture"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_IT "Ogni volta che un nuovo texture viene utilizzato dal gioco, verrà salvato come file .png nella cartella 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_IT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_IT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_IT "Scarica Texture sostituite"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_IT "Scarica sempre le texture che sono già sostituite da texture personalizzate."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_IT "Zona morta dello sticl analogico"
@@ -50677,27 +51063,27 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_70_IT NULL
 #define OPTION_VAL_80_IT NULL
 #define OPTION_VAL_90_IT NULL
-#define OPTION_VAL_100_O48_IT NULL
-#define OPTION_VAL_110_O48_IT NULL
-#define OPTION_VAL_120_O48_IT NULL
-#define OPTION_VAL_130_O48_IT NULL
-#define OPTION_VAL_140_O48_IT NULL
-#define OPTION_VAL_150_O48_IT NULL
-#define OPTION_VAL_160_O48_IT NULL
-#define OPTION_VAL_170_O48_IT NULL
-#define OPTION_VAL_180_O48_IT NULL
-#define OPTION_VAL_190_O48_IT NULL
-#define OPTION_VAL_200_O48_IT NULL
-#define OPTION_VAL_210_O48_IT NULL
-#define OPTION_VAL_220_O48_IT NULL
-#define OPTION_VAL_230_O48_IT NULL
-#define OPTION_VAL_240_O48_IT NULL
-#define OPTION_VAL_250_O48_IT NULL
-#define OPTION_VAL_260_O48_IT NULL
-#define OPTION_VAL_270_O48_IT NULL
-#define OPTION_VAL_280_O48_IT NULL
-#define OPTION_VAL_290_O48_IT NULL
-#define OPTION_VAL_300_O48_IT NULL
+#define OPTION_VAL_100_O49_IT NULL
+#define OPTION_VAL_110_O49_IT NULL
+#define OPTION_VAL_120_O49_IT NULL
+#define OPTION_VAL_130_O49_IT NULL
+#define OPTION_VAL_140_O49_IT NULL
+#define OPTION_VAL_150_O49_IT NULL
+#define OPTION_VAL_160_O49_IT NULL
+#define OPTION_VAL_170_O49_IT NULL
+#define OPTION_VAL_180_O49_IT NULL
+#define OPTION_VAL_190_O49_IT NULL
+#define OPTION_VAL_200_O49_IT NULL
+#define OPTION_VAL_210_O49_IT NULL
+#define OPTION_VAL_220_O49_IT NULL
+#define OPTION_VAL_230_O49_IT NULL
+#define OPTION_VAL_240_O49_IT NULL
+#define OPTION_VAL_250_O49_IT NULL
+#define OPTION_VAL_260_O49_IT NULL
+#define OPTION_VAL_270_O49_IT NULL
+#define OPTION_VAL_280_O49_IT NULL
+#define OPTION_VAL_290_O49_IT NULL
+#define OPTION_VAL_300_O49_IT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_IT "Mostra mirino della Pistola 1"
 #define OPTION_VAL_WHITE_IT "Bianco"
 #define OPTION_VAL_RED_IT "Rosso"
@@ -51566,6 +51952,20 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_IT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_IT,
       NULL,
@@ -51672,27 +52072,27 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O48_IT },
-         { "110%", OPTION_VAL_110_O48_IT },
-         { "120%", OPTION_VAL_120_O48_IT },
-         { "130%", OPTION_VAL_130_O48_IT },
-         { "140%", OPTION_VAL_140_O48_IT },
-         { "150%", OPTION_VAL_150_O48_IT },
-         { "160%", OPTION_VAL_160_O48_IT },
-         { "170%", OPTION_VAL_170_O48_IT },
-         { "180%", OPTION_VAL_180_O48_IT },
-         { "190%", OPTION_VAL_190_O48_IT },
-         { "200%", OPTION_VAL_200_O48_IT },
-         { "210%", OPTION_VAL_210_O48_IT },
-         { "220%", OPTION_VAL_220_O48_IT },
-         { "230%", OPTION_VAL_230_O48_IT },
-         { "240%", OPTION_VAL_240_O48_IT },
-         { "250%", OPTION_VAL_250_O48_IT },
-         { "260%", OPTION_VAL_260_O48_IT },
-         { "270%", OPTION_VAL_270_O48_IT },
-         { "280%", OPTION_VAL_280_O48_IT },
-         { "290%", OPTION_VAL_290_O48_IT },
-         { "300%", OPTION_VAL_300_O48_IT },
+         { "100%", OPTION_VAL_100_O49_IT },
+         { "110%", OPTION_VAL_110_O49_IT },
+         { "120%", OPTION_VAL_120_O49_IT },
+         { "130%", OPTION_VAL_130_O49_IT },
+         { "140%", OPTION_VAL_140_O49_IT },
+         { "150%", OPTION_VAL_150_O49_IT },
+         { "160%", OPTION_VAL_160_O49_IT },
+         { "170%", OPTION_VAL_170_O49_IT },
+         { "180%", OPTION_VAL_180_O49_IT },
+         { "190%", OPTION_VAL_190_O49_IT },
+         { "200%", OPTION_VAL_200_O49_IT },
+         { "210%", OPTION_VAL_210_O49_IT },
+         { "220%", OPTION_VAL_220_O49_IT },
+         { "230%", OPTION_VAL_230_O49_IT },
+         { "240%", OPTION_VAL_240_O49_IT },
+         { "250%", OPTION_VAL_250_O49_IT },
+         { "260%", OPTION_VAL_260_O49_IT },
+         { "270%", OPTION_VAL_270_O49_IT },
+         { "280%", OPTION_VAL_280_O49_IT },
+         { "290%", OPTION_VAL_290_O49_IT },
+         { "300%", OPTION_VAL_300_O49_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -52090,7 +52490,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O48_IT },
+         { "100%", OPTION_VAL_100_O49_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -52241,7 +52641,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O48_IT },
+         { "100%", OPTION_VAL_100_O49_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -52392,7 +52792,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O48_IT },
+         { "100%", OPTION_VAL_100_O49_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -52543,7 +52943,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O48_IT },
+         { "100%", OPTION_VAL_100_O49_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -52752,6 +53152,8 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_JA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_JA "テクスチャをダンプ"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_JA "ゲームで新しいテクスチャが使用されるたび、テクスチャを .png ファイルとして [system/dc/texdump/<game-id>] フォルダに保存します。"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_JA NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_JA NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_JA NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_JA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_JA "アナログスティックデッドゾーン"
@@ -52777,27 +53179,27 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_70_JA NULL
 #define OPTION_VAL_80_JA NULL
 #define OPTION_VAL_90_JA NULL
-#define OPTION_VAL_100_O48_JA NULL
-#define OPTION_VAL_110_O48_JA NULL
-#define OPTION_VAL_120_O48_JA NULL
-#define OPTION_VAL_130_O48_JA NULL
-#define OPTION_VAL_140_O48_JA NULL
-#define OPTION_VAL_150_O48_JA NULL
-#define OPTION_VAL_160_O48_JA NULL
-#define OPTION_VAL_170_O48_JA NULL
-#define OPTION_VAL_180_O48_JA NULL
-#define OPTION_VAL_190_O48_JA NULL
-#define OPTION_VAL_200_O48_JA NULL
-#define OPTION_VAL_210_O48_JA NULL
-#define OPTION_VAL_220_O48_JA NULL
-#define OPTION_VAL_230_O48_JA NULL
-#define OPTION_VAL_240_O48_JA NULL
-#define OPTION_VAL_250_O48_JA NULL
-#define OPTION_VAL_260_O48_JA NULL
-#define OPTION_VAL_270_O48_JA NULL
-#define OPTION_VAL_280_O48_JA NULL
-#define OPTION_VAL_290_O48_JA NULL
-#define OPTION_VAL_300_O48_JA NULL
+#define OPTION_VAL_100_O49_JA NULL
+#define OPTION_VAL_110_O49_JA NULL
+#define OPTION_VAL_120_O49_JA NULL
+#define OPTION_VAL_130_O49_JA NULL
+#define OPTION_VAL_140_O49_JA NULL
+#define OPTION_VAL_150_O49_JA NULL
+#define OPTION_VAL_160_O49_JA NULL
+#define OPTION_VAL_170_O49_JA NULL
+#define OPTION_VAL_180_O49_JA NULL
+#define OPTION_VAL_190_O49_JA NULL
+#define OPTION_VAL_200_O49_JA NULL
+#define OPTION_VAL_210_O49_JA NULL
+#define OPTION_VAL_220_O49_JA NULL
+#define OPTION_VAL_230_O49_JA NULL
+#define OPTION_VAL_240_O49_JA NULL
+#define OPTION_VAL_250_O49_JA NULL
+#define OPTION_VAL_260_O49_JA NULL
+#define OPTION_VAL_270_O49_JA NULL
+#define OPTION_VAL_280_O49_JA NULL
+#define OPTION_VAL_290_O49_JA NULL
+#define OPTION_VAL_300_O49_JA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_JA "ガンクロスヘア 1 表示"
 #define OPTION_VAL_WHITE_JA "白"
 #define OPTION_VAL_RED_JA "レッド"
@@ -53666,6 +54068,20 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_JA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_JA,
       NULL,
@@ -53772,27 +54188,27 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O48_JA },
-         { "110%", OPTION_VAL_110_O48_JA },
-         { "120%", OPTION_VAL_120_O48_JA },
-         { "130%", OPTION_VAL_130_O48_JA },
-         { "140%", OPTION_VAL_140_O48_JA },
-         { "150%", OPTION_VAL_150_O48_JA },
-         { "160%", OPTION_VAL_160_O48_JA },
-         { "170%", OPTION_VAL_170_O48_JA },
-         { "180%", OPTION_VAL_180_O48_JA },
-         { "190%", OPTION_VAL_190_O48_JA },
-         { "200%", OPTION_VAL_200_O48_JA },
-         { "210%", OPTION_VAL_210_O48_JA },
-         { "220%", OPTION_VAL_220_O48_JA },
-         { "230%", OPTION_VAL_230_O48_JA },
-         { "240%", OPTION_VAL_240_O48_JA },
-         { "250%", OPTION_VAL_250_O48_JA },
-         { "260%", OPTION_VAL_260_O48_JA },
-         { "270%", OPTION_VAL_270_O48_JA },
-         { "280%", OPTION_VAL_280_O48_JA },
-         { "290%", OPTION_VAL_290_O48_JA },
-         { "300%", OPTION_VAL_300_O48_JA },
+         { "100%", OPTION_VAL_100_O49_JA },
+         { "110%", OPTION_VAL_110_O49_JA },
+         { "120%", OPTION_VAL_120_O49_JA },
+         { "130%", OPTION_VAL_130_O49_JA },
+         { "140%", OPTION_VAL_140_O49_JA },
+         { "150%", OPTION_VAL_150_O49_JA },
+         { "160%", OPTION_VAL_160_O49_JA },
+         { "170%", OPTION_VAL_170_O49_JA },
+         { "180%", OPTION_VAL_180_O49_JA },
+         { "190%", OPTION_VAL_190_O49_JA },
+         { "200%", OPTION_VAL_200_O49_JA },
+         { "210%", OPTION_VAL_210_O49_JA },
+         { "220%", OPTION_VAL_220_O49_JA },
+         { "230%", OPTION_VAL_230_O49_JA },
+         { "240%", OPTION_VAL_240_O49_JA },
+         { "250%", OPTION_VAL_250_O49_JA },
+         { "260%", OPTION_VAL_260_O49_JA },
+         { "270%", OPTION_VAL_270_O49_JA },
+         { "280%", OPTION_VAL_280_O49_JA },
+         { "290%", OPTION_VAL_290_O49_JA },
+         { "300%", OPTION_VAL_300_O49_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -54190,7 +54606,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O48_JA },
+         { "100%", OPTION_VAL_100_O49_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -54341,7 +54757,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O48_JA },
+         { "100%", OPTION_VAL_100_O49_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -54492,7 +54908,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O48_JA },
+         { "100%", OPTION_VAL_100_O49_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -54643,7 +55059,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O48_JA },
+         { "100%", OPTION_VAL_100_O49_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -54852,6 +55268,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_KO "커스텀 텍스처를 게임 시작 시에 미리 불러옵니다. 성능이 향상될 수 있지만 메모리 사용량이 늘어납니다."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_KO "텍스쳐 덤프하기"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_KO "게임이 새로운 텍스처를 사용할 때마다, 'system/dc/texdump/<game-id>/' 폴더 안에 .png 파일로 저장되게 합니다."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_KO NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_KO NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_KO "교체된 텍스처 덤프하기"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_KO "커스텀 텍스처로 교체된 텍스처를 항상 덤프합니다."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_KO "아날로그 스틱 데드존"
@@ -54877,27 +55295,27 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_70_KO NULL
 #define OPTION_VAL_80_KO NULL
 #define OPTION_VAL_90_KO NULL
-#define OPTION_VAL_100_O48_KO NULL
-#define OPTION_VAL_110_O48_KO NULL
-#define OPTION_VAL_120_O48_KO NULL
-#define OPTION_VAL_130_O48_KO NULL
-#define OPTION_VAL_140_O48_KO NULL
-#define OPTION_VAL_150_O48_KO NULL
-#define OPTION_VAL_160_O48_KO NULL
-#define OPTION_VAL_170_O48_KO NULL
-#define OPTION_VAL_180_O48_KO NULL
-#define OPTION_VAL_190_O48_KO NULL
-#define OPTION_VAL_200_O48_KO NULL
-#define OPTION_VAL_210_O48_KO NULL
-#define OPTION_VAL_220_O48_KO NULL
-#define OPTION_VAL_230_O48_KO NULL
-#define OPTION_VAL_240_O48_KO NULL
-#define OPTION_VAL_250_O48_KO NULL
-#define OPTION_VAL_260_O48_KO NULL
-#define OPTION_VAL_270_O48_KO NULL
-#define OPTION_VAL_280_O48_KO NULL
-#define OPTION_VAL_290_O48_KO NULL
-#define OPTION_VAL_300_O48_KO NULL
+#define OPTION_VAL_100_O49_KO NULL
+#define OPTION_VAL_110_O49_KO NULL
+#define OPTION_VAL_120_O49_KO NULL
+#define OPTION_VAL_130_O49_KO NULL
+#define OPTION_VAL_140_O49_KO NULL
+#define OPTION_VAL_150_O49_KO NULL
+#define OPTION_VAL_160_O49_KO NULL
+#define OPTION_VAL_170_O49_KO NULL
+#define OPTION_VAL_180_O49_KO NULL
+#define OPTION_VAL_190_O49_KO NULL
+#define OPTION_VAL_200_O49_KO NULL
+#define OPTION_VAL_210_O49_KO NULL
+#define OPTION_VAL_220_O49_KO NULL
+#define OPTION_VAL_230_O49_KO NULL
+#define OPTION_VAL_240_O49_KO NULL
+#define OPTION_VAL_250_O49_KO NULL
+#define OPTION_VAL_260_O49_KO NULL
+#define OPTION_VAL_270_O49_KO NULL
+#define OPTION_VAL_280_O49_KO NULL
+#define OPTION_VAL_290_O49_KO NULL
+#define OPTION_VAL_300_O49_KO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_KO "라이트건 조준선 1 표시"
 #define OPTION_VAL_WHITE_KO "흰색"
 #define OPTION_VAL_RED_KO "빨강"
@@ -55766,6 +56184,20 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_KO,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_KO,
       NULL,
@@ -55872,27 +56304,27 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O48_KO },
-         { "110%", OPTION_VAL_110_O48_KO },
-         { "120%", OPTION_VAL_120_O48_KO },
-         { "130%", OPTION_VAL_130_O48_KO },
-         { "140%", OPTION_VAL_140_O48_KO },
-         { "150%", OPTION_VAL_150_O48_KO },
-         { "160%", OPTION_VAL_160_O48_KO },
-         { "170%", OPTION_VAL_170_O48_KO },
-         { "180%", OPTION_VAL_180_O48_KO },
-         { "190%", OPTION_VAL_190_O48_KO },
-         { "200%", OPTION_VAL_200_O48_KO },
-         { "210%", OPTION_VAL_210_O48_KO },
-         { "220%", OPTION_VAL_220_O48_KO },
-         { "230%", OPTION_VAL_230_O48_KO },
-         { "240%", OPTION_VAL_240_O48_KO },
-         { "250%", OPTION_VAL_250_O48_KO },
-         { "260%", OPTION_VAL_260_O48_KO },
-         { "270%", OPTION_VAL_270_O48_KO },
-         { "280%", OPTION_VAL_280_O48_KO },
-         { "290%", OPTION_VAL_290_O48_KO },
-         { "300%", OPTION_VAL_300_O48_KO },
+         { "100%", OPTION_VAL_100_O49_KO },
+         { "110%", OPTION_VAL_110_O49_KO },
+         { "120%", OPTION_VAL_120_O49_KO },
+         { "130%", OPTION_VAL_130_O49_KO },
+         { "140%", OPTION_VAL_140_O49_KO },
+         { "150%", OPTION_VAL_150_O49_KO },
+         { "160%", OPTION_VAL_160_O49_KO },
+         { "170%", OPTION_VAL_170_O49_KO },
+         { "180%", OPTION_VAL_180_O49_KO },
+         { "190%", OPTION_VAL_190_O49_KO },
+         { "200%", OPTION_VAL_200_O49_KO },
+         { "210%", OPTION_VAL_210_O49_KO },
+         { "220%", OPTION_VAL_220_O49_KO },
+         { "230%", OPTION_VAL_230_O49_KO },
+         { "240%", OPTION_VAL_240_O49_KO },
+         { "250%", OPTION_VAL_250_O49_KO },
+         { "260%", OPTION_VAL_260_O49_KO },
+         { "270%", OPTION_VAL_270_O49_KO },
+         { "280%", OPTION_VAL_280_O49_KO },
+         { "290%", OPTION_VAL_290_O49_KO },
+         { "300%", OPTION_VAL_300_O49_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -56290,7 +56722,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O48_KO },
+         { "100%", OPTION_VAL_100_O49_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -56441,7 +56873,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O48_KO },
+         { "100%", OPTION_VAL_100_O49_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -56592,7 +57024,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O48_KO },
+         { "100%", OPTION_VAL_100_O49_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -56743,7 +57175,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O48_KO },
+         { "100%", OPTION_VAL_100_O49_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -56952,6 +57384,8 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_NL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_NL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_NL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_NL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_NL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_NL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_NL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_NL NULL
@@ -56977,27 +57411,27 @@ struct retro_core_options_v2 options_ko = {
 #define OPTION_VAL_70_NL NULL
 #define OPTION_VAL_80_NL NULL
 #define OPTION_VAL_90_NL NULL
-#define OPTION_VAL_100_O48_NL NULL
-#define OPTION_VAL_110_O48_NL NULL
-#define OPTION_VAL_120_O48_NL NULL
-#define OPTION_VAL_130_O48_NL NULL
-#define OPTION_VAL_140_O48_NL NULL
-#define OPTION_VAL_150_O48_NL NULL
-#define OPTION_VAL_160_O48_NL NULL
-#define OPTION_VAL_170_O48_NL NULL
-#define OPTION_VAL_180_O48_NL NULL
-#define OPTION_VAL_190_O48_NL NULL
-#define OPTION_VAL_200_O48_NL NULL
-#define OPTION_VAL_210_O48_NL NULL
-#define OPTION_VAL_220_O48_NL NULL
-#define OPTION_VAL_230_O48_NL NULL
-#define OPTION_VAL_240_O48_NL NULL
-#define OPTION_VAL_250_O48_NL NULL
-#define OPTION_VAL_260_O48_NL NULL
-#define OPTION_VAL_270_O48_NL NULL
-#define OPTION_VAL_280_O48_NL NULL
-#define OPTION_VAL_290_O48_NL NULL
-#define OPTION_VAL_300_O48_NL NULL
+#define OPTION_VAL_100_O49_NL NULL
+#define OPTION_VAL_110_O49_NL NULL
+#define OPTION_VAL_120_O49_NL NULL
+#define OPTION_VAL_130_O49_NL NULL
+#define OPTION_VAL_140_O49_NL NULL
+#define OPTION_VAL_150_O49_NL NULL
+#define OPTION_VAL_160_O49_NL NULL
+#define OPTION_VAL_170_O49_NL NULL
+#define OPTION_VAL_180_O49_NL NULL
+#define OPTION_VAL_190_O49_NL NULL
+#define OPTION_VAL_200_O49_NL NULL
+#define OPTION_VAL_210_O49_NL NULL
+#define OPTION_VAL_220_O49_NL NULL
+#define OPTION_VAL_230_O49_NL NULL
+#define OPTION_VAL_240_O49_NL NULL
+#define OPTION_VAL_250_O49_NL NULL
+#define OPTION_VAL_260_O49_NL NULL
+#define OPTION_VAL_270_O49_NL NULL
+#define OPTION_VAL_280_O49_NL NULL
+#define OPTION_VAL_290_O49_NL NULL
+#define OPTION_VAL_300_O49_NL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NL NULL
 #define OPTION_VAL_WHITE_NL NULL
 #define OPTION_VAL_RED_NL "Rood"
@@ -57866,6 +58300,20 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_NL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_NL,
       NULL,
@@ -57972,27 +58420,27 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O48_NL },
-         { "110%", OPTION_VAL_110_O48_NL },
-         { "120%", OPTION_VAL_120_O48_NL },
-         { "130%", OPTION_VAL_130_O48_NL },
-         { "140%", OPTION_VAL_140_O48_NL },
-         { "150%", OPTION_VAL_150_O48_NL },
-         { "160%", OPTION_VAL_160_O48_NL },
-         { "170%", OPTION_VAL_170_O48_NL },
-         { "180%", OPTION_VAL_180_O48_NL },
-         { "190%", OPTION_VAL_190_O48_NL },
-         { "200%", OPTION_VAL_200_O48_NL },
-         { "210%", OPTION_VAL_210_O48_NL },
-         { "220%", OPTION_VAL_220_O48_NL },
-         { "230%", OPTION_VAL_230_O48_NL },
-         { "240%", OPTION_VAL_240_O48_NL },
-         { "250%", OPTION_VAL_250_O48_NL },
-         { "260%", OPTION_VAL_260_O48_NL },
-         { "270%", OPTION_VAL_270_O48_NL },
-         { "280%", OPTION_VAL_280_O48_NL },
-         { "290%", OPTION_VAL_290_O48_NL },
-         { "300%", OPTION_VAL_300_O48_NL },
+         { "100%", OPTION_VAL_100_O49_NL },
+         { "110%", OPTION_VAL_110_O49_NL },
+         { "120%", OPTION_VAL_120_O49_NL },
+         { "130%", OPTION_VAL_130_O49_NL },
+         { "140%", OPTION_VAL_140_O49_NL },
+         { "150%", OPTION_VAL_150_O49_NL },
+         { "160%", OPTION_VAL_160_O49_NL },
+         { "170%", OPTION_VAL_170_O49_NL },
+         { "180%", OPTION_VAL_180_O49_NL },
+         { "190%", OPTION_VAL_190_O49_NL },
+         { "200%", OPTION_VAL_200_O49_NL },
+         { "210%", OPTION_VAL_210_O49_NL },
+         { "220%", OPTION_VAL_220_O49_NL },
+         { "230%", OPTION_VAL_230_O49_NL },
+         { "240%", OPTION_VAL_240_O49_NL },
+         { "250%", OPTION_VAL_250_O49_NL },
+         { "260%", OPTION_VAL_260_O49_NL },
+         { "270%", OPTION_VAL_270_O49_NL },
+         { "280%", OPTION_VAL_280_O49_NL },
+         { "290%", OPTION_VAL_290_O49_NL },
+         { "300%", OPTION_VAL_300_O49_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -58390,7 +58838,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O48_NL },
+         { "100%", OPTION_VAL_100_O49_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -58541,7 +58989,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O48_NL },
+         { "100%", OPTION_VAL_100_O49_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -58692,7 +59140,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O48_NL },
+         { "100%", OPTION_VAL_100_O49_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -58843,7 +59291,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O48_NL },
+         { "100%", OPTION_VAL_100_O49_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -59052,6 +59500,8 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_NO NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_NO NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_NO NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_NO NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_NO NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_NO NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_NO NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_NO NULL
@@ -59077,27 +59527,27 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_70_NO NULL
 #define OPTION_VAL_80_NO NULL
 #define OPTION_VAL_90_NO NULL
-#define OPTION_VAL_100_O48_NO NULL
-#define OPTION_VAL_110_O48_NO NULL
-#define OPTION_VAL_120_O48_NO NULL
-#define OPTION_VAL_130_O48_NO NULL
-#define OPTION_VAL_140_O48_NO NULL
-#define OPTION_VAL_150_O48_NO NULL
-#define OPTION_VAL_160_O48_NO NULL
-#define OPTION_VAL_170_O48_NO NULL
-#define OPTION_VAL_180_O48_NO NULL
-#define OPTION_VAL_190_O48_NO NULL
-#define OPTION_VAL_200_O48_NO NULL
-#define OPTION_VAL_210_O48_NO NULL
-#define OPTION_VAL_220_O48_NO NULL
-#define OPTION_VAL_230_O48_NO NULL
-#define OPTION_VAL_240_O48_NO NULL
-#define OPTION_VAL_250_O48_NO NULL
-#define OPTION_VAL_260_O48_NO NULL
-#define OPTION_VAL_270_O48_NO NULL
-#define OPTION_VAL_280_O48_NO NULL
-#define OPTION_VAL_290_O48_NO NULL
-#define OPTION_VAL_300_O48_NO NULL
+#define OPTION_VAL_100_O49_NO NULL
+#define OPTION_VAL_110_O49_NO NULL
+#define OPTION_VAL_120_O49_NO NULL
+#define OPTION_VAL_130_O49_NO NULL
+#define OPTION_VAL_140_O49_NO NULL
+#define OPTION_VAL_150_O49_NO NULL
+#define OPTION_VAL_160_O49_NO NULL
+#define OPTION_VAL_170_O49_NO NULL
+#define OPTION_VAL_180_O49_NO NULL
+#define OPTION_VAL_190_O49_NO NULL
+#define OPTION_VAL_200_O49_NO NULL
+#define OPTION_VAL_210_O49_NO NULL
+#define OPTION_VAL_220_O49_NO NULL
+#define OPTION_VAL_230_O49_NO NULL
+#define OPTION_VAL_240_O49_NO NULL
+#define OPTION_VAL_250_O49_NO NULL
+#define OPTION_VAL_260_O49_NO NULL
+#define OPTION_VAL_270_O49_NO NULL
+#define OPTION_VAL_280_O49_NO NULL
+#define OPTION_VAL_290_O49_NO NULL
+#define OPTION_VAL_300_O49_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NO NULL
 #define OPTION_VAL_WHITE_NO NULL
 #define OPTION_VAL_RED_NO "Rød"
@@ -59966,6 +60416,20 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_NO,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_NO,
       NULL,
@@ -60072,27 +60536,27 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O48_NO },
-         { "110%", OPTION_VAL_110_O48_NO },
-         { "120%", OPTION_VAL_120_O48_NO },
-         { "130%", OPTION_VAL_130_O48_NO },
-         { "140%", OPTION_VAL_140_O48_NO },
-         { "150%", OPTION_VAL_150_O48_NO },
-         { "160%", OPTION_VAL_160_O48_NO },
-         { "170%", OPTION_VAL_170_O48_NO },
-         { "180%", OPTION_VAL_180_O48_NO },
-         { "190%", OPTION_VAL_190_O48_NO },
-         { "200%", OPTION_VAL_200_O48_NO },
-         { "210%", OPTION_VAL_210_O48_NO },
-         { "220%", OPTION_VAL_220_O48_NO },
-         { "230%", OPTION_VAL_230_O48_NO },
-         { "240%", OPTION_VAL_240_O48_NO },
-         { "250%", OPTION_VAL_250_O48_NO },
-         { "260%", OPTION_VAL_260_O48_NO },
-         { "270%", OPTION_VAL_270_O48_NO },
-         { "280%", OPTION_VAL_280_O48_NO },
-         { "290%", OPTION_VAL_290_O48_NO },
-         { "300%", OPTION_VAL_300_O48_NO },
+         { "100%", OPTION_VAL_100_O49_NO },
+         { "110%", OPTION_VAL_110_O49_NO },
+         { "120%", OPTION_VAL_120_O49_NO },
+         { "130%", OPTION_VAL_130_O49_NO },
+         { "140%", OPTION_VAL_140_O49_NO },
+         { "150%", OPTION_VAL_150_O49_NO },
+         { "160%", OPTION_VAL_160_O49_NO },
+         { "170%", OPTION_VAL_170_O49_NO },
+         { "180%", OPTION_VAL_180_O49_NO },
+         { "190%", OPTION_VAL_190_O49_NO },
+         { "200%", OPTION_VAL_200_O49_NO },
+         { "210%", OPTION_VAL_210_O49_NO },
+         { "220%", OPTION_VAL_220_O49_NO },
+         { "230%", OPTION_VAL_230_O49_NO },
+         { "240%", OPTION_VAL_240_O49_NO },
+         { "250%", OPTION_VAL_250_O49_NO },
+         { "260%", OPTION_VAL_260_O49_NO },
+         { "270%", OPTION_VAL_270_O49_NO },
+         { "280%", OPTION_VAL_280_O49_NO },
+         { "290%", OPTION_VAL_290_O49_NO },
+         { "300%", OPTION_VAL_300_O49_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -60490,7 +60954,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O48_NO },
+         { "100%", OPTION_VAL_100_O49_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -60641,7 +61105,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O48_NO },
+         { "100%", OPTION_VAL_100_O49_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -60792,7 +61256,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O48_NO },
+         { "100%", OPTION_VAL_100_O49_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -60943,7 +61407,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O48_NO },
+         { "100%", OPTION_VAL_100_O49_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -61152,6 +61616,8 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_OR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_OR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_OR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_OR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_OR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_OR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_OR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_OR NULL
@@ -61177,27 +61643,27 @@ struct retro_core_options_v2 options_no = {
 #define OPTION_VAL_70_OR NULL
 #define OPTION_VAL_80_OR NULL
 #define OPTION_VAL_90_OR NULL
-#define OPTION_VAL_100_O48_OR NULL
-#define OPTION_VAL_110_O48_OR NULL
-#define OPTION_VAL_120_O48_OR NULL
-#define OPTION_VAL_130_O48_OR NULL
-#define OPTION_VAL_140_O48_OR NULL
-#define OPTION_VAL_150_O48_OR NULL
-#define OPTION_VAL_160_O48_OR NULL
-#define OPTION_VAL_170_O48_OR NULL
-#define OPTION_VAL_180_O48_OR NULL
-#define OPTION_VAL_190_O48_OR NULL
-#define OPTION_VAL_200_O48_OR NULL
-#define OPTION_VAL_210_O48_OR NULL
-#define OPTION_VAL_220_O48_OR NULL
-#define OPTION_VAL_230_O48_OR NULL
-#define OPTION_VAL_240_O48_OR NULL
-#define OPTION_VAL_250_O48_OR NULL
-#define OPTION_VAL_260_O48_OR NULL
-#define OPTION_VAL_270_O48_OR NULL
-#define OPTION_VAL_280_O48_OR NULL
-#define OPTION_VAL_290_O48_OR NULL
-#define OPTION_VAL_300_O48_OR NULL
+#define OPTION_VAL_100_O49_OR NULL
+#define OPTION_VAL_110_O49_OR NULL
+#define OPTION_VAL_120_O49_OR NULL
+#define OPTION_VAL_130_O49_OR NULL
+#define OPTION_VAL_140_O49_OR NULL
+#define OPTION_VAL_150_O49_OR NULL
+#define OPTION_VAL_160_O49_OR NULL
+#define OPTION_VAL_170_O49_OR NULL
+#define OPTION_VAL_180_O49_OR NULL
+#define OPTION_VAL_190_O49_OR NULL
+#define OPTION_VAL_200_O49_OR NULL
+#define OPTION_VAL_210_O49_OR NULL
+#define OPTION_VAL_220_O49_OR NULL
+#define OPTION_VAL_230_O49_OR NULL
+#define OPTION_VAL_240_O49_OR NULL
+#define OPTION_VAL_250_O49_OR NULL
+#define OPTION_VAL_260_O49_OR NULL
+#define OPTION_VAL_270_O49_OR NULL
+#define OPTION_VAL_280_O49_OR NULL
+#define OPTION_VAL_290_O49_OR NULL
+#define OPTION_VAL_300_O49_OR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OR NULL
 #define OPTION_VAL_WHITE_OR NULL
 #define OPTION_VAL_RED_OR NULL
@@ -62066,6 +62532,20 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_OR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_OR,
       NULL,
@@ -62172,27 +62652,27 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O48_OR },
-         { "110%", OPTION_VAL_110_O48_OR },
-         { "120%", OPTION_VAL_120_O48_OR },
-         { "130%", OPTION_VAL_130_O48_OR },
-         { "140%", OPTION_VAL_140_O48_OR },
-         { "150%", OPTION_VAL_150_O48_OR },
-         { "160%", OPTION_VAL_160_O48_OR },
-         { "170%", OPTION_VAL_170_O48_OR },
-         { "180%", OPTION_VAL_180_O48_OR },
-         { "190%", OPTION_VAL_190_O48_OR },
-         { "200%", OPTION_VAL_200_O48_OR },
-         { "210%", OPTION_VAL_210_O48_OR },
-         { "220%", OPTION_VAL_220_O48_OR },
-         { "230%", OPTION_VAL_230_O48_OR },
-         { "240%", OPTION_VAL_240_O48_OR },
-         { "250%", OPTION_VAL_250_O48_OR },
-         { "260%", OPTION_VAL_260_O48_OR },
-         { "270%", OPTION_VAL_270_O48_OR },
-         { "280%", OPTION_VAL_280_O48_OR },
-         { "290%", OPTION_VAL_290_O48_OR },
-         { "300%", OPTION_VAL_300_O48_OR },
+         { "100%", OPTION_VAL_100_O49_OR },
+         { "110%", OPTION_VAL_110_O49_OR },
+         { "120%", OPTION_VAL_120_O49_OR },
+         { "130%", OPTION_VAL_130_O49_OR },
+         { "140%", OPTION_VAL_140_O49_OR },
+         { "150%", OPTION_VAL_150_O49_OR },
+         { "160%", OPTION_VAL_160_O49_OR },
+         { "170%", OPTION_VAL_170_O49_OR },
+         { "180%", OPTION_VAL_180_O49_OR },
+         { "190%", OPTION_VAL_190_O49_OR },
+         { "200%", OPTION_VAL_200_O49_OR },
+         { "210%", OPTION_VAL_210_O49_OR },
+         { "220%", OPTION_VAL_220_O49_OR },
+         { "230%", OPTION_VAL_230_O49_OR },
+         { "240%", OPTION_VAL_240_O49_OR },
+         { "250%", OPTION_VAL_250_O49_OR },
+         { "260%", OPTION_VAL_260_O49_OR },
+         { "270%", OPTION_VAL_270_O49_OR },
+         { "280%", OPTION_VAL_280_O49_OR },
+         { "290%", OPTION_VAL_290_O49_OR },
+         { "300%", OPTION_VAL_300_O49_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -62590,7 +63070,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O48_OR },
+         { "100%", OPTION_VAL_100_O49_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -62741,7 +63221,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O48_OR },
+         { "100%", OPTION_VAL_100_O49_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -62892,7 +63372,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O48_OR },
+         { "100%", OPTION_VAL_100_O49_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -63043,7 +63523,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O48_OR },
+         { "100%", OPTION_VAL_100_O49_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -63252,6 +63732,8 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_PL "Wstępnie załaduj niestandardowe tekstury przy starcie gry. Może poprawić wydajność, ale zwiększa zużycie pamięci."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PL "Zgraj tekstury"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_PL "Za każdym razem, gdy nowa tekstura jest używana przez grę, zostanie zapisana jako plik .png w folderze 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_PL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_PL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PL "Zgrywaj zamienione tekstury"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_PL "Zawsze zgrywaj tekstury, które są już zastąpione przez niestandardowe tekstury."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PL "Martwa strefa drążka analogowego"
@@ -63277,27 +63759,27 @@ struct retro_core_options_v2 options_or = {
 #define OPTION_VAL_70_PL NULL
 #define OPTION_VAL_80_PL "80 %"
 #define OPTION_VAL_90_PL NULL
-#define OPTION_VAL_100_O48_PL NULL
-#define OPTION_VAL_110_O48_PL NULL
-#define OPTION_VAL_120_O48_PL NULL
-#define OPTION_VAL_130_O48_PL NULL
-#define OPTION_VAL_140_O48_PL NULL
-#define OPTION_VAL_150_O48_PL NULL
-#define OPTION_VAL_160_O48_PL NULL
-#define OPTION_VAL_170_O48_PL NULL
-#define OPTION_VAL_180_O48_PL NULL
-#define OPTION_VAL_190_O48_PL NULL
-#define OPTION_VAL_200_O48_PL NULL
-#define OPTION_VAL_210_O48_PL NULL
-#define OPTION_VAL_220_O48_PL NULL
-#define OPTION_VAL_230_O48_PL NULL
-#define OPTION_VAL_240_O48_PL NULL
-#define OPTION_VAL_250_O48_PL NULL
-#define OPTION_VAL_260_O48_PL NULL
-#define OPTION_VAL_270_O48_PL NULL
-#define OPTION_VAL_280_O48_PL NULL
-#define OPTION_VAL_290_O48_PL NULL
-#define OPTION_VAL_300_O48_PL NULL
+#define OPTION_VAL_100_O49_PL NULL
+#define OPTION_VAL_110_O49_PL NULL
+#define OPTION_VAL_120_O49_PL NULL
+#define OPTION_VAL_130_O49_PL NULL
+#define OPTION_VAL_140_O49_PL NULL
+#define OPTION_VAL_150_O49_PL NULL
+#define OPTION_VAL_160_O49_PL NULL
+#define OPTION_VAL_170_O49_PL NULL
+#define OPTION_VAL_180_O49_PL NULL
+#define OPTION_VAL_190_O49_PL NULL
+#define OPTION_VAL_200_O49_PL NULL
+#define OPTION_VAL_210_O49_PL NULL
+#define OPTION_VAL_220_O49_PL NULL
+#define OPTION_VAL_230_O49_PL NULL
+#define OPTION_VAL_240_O49_PL NULL
+#define OPTION_VAL_250_O49_PL NULL
+#define OPTION_VAL_260_O49_PL NULL
+#define OPTION_VAL_270_O49_PL NULL
+#define OPTION_VAL_280_O49_PL NULL
+#define OPTION_VAL_290_O49_PL NULL
+#define OPTION_VAL_300_O49_PL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PL "Wyświetlanie celownika pistoletu 1"
 #define OPTION_VAL_WHITE_PL "Biały"
 #define OPTION_VAL_RED_PL "Czerwony"
@@ -64166,6 +64648,20 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_PL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PL,
       NULL,
@@ -64272,27 +64768,27 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O48_PL },
-         { "110%", OPTION_VAL_110_O48_PL },
-         { "120%", OPTION_VAL_120_O48_PL },
-         { "130%", OPTION_VAL_130_O48_PL },
-         { "140%", OPTION_VAL_140_O48_PL },
-         { "150%", OPTION_VAL_150_O48_PL },
-         { "160%", OPTION_VAL_160_O48_PL },
-         { "170%", OPTION_VAL_170_O48_PL },
-         { "180%", OPTION_VAL_180_O48_PL },
-         { "190%", OPTION_VAL_190_O48_PL },
-         { "200%", OPTION_VAL_200_O48_PL },
-         { "210%", OPTION_VAL_210_O48_PL },
-         { "220%", OPTION_VAL_220_O48_PL },
-         { "230%", OPTION_VAL_230_O48_PL },
-         { "240%", OPTION_VAL_240_O48_PL },
-         { "250%", OPTION_VAL_250_O48_PL },
-         { "260%", OPTION_VAL_260_O48_PL },
-         { "270%", OPTION_VAL_270_O48_PL },
-         { "280%", OPTION_VAL_280_O48_PL },
-         { "290%", OPTION_VAL_290_O48_PL },
-         { "300%", OPTION_VAL_300_O48_PL },
+         { "100%", OPTION_VAL_100_O49_PL },
+         { "110%", OPTION_VAL_110_O49_PL },
+         { "120%", OPTION_VAL_120_O49_PL },
+         { "130%", OPTION_VAL_130_O49_PL },
+         { "140%", OPTION_VAL_140_O49_PL },
+         { "150%", OPTION_VAL_150_O49_PL },
+         { "160%", OPTION_VAL_160_O49_PL },
+         { "170%", OPTION_VAL_170_O49_PL },
+         { "180%", OPTION_VAL_180_O49_PL },
+         { "190%", OPTION_VAL_190_O49_PL },
+         { "200%", OPTION_VAL_200_O49_PL },
+         { "210%", OPTION_VAL_210_O49_PL },
+         { "220%", OPTION_VAL_220_O49_PL },
+         { "230%", OPTION_VAL_230_O49_PL },
+         { "240%", OPTION_VAL_240_O49_PL },
+         { "250%", OPTION_VAL_250_O49_PL },
+         { "260%", OPTION_VAL_260_O49_PL },
+         { "270%", OPTION_VAL_270_O49_PL },
+         { "280%", OPTION_VAL_280_O49_PL },
+         { "290%", OPTION_VAL_290_O49_PL },
+         { "300%", OPTION_VAL_300_O49_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -64690,7 +65186,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O48_PL },
+         { "100%", OPTION_VAL_100_O49_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -64841,7 +65337,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O48_PL },
+         { "100%", OPTION_VAL_100_O49_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -64992,7 +65488,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O48_PL },
+         { "100%", OPTION_VAL_100_O49_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -65143,7 +65639,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O48_PL },
+         { "100%", OPTION_VAL_100_O49_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -65352,6 +65848,8 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_PT_BR "Pré-carrega as texturas personalizadas ao iniciar um jogo. Otimiza o desempenho, mas aumenta o uso de memória."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PT_BR "Descarregar texturas"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_PT_BR "Toda vez que uma nova textura for usada pelo jogo, a textura será salva como um .PNG na pasta \"system/dc/texdump/<game-id>/\"."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PT_BR "Descarregar texturas substituídas"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_PT_BR "Descarrega as texturas que já foram substituídas pelas texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PT_BR "Zona morta do direcional analógico"
@@ -65377,27 +65875,27 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_70_PT_BR NULL
 #define OPTION_VAL_80_PT_BR NULL
 #define OPTION_VAL_90_PT_BR NULL
-#define OPTION_VAL_100_O48_PT_BR NULL
-#define OPTION_VAL_110_O48_PT_BR NULL
-#define OPTION_VAL_120_O48_PT_BR NULL
-#define OPTION_VAL_130_O48_PT_BR NULL
-#define OPTION_VAL_140_O48_PT_BR NULL
-#define OPTION_VAL_150_O48_PT_BR NULL
-#define OPTION_VAL_160_O48_PT_BR NULL
-#define OPTION_VAL_170_O48_PT_BR NULL
-#define OPTION_VAL_180_O48_PT_BR NULL
-#define OPTION_VAL_190_O48_PT_BR NULL
-#define OPTION_VAL_200_O48_PT_BR NULL
-#define OPTION_VAL_210_O48_PT_BR NULL
-#define OPTION_VAL_220_O48_PT_BR NULL
-#define OPTION_VAL_230_O48_PT_BR NULL
-#define OPTION_VAL_240_O48_PT_BR NULL
-#define OPTION_VAL_250_O48_PT_BR NULL
-#define OPTION_VAL_260_O48_PT_BR NULL
-#define OPTION_VAL_270_O48_PT_BR NULL
-#define OPTION_VAL_280_O48_PT_BR NULL
-#define OPTION_VAL_290_O48_PT_BR NULL
-#define OPTION_VAL_300_O48_PT_BR NULL
+#define OPTION_VAL_100_O49_PT_BR NULL
+#define OPTION_VAL_110_O49_PT_BR NULL
+#define OPTION_VAL_120_O49_PT_BR NULL
+#define OPTION_VAL_130_O49_PT_BR NULL
+#define OPTION_VAL_140_O49_PT_BR NULL
+#define OPTION_VAL_150_O49_PT_BR NULL
+#define OPTION_VAL_160_O49_PT_BR NULL
+#define OPTION_VAL_170_O49_PT_BR NULL
+#define OPTION_VAL_180_O49_PT_BR NULL
+#define OPTION_VAL_190_O49_PT_BR NULL
+#define OPTION_VAL_200_O49_PT_BR NULL
+#define OPTION_VAL_210_O49_PT_BR NULL
+#define OPTION_VAL_220_O49_PT_BR NULL
+#define OPTION_VAL_230_O49_PT_BR NULL
+#define OPTION_VAL_240_O49_PT_BR NULL
+#define OPTION_VAL_250_O49_PT_BR NULL
+#define OPTION_VAL_260_O49_PT_BR NULL
+#define OPTION_VAL_270_O49_PT_BR NULL
+#define OPTION_VAL_280_O49_PT_BR NULL
+#define OPTION_VAL_290_O49_PT_BR NULL
+#define OPTION_VAL_300_O49_PT_BR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_BR "Mira da arma 1"
 #define OPTION_VAL_WHITE_PT_BR "Branco"
 #define OPTION_VAL_RED_PT_BR "Vermelho"
@@ -66266,6 +66764,20 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_PT_BR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PT_BR,
       NULL,
@@ -66372,27 +66884,27 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O48_PT_BR },
-         { "110%", OPTION_VAL_110_O48_PT_BR },
-         { "120%", OPTION_VAL_120_O48_PT_BR },
-         { "130%", OPTION_VAL_130_O48_PT_BR },
-         { "140%", OPTION_VAL_140_O48_PT_BR },
-         { "150%", OPTION_VAL_150_O48_PT_BR },
-         { "160%", OPTION_VAL_160_O48_PT_BR },
-         { "170%", OPTION_VAL_170_O48_PT_BR },
-         { "180%", OPTION_VAL_180_O48_PT_BR },
-         { "190%", OPTION_VAL_190_O48_PT_BR },
-         { "200%", OPTION_VAL_200_O48_PT_BR },
-         { "210%", OPTION_VAL_210_O48_PT_BR },
-         { "220%", OPTION_VAL_220_O48_PT_BR },
-         { "230%", OPTION_VAL_230_O48_PT_BR },
-         { "240%", OPTION_VAL_240_O48_PT_BR },
-         { "250%", OPTION_VAL_250_O48_PT_BR },
-         { "260%", OPTION_VAL_260_O48_PT_BR },
-         { "270%", OPTION_VAL_270_O48_PT_BR },
-         { "280%", OPTION_VAL_280_O48_PT_BR },
-         { "290%", OPTION_VAL_290_O48_PT_BR },
-         { "300%", OPTION_VAL_300_O48_PT_BR },
+         { "100%", OPTION_VAL_100_O49_PT_BR },
+         { "110%", OPTION_VAL_110_O49_PT_BR },
+         { "120%", OPTION_VAL_120_O49_PT_BR },
+         { "130%", OPTION_VAL_130_O49_PT_BR },
+         { "140%", OPTION_VAL_140_O49_PT_BR },
+         { "150%", OPTION_VAL_150_O49_PT_BR },
+         { "160%", OPTION_VAL_160_O49_PT_BR },
+         { "170%", OPTION_VAL_170_O49_PT_BR },
+         { "180%", OPTION_VAL_180_O49_PT_BR },
+         { "190%", OPTION_VAL_190_O49_PT_BR },
+         { "200%", OPTION_VAL_200_O49_PT_BR },
+         { "210%", OPTION_VAL_210_O49_PT_BR },
+         { "220%", OPTION_VAL_220_O49_PT_BR },
+         { "230%", OPTION_VAL_230_O49_PT_BR },
+         { "240%", OPTION_VAL_240_O49_PT_BR },
+         { "250%", OPTION_VAL_250_O49_PT_BR },
+         { "260%", OPTION_VAL_260_O49_PT_BR },
+         { "270%", OPTION_VAL_270_O49_PT_BR },
+         { "280%", OPTION_VAL_280_O49_PT_BR },
+         { "290%", OPTION_VAL_290_O49_PT_BR },
+         { "300%", OPTION_VAL_300_O49_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -66790,7 +67302,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O48_PT_BR },
+         { "100%", OPTION_VAL_100_O49_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -66941,7 +67453,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O48_PT_BR },
+         { "100%", OPTION_VAL_100_O49_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -67092,7 +67604,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O48_PT_BR },
+         { "100%", OPTION_VAL_100_O49_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -67243,7 +67755,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O48_PT_BR },
+         { "100%", OPTION_VAL_100_O49_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -67452,6 +67964,8 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PT_PT NULL
@@ -67477,27 +67991,27 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_70_PT_PT NULL
 #define OPTION_VAL_80_PT_PT NULL
 #define OPTION_VAL_90_PT_PT NULL
-#define OPTION_VAL_100_O48_PT_PT NULL
-#define OPTION_VAL_110_O48_PT_PT NULL
-#define OPTION_VAL_120_O48_PT_PT NULL
-#define OPTION_VAL_130_O48_PT_PT NULL
-#define OPTION_VAL_140_O48_PT_PT NULL
-#define OPTION_VAL_150_O48_PT_PT NULL
-#define OPTION_VAL_160_O48_PT_PT NULL
-#define OPTION_VAL_170_O48_PT_PT NULL
-#define OPTION_VAL_180_O48_PT_PT NULL
-#define OPTION_VAL_190_O48_PT_PT NULL
-#define OPTION_VAL_200_O48_PT_PT NULL
-#define OPTION_VAL_210_O48_PT_PT NULL
-#define OPTION_VAL_220_O48_PT_PT NULL
-#define OPTION_VAL_230_O48_PT_PT NULL
-#define OPTION_VAL_240_O48_PT_PT NULL
-#define OPTION_VAL_250_O48_PT_PT NULL
-#define OPTION_VAL_260_O48_PT_PT NULL
-#define OPTION_VAL_270_O48_PT_PT NULL
-#define OPTION_VAL_280_O48_PT_PT NULL
-#define OPTION_VAL_290_O48_PT_PT NULL
-#define OPTION_VAL_300_O48_PT_PT NULL
+#define OPTION_VAL_100_O49_PT_PT NULL
+#define OPTION_VAL_110_O49_PT_PT NULL
+#define OPTION_VAL_120_O49_PT_PT NULL
+#define OPTION_VAL_130_O49_PT_PT NULL
+#define OPTION_VAL_140_O49_PT_PT NULL
+#define OPTION_VAL_150_O49_PT_PT NULL
+#define OPTION_VAL_160_O49_PT_PT NULL
+#define OPTION_VAL_170_O49_PT_PT NULL
+#define OPTION_VAL_180_O49_PT_PT NULL
+#define OPTION_VAL_190_O49_PT_PT NULL
+#define OPTION_VAL_200_O49_PT_PT NULL
+#define OPTION_VAL_210_O49_PT_PT NULL
+#define OPTION_VAL_220_O49_PT_PT NULL
+#define OPTION_VAL_230_O49_PT_PT NULL
+#define OPTION_VAL_240_O49_PT_PT NULL
+#define OPTION_VAL_250_O49_PT_PT NULL
+#define OPTION_VAL_260_O49_PT_PT NULL
+#define OPTION_VAL_270_O49_PT_PT NULL
+#define OPTION_VAL_280_O49_PT_PT NULL
+#define OPTION_VAL_290_O49_PT_PT NULL
+#define OPTION_VAL_300_O49_PT_PT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_PT NULL
 #define OPTION_VAL_WHITE_PT_PT NULL
 #define OPTION_VAL_RED_PT_PT "Vermelho"
@@ -68366,6 +68880,20 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_PT_PT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PT_PT,
       NULL,
@@ -68472,27 +69000,27 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O48_PT_PT },
-         { "110%", OPTION_VAL_110_O48_PT_PT },
-         { "120%", OPTION_VAL_120_O48_PT_PT },
-         { "130%", OPTION_VAL_130_O48_PT_PT },
-         { "140%", OPTION_VAL_140_O48_PT_PT },
-         { "150%", OPTION_VAL_150_O48_PT_PT },
-         { "160%", OPTION_VAL_160_O48_PT_PT },
-         { "170%", OPTION_VAL_170_O48_PT_PT },
-         { "180%", OPTION_VAL_180_O48_PT_PT },
-         { "190%", OPTION_VAL_190_O48_PT_PT },
-         { "200%", OPTION_VAL_200_O48_PT_PT },
-         { "210%", OPTION_VAL_210_O48_PT_PT },
-         { "220%", OPTION_VAL_220_O48_PT_PT },
-         { "230%", OPTION_VAL_230_O48_PT_PT },
-         { "240%", OPTION_VAL_240_O48_PT_PT },
-         { "250%", OPTION_VAL_250_O48_PT_PT },
-         { "260%", OPTION_VAL_260_O48_PT_PT },
-         { "270%", OPTION_VAL_270_O48_PT_PT },
-         { "280%", OPTION_VAL_280_O48_PT_PT },
-         { "290%", OPTION_VAL_290_O48_PT_PT },
-         { "300%", OPTION_VAL_300_O48_PT_PT },
+         { "100%", OPTION_VAL_100_O49_PT_PT },
+         { "110%", OPTION_VAL_110_O49_PT_PT },
+         { "120%", OPTION_VAL_120_O49_PT_PT },
+         { "130%", OPTION_VAL_130_O49_PT_PT },
+         { "140%", OPTION_VAL_140_O49_PT_PT },
+         { "150%", OPTION_VAL_150_O49_PT_PT },
+         { "160%", OPTION_VAL_160_O49_PT_PT },
+         { "170%", OPTION_VAL_170_O49_PT_PT },
+         { "180%", OPTION_VAL_180_O49_PT_PT },
+         { "190%", OPTION_VAL_190_O49_PT_PT },
+         { "200%", OPTION_VAL_200_O49_PT_PT },
+         { "210%", OPTION_VAL_210_O49_PT_PT },
+         { "220%", OPTION_VAL_220_O49_PT_PT },
+         { "230%", OPTION_VAL_230_O49_PT_PT },
+         { "240%", OPTION_VAL_240_O49_PT_PT },
+         { "250%", OPTION_VAL_250_O49_PT_PT },
+         { "260%", OPTION_VAL_260_O49_PT_PT },
+         { "270%", OPTION_VAL_270_O49_PT_PT },
+         { "280%", OPTION_VAL_280_O49_PT_PT },
+         { "290%", OPTION_VAL_290_O49_PT_PT },
+         { "300%", OPTION_VAL_300_O49_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -68890,7 +69418,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O48_PT_PT },
+         { "100%", OPTION_VAL_100_O49_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -69041,7 +69569,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O48_PT_PT },
+         { "100%", OPTION_VAL_100_O49_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -69192,7 +69720,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O48_PT_PT },
+         { "100%", OPTION_VAL_100_O49_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -69343,7 +69871,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O48_PT_PT },
+         { "100%", OPTION_VAL_100_O49_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -69552,6 +70080,8 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_RU "Использовать предзагрузку кастомных текстур при запуске игры. Может улучшить производительность, но увеличивает расход памяти."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RU "Дамп текстур"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_RU "При каждом использовании игрой новой текстуры она будет сохраняться в файл .png в папке 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_RU NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_RU NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_RU "Выгружать заменяемые текстуры"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_RU "Всегда создавать дамп текстур, для которых загружены кастомные текстуры."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_RU "Мёртвая зона аналогового стика"
@@ -69577,27 +70107,27 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_70_RU NULL
 #define OPTION_VAL_80_RU NULL
 #define OPTION_VAL_90_RU NULL
-#define OPTION_VAL_100_O48_RU NULL
-#define OPTION_VAL_110_O48_RU NULL
-#define OPTION_VAL_120_O48_RU NULL
-#define OPTION_VAL_130_O48_RU NULL
-#define OPTION_VAL_140_O48_RU NULL
-#define OPTION_VAL_150_O48_RU NULL
-#define OPTION_VAL_160_O48_RU NULL
-#define OPTION_VAL_170_O48_RU NULL
-#define OPTION_VAL_180_O48_RU NULL
-#define OPTION_VAL_190_O48_RU NULL
-#define OPTION_VAL_200_O48_RU NULL
-#define OPTION_VAL_210_O48_RU NULL
-#define OPTION_VAL_220_O48_RU NULL
-#define OPTION_VAL_230_O48_RU NULL
-#define OPTION_VAL_240_O48_RU NULL
-#define OPTION_VAL_250_O48_RU NULL
-#define OPTION_VAL_260_O48_RU NULL
-#define OPTION_VAL_270_O48_RU NULL
-#define OPTION_VAL_280_O48_RU NULL
-#define OPTION_VAL_290_O48_RU NULL
-#define OPTION_VAL_300_O48_RU NULL
+#define OPTION_VAL_100_O49_RU NULL
+#define OPTION_VAL_110_O49_RU NULL
+#define OPTION_VAL_120_O49_RU NULL
+#define OPTION_VAL_130_O49_RU NULL
+#define OPTION_VAL_140_O49_RU NULL
+#define OPTION_VAL_150_O49_RU NULL
+#define OPTION_VAL_160_O49_RU NULL
+#define OPTION_VAL_170_O49_RU NULL
+#define OPTION_VAL_180_O49_RU NULL
+#define OPTION_VAL_190_O49_RU NULL
+#define OPTION_VAL_200_O49_RU NULL
+#define OPTION_VAL_210_O49_RU NULL
+#define OPTION_VAL_220_O49_RU NULL
+#define OPTION_VAL_230_O49_RU NULL
+#define OPTION_VAL_240_O49_RU NULL
+#define OPTION_VAL_250_O49_RU NULL
+#define OPTION_VAL_260_O49_RU NULL
+#define OPTION_VAL_270_O49_RU NULL
+#define OPTION_VAL_280_O49_RU NULL
+#define OPTION_VAL_290_O49_RU NULL
+#define OPTION_VAL_300_O49_RU NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 1"
 #define OPTION_VAL_WHITE_RU "Белый"
 #define OPTION_VAL_RED_RU "Красный"
@@ -70466,6 +70996,20 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_RU,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_RU,
       NULL,
@@ -70572,27 +71116,27 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O48_RU },
-         { "110%", OPTION_VAL_110_O48_RU },
-         { "120%", OPTION_VAL_120_O48_RU },
-         { "130%", OPTION_VAL_130_O48_RU },
-         { "140%", OPTION_VAL_140_O48_RU },
-         { "150%", OPTION_VAL_150_O48_RU },
-         { "160%", OPTION_VAL_160_O48_RU },
-         { "170%", OPTION_VAL_170_O48_RU },
-         { "180%", OPTION_VAL_180_O48_RU },
-         { "190%", OPTION_VAL_190_O48_RU },
-         { "200%", OPTION_VAL_200_O48_RU },
-         { "210%", OPTION_VAL_210_O48_RU },
-         { "220%", OPTION_VAL_220_O48_RU },
-         { "230%", OPTION_VAL_230_O48_RU },
-         { "240%", OPTION_VAL_240_O48_RU },
-         { "250%", OPTION_VAL_250_O48_RU },
-         { "260%", OPTION_VAL_260_O48_RU },
-         { "270%", OPTION_VAL_270_O48_RU },
-         { "280%", OPTION_VAL_280_O48_RU },
-         { "290%", OPTION_VAL_290_O48_RU },
-         { "300%", OPTION_VAL_300_O48_RU },
+         { "100%", OPTION_VAL_100_O49_RU },
+         { "110%", OPTION_VAL_110_O49_RU },
+         { "120%", OPTION_VAL_120_O49_RU },
+         { "130%", OPTION_VAL_130_O49_RU },
+         { "140%", OPTION_VAL_140_O49_RU },
+         { "150%", OPTION_VAL_150_O49_RU },
+         { "160%", OPTION_VAL_160_O49_RU },
+         { "170%", OPTION_VAL_170_O49_RU },
+         { "180%", OPTION_VAL_180_O49_RU },
+         { "190%", OPTION_VAL_190_O49_RU },
+         { "200%", OPTION_VAL_200_O49_RU },
+         { "210%", OPTION_VAL_210_O49_RU },
+         { "220%", OPTION_VAL_220_O49_RU },
+         { "230%", OPTION_VAL_230_O49_RU },
+         { "240%", OPTION_VAL_240_O49_RU },
+         { "250%", OPTION_VAL_250_O49_RU },
+         { "260%", OPTION_VAL_260_O49_RU },
+         { "270%", OPTION_VAL_270_O49_RU },
+         { "280%", OPTION_VAL_280_O49_RU },
+         { "290%", OPTION_VAL_290_O49_RU },
+         { "300%", OPTION_VAL_300_O49_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -70990,7 +71534,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O48_RU },
+         { "100%", OPTION_VAL_100_O49_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -71141,7 +71685,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O48_RU },
+         { "100%", OPTION_VAL_100_O49_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -71292,7 +71836,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O48_RU },
+         { "100%", OPTION_VAL_100_O49_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -71443,7 +71987,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O48_RU },
+         { "100%", OPTION_VAL_100_O49_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -71492,8 +72036,8 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SK "Povolí tlačidlo SERVICE pre arkádové hry na vstup do nastavení skrinky."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SK "Nastaviť hry NAOMI na voľné hranie"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SK "Upraví nastavenia mincí hry na voľné hranie."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_SK NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_SK NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_SK "Limit mincí"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_SK "Po dosiahnutí nastaveného limitu zakáže vhadzovanie mincí."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK "Emulácia širokopásmového adaptéra"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK "Emulovať širokopásmový Ethernet adaptér namiesto modemu. (vyžaduje reštart)"
 #define CORE_OPTION_NAME_UPNP_LABEL_SK "Povoliť UPnP"
@@ -71652,6 +72196,8 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_SK "Predčíta vlastné textúry pri spustení hry. Môže zlepšiť výkon, ale zvyšuje využitie pamäte."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SK "Dumpovať textúry"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SK "Vždy, keď hra použije novú textúru, sa uloží ako súbor .png v priečinku 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_SK "Vynechať video a animované textúry"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_SK "Pri ukladaní textúr preskočí video (YUV) a už aktualizované textúry."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SK "Dumpovať nahradené textúry"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_SK "Vždy dumpovať textúry, ktoré sú už nahradené vlastnými textúrami."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SK "Mŕtva zóna analógovej páčky"
@@ -71677,27 +72223,27 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_70_SK NULL
 #define OPTION_VAL_80_SK NULL
 #define OPTION_VAL_90_SK NULL
-#define OPTION_VAL_100_O48_SK NULL
-#define OPTION_VAL_110_O48_SK NULL
-#define OPTION_VAL_120_O48_SK NULL
-#define OPTION_VAL_130_O48_SK NULL
-#define OPTION_VAL_140_O48_SK NULL
-#define OPTION_VAL_150_O48_SK NULL
-#define OPTION_VAL_160_O48_SK NULL
-#define OPTION_VAL_170_O48_SK NULL
-#define OPTION_VAL_180_O48_SK NULL
-#define OPTION_VAL_190_O48_SK NULL
-#define OPTION_VAL_200_O48_SK NULL
-#define OPTION_VAL_210_O48_SK NULL
-#define OPTION_VAL_220_O48_SK NULL
-#define OPTION_VAL_230_O48_SK NULL
-#define OPTION_VAL_240_O48_SK NULL
-#define OPTION_VAL_250_O48_SK NULL
-#define OPTION_VAL_260_O48_SK NULL
-#define OPTION_VAL_270_O48_SK NULL
-#define OPTION_VAL_280_O48_SK NULL
-#define OPTION_VAL_290_O48_SK NULL
-#define OPTION_VAL_300_O48_SK NULL
+#define OPTION_VAL_100_O49_SK NULL
+#define OPTION_VAL_110_O49_SK NULL
+#define OPTION_VAL_120_O49_SK NULL
+#define OPTION_VAL_130_O49_SK NULL
+#define OPTION_VAL_140_O49_SK NULL
+#define OPTION_VAL_150_O49_SK NULL
+#define OPTION_VAL_160_O49_SK NULL
+#define OPTION_VAL_170_O49_SK NULL
+#define OPTION_VAL_180_O49_SK NULL
+#define OPTION_VAL_190_O49_SK NULL
+#define OPTION_VAL_200_O49_SK NULL
+#define OPTION_VAL_210_O49_SK NULL
+#define OPTION_VAL_220_O49_SK NULL
+#define OPTION_VAL_230_O49_SK NULL
+#define OPTION_VAL_240_O49_SK NULL
+#define OPTION_VAL_250_O49_SK NULL
+#define OPTION_VAL_260_O49_SK NULL
+#define OPTION_VAL_270_O49_SK NULL
+#define OPTION_VAL_280_O49_SK NULL
+#define OPTION_VAL_290_O49_SK NULL
+#define OPTION_VAL_300_O49_SK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK "Displej zameriavača pištole 1"
 #define OPTION_VAL_WHITE_SK "Biela"
 #define OPTION_VAL_RED_SK "Červená"
@@ -72566,6 +73112,20 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_SK,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SK,
       NULL,
@@ -72672,27 +73232,27 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O48_SK },
-         { "110%", OPTION_VAL_110_O48_SK },
-         { "120%", OPTION_VAL_120_O48_SK },
-         { "130%", OPTION_VAL_130_O48_SK },
-         { "140%", OPTION_VAL_140_O48_SK },
-         { "150%", OPTION_VAL_150_O48_SK },
-         { "160%", OPTION_VAL_160_O48_SK },
-         { "170%", OPTION_VAL_170_O48_SK },
-         { "180%", OPTION_VAL_180_O48_SK },
-         { "190%", OPTION_VAL_190_O48_SK },
-         { "200%", OPTION_VAL_200_O48_SK },
-         { "210%", OPTION_VAL_210_O48_SK },
-         { "220%", OPTION_VAL_220_O48_SK },
-         { "230%", OPTION_VAL_230_O48_SK },
-         { "240%", OPTION_VAL_240_O48_SK },
-         { "250%", OPTION_VAL_250_O48_SK },
-         { "260%", OPTION_VAL_260_O48_SK },
-         { "270%", OPTION_VAL_270_O48_SK },
-         { "280%", OPTION_VAL_280_O48_SK },
-         { "290%", OPTION_VAL_290_O48_SK },
-         { "300%", OPTION_VAL_300_O48_SK },
+         { "100%", OPTION_VAL_100_O49_SK },
+         { "110%", OPTION_VAL_110_O49_SK },
+         { "120%", OPTION_VAL_120_O49_SK },
+         { "130%", OPTION_VAL_130_O49_SK },
+         { "140%", OPTION_VAL_140_O49_SK },
+         { "150%", OPTION_VAL_150_O49_SK },
+         { "160%", OPTION_VAL_160_O49_SK },
+         { "170%", OPTION_VAL_170_O49_SK },
+         { "180%", OPTION_VAL_180_O49_SK },
+         { "190%", OPTION_VAL_190_O49_SK },
+         { "200%", OPTION_VAL_200_O49_SK },
+         { "210%", OPTION_VAL_210_O49_SK },
+         { "220%", OPTION_VAL_220_O49_SK },
+         { "230%", OPTION_VAL_230_O49_SK },
+         { "240%", OPTION_VAL_240_O49_SK },
+         { "250%", OPTION_VAL_250_O49_SK },
+         { "260%", OPTION_VAL_260_O49_SK },
+         { "270%", OPTION_VAL_270_O49_SK },
+         { "280%", OPTION_VAL_280_O49_SK },
+         { "290%", OPTION_VAL_290_O49_SK },
+         { "300%", OPTION_VAL_300_O49_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -73090,7 +73650,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O48_SK },
+         { "100%", OPTION_VAL_100_O49_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -73241,7 +73801,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O48_SK },
+         { "100%", OPTION_VAL_100_O49_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -73392,7 +73952,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O48_SK },
+         { "100%", OPTION_VAL_100_O49_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -73543,7 +74103,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O48_SK },
+         { "100%", OPTION_VAL_100_O49_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -73752,6 +74312,8 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_SR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_SR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_SR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_SR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SR NULL
@@ -73777,27 +74339,27 @@ struct retro_core_options_v2 options_sk = {
 #define OPTION_VAL_70_SR NULL
 #define OPTION_VAL_80_SR NULL
 #define OPTION_VAL_90_SR NULL
-#define OPTION_VAL_100_O48_SR NULL
-#define OPTION_VAL_110_O48_SR NULL
-#define OPTION_VAL_120_O48_SR NULL
-#define OPTION_VAL_130_O48_SR NULL
-#define OPTION_VAL_140_O48_SR NULL
-#define OPTION_VAL_150_O48_SR NULL
-#define OPTION_VAL_160_O48_SR NULL
-#define OPTION_VAL_170_O48_SR NULL
-#define OPTION_VAL_180_O48_SR NULL
-#define OPTION_VAL_190_O48_SR NULL
-#define OPTION_VAL_200_O48_SR NULL
-#define OPTION_VAL_210_O48_SR NULL
-#define OPTION_VAL_220_O48_SR NULL
-#define OPTION_VAL_230_O48_SR NULL
-#define OPTION_VAL_240_O48_SR NULL
-#define OPTION_VAL_250_O48_SR NULL
-#define OPTION_VAL_260_O48_SR NULL
-#define OPTION_VAL_270_O48_SR NULL
-#define OPTION_VAL_280_O48_SR NULL
-#define OPTION_VAL_290_O48_SR NULL
-#define OPTION_VAL_300_O48_SR NULL
+#define OPTION_VAL_100_O49_SR NULL
+#define OPTION_VAL_110_O49_SR NULL
+#define OPTION_VAL_120_O49_SR NULL
+#define OPTION_VAL_130_O49_SR NULL
+#define OPTION_VAL_140_O49_SR NULL
+#define OPTION_VAL_150_O49_SR NULL
+#define OPTION_VAL_160_O49_SR NULL
+#define OPTION_VAL_170_O49_SR NULL
+#define OPTION_VAL_180_O49_SR NULL
+#define OPTION_VAL_190_O49_SR NULL
+#define OPTION_VAL_200_O49_SR NULL
+#define OPTION_VAL_210_O49_SR NULL
+#define OPTION_VAL_220_O49_SR NULL
+#define OPTION_VAL_230_O49_SR NULL
+#define OPTION_VAL_240_O49_SR NULL
+#define OPTION_VAL_250_O49_SR NULL
+#define OPTION_VAL_260_O49_SR NULL
+#define OPTION_VAL_270_O49_SR NULL
+#define OPTION_VAL_280_O49_SR NULL
+#define OPTION_VAL_290_O49_SR NULL
+#define OPTION_VAL_300_O49_SR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SR NULL
 #define OPTION_VAL_WHITE_SR NULL
 #define OPTION_VAL_RED_SR NULL
@@ -74666,6 +75228,20 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_SR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SR,
       NULL,
@@ -74772,27 +75348,27 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O48_SR },
-         { "110%", OPTION_VAL_110_O48_SR },
-         { "120%", OPTION_VAL_120_O48_SR },
-         { "130%", OPTION_VAL_130_O48_SR },
-         { "140%", OPTION_VAL_140_O48_SR },
-         { "150%", OPTION_VAL_150_O48_SR },
-         { "160%", OPTION_VAL_160_O48_SR },
-         { "170%", OPTION_VAL_170_O48_SR },
-         { "180%", OPTION_VAL_180_O48_SR },
-         { "190%", OPTION_VAL_190_O48_SR },
-         { "200%", OPTION_VAL_200_O48_SR },
-         { "210%", OPTION_VAL_210_O48_SR },
-         { "220%", OPTION_VAL_220_O48_SR },
-         { "230%", OPTION_VAL_230_O48_SR },
-         { "240%", OPTION_VAL_240_O48_SR },
-         { "250%", OPTION_VAL_250_O48_SR },
-         { "260%", OPTION_VAL_260_O48_SR },
-         { "270%", OPTION_VAL_270_O48_SR },
-         { "280%", OPTION_VAL_280_O48_SR },
-         { "290%", OPTION_VAL_290_O48_SR },
-         { "300%", OPTION_VAL_300_O48_SR },
+         { "100%", OPTION_VAL_100_O49_SR },
+         { "110%", OPTION_VAL_110_O49_SR },
+         { "120%", OPTION_VAL_120_O49_SR },
+         { "130%", OPTION_VAL_130_O49_SR },
+         { "140%", OPTION_VAL_140_O49_SR },
+         { "150%", OPTION_VAL_150_O49_SR },
+         { "160%", OPTION_VAL_160_O49_SR },
+         { "170%", OPTION_VAL_170_O49_SR },
+         { "180%", OPTION_VAL_180_O49_SR },
+         { "190%", OPTION_VAL_190_O49_SR },
+         { "200%", OPTION_VAL_200_O49_SR },
+         { "210%", OPTION_VAL_210_O49_SR },
+         { "220%", OPTION_VAL_220_O49_SR },
+         { "230%", OPTION_VAL_230_O49_SR },
+         { "240%", OPTION_VAL_240_O49_SR },
+         { "250%", OPTION_VAL_250_O49_SR },
+         { "260%", OPTION_VAL_260_O49_SR },
+         { "270%", OPTION_VAL_270_O49_SR },
+         { "280%", OPTION_VAL_280_O49_SR },
+         { "290%", OPTION_VAL_290_O49_SR },
+         { "300%", OPTION_VAL_300_O49_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -75190,7 +75766,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O48_SR },
+         { "100%", OPTION_VAL_100_O49_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -75341,7 +75917,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O48_SR },
+         { "100%", OPTION_VAL_100_O49_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -75492,7 +76068,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O48_SR },
+         { "100%", OPTION_VAL_100_O49_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -75643,7 +76219,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O48_SR },
+         { "100%", OPTION_VAL_100_O49_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -75692,8 +76268,8 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV "Aktiverar SERVICE-knapp för arkadspel för att ange kabinettinställningar."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV "Ställ in NAOMI-spel till Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV "Ändra spelets myntinställningar till free play."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_SV NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_SV NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_SV "Myntgräns"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_SV "Inaktivera myntinsättning efter angiven gräns."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV "Emulering av bredbandsadapter"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV "Emulera Ethernet-bredbandsadaptern istället för modemet. (Omstart krävs)"
 #define CORE_OPTION_NAME_UPNP_LABEL_SV "Aktivera UPnP"
@@ -75852,6 +76428,8 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_SV "Förinläs anpassade texturer vid spelstart. Kan förbättra prestanda men ökar minnesanvändningen."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SV "Varje gång en ny textur används av spelet sparas den som en .png-fil i mappen 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_SV "Ignorera video och animerade texturer"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_SV "Hoppa över dumpning av video (YUV) och redan uppdaterade texturer."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SV "Dumpa ersatta texturer"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_SV "Dumpa alltid texturer som redan ersatts av anpassade texturer."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV "Analoga spakens dödzon"
@@ -75877,27 +76455,27 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_70_SV NULL
 #define OPTION_VAL_80_SV NULL
 #define OPTION_VAL_90_SV NULL
-#define OPTION_VAL_100_O48_SV NULL
-#define OPTION_VAL_110_O48_SV NULL
-#define OPTION_VAL_120_O48_SV NULL
-#define OPTION_VAL_130_O48_SV NULL
-#define OPTION_VAL_140_O48_SV NULL
-#define OPTION_VAL_150_O48_SV NULL
-#define OPTION_VAL_160_O48_SV NULL
-#define OPTION_VAL_170_O48_SV NULL
-#define OPTION_VAL_180_O48_SV NULL
-#define OPTION_VAL_190_O48_SV NULL
-#define OPTION_VAL_200_O48_SV NULL
-#define OPTION_VAL_210_O48_SV NULL
-#define OPTION_VAL_220_O48_SV NULL
-#define OPTION_VAL_230_O48_SV NULL
-#define OPTION_VAL_240_O48_SV NULL
-#define OPTION_VAL_250_O48_SV NULL
-#define OPTION_VAL_260_O48_SV NULL
-#define OPTION_VAL_270_O48_SV NULL
-#define OPTION_VAL_280_O48_SV NULL
-#define OPTION_VAL_290_O48_SV NULL
-#define OPTION_VAL_300_O48_SV NULL
+#define OPTION_VAL_100_O49_SV NULL
+#define OPTION_VAL_110_O49_SV NULL
+#define OPTION_VAL_120_O49_SV NULL
+#define OPTION_VAL_130_O49_SV NULL
+#define OPTION_VAL_140_O49_SV NULL
+#define OPTION_VAL_150_O49_SV NULL
+#define OPTION_VAL_160_O49_SV NULL
+#define OPTION_VAL_170_O49_SV NULL
+#define OPTION_VAL_180_O49_SV NULL
+#define OPTION_VAL_190_O49_SV NULL
+#define OPTION_VAL_200_O49_SV NULL
+#define OPTION_VAL_210_O49_SV NULL
+#define OPTION_VAL_220_O49_SV NULL
+#define OPTION_VAL_230_O49_SV NULL
+#define OPTION_VAL_240_O49_SV NULL
+#define OPTION_VAL_250_O49_SV NULL
+#define OPTION_VAL_260_O49_SV NULL
+#define OPTION_VAL_270_O49_SV NULL
+#define OPTION_VAL_280_O49_SV NULL
+#define OPTION_VAL_290_O49_SV NULL
+#define OPTION_VAL_300_O49_SV NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
@@ -76766,6 +77344,20 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_SV,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SV,
       NULL,
@@ -76872,27 +77464,27 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O48_SV },
-         { "110%", OPTION_VAL_110_O48_SV },
-         { "120%", OPTION_VAL_120_O48_SV },
-         { "130%", OPTION_VAL_130_O48_SV },
-         { "140%", OPTION_VAL_140_O48_SV },
-         { "150%", OPTION_VAL_150_O48_SV },
-         { "160%", OPTION_VAL_160_O48_SV },
-         { "170%", OPTION_VAL_170_O48_SV },
-         { "180%", OPTION_VAL_180_O48_SV },
-         { "190%", OPTION_VAL_190_O48_SV },
-         { "200%", OPTION_VAL_200_O48_SV },
-         { "210%", OPTION_VAL_210_O48_SV },
-         { "220%", OPTION_VAL_220_O48_SV },
-         { "230%", OPTION_VAL_230_O48_SV },
-         { "240%", OPTION_VAL_240_O48_SV },
-         { "250%", OPTION_VAL_250_O48_SV },
-         { "260%", OPTION_VAL_260_O48_SV },
-         { "270%", OPTION_VAL_270_O48_SV },
-         { "280%", OPTION_VAL_280_O48_SV },
-         { "290%", OPTION_VAL_290_O48_SV },
-         { "300%", OPTION_VAL_300_O48_SV },
+         { "100%", OPTION_VAL_100_O49_SV },
+         { "110%", OPTION_VAL_110_O49_SV },
+         { "120%", OPTION_VAL_120_O49_SV },
+         { "130%", OPTION_VAL_130_O49_SV },
+         { "140%", OPTION_VAL_140_O49_SV },
+         { "150%", OPTION_VAL_150_O49_SV },
+         { "160%", OPTION_VAL_160_O49_SV },
+         { "170%", OPTION_VAL_170_O49_SV },
+         { "180%", OPTION_VAL_180_O49_SV },
+         { "190%", OPTION_VAL_190_O49_SV },
+         { "200%", OPTION_VAL_200_O49_SV },
+         { "210%", OPTION_VAL_210_O49_SV },
+         { "220%", OPTION_VAL_220_O49_SV },
+         { "230%", OPTION_VAL_230_O49_SV },
+         { "240%", OPTION_VAL_240_O49_SV },
+         { "250%", OPTION_VAL_250_O49_SV },
+         { "260%", OPTION_VAL_260_O49_SV },
+         { "270%", OPTION_VAL_270_O49_SV },
+         { "280%", OPTION_VAL_280_O49_SV },
+         { "290%", OPTION_VAL_290_O49_SV },
+         { "300%", OPTION_VAL_300_O49_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -77290,7 +77882,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O48_SV },
+         { "100%", OPTION_VAL_100_O49_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -77441,7 +78033,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O48_SV },
+         { "100%", OPTION_VAL_100_O49_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -77592,7 +78184,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O48_SV },
+         { "100%", OPTION_VAL_100_O49_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -77743,7 +78335,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O48_SV },
+         { "100%", OPTION_VAL_100_O49_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -77952,6 +78544,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TH "โหลดพื้นผิวแบบกำหนดเองล่วงหน้า เมื่อเริ่มเกม อาจช่วยปรับปรุงประสิทธิภาพให้ดีขึ้น แต่จะใช้ RAM เพิ่มมากขึ้น"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TH NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TH "ทุกครั้งที่มีการใช้งานพื้นผิวใหม่ในเกม ไฟล์นั้นจะถูกบันทึกเป็นไฟล์ .png ไว้ในโฟลเดอร์ 'system/dc/texdump/<game-id>/'"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_TH NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_TH NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TH "ดัมป์พื้นผิวที่ถูกแทนที่"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TH "ดัมป์พื้นผิวที่ถูกแทนที่ด้วยพื้นผิวแบบกำหนดเองเสมอ"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TH "ระยะหยุดการทำงานของก้านอะนาล็อก"
@@ -77977,27 +78571,27 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_70_TH NULL
 #define OPTION_VAL_80_TH NULL
 #define OPTION_VAL_90_TH NULL
-#define OPTION_VAL_100_O48_TH NULL
-#define OPTION_VAL_110_O48_TH NULL
-#define OPTION_VAL_120_O48_TH NULL
-#define OPTION_VAL_130_O48_TH NULL
-#define OPTION_VAL_140_O48_TH NULL
-#define OPTION_VAL_150_O48_TH NULL
-#define OPTION_VAL_160_O48_TH NULL
-#define OPTION_VAL_170_O48_TH NULL
-#define OPTION_VAL_180_O48_TH NULL
-#define OPTION_VAL_190_O48_TH NULL
-#define OPTION_VAL_200_O48_TH NULL
-#define OPTION_VAL_210_O48_TH NULL
-#define OPTION_VAL_220_O48_TH NULL
-#define OPTION_VAL_230_O48_TH NULL
-#define OPTION_VAL_240_O48_TH NULL
-#define OPTION_VAL_250_O48_TH NULL
-#define OPTION_VAL_260_O48_TH NULL
-#define OPTION_VAL_270_O48_TH NULL
-#define OPTION_VAL_280_O48_TH NULL
-#define OPTION_VAL_290_O48_TH NULL
-#define OPTION_VAL_300_O48_TH NULL
+#define OPTION_VAL_100_O49_TH NULL
+#define OPTION_VAL_110_O49_TH NULL
+#define OPTION_VAL_120_O49_TH NULL
+#define OPTION_VAL_130_O49_TH NULL
+#define OPTION_VAL_140_O49_TH NULL
+#define OPTION_VAL_150_O49_TH NULL
+#define OPTION_VAL_160_O49_TH NULL
+#define OPTION_VAL_170_O49_TH NULL
+#define OPTION_VAL_180_O49_TH NULL
+#define OPTION_VAL_190_O49_TH NULL
+#define OPTION_VAL_200_O49_TH NULL
+#define OPTION_VAL_210_O49_TH NULL
+#define OPTION_VAL_220_O49_TH NULL
+#define OPTION_VAL_230_O49_TH NULL
+#define OPTION_VAL_240_O49_TH NULL
+#define OPTION_VAL_250_O49_TH NULL
+#define OPTION_VAL_260_O49_TH NULL
+#define OPTION_VAL_270_O49_TH NULL
+#define OPTION_VAL_280_O49_TH NULL
+#define OPTION_VAL_290_O49_TH NULL
+#define OPTION_VAL_300_O49_TH NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TH "การแสดงผลเป้าเล็งของปืน 1"
 #define OPTION_VAL_WHITE_TH "ขาว"
 #define OPTION_VAL_RED_TH NULL
@@ -78866,6 +79460,20 @@ struct retro_core_option_v2_definition option_defs_th[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TH,
       NULL,
@@ -78972,27 +79580,27 @@ struct retro_core_option_v2_definition option_defs_th[] = {
          { "70%",  OPTION_VAL_70_TH },
          { "80%",  OPTION_VAL_80_TH },
          { "90%",  OPTION_VAL_90_TH },
-         { "100%", OPTION_VAL_100_O48_TH },
-         { "110%", OPTION_VAL_110_O48_TH },
-         { "120%", OPTION_VAL_120_O48_TH },
-         { "130%", OPTION_VAL_130_O48_TH },
-         { "140%", OPTION_VAL_140_O48_TH },
-         { "150%", OPTION_VAL_150_O48_TH },
-         { "160%", OPTION_VAL_160_O48_TH },
-         { "170%", OPTION_VAL_170_O48_TH },
-         { "180%", OPTION_VAL_180_O48_TH },
-         { "190%", OPTION_VAL_190_O48_TH },
-         { "200%", OPTION_VAL_200_O48_TH },
-         { "210%", OPTION_VAL_210_O48_TH },
-         { "220%", OPTION_VAL_220_O48_TH },
-         { "230%", OPTION_VAL_230_O48_TH },
-         { "240%", OPTION_VAL_240_O48_TH },
-         { "250%", OPTION_VAL_250_O48_TH },
-         { "260%", OPTION_VAL_260_O48_TH },
-         { "270%", OPTION_VAL_270_O48_TH },
-         { "280%", OPTION_VAL_280_O48_TH },
-         { "290%", OPTION_VAL_290_O48_TH },
-         { "300%", OPTION_VAL_300_O48_TH },
+         { "100%", OPTION_VAL_100_O49_TH },
+         { "110%", OPTION_VAL_110_O49_TH },
+         { "120%", OPTION_VAL_120_O49_TH },
+         { "130%", OPTION_VAL_130_O49_TH },
+         { "140%", OPTION_VAL_140_O49_TH },
+         { "150%", OPTION_VAL_150_O49_TH },
+         { "160%", OPTION_VAL_160_O49_TH },
+         { "170%", OPTION_VAL_170_O49_TH },
+         { "180%", OPTION_VAL_180_O49_TH },
+         { "190%", OPTION_VAL_190_O49_TH },
+         { "200%", OPTION_VAL_200_O49_TH },
+         { "210%", OPTION_VAL_210_O49_TH },
+         { "220%", OPTION_VAL_220_O49_TH },
+         { "230%", OPTION_VAL_230_O49_TH },
+         { "240%", OPTION_VAL_240_O49_TH },
+         { "250%", OPTION_VAL_250_O49_TH },
+         { "260%", OPTION_VAL_260_O49_TH },
+         { "270%", OPTION_VAL_270_O49_TH },
+         { "280%", OPTION_VAL_280_O49_TH },
+         { "290%", OPTION_VAL_290_O49_TH },
+         { "300%", OPTION_VAL_300_O49_TH },
          { NULL,   NULL },
       },
       "100%",
@@ -79390,7 +79998,7 @@ struct retro_core_option_v2_definition option_defs_th[] = {
          { "70%",  OPTION_VAL_70_TH },
          { "80%",  OPTION_VAL_80_TH },
          { "90%",  OPTION_VAL_90_TH },
-         { "100%", OPTION_VAL_100_O48_TH },
+         { "100%", OPTION_VAL_100_O49_TH },
          { NULL,   NULL },
       },
       "100%",
@@ -79541,7 +80149,7 @@ struct retro_core_option_v2_definition option_defs_th[] = {
          { "70%",  OPTION_VAL_70_TH },
          { "80%",  OPTION_VAL_80_TH },
          { "90%",  OPTION_VAL_90_TH },
-         { "100%", OPTION_VAL_100_O48_TH },
+         { "100%", OPTION_VAL_100_O49_TH },
          { NULL,   NULL },
       },
       "100%",
@@ -79692,7 +80300,7 @@ struct retro_core_option_v2_definition option_defs_th[] = {
          { "70%",  OPTION_VAL_70_TH },
          { "80%",  OPTION_VAL_80_TH },
          { "90%",  OPTION_VAL_90_TH },
-         { "100%", OPTION_VAL_100_O48_TH },
+         { "100%", OPTION_VAL_100_O49_TH },
          { NULL,   NULL },
       },
       "100%",
@@ -79843,7 +80451,7 @@ struct retro_core_option_v2_definition option_defs_th[] = {
          { "70%",  OPTION_VAL_70_TH },
          { "80%",  OPTION_VAL_80_TH },
          { "90%",  OPTION_VAL_90_TH },
-         { "100%", OPTION_VAL_100_O48_TH },
+         { "100%", OPTION_VAL_100_O49_TH },
          { NULL,   NULL },
       },
       "100%",
@@ -80052,6 +80660,8 @@ struct retro_core_options_v2 options_th = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TR "Oyun başlangıcında özel dokuları önceden yükleyin. Bu, performansı artırabilir ancak bellek kullanımını yükseltir."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR "Oyun tarafından her yeni doku kullanıldığında, 'system/dc/texdump/<game-id>/' klasörüne .png dosyası olarak kaydedilecektir."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_TR NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_TR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TR NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TR "Analog Çubuğu Ölü Bölge"
@@ -80077,27 +80687,27 @@ struct retro_core_options_v2 options_th = {
 #define OPTION_VAL_70_TR "%70"
 #define OPTION_VAL_80_TR "%80"
 #define OPTION_VAL_90_TR "%90"
-#define OPTION_VAL_100_O48_TR NULL
-#define OPTION_VAL_110_O48_TR NULL
-#define OPTION_VAL_120_O48_TR NULL
-#define OPTION_VAL_130_O48_TR NULL
-#define OPTION_VAL_140_O48_TR NULL
-#define OPTION_VAL_150_O48_TR NULL
-#define OPTION_VAL_160_O48_TR NULL
-#define OPTION_VAL_170_O48_TR NULL
-#define OPTION_VAL_180_O48_TR NULL
-#define OPTION_VAL_190_O48_TR NULL
-#define OPTION_VAL_200_O48_TR NULL
-#define OPTION_VAL_210_O48_TR NULL
-#define OPTION_VAL_220_O48_TR NULL
-#define OPTION_VAL_230_O48_TR NULL
-#define OPTION_VAL_240_O48_TR NULL
-#define OPTION_VAL_250_O48_TR NULL
-#define OPTION_VAL_260_O48_TR NULL
-#define OPTION_VAL_270_O48_TR NULL
-#define OPTION_VAL_280_O48_TR NULL
-#define OPTION_VAL_290_O48_TR NULL
-#define OPTION_VAL_300_O48_TR NULL
+#define OPTION_VAL_100_O49_TR "%100"
+#define OPTION_VAL_110_O49_TR "%110"
+#define OPTION_VAL_120_O49_TR "%120"
+#define OPTION_VAL_130_O49_TR "%130"
+#define OPTION_VAL_140_O49_TR "%140"
+#define OPTION_VAL_150_O49_TR "%150"
+#define OPTION_VAL_160_O49_TR "%160"
+#define OPTION_VAL_170_O49_TR "%170"
+#define OPTION_VAL_180_O49_TR "%180"
+#define OPTION_VAL_190_O49_TR "%190"
+#define OPTION_VAL_200_O49_TR "%200"
+#define OPTION_VAL_210_O49_TR "%210"
+#define OPTION_VAL_220_O49_TR "%220"
+#define OPTION_VAL_230_O49_TR "%230"
+#define OPTION_VAL_240_O49_TR "%240"
+#define OPTION_VAL_250_O49_TR "%250"
+#define OPTION_VAL_260_O49_TR "%260"
+#define OPTION_VAL_270_O49_TR "%270"
+#define OPTION_VAL_280_O49_TR "%280"
+#define OPTION_VAL_290_O49_TR "%290"
+#define OPTION_VAL_300_O49_TR "%300"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 1 Görüntüle"
 #define OPTION_VAL_WHITE_TR "Beyaz"
 #define OPTION_VAL_RED_TR "Kırmızı"
@@ -80966,6 +81576,20 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_TR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TR,
       NULL,
@@ -81072,27 +81696,27 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O48_TR },
-         { "110%", OPTION_VAL_110_O48_TR },
-         { "120%", OPTION_VAL_120_O48_TR },
-         { "130%", OPTION_VAL_130_O48_TR },
-         { "140%", OPTION_VAL_140_O48_TR },
-         { "150%", OPTION_VAL_150_O48_TR },
-         { "160%", OPTION_VAL_160_O48_TR },
-         { "170%", OPTION_VAL_170_O48_TR },
-         { "180%", OPTION_VAL_180_O48_TR },
-         { "190%", OPTION_VAL_190_O48_TR },
-         { "200%", OPTION_VAL_200_O48_TR },
-         { "210%", OPTION_VAL_210_O48_TR },
-         { "220%", OPTION_VAL_220_O48_TR },
-         { "230%", OPTION_VAL_230_O48_TR },
-         { "240%", OPTION_VAL_240_O48_TR },
-         { "250%", OPTION_VAL_250_O48_TR },
-         { "260%", OPTION_VAL_260_O48_TR },
-         { "270%", OPTION_VAL_270_O48_TR },
-         { "280%", OPTION_VAL_280_O48_TR },
-         { "290%", OPTION_VAL_290_O48_TR },
-         { "300%", OPTION_VAL_300_O48_TR },
+         { "100%", OPTION_VAL_100_O49_TR },
+         { "110%", OPTION_VAL_110_O49_TR },
+         { "120%", OPTION_VAL_120_O49_TR },
+         { "130%", OPTION_VAL_130_O49_TR },
+         { "140%", OPTION_VAL_140_O49_TR },
+         { "150%", OPTION_VAL_150_O49_TR },
+         { "160%", OPTION_VAL_160_O49_TR },
+         { "170%", OPTION_VAL_170_O49_TR },
+         { "180%", OPTION_VAL_180_O49_TR },
+         { "190%", OPTION_VAL_190_O49_TR },
+         { "200%", OPTION_VAL_200_O49_TR },
+         { "210%", OPTION_VAL_210_O49_TR },
+         { "220%", OPTION_VAL_220_O49_TR },
+         { "230%", OPTION_VAL_230_O49_TR },
+         { "240%", OPTION_VAL_240_O49_TR },
+         { "250%", OPTION_VAL_250_O49_TR },
+         { "260%", OPTION_VAL_260_O49_TR },
+         { "270%", OPTION_VAL_270_O49_TR },
+         { "280%", OPTION_VAL_280_O49_TR },
+         { "290%", OPTION_VAL_290_O49_TR },
+         { "300%", OPTION_VAL_300_O49_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -81490,7 +82114,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O48_TR },
+         { "100%", OPTION_VAL_100_O49_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -81641,7 +82265,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O48_TR },
+         { "100%", OPTION_VAL_100_O49_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -81792,7 +82416,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O48_TR },
+         { "100%", OPTION_VAL_100_O49_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -81943,7 +82567,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O48_TR },
+         { "100%", OPTION_VAL_100_O49_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -82152,6 +82776,8 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_TT NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_TT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TT NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TT NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TT NULL
@@ -82177,27 +82803,27 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_70_TT NULL
 #define OPTION_VAL_80_TT NULL
 #define OPTION_VAL_90_TT NULL
-#define OPTION_VAL_100_O48_TT NULL
-#define OPTION_VAL_110_O48_TT NULL
-#define OPTION_VAL_120_O48_TT NULL
-#define OPTION_VAL_130_O48_TT NULL
-#define OPTION_VAL_140_O48_TT NULL
-#define OPTION_VAL_150_O48_TT NULL
-#define OPTION_VAL_160_O48_TT NULL
-#define OPTION_VAL_170_O48_TT NULL
-#define OPTION_VAL_180_O48_TT NULL
-#define OPTION_VAL_190_O48_TT NULL
-#define OPTION_VAL_200_O48_TT NULL
-#define OPTION_VAL_210_O48_TT NULL
-#define OPTION_VAL_220_O48_TT NULL
-#define OPTION_VAL_230_O48_TT NULL
-#define OPTION_VAL_240_O48_TT NULL
-#define OPTION_VAL_250_O48_TT NULL
-#define OPTION_VAL_260_O48_TT NULL
-#define OPTION_VAL_270_O48_TT NULL
-#define OPTION_VAL_280_O48_TT NULL
-#define OPTION_VAL_290_O48_TT NULL
-#define OPTION_VAL_300_O48_TT NULL
+#define OPTION_VAL_100_O49_TT NULL
+#define OPTION_VAL_110_O49_TT NULL
+#define OPTION_VAL_120_O49_TT NULL
+#define OPTION_VAL_130_O49_TT NULL
+#define OPTION_VAL_140_O49_TT NULL
+#define OPTION_VAL_150_O49_TT NULL
+#define OPTION_VAL_160_O49_TT NULL
+#define OPTION_VAL_170_O49_TT NULL
+#define OPTION_VAL_180_O49_TT NULL
+#define OPTION_VAL_190_O49_TT NULL
+#define OPTION_VAL_200_O49_TT NULL
+#define OPTION_VAL_210_O49_TT NULL
+#define OPTION_VAL_220_O49_TT NULL
+#define OPTION_VAL_230_O49_TT NULL
+#define OPTION_VAL_240_O49_TT NULL
+#define OPTION_VAL_250_O49_TT NULL
+#define OPTION_VAL_260_O49_TT NULL
+#define OPTION_VAL_270_O49_TT NULL
+#define OPTION_VAL_280_O49_TT NULL
+#define OPTION_VAL_290_O49_TT NULL
+#define OPTION_VAL_300_O49_TT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TT NULL
 #define OPTION_VAL_WHITE_TT "Ак"
 #define OPTION_VAL_RED_TT "Кызыл"
@@ -83066,6 +83692,20 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_TT,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_TT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TT,
       NULL,
@@ -83172,27 +83812,27 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
          { "70%",  OPTION_VAL_70_TT },
          { "80%",  OPTION_VAL_80_TT },
          { "90%",  OPTION_VAL_90_TT },
-         { "100%", OPTION_VAL_100_O48_TT },
-         { "110%", OPTION_VAL_110_O48_TT },
-         { "120%", OPTION_VAL_120_O48_TT },
-         { "130%", OPTION_VAL_130_O48_TT },
-         { "140%", OPTION_VAL_140_O48_TT },
-         { "150%", OPTION_VAL_150_O48_TT },
-         { "160%", OPTION_VAL_160_O48_TT },
-         { "170%", OPTION_VAL_170_O48_TT },
-         { "180%", OPTION_VAL_180_O48_TT },
-         { "190%", OPTION_VAL_190_O48_TT },
-         { "200%", OPTION_VAL_200_O48_TT },
-         { "210%", OPTION_VAL_210_O48_TT },
-         { "220%", OPTION_VAL_220_O48_TT },
-         { "230%", OPTION_VAL_230_O48_TT },
-         { "240%", OPTION_VAL_240_O48_TT },
-         { "250%", OPTION_VAL_250_O48_TT },
-         { "260%", OPTION_VAL_260_O48_TT },
-         { "270%", OPTION_VAL_270_O48_TT },
-         { "280%", OPTION_VAL_280_O48_TT },
-         { "290%", OPTION_VAL_290_O48_TT },
-         { "300%", OPTION_VAL_300_O48_TT },
+         { "100%", OPTION_VAL_100_O49_TT },
+         { "110%", OPTION_VAL_110_O49_TT },
+         { "120%", OPTION_VAL_120_O49_TT },
+         { "130%", OPTION_VAL_130_O49_TT },
+         { "140%", OPTION_VAL_140_O49_TT },
+         { "150%", OPTION_VAL_150_O49_TT },
+         { "160%", OPTION_VAL_160_O49_TT },
+         { "170%", OPTION_VAL_170_O49_TT },
+         { "180%", OPTION_VAL_180_O49_TT },
+         { "190%", OPTION_VAL_190_O49_TT },
+         { "200%", OPTION_VAL_200_O49_TT },
+         { "210%", OPTION_VAL_210_O49_TT },
+         { "220%", OPTION_VAL_220_O49_TT },
+         { "230%", OPTION_VAL_230_O49_TT },
+         { "240%", OPTION_VAL_240_O49_TT },
+         { "250%", OPTION_VAL_250_O49_TT },
+         { "260%", OPTION_VAL_260_O49_TT },
+         { "270%", OPTION_VAL_270_O49_TT },
+         { "280%", OPTION_VAL_280_O49_TT },
+         { "290%", OPTION_VAL_290_O49_TT },
+         { "300%", OPTION_VAL_300_O49_TT },
          { NULL,   NULL },
       },
       "100%",
@@ -83590,7 +84230,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
          { "70%",  OPTION_VAL_70_TT },
          { "80%",  OPTION_VAL_80_TT },
          { "90%",  OPTION_VAL_90_TT },
-         { "100%", OPTION_VAL_100_O48_TT },
+         { "100%", OPTION_VAL_100_O49_TT },
          { NULL,   NULL },
       },
       "100%",
@@ -83741,7 +84381,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
          { "70%",  OPTION_VAL_70_TT },
          { "80%",  OPTION_VAL_80_TT },
          { "90%",  OPTION_VAL_90_TT },
-         { "100%", OPTION_VAL_100_O48_TT },
+         { "100%", OPTION_VAL_100_O49_TT },
          { NULL,   NULL },
       },
       "100%",
@@ -83892,7 +84532,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
          { "70%",  OPTION_VAL_70_TT },
          { "80%",  OPTION_VAL_80_TT },
          { "90%",  OPTION_VAL_90_TT },
-         { "100%", OPTION_VAL_100_O48_TT },
+         { "100%", OPTION_VAL_100_O49_TT },
          { NULL,   NULL },
       },
       "100%",
@@ -84043,7 +84683,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
          { "70%",  OPTION_VAL_70_TT },
          { "80%",  OPTION_VAL_80_TT },
          { "90%",  OPTION_VAL_90_TT },
-         { "100%", OPTION_VAL_100_O48_TT },
+         { "100%", OPTION_VAL_100_O49_TT },
          { NULL,   NULL },
       },
       "100%",
@@ -84252,6 +84892,8 @@ struct retro_core_options_v2 options_tt = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_UK "При запуску гри попередньо завантажуйте спеціальні текстури. Може покращити продуктивність, але збільшує використання пам'яті."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_UK "Дамп текстур"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_UK "Кожного разу, коли гра використовує нову текстуру, вона буде збережена як файл .png у теці 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_UK NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_UK NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_UK "Дамп замінених текстур"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_UK "Завжди вивантажувати текстури, які вже замінені спеціальними текстами."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_UK "Аналоговий стік Deadzone"
@@ -84277,27 +84919,27 @@ struct retro_core_options_v2 options_tt = {
 #define OPTION_VAL_70_UK NULL
 #define OPTION_VAL_80_UK NULL
 #define OPTION_VAL_90_UK NULL
-#define OPTION_VAL_100_O48_UK NULL
-#define OPTION_VAL_110_O48_UK NULL
-#define OPTION_VAL_120_O48_UK NULL
-#define OPTION_VAL_130_O48_UK NULL
-#define OPTION_VAL_140_O48_UK NULL
-#define OPTION_VAL_150_O48_UK NULL
-#define OPTION_VAL_160_O48_UK NULL
-#define OPTION_VAL_170_O48_UK NULL
-#define OPTION_VAL_180_O48_UK NULL
-#define OPTION_VAL_190_O48_UK NULL
-#define OPTION_VAL_200_O48_UK NULL
-#define OPTION_VAL_210_O48_UK NULL
-#define OPTION_VAL_220_O48_UK NULL
-#define OPTION_VAL_230_O48_UK NULL
-#define OPTION_VAL_240_O48_UK NULL
-#define OPTION_VAL_250_O48_UK NULL
-#define OPTION_VAL_260_O48_UK NULL
-#define OPTION_VAL_270_O48_UK NULL
-#define OPTION_VAL_280_O48_UK NULL
-#define OPTION_VAL_290_O48_UK NULL
-#define OPTION_VAL_300_O48_UK NULL
+#define OPTION_VAL_100_O49_UK NULL
+#define OPTION_VAL_110_O49_UK NULL
+#define OPTION_VAL_120_O49_UK NULL
+#define OPTION_VAL_130_O49_UK NULL
+#define OPTION_VAL_140_O49_UK NULL
+#define OPTION_VAL_150_O49_UK NULL
+#define OPTION_VAL_160_O49_UK NULL
+#define OPTION_VAL_170_O49_UK NULL
+#define OPTION_VAL_180_O49_UK NULL
+#define OPTION_VAL_190_O49_UK NULL
+#define OPTION_VAL_200_O49_UK NULL
+#define OPTION_VAL_210_O49_UK NULL
+#define OPTION_VAL_220_O49_UK NULL
+#define OPTION_VAL_230_O49_UK NULL
+#define OPTION_VAL_240_O49_UK NULL
+#define OPTION_VAL_250_O49_UK NULL
+#define OPTION_VAL_260_O49_UK NULL
+#define OPTION_VAL_270_O49_UK NULL
+#define OPTION_VAL_280_O49_UK NULL
+#define OPTION_VAL_290_O49_UK NULL
+#define OPTION_VAL_300_O49_UK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_UK "Збройний приціл 1 дисплей"
 #define OPTION_VAL_WHITE_UK "Білі"
 #define OPTION_VAL_RED_UK "Червоний"
@@ -85166,6 +85808,20 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_UK,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_UK,
       NULL,
@@ -85272,27 +85928,27 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O48_UK },
-         { "110%", OPTION_VAL_110_O48_UK },
-         { "120%", OPTION_VAL_120_O48_UK },
-         { "130%", OPTION_VAL_130_O48_UK },
-         { "140%", OPTION_VAL_140_O48_UK },
-         { "150%", OPTION_VAL_150_O48_UK },
-         { "160%", OPTION_VAL_160_O48_UK },
-         { "170%", OPTION_VAL_170_O48_UK },
-         { "180%", OPTION_VAL_180_O48_UK },
-         { "190%", OPTION_VAL_190_O48_UK },
-         { "200%", OPTION_VAL_200_O48_UK },
-         { "210%", OPTION_VAL_210_O48_UK },
-         { "220%", OPTION_VAL_220_O48_UK },
-         { "230%", OPTION_VAL_230_O48_UK },
-         { "240%", OPTION_VAL_240_O48_UK },
-         { "250%", OPTION_VAL_250_O48_UK },
-         { "260%", OPTION_VAL_260_O48_UK },
-         { "270%", OPTION_VAL_270_O48_UK },
-         { "280%", OPTION_VAL_280_O48_UK },
-         { "290%", OPTION_VAL_290_O48_UK },
-         { "300%", OPTION_VAL_300_O48_UK },
+         { "100%", OPTION_VAL_100_O49_UK },
+         { "110%", OPTION_VAL_110_O49_UK },
+         { "120%", OPTION_VAL_120_O49_UK },
+         { "130%", OPTION_VAL_130_O49_UK },
+         { "140%", OPTION_VAL_140_O49_UK },
+         { "150%", OPTION_VAL_150_O49_UK },
+         { "160%", OPTION_VAL_160_O49_UK },
+         { "170%", OPTION_VAL_170_O49_UK },
+         { "180%", OPTION_VAL_180_O49_UK },
+         { "190%", OPTION_VAL_190_O49_UK },
+         { "200%", OPTION_VAL_200_O49_UK },
+         { "210%", OPTION_VAL_210_O49_UK },
+         { "220%", OPTION_VAL_220_O49_UK },
+         { "230%", OPTION_VAL_230_O49_UK },
+         { "240%", OPTION_VAL_240_O49_UK },
+         { "250%", OPTION_VAL_250_O49_UK },
+         { "260%", OPTION_VAL_260_O49_UK },
+         { "270%", OPTION_VAL_270_O49_UK },
+         { "280%", OPTION_VAL_280_O49_UK },
+         { "290%", OPTION_VAL_290_O49_UK },
+         { "300%", OPTION_VAL_300_O49_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -85690,7 +86346,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O48_UK },
+         { "100%", OPTION_VAL_100_O49_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -85841,7 +86497,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O48_UK },
+         { "100%", OPTION_VAL_100_O49_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -85992,7 +86648,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O48_UK },
+         { "100%", OPTION_VAL_100_O49_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -86143,7 +86799,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O48_UK },
+         { "100%", OPTION_VAL_100_O49_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -86352,6 +87008,8 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_VAL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_VAL NULL
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_VAL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_VAL NULL
@@ -86377,27 +87035,27 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_70_VAL NULL
 #define OPTION_VAL_80_VAL NULL
 #define OPTION_VAL_90_VAL NULL
-#define OPTION_VAL_100_O48_VAL NULL
-#define OPTION_VAL_110_O48_VAL NULL
-#define OPTION_VAL_120_O48_VAL NULL
-#define OPTION_VAL_130_O48_VAL NULL
-#define OPTION_VAL_140_O48_VAL NULL
-#define OPTION_VAL_150_O48_VAL NULL
-#define OPTION_VAL_160_O48_VAL NULL
-#define OPTION_VAL_170_O48_VAL NULL
-#define OPTION_VAL_180_O48_VAL NULL
-#define OPTION_VAL_190_O48_VAL NULL
-#define OPTION_VAL_200_O48_VAL NULL
-#define OPTION_VAL_210_O48_VAL NULL
-#define OPTION_VAL_220_O48_VAL NULL
-#define OPTION_VAL_230_O48_VAL NULL
-#define OPTION_VAL_240_O48_VAL NULL
-#define OPTION_VAL_250_O48_VAL NULL
-#define OPTION_VAL_260_O48_VAL NULL
-#define OPTION_VAL_270_O48_VAL NULL
-#define OPTION_VAL_280_O48_VAL NULL
-#define OPTION_VAL_290_O48_VAL NULL
-#define OPTION_VAL_300_O48_VAL NULL
+#define OPTION_VAL_100_O49_VAL NULL
+#define OPTION_VAL_110_O49_VAL NULL
+#define OPTION_VAL_120_O49_VAL NULL
+#define OPTION_VAL_130_O49_VAL NULL
+#define OPTION_VAL_140_O49_VAL NULL
+#define OPTION_VAL_150_O49_VAL NULL
+#define OPTION_VAL_160_O49_VAL NULL
+#define OPTION_VAL_170_O49_VAL NULL
+#define OPTION_VAL_180_O49_VAL NULL
+#define OPTION_VAL_190_O49_VAL NULL
+#define OPTION_VAL_200_O49_VAL NULL
+#define OPTION_VAL_210_O49_VAL NULL
+#define OPTION_VAL_220_O49_VAL NULL
+#define OPTION_VAL_230_O49_VAL NULL
+#define OPTION_VAL_240_O49_VAL NULL
+#define OPTION_VAL_250_O49_VAL NULL
+#define OPTION_VAL_260_O49_VAL NULL
+#define OPTION_VAL_270_O49_VAL NULL
+#define OPTION_VAL_280_O49_VAL NULL
+#define OPTION_VAL_290_O49_VAL NULL
+#define OPTION_VAL_300_O49_VAL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VAL NULL
 #define OPTION_VAL_WHITE_VAL NULL
 #define OPTION_VAL_RED_VAL NULL
@@ -87266,6 +87924,20 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_VAL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_VAL,
       NULL,
@@ -87372,27 +88044,27 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O48_VAL },
-         { "110%", OPTION_VAL_110_O48_VAL },
-         { "120%", OPTION_VAL_120_O48_VAL },
-         { "130%", OPTION_VAL_130_O48_VAL },
-         { "140%", OPTION_VAL_140_O48_VAL },
-         { "150%", OPTION_VAL_150_O48_VAL },
-         { "160%", OPTION_VAL_160_O48_VAL },
-         { "170%", OPTION_VAL_170_O48_VAL },
-         { "180%", OPTION_VAL_180_O48_VAL },
-         { "190%", OPTION_VAL_190_O48_VAL },
-         { "200%", OPTION_VAL_200_O48_VAL },
-         { "210%", OPTION_VAL_210_O48_VAL },
-         { "220%", OPTION_VAL_220_O48_VAL },
-         { "230%", OPTION_VAL_230_O48_VAL },
-         { "240%", OPTION_VAL_240_O48_VAL },
-         { "250%", OPTION_VAL_250_O48_VAL },
-         { "260%", OPTION_VAL_260_O48_VAL },
-         { "270%", OPTION_VAL_270_O48_VAL },
-         { "280%", OPTION_VAL_280_O48_VAL },
-         { "290%", OPTION_VAL_290_O48_VAL },
-         { "300%", OPTION_VAL_300_O48_VAL },
+         { "100%", OPTION_VAL_100_O49_VAL },
+         { "110%", OPTION_VAL_110_O49_VAL },
+         { "120%", OPTION_VAL_120_O49_VAL },
+         { "130%", OPTION_VAL_130_O49_VAL },
+         { "140%", OPTION_VAL_140_O49_VAL },
+         { "150%", OPTION_VAL_150_O49_VAL },
+         { "160%", OPTION_VAL_160_O49_VAL },
+         { "170%", OPTION_VAL_170_O49_VAL },
+         { "180%", OPTION_VAL_180_O49_VAL },
+         { "190%", OPTION_VAL_190_O49_VAL },
+         { "200%", OPTION_VAL_200_O49_VAL },
+         { "210%", OPTION_VAL_210_O49_VAL },
+         { "220%", OPTION_VAL_220_O49_VAL },
+         { "230%", OPTION_VAL_230_O49_VAL },
+         { "240%", OPTION_VAL_240_O49_VAL },
+         { "250%", OPTION_VAL_250_O49_VAL },
+         { "260%", OPTION_VAL_260_O49_VAL },
+         { "270%", OPTION_VAL_270_O49_VAL },
+         { "280%", OPTION_VAL_280_O49_VAL },
+         { "290%", OPTION_VAL_290_O49_VAL },
+         { "300%", OPTION_VAL_300_O49_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -87790,7 +88462,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O48_VAL },
+         { "100%", OPTION_VAL_100_O49_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -87941,7 +88613,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O48_VAL },
+         { "100%", OPTION_VAL_100_O49_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -88092,7 +88764,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O48_VAL },
+         { "100%", OPTION_VAL_100_O49_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -88243,7 +88915,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O48_VAL },
+         { "100%", OPTION_VAL_100_O49_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -88292,8 +88964,8 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VN "Bật Phím SERVICE để truy cập cài đặt trong máy arcade."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VN "Chế độ Free Play cho game NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VN "Chỉnh cài đặt đồng xu của trò chơi sang chế độ chơi miễn phí."
-#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_VN NULL
-#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_VN NULL
+#define CORE_OPTION_NAME_COIN_LIMIT_LABEL_VN "Giới hạn xu"
+#define CORE_OPTION_NAME_COIN_LIMIT_INFO_0_VN "Tắt chức năng nạp xu sau khi đạt đến giới hạn đã đặt."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN "Giả lập Bộ chuyển đổi Băng thông Rộng"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN "Giả lập bộ chuyển đổi Ethernet băng thông rộng thay vì modem. (Cần khởi động lại)"
 #define CORE_OPTION_NAME_UPNP_LABEL_VN "Bật UPnP"
@@ -88452,6 +89124,8 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_VN "Nạp sẵn các kết cấu tùy chỉnh ngay khi game bắt đầu. Có thể giúp tăng hiệu năng nhưng sẽ sử dụng nhiều bộ nhớ hơn."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_VN "Xuất kết cấu"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_VN "Mỗi khi trò chơi sử dụng một kết cấu mới, nó sẽ được lưu dưới dạng tệp .png trong thư mục 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_VN "Bỏ qua video và kết cấu động"
+#define CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_VN "Bỏ qua việc trích xuất video (YUV) và các kết cấu đã được cập nhật."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_VN "Xuất Kết cấu Đã Thay Thế"
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_VN "Luôn xuất các Kết cấu đã được thay thế bằng Kết cấu tùy chỉnh."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_VN "Vùng chết của Analog"
@@ -88477,27 +89151,27 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_70_VN NULL
 #define OPTION_VAL_80_VN NULL
 #define OPTION_VAL_90_VN NULL
-#define OPTION_VAL_100_O48_VN NULL
-#define OPTION_VAL_110_O48_VN NULL
-#define OPTION_VAL_120_O48_VN NULL
-#define OPTION_VAL_130_O48_VN NULL
-#define OPTION_VAL_140_O48_VN NULL
-#define OPTION_VAL_150_O48_VN NULL
-#define OPTION_VAL_160_O48_VN NULL
-#define OPTION_VAL_170_O48_VN NULL
-#define OPTION_VAL_180_O48_VN NULL
-#define OPTION_VAL_190_O48_VN NULL
-#define OPTION_VAL_200_O48_VN NULL
-#define OPTION_VAL_210_O48_VN NULL
-#define OPTION_VAL_220_O48_VN NULL
-#define OPTION_VAL_230_O48_VN NULL
-#define OPTION_VAL_240_O48_VN NULL
-#define OPTION_VAL_250_O48_VN NULL
-#define OPTION_VAL_260_O48_VN NULL
-#define OPTION_VAL_270_O48_VN NULL
-#define OPTION_VAL_280_O48_VN NULL
-#define OPTION_VAL_290_O48_VN NULL
-#define OPTION_VAL_300_O48_VN NULL
+#define OPTION_VAL_100_O49_VN NULL
+#define OPTION_VAL_110_O49_VN NULL
+#define OPTION_VAL_120_O49_VN NULL
+#define OPTION_VAL_130_O49_VN NULL
+#define OPTION_VAL_140_O49_VN NULL
+#define OPTION_VAL_150_O49_VN NULL
+#define OPTION_VAL_160_O49_VN NULL
+#define OPTION_VAL_170_O49_VN NULL
+#define OPTION_VAL_180_O49_VN NULL
+#define OPTION_VAL_190_O49_VN NULL
+#define OPTION_VAL_200_O49_VN NULL
+#define OPTION_VAL_210_O49_VN NULL
+#define OPTION_VAL_220_O49_VN NULL
+#define OPTION_VAL_230_O49_VN NULL
+#define OPTION_VAL_240_O49_VN NULL
+#define OPTION_VAL_250_O49_VN NULL
+#define OPTION_VAL_260_O49_VN NULL
+#define OPTION_VAL_270_O49_VN NULL
+#define OPTION_VAL_280_O49_VN NULL
+#define OPTION_VAL_290_O49_VN NULL
+#define OPTION_VAL_300_O49_VN NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VN "Hiển thị Tâm ngắm 1"
 #define OPTION_VAL_WHITE_VN "Trắng"
 #define OPTION_VAL_RED_VN "Đỏ"
@@ -89366,6 +90040,20 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_dump_unique_textures",
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_DUMP_UNIQUE_TEXTURES_INFO_0_VN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_replaced_textures",
       CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_VN,
       NULL,
@@ -89472,27 +90160,27 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O48_VN },
-         { "110%", OPTION_VAL_110_O48_VN },
-         { "120%", OPTION_VAL_120_O48_VN },
-         { "130%", OPTION_VAL_130_O48_VN },
-         { "140%", OPTION_VAL_140_O48_VN },
-         { "150%", OPTION_VAL_150_O48_VN },
-         { "160%", OPTION_VAL_160_O48_VN },
-         { "170%", OPTION_VAL_170_O48_VN },
-         { "180%", OPTION_VAL_180_O48_VN },
-         { "190%", OPTION_VAL_190_O48_VN },
-         { "200%", OPTION_VAL_200_O48_VN },
-         { "210%", OPTION_VAL_210_O48_VN },
-         { "220%", OPTION_VAL_220_O48_VN },
-         { "230%", OPTION_VAL_230_O48_VN },
-         { "240%", OPTION_VAL_240_O48_VN },
-         { "250%", OPTION_VAL_250_O48_VN },
-         { "260%", OPTION_VAL_260_O48_VN },
-         { "270%", OPTION_VAL_270_O48_VN },
-         { "280%", OPTION_VAL_280_O48_VN },
-         { "290%", OPTION_VAL_290_O48_VN },
-         { "300%", OPTION_VAL_300_O48_VN },
+         { "100%", OPTION_VAL_100_O49_VN },
+         { "110%", OPTION_VAL_110_O49_VN },
+         { "120%", OPTION_VAL_120_O49_VN },
+         { "130%", OPTION_VAL_130_O49_VN },
+         { "140%", OPTION_VAL_140_O49_VN },
+         { "150%", OPTION_VAL_150_O49_VN },
+         { "160%", OPTION_VAL_160_O49_VN },
+         { "170%", OPTION_VAL_170_O49_VN },
+         { "180%", OPTION_VAL_180_O49_VN },
+         { "190%", OPTION_VAL_190_O49_VN },
+         { "200%", OPTION_VAL_200_O49_VN },
+         { "210%", OPTION_VAL_210_O49_VN },
+         { "220%", OPTION_VAL_220_O49_VN },
+         { "230%", OPTION_VAL_230_O49_VN },
+         { "240%", OPTION_VAL_240_O49_VN },
+         { "250%", OPTION_VAL_250_O49_VN },
+         { "260%", OPTION_VAL_260_O49_VN },
+         { "270%", OPTION_VAL_270_O49_VN },
+         { "280%", OPTION_VAL_280_O49_VN },
+         { "290%", OPTION_VAL_290_O49_VN },
+         { "300%", OPTION_VAL_300_O49_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -89890,7 +90578,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O48_VN },
+         { "100%", OPTION_VAL_100_O49_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -90041,7 +90729,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O48_VN },
+         { "100%", OPTION_VAL_100_O49_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -90192,7 +90880,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O48_VN },
+         { "100%", OPTION_VAL_100_O49_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -90343,7 +91031,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O48_VN },
+         { "100%", OPTION_VAL_100_O49_VN },
          { NULL,   NULL },
       },
       "100%",

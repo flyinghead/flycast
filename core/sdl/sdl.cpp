@@ -649,7 +649,9 @@ void input_sdl_handle()
 
 void sdlReceiveSlaveKeyboardEvent(u16 scancode, bool pressed)
 {
-	sdl_keyboard->input((SDL_Scancode)scancode, pressed);
+	if (sdl_keyboard != nullptr)
+		// TODO raw input support
+		sdl_keyboard->input((SDL_Scancode)scancode, pressed);
 	if (pressed)
 	{
 		u32 flags = SDL_GetWindowFlags(window);

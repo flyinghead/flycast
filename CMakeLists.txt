@@ -213,6 +213,10 @@ elseif(LIBRETRO)
 		if(NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 		endif()
+		if(NOT WIN32)
+			# keep bundled libs like glslang from binding to the frontend's copies
+			target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--version-script,${CMAKE_CURRENT_SOURCE_DIR}/shell/libretro/link.T")
+		endif()
 	endif()
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro"
 	  XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
@@ -862,6 +866,13 @@ endif()
 # tinygettext
 set(TINYGETTEXT_WO_ICONV ON)
 add_subdirectory(core/deps/tinygettext EXCLUDE_FROM_ALL)
+if(MSVC)
+	# language.cpp holds the native language names as non-ASCII literals. MSVC
+	# decodes sources without a BOM using the active code page, so on a non-UTF-8
+	# system locale those literals break the build (C2001/C2064). The main target
+	# already passes /utf-8; this dependency needs it too.
+	target_compile_options(tinygettext PRIVATE /utf-8)
+endif()
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/tinygettext/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE tinygettext::tinygettext)
 

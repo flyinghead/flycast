@@ -52,6 +52,8 @@ static void activate(bool enable)
 	{
 		if (settings.input.fastForwardMode || !config::VSync || !googleTimingSupported)
 			return;
+		if (g_activity == nullptr)
+			return;
 
 		// Fake call to make swappy use google timing for this device
 		VkExtensionProperties prop { { VK_GOOGLE_DISPLAY_TIMING_EXTENSION_NAME } };

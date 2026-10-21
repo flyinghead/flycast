@@ -334,6 +334,9 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 void Sh4Recompiler::Reset(bool hard)
 {
 	super::Reset(hard);
+	if (hard)
+		// in case ram base has changed
+		sh4Dynarec->init(*getContext(), codeBuffer);
 	ResetCache();
 	if (hard)
 		bm_Reset();

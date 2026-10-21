@@ -651,7 +651,6 @@ void sb_Init()
 	maple_Init();
 	aica::sbInit();
 
-	bba_Init();
 	ModemInit();
 }
 
