@@ -398,6 +398,9 @@ static void termMappings()
 		aica::aica_ram.free();
 		free_pages(elan::RAM);
 		elan::RAM = nullptr;
+		// Don't leave the address map pointing at freed memory. A null entry
+		// routes accesses to handler 0 (not mapped), which touches nothing.
+		memset(memInfo_ptr, 0, sizeof(memInfo_ptr));
 	}
 }
 
