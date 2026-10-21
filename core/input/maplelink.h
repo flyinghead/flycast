@@ -48,8 +48,8 @@ public:
 
 	//! Returns the maple link at the given location if any
 	static Ptr GetMapleLink(int bus, int port) {
-		std::lock_guard<std::mutex> _(Mutex);
-		std::list<MapleLink::Ptr>& list = Links[bus][port];
+		std::lock_guard<std::mutex> _(mutex());
+		std::list<MapleLink::Ptr>& list = links()[bus][port];
 		if (list.empty())
 			return nullptr;
 		return list.front();
@@ -66,10 +66,15 @@ protected:
 	u32 ports = 0;
 
 private:
-	static std::mutex Mutex;
+	using LinkTable = std::array<std::array<std::list<Ptr>, 2>, 4>;
+	// Never destroyed: ~maple_sega_vmu() reaches GetMapleLink() from the
+	// static destructor of MapleDevices[][] at process exit, after objects
+	// with static storage in other translation units may already be gone.
+	// Locking a destroyed std::mutex throws (libc++: "mutex lock failed").
+	static std::mutex& mutex();
 	//! Indexed by [bus][extension port][priority idx]
 	//! Multiple links may be registered for a bus/port, and the last added to front takes precedence
-	static std::array<std::array<std::list<Ptr>, 2>, 4> Links;
+	static LinkTable& links();
 };
 
 class BaseMapleLink : public MapleLink
