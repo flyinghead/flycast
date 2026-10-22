@@ -35,10 +35,15 @@ if(APPLE)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum tvOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
 	else()
+		# Metal 4 is a runtime-gated feature, not the minimum OS of the app.
+		# AppleClang raises the arm64 slice to macOS 11 automatically.
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum macOS deployment version")
-		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS app architectures")
+		include(MacDeploymentSDK)
 	endif()
-	set(ZLIB_LIBRARY "-lz" CACHE STRING "Use generic linker flag for Xcode to support multiple SDKs")
+	if(CMAKE_GENERATOR STREQUAL "Xcode")
+		set(ZLIB_LIBRARY "-lz" CACHE STRING "Use generic linker flag for Xcode to support multiple SDKs")
+	endif()
 endif()
 
 if(LIBRETRO)
@@ -95,6 +100,34 @@ option(USE_DX9 "Build with Direct3D 9 support" ON)
 option(USE_DX11 "Build with Direct3D 11 support" ON)
 option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
+set(USE_METAL_DEFAULT OFF)
+if(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT LIBRETRO AND "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+	set(USE_METAL_DEFAULT ON)
+endif()
+option(USE_METAL "Build the native Apple Silicon Metal 4 renderer (standalone macOS)" ${USE_METAL_DEFAULT})
+if(USE_METAL AND (NOT APPLE OR NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR LIBRETRO))
+	message(FATAL_ERROR "USE_METAL currently requires standalone macOS")
+endif()
+if(USE_METAL)
+	if(NOT "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+		message(FATAL_ERROR "Metal 4 requires an arm64 slice")
+	endif()
+	foreach(_metal_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+		if(NOT _metal_arch MATCHES "^(arm64|x86_64)$")
+			message(FATAL_ERROR "Unsupported macOS architecture with Metal 4: ${_metal_arch}")
+		endif()
+	endforeach()
+	enable_language(OBJC OBJCXX)
+	include(CheckOBJCXXSourceCompiles)
+	check_objcxx_source_compiles("#import <Metal/Metal.h>
+		int main() {
+			id<MTL4Compiler> compiler = nil;
+			return compiler != nil || MTLLanguageVersion4_0 == 0 || MTLGPUFamilyMetal4 == 0;
+		}" FLYCAST_HAS_METAL4_SDK)
+	if(NOT FLYCAST_HAS_METAL4_SDK)
+		message(FATAL_ERROR "Metal 4 requires an Apple SDK exposing MTL4Compiler and MSL 4.0 (macOS 26 or later)")
+	endif()
+endif()
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(USE_ALSA "Build with ALSA support" ON)
 option(USE_LIBAO "Build with AO support" ON)
@@ -319,7 +352,9 @@ if(WINDOWS_STORE)
 	set(USE_VULKAN OFF)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+if(NOT (APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+endif()
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS- /utf-8)
 	if(WINDOWS_STORE)
@@ -426,38 +461,39 @@ if(USE_BREAKPAD AND NOT LIBRETRO)
 		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		include(MacBreakpad)
 		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+		# Release still needs line tables for its Breakpad dSYM. Keep the
+		# linker debug map intact until dsymutil/Xcode has consumed it.
+		target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:-gline-tables-only>")
 
 		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND sleep 20
-				COMMAND mkdir -p ../symbols
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a x86_64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-x64.sym
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-arm64.sym
-			)
+			set(FLYCAST_DSYM "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM")
 		else()
+			set(FLYCAST_DSYM "${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM")
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND sleep 20
-				COMMAND mkdir -p ../symbols
 				COMMAND dsymutil $<TARGET_FILE:flycast>
-					-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a x86_64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-x64.sym
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-					$<TARGET_FILE:flycast> > ../symbols/Flycast-arm64.sym
+					-o "${FLYCAST_DSYM}"
+				VERBATIM
 			)
 		endif()
+		# Metal-enabled apps may be universal or arm64-only. Export only the
+		# slices actually built, rather than assuming an Intel slice exists.
+		set(FLYCAST_SYMBOLS_DIR "${CMAKE_BINARY_DIR}/../symbols")
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${FLYCAST_SYMBOLS_DIR}"
+			VERBATIM)
+		foreach(_symbol_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+			set(_symbol_suffix "${_symbol_arch}")
+			if(_symbol_arch STREQUAL "x86_64")
+				set(_symbol_suffix "x64")
+			endif()
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND "${FLYCAST_DUMP_SYMS}"
+					-a "${_symbol_arch}" -g "${FLYCAST_DSYM}" $<TARGET_FILE:flycast>
+					> "${FLYCAST_SYMBOLS_DIR}/Flycast-${_symbol_suffix}.sym"
+				VERBATIM)
+		endforeach()
 	endif()
 endif()
 
@@ -980,6 +1016,20 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
 if(USE_DISCORD AND NOT LIBRETRO)
 	option(BUILD_EXAMPLES "Build example apps" OFF)
 	add_subdirectory(core/deps/discord-rpc EXCLUDE_FROM_ALL)
+	if(APPLE)
+		# The pinned RPC library exports a hard-coded 10.10 linker flag through
+		# its static-library interface. The app's deployment target must win.
+		get_target_property(_discord_links discord-rpc LINK_LIBRARIES)
+		list(REMOVE_ITEM _discord_links "-framework AppKit, -mmacosx-version-min=10.10")
+		list(APPEND _discord_links "-framework AppKit")
+		set_property(TARGET discord-rpc PROPERTY LINK_LIBRARIES "${_discord_links}")
+		get_target_property(_discord_interface discord-rpc INTERFACE_LINK_LIBRARIES)
+		list(REMOVE_ITEM _discord_interface "-framework AppKit, -mmacosx-version-min=10.10"
+			"$<LINK_ONLY:-framework AppKit, -mmacosx-version-min=10.10>")
+		list(APPEND _discord_interface "-framework AppKit")
+		list(REMOVE_DUPLICATES _discord_interface)
+		set_property(TARGET discord-rpc PROPERTY INTERFACE_LINK_LIBRARIES "${_discord_interface}")
+	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/discord-rpc/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE discord-rpc)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DISCORD)
@@ -1436,6 +1486,10 @@ if(NOT LIBRETRO)
 			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
 			source_group("Resources" FILES ${ASSETS})
 			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+			set(FLYCAST_MACOS_ARM64_MINIMUM "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+			if(FLYCAST_MACOS_ARM64_MINIMUM VERSION_LESS "11.0")
+				set(FLYCAST_MACOS_ARM64_MINIMUM "11.0")
+			endif()
 
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast"
@@ -1450,6 +1504,10 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
 				MACOSX_BUNDLE_COPYRIGHT "Copyright © ${YEAR} Flycast contributors. All rights reserved."
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf"
+				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym"
+				XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] YES
+				XCODE_ATTRIBUTE_CLANG_DEBUG_INFORMATION_LEVEL[variant=Release] "line-tables-only"
+				XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] YES
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=RelWithDebInfo] "dwarf-with-dsym"
 				XCODE_ATTRIBUTE_CLANG_DEBUG_INFORMATION_LEVEL[variant=RelWithDebInfo] "line-tables-only"
 				XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=RelWithDebInfo] YES
@@ -1479,6 +1537,13 @@ if(NOT LIBRETRO)
 				if(NOT MOLTENVK_DYLIB_PATH OR NOT EXISTS "${MOLTENVK_DYLIB_PATH}")
 					message(FATAL_ERROR "A macOS MoltenVK dylib is required for macOS Vulkan builds. Run shell/apple/generate_xcode_project.command to download the configured MoltenVK release, or pass -DMOLTENVK_DYLIB=/path/to/libMoltenVK.dylib.")
 				endif()
+				foreach(_moltenvk_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+					execute_process(COMMAND lipo "${MOLTENVK_DYLIB_PATH}" -verify_arch "${_moltenvk_arch}"
+						RESULT_VARIABLE _moltenvk_arch_result ERROR_VARIABLE _moltenvk_arch_error)
+					if(NOT _moltenvk_arch_result EQUAL 0)
+						message(FATAL_ERROR "MoltenVK is missing app architecture ${_moltenvk_arch}: ${_moltenvk_arch_error}")
+					endif()
+				endforeach()
 				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 					COMMAND ${CMAKE_COMMAND} -E copy "${MOLTENVK_DYLIB_PATH}"
 					$<TARGET_FILE_DIR:flycast>/../Frameworks/libMoltenVK.dylib)

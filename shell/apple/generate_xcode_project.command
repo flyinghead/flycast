@@ -185,7 +185,7 @@ if [ ! -f core/deps/glslang/CMakeLists.txt ]; then
     fi
 fi
 
-echo "1) macOS ($(uname -m))"
+echo "1) macOS (Universal: Intel + Apple Silicon)"
 echo "2) iOS"
 read -p "Choose your target platform: " x
 
@@ -216,7 +216,7 @@ else
         fi
     fi
 
-    option="-DCMAKE_OSX_ARCHITECTURES=$(uname -m) -DUSE_VULKAN=$use_vulkan"
+    option="-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64 -DUSE_VULKAN=$use_vulkan"
     if [ "$use_vulkan" = "ON" ]; then
         option+=" -DMOLTENVK_DYLIB=$moltenvk_dylib"
     fi
@@ -224,7 +224,7 @@ else
     echo 'Building macOS xcodeproj for debugging'
 fi
 
-cmake -B build -DCMAKE_BUILD_TYPE=Release $option -DUSE_BREAKPAD=NO -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 $option -DUSE_BREAKPAD=NO -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
 
 nl=$'\n'
 /usr/bin/sed -i '' -E "s/launchStyle/customLLDBInitFile = \"\$(SRCROOT)\/shell\/apple\/\\${lldbinitfolder}\/LLDBInitFile\"\\${nl}launchStyle/g" build/flycast.xcodeproj/xcshareddata/xcschemes/flycast.xcscheme

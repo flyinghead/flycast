@@ -26,12 +26,41 @@
 #include "gl_context.h"
 #include "rend/dx9/dxcontext.h"
 #include "rend/dx11/dx11context.h"
+#ifdef USE_METAL
+#include "rend/metal4/metal4_context.h"
+#include "rend/metal4/metal4_support.h"
+#endif
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 #endif
 
 void initRenderApi(void *window, void *display)
 {
+#ifdef USE_METAL
+#if !defined(USE_OPENGL) && !defined(USE_VULKAN) && !defined(USE_DX9) && !defined(USE_DX11)
+	if (!isMetal(config::RendererType))
+		config::RendererType = RenderType::Metal;
+#endif
+	if (isMetal(config::RendererType))
+	{
+		if (__builtin_available(macOS 26.0, *)) {
+			if (metal4Available()) {
+				MetalContext::Create(window, display);
+				return;
+			}
+		}
+		// Also handles command-line overrides made after settings were loaded.
+		// An unavailable optional backend must not prevent older Macs starting.
+		WARN_LOG(RENDERER, "Metal 4 unavailable on this Mac; using a compatible graphics API");
+#ifdef USE_OPENGL
+		config::RendererType = RenderType::OpenGL;
+#elif defined(USE_VULKAN)
+		config::RendererType = RenderType::Vulkan;
+#else
+		throw FlycastException("Metal 4 requires Apple Silicon and macOS 26 or later");
+#endif
+	}
+#endif
 #ifdef USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
@@ -77,6 +106,9 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	try {
 		GLGraphicsContext::Create(window, display);
+		if (config::RendererType == RenderType::OpenGL_OIT
+				&& !GraphicsContext::Instance()->hasPerPixel())
+			config::RendererType = RenderType::OpenGL;
 		return;
 	} catch (const std::exception& e) {
 		WARN_LOG(RENDERER, "OpenGL init failed: %s", e.what());

@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		custom_texture/CustomTextureTypes.h
 		custom_texture/TextureTranscoder.cpp
 		custom_texture/TextureTranscoder.h
+		custom_texture/GpuTexturePreload.cpp
         osd.cpp
         osd.h
         sorter.cpp
@@ -31,6 +32,10 @@ endif()
 
 if(USE_VULKAN)
     add_subdirectory(vulkan)
+endif()
+
+if(USE_METAL)
+    add_subdirectory(metal4)
 endif()
 
 if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))

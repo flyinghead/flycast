@@ -6,6 +6,9 @@
 #include <SDL_syswm.h>
 #endif
 #include <SDL_video.h>
+#if defined(USE_METAL)
+#include <SDL_metal.h>
+#endif
 #if defined(USE_VULKAN)
 #include <SDL_vulkan.h>
 #endif
@@ -15,6 +18,9 @@
 #include "sdl_keyboard.h"
 #include "sdl_keyboard_mac.h"
 #include "wsi/context.h"
+#if defined(USE_METAL) && defined(METAL_RENDERER_TESTS)
+#include "rend/metal4/metal4_context.h"
+#endif
 #include "ui/gui.h"
 #include "emulator.h"
 #include "stdclass.h"
@@ -377,6 +383,14 @@ void input_sdl_handle()
 				checkRawInput();
 				if (event.key.repeat == 0)
 				{
+#if defined(USE_METAL) && defined(METAL_RENDERER_TESTS)
+					if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F9
+							&& isMetal(config::RendererType) && config::loadBool("log", "MetalVSyncTests", false)) {
+						if (__builtin_available(macOS 26.0, *))
+							MetalContext::Instance()->requestVSyncValidation();
+						break;
+					}
+#endif
 					// Alt-Return and F11 toggle full screen
 					if (event.type == SDL_KEYDOWN
 							&& ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
@@ -676,6 +690,11 @@ bool sdl_update_display_metrics(SDL_Window *window, u32 windowFlags)
 	int windowHeight = 0;
 	SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 
+#ifdef USE_METAL
+	if (windowFlags & SDL_WINDOW_METAL)
+		SDL_Metal_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	else
+#endif
 #ifdef USE_VULKAN
 	if (windowFlags & SDL_WINDOW_VULKAN)
 		SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);

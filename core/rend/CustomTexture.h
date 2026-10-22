@@ -96,6 +96,12 @@ class CustomTexture
 {
 public:
 	using GpuTextureUploader = std::function<bool(u32 hash, const PreparedCustomTexture& texture)>;
+	// Opt-in admission result: a full speculative GPU budget can leave a
+	// texture on the normal on-demand path without reporting an upload error.
+	// Partial GPU caches must preserve current/VQ/old-hash source preference
+	// when looking up resident images (including deferred higher-priority keys).
+	enum class GpuPreloadResult { Uploaded, OnDemand, Failed };
+	using GpuTextureAdmission = std::function<GpuPreloadResult(u32 hash, const PreparedCustomTexture& texture)>;
 
 	~CustomTexture();
 	void init();
@@ -111,16 +117,21 @@ public:
 	void setCapabilities(const CustomTextureCapabilities& capabilities);
 	void invalidateGpuPreloads();
 	CustomTextureCapabilities getCapabilities() const;
+	bool hasReplacement(u32 hash) const;
 	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *srcBuffer);
 	void refresh();
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loadedSize) const;
 	void processGpuPreloads(const GpuTextureUploader& uploader);
+	void processGpuPreloadsWithAdmission(const GpuTextureAdmission& uploader);
 	void reportError(CustomTextureException::Error error);
 	void showErrorNotification();
 
 private:
 	friend struct Renderer;
+#ifdef FLYCAST_CUSTOM_TEXTURE_PRELOAD_TESTS
+	friend struct CustomTexturePreloadTest;
+#endif
 	struct GpuCleanupOperation {};
 	enum class State
 	{

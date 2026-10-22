@@ -156,6 +156,7 @@ jobs:
 
       - name: Package app (macos)
         run: |
+          python3 shell/apple/check_macos_compatibility.py artifact/bin/Flycast.app --dsym build/RelWithDebInfo/Flycast.app.dSYM --symbols symbols
           cd artifact/bin
           codesign --verify --deep --strict --all-architectures --verbose=4 Flycast.app
           zip -rm flycast.app.zip Flycast.app
