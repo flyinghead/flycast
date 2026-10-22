@@ -622,8 +622,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		if (platform == DC_PLATFORM_NAOMI && !settings.naomi.slave)
 		{
 			std::string extension = get_file_extension(settings.content.fileName);
-			if (extension == "bin" || extension == "dat")
-				// Decrypted rom: the cartridge header tells Naomi 2 from Naomi
+			if (extension == "bin" || extension == "dat" || extension == "zip" || extension == "7z")
+				// Decrypted rom, plain or in an archive that isn't a romset: the
+				// cartridge header tells Naomi 2 from Naomi
 				platform = naomi_cart_GetDecryptedRomPlatform(settings.content.path);
 		}
 		setPlatform(platform);

@@ -79,6 +79,25 @@ bool SzArchive::Open(hostfs::File *file)
 	return (res == SZ_OK);
 }
 
+std::vector<std::string> SzArchive::listFiles()
+{
+	std::vector<std::string> names;
+	for (UInt32 i = 0; i < szarchive.NumFiles; i++)
+	{
+		if (SzArEx_IsDir(&szarchive, i))
+			continue;
+		UInt16 name16[512];
+		// Length includes the terminating 0. Same narrowing as OpenFile(), so a
+		// listed name opens.
+		size_t len = SzArEx_GetFileNameUtf16(&szarchive, i, name16);
+		std::string name;
+		for (size_t j = 0; j + 1 < len && j < 511; j++)
+			name += (char)name16[j];
+		names.push_back(name);
+	}
+	return names;
+}
+
 ArchiveFile* SzArchive::OpenFile(const char* name)
 {
 	u16 fname[512];

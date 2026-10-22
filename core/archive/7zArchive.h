@@ -37,6 +37,7 @@ public:
 
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile *OpenFileByCrc(u32 crc) override;
+	std::vector<std::string> listFiles() override;
 
 protected:
 	bool Open(hostfs::File *file) override;
