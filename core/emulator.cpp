@@ -238,6 +238,13 @@ static void loadSpecialSettings()
 		}
 		else
 			WARN_LOG(BOOT, "No region specified in IP.BIN");
+		// Broadcast left on Default follows the region, the way Region's own
+		// Default follows IP.BIN above: PAL for Europe, NTSC otherwise.
+		// fixUpDCFlash() skips the out-of-range Default value, which left the
+		// flash byte at the factory setting (NTSC) or at whatever the last
+		// explicit choice wrote.
+		if (config::Broadcast == 4)
+			config::Broadcast.override(config::Region == 2 ? 1 : 0);
 		if (config::Cable <= 1 && (!ip_meta.supportsVGA()
 				|| prod_id == "T-12504N"	// Caesar's Palace (NTSC)
 				|| prod_id == "12502D-50"))	// Caesar's Palace (PAL)
