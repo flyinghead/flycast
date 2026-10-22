@@ -9,10 +9,16 @@
 #include <vector>
 #include <limits>
 #include <utility>
+#include <chrono>
 using u32 = uint32_t;
 #include "rend/metal4/metal4_shaders.h"
 #include "rend/metal4/metal4_shader_options.h"
 #include "rend/metal4/metal4_oit_tiling.h"
+#include "rend/metal4/metal4_oit_storage.h"
+#include "rend/metal4/metal4_oit_draw_plan.h"
+#include "rend/metal4/metal4_oit_plan.h"
+#include "rend/metal4/metal4_geometry_proof.h"
+#include <map>
 
 namespace {
 struct Vertex {
@@ -32,6 +38,15 @@ void require(bool value, const char *message) { if (!value) throw std::runtime_e
 void error(NSError *error) { if (error) throw std::runtime_error(error.localizedDescription.UTF8String); }
 
 static constexpr const char FogReferenceShader[] = R"MSL(
+struct BindingTestOut { float4 position [[position]]; float4 value; };
+vertex BindingTestOut binding_test_vertex(uint id [[vertex_id]], constant float4& value [[buffer(0)]]) {
+    const float2 positions[] = {float2(-1,-1),float2(3,-1),float2(-1,3)};
+    return {float4(positions[id],0,1),value};
+}
+fragment float4 binding_test_fragment(BindingTestOut in [[stage_in]], constant float4& value [[buffer(0)]]) {
+    return float4(in.value.r,value.g,in.value.b+value.b,1);
+}
+
 // Compare the production lookup against the previous shader expression.
 // Enumerating the float bit patterns covers every mantissa and exponent
 // boundary of the clamped range, rather than just a few uniform fog colors.
@@ -157,6 +172,7 @@ public:
 	id<MTLSamplerState> nearest;
 	id<MTLTexture> tex0, tex1, fog, palette, stencil, depth;
 	id<MTLBuffer> nodes, heads, counter, polygons, colors1;
+	NSUInteger colors1Offset = 0;
 	MetalFrameUniforms frame{};
 	MetalNaomi2Uniforms naomi2{};
 	Lights lights{};
@@ -216,6 +232,172 @@ public:
 		frame.ndc = glm::mat4(1); frame.clampMax = glm::vec4(1); frame.dither = glm::vec4(2,2,2,1);
 		frame.fogDensity = 1; frame.shadeScale = .25f; frame.width = frame.height = 1; frame.capacity = 64; frame.maxLayers = 32;
 		printf("Metal 4 GPU: %s\n", device.name.UTF8String);
+	}
+	void validateSharedOITStorage()
+	{
+		const auto originalNodes=nodes, originalColors=colors1; const auto originalFrame=frame;
+		unsigned count=0;
+		for(size_t budget:{size_t(48),size_t(120),size_t(1536)}) {
+			auto shared=[device newBufferWithLength:budget options:MTLResourceStorageModeShared];
+			for(bool native:{false,true}) for(bool shadow:{false,true}) for(bool volume:{false,true}) for(bool source:{false,true}) {
+				MetalPolyUniforms back{},front{}; back.trilinear=front.trilinear=1;
+				back.flags=front.flags=4u|(native?1u<<4:0)|((volume&&shadow)?1u<<6:0);
+				back.tsp0=front.tsp0=(1u<<20)|(2u<<22)|(4u<<29)|(5u<<26);
+				back.tsp1=front.tsp1=back.tsp0|(source?1u<<25:0);
+				front.sequence=1u<<17;
+				const auto layout=metal_oit::storageLayout(budget,shadow&&volume&&!source);
+				frame.capacity=layout.capacity;
+				nodes=originalNodes; colors1=originalColors; colors1Offset=0;
+				const auto expected=oit(back,front,shadow);
+				nodes=shared; colors1=layout.colorOffset?shared:counter; colors1Offset=layout.colorOffset;
+				require(expected==oit(back,front,shadow),"Shared OIT storage changed captured/modifier/resolved pixels");
+				++count;
+			}
+		}
+		nodes=originalNodes; colors1=originalColors; colors1Offset=0; frame=originalFrame;
+		printf("PASS shared OIT storage: %u exact capture/modifier/resolve comparisons, alternating layouts, tiny budgets, both depth modes\n",count);
+	}
+	void validateDirectAccumulator()
+	{
+		MTLVertexDescriptor *layout = [MTLVertexDescriptor vertexDescriptor];
+		const MTLVertexFormat formats[] = {MTLVertexFormatFloat3,MTLVertexFormatUChar4Normalized,MTLVertexFormatUChar4Normalized,
+			MTLVertexFormatFloat2,MTLVertexFormatUChar4Normalized,MTLVertexFormatUChar4Normalized,MTLVertexFormatFloat2,MTLVertexFormatFloat3};
+		const size_t offsets[] = {offsetof(Vertex,pos),offsetof(Vertex,base),offsetof(Vertex,offset),offsetof(Vertex,uv),
+			offsetof(Vertex,base1),offsetof(Vertex,offset1),offsetof(Vertex,uv1),offsetof(Vertex,normal)};
+		for (unsigned i=0;i<8;++i) { layout.attributes[i].format=formats[i]; layout.attributes[i].offset=offsets[i]; }
+		layout.layouts[0].stride=sizeof(Vertex);
+		const auto factor = [](unsigned value,bool source,bool alpha) {
+			const MTLBlendFactor values[]{MTLBlendFactorZero,MTLBlendFactorOne,
+				source ? (alpha?MTLBlendFactorDestinationAlpha:MTLBlendFactorDestinationColor) : (alpha?MTLBlendFactorSourceAlpha:MTLBlendFactorSourceColor),
+				source ? (alpha?MTLBlendFactorOneMinusDestinationAlpha:MTLBlendFactorOneMinusDestinationColor) : (alpha?MTLBlendFactorOneMinusSourceAlpha:MTLBlendFactorOneMinusSourceColor),
+				MTLBlendFactorSourceAlpha,MTLBlendFactorOneMinusSourceAlpha,MTLBlendFactorDestinationAlpha,MTLBlendFactorOneMinusDestinationAlpha};
+			return values[value];
+		};
+		const auto make = [&](unsigned src,unsigned dst,bool secondary,bool volume=false) {
+			MTL4RenderPipelineDescriptor *p=[MTL4RenderPipelineDescriptor new];
+			p.vertexFunctionDescriptor=function(@"pvr_vertex"); p.fragmentFunctionDescriptor=function(volume?@"pvr_volume_accumulator_fragment":@"pvr_accumulator_fragment"); p.vertexDescriptor=layout;
+			for (unsigned i=0;i<2;++i) {
+				auto a=p.colorAttachments[i]; a.pixelFormat=MTLPixelFormatRGBA8Unorm;
+				a.writeMask=(volume || i==unsigned(secondary))?MTLColorWriteMaskAll:MTLColorWriteMaskNone;
+				a.blendingState=volume?MTL4BlendStateDisabled:MTL4BlendStateEnabled;
+				a.sourceRGBBlendFactor=factor(src,true,false); a.sourceAlphaBlendFactor=factor(src,true,true);
+				a.destinationRGBBlendFactor=factor(dst,false,false); a.destinationAlphaBlendFactor=factor(dst,false,true);
+			}
+			NSError *err=nil; auto result=[compiler newRenderPipelineStateWithDescriptor:p compilerTaskOptions:nil error:&err]; error(err);
+			require(result!=nil,"Accumulator pipeline creation failed"); return result;
+		};
+		const auto copySecondary=make(1,0,true);
+		const std::array<uint8_t,4> a{64,128,192,96}, b{160,80,32,144}, initial{10,20,30,40};
+		const auto coefficient=[](unsigned mode,bool source,unsigned c,const std::array<uint8_t,4>& src,const std::array<uint8_t,4>& dst) {
+			const double other=(source?dst[c]:src[c])/255.0;
+			switch(mode) {case 0:return 0.0;case 1:return 1.0;case 2:return other;case 3:return 1-other;
+			case 4:return src[3]/255.0;case 5:return 1-src[3]/255.0;case 6:return dst[3]/255.0;default:return 1-dst[3]/255.0;}
+		};
+		unsigned fixtures=0;
+		for(unsigned src=0;src<8;++src) for(unsigned dst=0;dst<8;++dst) for(bool destination:{false,true}) for(unsigned volume=0;volume<3;++volume) {
+			auto operation=make(src,dst,destination,volume!=0);
+			uint8_t shadow=volume==2?0x81:0; [stencil replaceRegion:MTLRegionMake2D(0,0,1,1) mipmapLevel:0 withBytes:&shadow bytesPerRow:1];
+			for(bool source:{false,true}) for(bool native:{false,true}) {
+				auto output=texture(MTLPixelFormatRGBA8Unorm), secondary=texture(MTLPixelFormatRGBA8Unorm);
+				auto cb=[queue commandBuffer]; auto render=pass(output,true);
+				render.colorAttachments[0].clearColor=MTLClearColorMake(initial[0]/255.,initial[1]/255.,initial[2]/255.,initial[3]/255.);
+				render.colorAttachments[1].texture=secondary; render.colorAttachments[1].loadAction=MTLLoadActionClear;
+				render.colorAttachments[1].storeAction=MTLStoreActionStore;
+				auto e=[cb renderCommandEncoderWithDescriptor:render];
+				MetalPolyUniforms p{}; p.trilinear=1; p.flags=4|(native?1u<<4:0); p.tsp0=(1u<<20)|(2u<<22);
+				[e setRenderPipelineState:copySecondary]; bind(e,p,triangle(a,1)); [e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+				p.tsp0|=(source?1u<<25:0)|(destination?1u<<24:0)|(src<<29)|(dst<<26);
+				if(volume) {
+					p.flags|=(1u<<6)|(1u<<13); p.tsp1=p.tsp0;
+					// Give the unselected area unrelated controls and destination.
+					const u32 unused=(1u<<20)|(2u<<22)|(1u<<26)|(destination?0:1u<<24);
+					if(volume==2) p.tsp0=unused; else p.tsp1=unused;
+				}
+				auto vertices=triangle(b,1); for(auto& vertex:vertices) memcpy(vertex.base1,b.data(),4);
+				[e setRenderPipelineState:operation]; bind(e,p,vertices); [e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+				[e endEncoding];
+				auto bytes=[device newBufferWithLength:512 options:MTLResourceStorageModeShared]; auto blit=[cb transferEncoder];
+				for(unsigned i=0;i<2;++i) [blit copyFromTexture:i?secondary:output sourceSlice:0 sourceLevel:0 sourceOrigin:MTLOriginMake(0,0,0)
+					sourceSize:MTLSizeMake(1,1,1) toBuffer:bytes destinationOffset:256*i destinationBytesPerRow:256 destinationBytesPerImage:256];
+				[blit endEncoding]; [cb commit]; [cb waitUntilCompleted]; error(cb.error);
+				const auto& sourceColor=source?a:b; const auto& destColor=destination?a:initial;
+				for(unsigned c=0;c<4;++c) {
+					const int expected=int(std::lround(std::clamp(sourceColor[c]*coefficient(src,true,c,sourceColor,destColor)
+						+destColor[c]*coefficient(dst,false,c,sourceColor,destColor),0.0,255.0)));
+					const auto *actual=static_cast<const uint8_t *>(bytes.contents);
+					require(std::abs(int(actual[(destination?256:0)+c])-expected)<=1,"Direct accumulator blend differs from CPU reference");
+					require(actual[(destination?0:256)+c]==(destination?initial[c]:a[c]),"Unselected accumulator was overwritten");
+				}
+				++fixtures;
+			}
+		}
+		printf("PASS direct accumulator: %u GPU fixtures, all 64 blend pairs, both destinations/sources/depth modes, two-volume area selection, untouched destination exact\n",fixtures);
+	}
+	void validateSharedBindings()
+	{
+		const auto state = pipeline(@"binding_test_vertex", @"binding_test_fragment", nil, false, true);
+		struct alignas(32) Value { float color[4]; } a{{.25f,.5f,.125f,1}}, b{{.75f,.125f,.25f,1}};
+		auto buffer = [device newBufferWithLength:sizeof(Value)*2 options:MTLResourceStorageModeShared];
+		memcpy(buffer.contents,&a,sizeof(a)); memcpy((uint8_t *)buffer.contents+sizeof(a),&b,sizeof(b));
+		for (u32 mode=0;mode<4;++mode) {
+			auto render = [&](bool shared) {
+				auto output = texture(MTLPixelFormatRGBA8Unorm); auto cb = [queue commandBuffer];
+				auto e = [cb renderCommandEncoderWithDescriptor:pass(output,false)];
+				[e setRenderPipelineState:state]; [e setViewport:MTLViewport{0,0,1,1,0,1}];
+				if (mode==0 && shared) [e setSharedBytes:&a length:sizeof(a) atIndex:0];
+				else if (shared) {
+					[e setVertexBuffer:buffer offset:0 atIndex:0]; [e setFragmentBuffer:buffer offset:0 atIndex:0];
+					[e setVertexBufferOffset:mode&1 ? sizeof(a) : 0 atIndex:0];
+					[e setFragmentBufferOffset:mode&2 ? sizeof(a) : 0 atIndex:0];
+				} else {
+					[e setVertexBytes:mode&1 ? &b : &a length:sizeof(a) atIndex:0];
+					[e setFragmentBytes:mode&2 ? &b : &a length:sizeof(a) atIndex:0];
+				}
+				[e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3]; [e endEncoding];
+				return read(output,cb);
+			};
+			require(render(false)==render(true),"Shared constants or buffer offset change shader inputs");
+		}
+		auto cb = [queue commandBuffer]; auto e = [cb renderCommandEncoderWithDescriptor:pass(texture(MTLPixelFormatRGBA8Unorm),false)];
+		unsigned rejected=0;
+		[e setVertexBuffer:buffer offset:0 atIndex:0]; [e setFragmentBuffer:buffer offset:0 atIndex:0];
+		try { [e setVertexBufferOffset:buffer.length+1 atIndex:0]; } catch (...) { ++rejected; }
+		try { [e setFragmentBufferOffset:buffer.length+1 atIndex:0]; } catch (...) { ++rejected; }
+		[e setSharedBytes:&a length:sizeof(a) atIndex:0];
+		try { [e setVertexBufferOffset:0 atIndex:0]; } catch (...) { ++rejected; }
+		try { [e setFragmentBufferOffset:0 atIndex:0]; } catch (...) { ++rejected; }
+		[e endEncoding];
+		require(rejected==4,"Offset validation or shared-byte buffer invalidation was lost");
+		printf("PASS shared constants and resident-buffer offsets: 4 exact GPU comparisons, 4 invalid bindings rejected\n");
+	}
+	void benchmarkSharedBindings()
+	{
+		const auto state=pipeline(@"binding_test_vertex",@"binding_test_fragment",nil,false,true);
+		struct alignas(32) Value { float color[4]; } value{{.25f,.5f,.125f,1}};
+		std::vector<double> oldTimes,sharedTimes;
+		for(unsigned sample=0;sample<35;++sample) {
+			std::array<uint8_t,4> reference{};
+			for(unsigned order=0;order<2;++order) {
+				const bool shared=((sample+order)&1)!=0;
+				auto output=texture(MTLPixelFormatRGBA8Unorm); auto cb=[queue commandBuffer];
+				auto e=[cb renderCommandEncoderWithDescriptor:pass(output,false)];
+				[e setRenderPipelineState:state]; [e setViewport:MTLViewport{0,0,1,1,0,1}];
+				const auto start=std::chrono::steady_clock::now();
+				for(unsigned i=0;i<512;++i) {
+					if(shared) [e setSharedBytes:&value length:sizeof(value) atIndex:0];
+					else { [e setVertexBytes:&value length:sizeof(value) atIndex:0]; [e setFragmentBytes:&value length:sizeof(value) atIndex:0]; }
+					[e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+				}
+				[e endEncoding];
+				const double micros=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count();
+				const auto actual=read(output,cb);
+				if(order==0) reference=actual; else require(actual==reference,"Binding benchmark changed exact GPU pixels");
+				if(sample>=4) (shared?sharedTimes:oldTimes).push_back(micros);
+			}
+		}
+		std::sort(oldTimes.begin(),oldTimes.end());std::sort(sharedTimes.begin(),sharedTimes.end());
+		printf("Shared-binding benchmark: 31 paired samples after warmup, 512 draws; CPU encoding median old %.3f us shared %.3f us; exact GPU pixels in all 35 pairs\n",
+			oldTimes[oldTimes.size()/2],sharedTimes[sharedTimes.size()/2]);
 	}
 	void validateFogCoordinates()
 	{
@@ -414,7 +596,7 @@ public:
 		[e setFragmentSamplerState:nearest atIndex:0]; [e setFragmentSamplerState:nearest atIndex:1];
 		[e setFragmentBuffer:nodes offset:0 atIndex:4]; [e setFragmentBuffer:heads offset:0 atIndex:5]; [e setFragmentBuffer:counter offset:0 atIndex:6];
 		[e setFragmentBuffer:polygons offset:0 atIndex:7];
-		[e setFragmentBuffer:colors1 offset:0 atIndex:8];
+		[e setFragmentBuffer:colors1 offset:colors1Offset atIndex:8];
 	}
 	MTL4RenderPassDescriptor *pass(id<MTLTexture> output, bool useDepth, float clearDepth = 0)
 	{
@@ -468,7 +650,7 @@ public:
 		}
 		auto c = [cb computeCommandEncoder]; [c setComputePipelineState:resolve];
 		[c setBytes:&frame length:sizeof(frame) atIndex:1]; [c setBuffer:nodes offset:0 atIndex:4]; [c setBuffer:heads offset:0 atIndex:5]; [c setBuffer:counter offset:0 atIndex:6];
-		[c setBuffer:polygons offset:0 atIndex:7]; [c setBuffer:colors1 offset:0 atIndex:8];
+		[c setBuffer:polygons offset:0 atIndex:7]; [c setBuffer:colors1 offset:colors1Offset atIndex:8];
 		[c setTexture:output atIndex:0]; [c setTexture:final atIndex:1];
 		[c dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)]; [c endEncoding];
 		auto result = read(final,cb); require(((u32 *)counter.contents)[1] == expectedStatus,"Unexpected OIT limit status"); return result;
@@ -595,9 +777,10 @@ public:
 		static std::vector<std::vector<uint8_t>> preciseReference;
 		const bool collect = preciseReference.empty();
 		size_t fixture = 0;
-		for (bool shadow : {false, true}) for (bool volume : {false,true}) for (bool dither : {false, true}) for (bool clipped : {false,true}) for (bool textured : {false,true}) {
+		size_t indexedComparisons = 0;
+		for (bool shadow : {false, true}) for (bool volume : {false,true}) for (bool dither : {false, true}) for (bool clipped : {false,true}) for (bool textured : {false,true}) for (bool localized : {false,true}) for (bool heavyPlan : {false,true}) {
 			std::vector<uint8_t> reference;
-			for (u32 layers : {32u,2u}) for (u32 capacity : {2 * width * height, 27u}) for (bool sourceOver : {false, true}) for (bool packedList : {false,true}) {
+			for (u32 layers : {32u,2u}) for (u32 capacity : {2 * width * height, 27u}) for (bool sourceOver : {false, true}) for (bool packedList : {false,true}) for (bool indexed : {false,true}) {
 				if ((sourceOver || packedList) && (shadow || volume)) continue;
 				auto reset = compute([NSString stringWithFormat:@"oit_resolve_%u_reset%@%@",layers,sourceOver ? @"_source_over" : @"",packedList ? @"_packed" : @""]);
 				frame.capacity = capacity; frame.dithering = dither;
@@ -617,17 +800,43 @@ public:
 				auto input = texture(MTLPixelFormatRGBA8Unorm,width,height), output = texture(MTLPixelFormatRGBA8Unorm,width,height);
 				auto cb = [queue commandBuffer];
 				auto e = [cb renderCommandEncoderWithDescriptor:pass(input,true)]; [e endEncoding];
-				const auto tiles = metal_oit::plan(width,height,{{0,0,width,height},{0,0,width,height}},capacity);
-				for (const auto& tile : tiles) {
+				std::vector<metal_oit::Tile> planBounds{{0,0,width,height},{0,0,width,height}};
+				if (heavyPlan) {
+					// Additional conservative bounds force the spatial planner, while
+					// still bounding every actually rasterized fragment below capacity.
+					for (u32 i=0;i<1022;++i) planBounds.push_back({i%width,(i/width)%height,1,1});
+				}
+				uint64_t planCoverage=0;
+				for (auto bounds:planBounds) metal_oit::TilePlanner::addCoverage(planCoverage,bounds);
+				metal_oit::TilePlanner tilePlanner;
+				const auto tiles = indexed ? tilePlanner.plan(width,height,planBounds,capacity,planCoverage)
+					: metal_oit::plan(width,height,planBounds,capacity);
+				if (heavyPlan && indexed && capacity==27) require(tilePlanner.usedHierarchy(),"GPU fixture did not exercise spatial tile hierarchy");
+				// Independently imposed raster scissors provide exact coverage for
+				// localized, touching, empty and off-screen polygons. Compare every
+				// indexed result with the original ordered scan on the same GPU.
+				const std::vector<metal_oit::BoundedPolygon> bounded{
+					{0,localized ? metal_oit::Tile{width/2,0,width-width/2,height} : metal_oit::Tile{0,0,width,height}},
+					{1,localized ? metal_oit::Tile{0,height/2,width,height-height/2} : metal_oit::Tile{0,0,width,height}},
+					{2,{0,0,0,0}}, {3,{width,height,2,2}}};
+				metal_oit::DrawPlan drawPlan;
+				if (indexed) drawPlan.prepare(tiles,bounded);
+				for (size_t tileIndex=0;tileIndex<tiles.size();++tileIndex) {
+					const auto& tile = tiles[tileIndex];
 					frame.oitTile = {tile.x,tile.y,tile.width,tile.height};
 					auto p = pass(input,false); p.colorAttachments[0].loadAction = MTLLoadActionLoad;
 					e = [cb renderCommandEncoderWithDescriptor:p]; [e setRenderPipelineState:capture];
-					for (bool near : {true,false}) {
+					const auto draw = [&](u32 active) {
+						const auto region = metal_oit::intersection(tile,bounded[active].bounds);
+						if (!region.width || !region.height) return;
+						const bool near = bounded[active].index == 0;
 						bind(e,near ? front : back,triangle(near ? std::array<uint8_t,4>{0,0,255,128} : std::array<uint8_t,4>{255,0,0,128},near ? 2 : 1));
 						[e setViewport:MTLViewport{0,0,width,height,0,1}];
-						[e setScissorRect:MTLScissorRect{tile.x,tile.y,tile.width,tile.height}];
+						[e setScissorRect:MTLScissorRect{region.x,region.y,region.width,region.height}];
 						[e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
-					}
+					};
+					if (indexed) drawPlan.forEach(tileIndex,draw);
+					else for (u32 active=0;active<bounded.size();++active) draw(active);
 					[e endEncoding];
 					if (shadow) for (u32 mode : {1u,2u}) {
 						e = [cb renderCommandEncoderWithDescriptor:p]; [e setRenderPipelineState:mod];
@@ -641,7 +850,7 @@ public:
 					auto tiledFrame = frame; tiledFrame.oitTile = {tile.x,tile.y,tile.width,tile.height};
 					[c setBytes:&tiledFrame length:sizeof(tiledFrame) atIndex:1];
 					[c setBuffer:nodes offset:0 atIndex:4]; [c setBuffer:heads offset:0 atIndex:5]; [c setBuffer:counter offset:0 atIndex:6];
-					[c setBuffer:polygons offset:0 atIndex:7]; [c setBuffer:colors1 offset:0 atIndex:8];
+					[c setBuffer:polygons offset:0 atIndex:7]; [c setBuffer:colors1 offset:colors1Offset atIndex:8];
 					[c setTexture:input atIndex:0]; [c setTexture:output atIndex:1];
 					[c dispatchThreads:MTLSizeMake(tile.width,tile.height,1) threadsPerThreadgroup:MTLSizeMake(4,2,1)]; [c endEncoding];
 				}
@@ -660,12 +869,15 @@ public:
 					else require(preciseReference.at(fixture) == pixels,"Relaxed divisions change precise-reference pixels");
 				}
 				else require(reference == pixels,"Tiled OIT changes blending, modifier shadows, dither or tile seams");
+				if (indexed) ++indexedComparisons;
 			}
 			++fixture;
 		}
 		frame.oitTile = {};
 		printf("PASS source-over reset kernels: exact full-frame comparison with the general resolver, odd edges, clipped/textured/dithered passes\n");
 		printf("PASS tiled OIT: exact full-frame pixels with a 27-node buffer, 2/32-layer arrays, reset/reuse, modifiers, dithering, clipping, textures, odd tile edges\n");
+		require(indexedComparisons==896,"Spatial OIT comparison coverage is incomplete");
+		printf("PASS spatial OIT draw plan: %zu exact indexed/linear GPU pairs, original order, localized/full-screen, empty/off-screen coverage\n",indexedComparisons);
 	}
 	std::array<uint8_t,4> resolveKeys(std::initializer_list<std::pair<float,u32>> keys)
 	{
@@ -710,7 +922,7 @@ public:
 		auto c = [cb computeCommandEncoder];
 		[c setComputePipelineState:resolve]; [c setBytes:&frame length:sizeof(frame) atIndex:1];
 		[c setBuffer:source offset:0 atIndex:4]; [c setBuffer:heads offset:0 atIndex:5]; [c setBuffer:counter offset:0 atIndex:6];
-		[c setBuffer:polygons offset:0 atIndex:7]; [c setBuffer:colors1 offset:0 atIndex:8];
+		[c setBuffer:(sourceOver ? counter : polygons) offset:0 atIndex:7]; [c setBuffer:colors1 offset:colors1Offset atIndex:8];
 		[c setTexture:input atIndex:0]; [c setTexture:output atIndex:1];
 		[c dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)]; [c endEncoding];
 		auto result = read(output, cb);
@@ -732,6 +944,69 @@ void expect(const char *name, std::array<uint8_t,4> actual, std::array<uint8_t,4
 }
 
 #include "metal_naomi2_gpu_validation.inc"
+
+void validateGeometryProofCache(GPU& g)
+{
+	const auto savedDirect=g.direct;
+	const auto savedTexture=g.tex0;
+	const auto savedSampler=g.nearest;const auto savedFrame=g.frame;
+	auto layout=[MTLVertexDescriptor vertexDescriptor];
+	const MTLVertexFormat formats[]={MTLVertexFormatFloat3,MTLVertexFormatUChar4Normalized,MTLVertexFormatUChar4Normalized,
+		MTLVertexFormatFloat2,MTLVertexFormatUChar4Normalized,MTLVertexFormatUChar4Normalized,MTLVertexFormatFloat2,MTLVertexFormatFloat3};
+	const size_t offsets[]={offsetof(Vertex,pos),offsetof(Vertex,base),offsetof(Vertex,offset),offsetof(Vertex,uv),
+		offsetof(Vertex,base1),offsetof(Vertex,offset1),offsetof(Vertex,uv1),offsetof(Vertex,normal)};
+	for(unsigned i=0;i<8;++i) {layout.attributes[i].format=formats[i];layout.attributes[i].offset=offsets[i];}
+	layout.layouts[0].stride=sizeof(Vertex);
+	std::array<uint8_t,8*8*4> pixels{};for(size_t i=0;i<pixels.size();++i)pixels[i]=uint8_t(i*73+i/7);
+	g.tex0=g.texture(MTLPixelFormatRGBA8Unorm,8,8,pixels.data(),32);
+	auto sampler=[MTLSamplerDescriptor new];sampler.supportArgumentBuffers=YES;
+	sampler.minFilter=sampler.magFilter=MTLSamplerMinMagFilterLinear;
+	sampler.sAddressMode=sampler.tAddressMode=MTLSamplerAddressModeClampToEdge;g.nearest=[g.device newSamplerStateWithDescriptor:sampler];
+	metal_geometry::ProofCache cache;
+	std::map<u32,id<MTLRenderPipelineState>> variants;
+	unsigned comparisons=0,hits=0,nonBlack=0;
+	bool sawBounded=false,sawFallback=false,sawColourUV=false;
+	struct ProofVertex {float x,y,z,u,v;};
+	for(bool native:{false,true})for(bool textured:{false,true})for(float z:{.0001f,.1f,1.f,64.f,100000.f,1000000.f})
+	for(float uv:{.5f,4.f,std::nextafter(4.f,INFINITY),-4.f})for(bool projection:{false,true}) {
+		g.frame.ndc=glm::mat4(1);if(projection)g.frame.ndc[0][3]=.125f;
+		auto vertices=g.triangle({73,149,211,255},z);
+		std::array<ProofVertex,3> proofVertices;
+		for(unsigned i=0;i<3;++i) {
+			vertices[i].pos[2]*=1.f+.125f*i;
+			vertices[i].uv[0]=uv;vertices[i].uv[1]=.125f+.25f*i;
+			vertices[i].base[0]=uint8_t(53+37*i);
+			const auto& v=vertices[i];proofVertices[i]={v.pos[0],v.pos[1],v.pos[2],v.uv[0],v.uv[1]};
+		}
+		const std::array<u32,4> indices{0,1,2,~0u};
+		cache.reset();
+		for(bool needUV:{false,true,false,true}) {
+			const auto raw=metal_geometry::prove(g.frame.ndc,indices,proofVertices,0,4,needUV);
+			const auto memo=cache.get(0,4,needUV,[&](bool wantUV){return metal_geometry::prove(g.frame.ndc,indices,proofVertices,0,4,wantUV);});
+			require(memcmp(&raw.depth,&memo.depth,sizeof(float))==0 && raw.colourCoordinates==memo.colourCoordinates,"Proof cache changes GPU inputs");
+			const auto render=[&](metal_geometry::Proof proof) {
+				MetalPolyUniforms p{};p.trilinear=1;p.flags=4|(native?1u<<4:0)|(textured?1:0);
+				p.tsp0=(1u<<19)|(1u<<20)|(2u<<22)|(3u<<6);
+				if(textured && !native && proof.colourCoordinates)p.flags|=1u<<18;
+				p.depthBound=proof.depth;
+				const bool bounded=proof.depth>0;
+				sawBounded|=bounded;sawFallback|=!bounded;sawColourUV|=(p.flags&(1u<<18))!=0;
+				const u32 key=p.flags|(bounded?1u<<24:0);
+				auto found=variants.find(key);
+				if(found==variants.end())found=variants.emplace(key,g.pipeline(bounded?@"pvr_dc_bounded_vertex":@"pvr_dc_material_vertex",
+					bounded?@"pvr_bounded_fragment":@"pvr_material_fragment",layout,true,true,&p)).first;
+				g.direct=found->second;return g.draw(p,vertices);
+			};
+			const auto reference=render(raw),candidate=render(memo);
+			nonBlack+=reference[0]!=0 || reference[1]!=0 || reference[2]!=0;
+			require(reference==candidate,"Proof cache changes bounded/fallback GPU pixels");++comparisons;
+		}
+		hits+=cache.statistics.hits;
+	}
+	g.direct=savedDirect;g.tex0=savedTexture;g.nearest=savedSampler;g.frame=savedFrame;
+	require(comparisons==768 && hits>0 && nonBlack>=256 && sawBounded && sawFallback && sawColourUV,"Proof cache GPU coverage is incomplete");
+	printf("PASS geometry proof cache: %u exact GPU pairs, both depth modes, UV demand/upgrade, bounds/fallbacks, projection reset; hits=%u nonblack=%u\n",comparisons,hits,nonBlack);
+}
 
 
 // Cross-material comparisons against the original precise-divide path.
@@ -815,8 +1090,28 @@ void validateAlphaConsumers(GPU& g, bool optimized,
 int main(int argc, char **argv)
 {
 	@autoreleasepool { try {
+		if (argc > 1 && strcmp(argv[1], "--bindings-benchmark") == 0) {
+			GPU g(false); g.benchmarkSharedBindings(); return 0;
+		}
+		if (argc > 1 && strcmp(argv[1], "--storage-only") == 0) {
+			GPU g(false); g.validateSharedOITStorage(); return 0;
+		}
+		if (argc > 1 && strcmp(argv[1], "--accumulator-only") == 0) {
+			GPU g(false); g.validateDirectAccumulator(); return 0;
+		}
+		if (argc > 1 && strcmp(argv[1], "--bindings-only") == 0) {
+			GPU g(false); g.validateSharedBindings(); return 0;
+		}
 		if (argc > 1 && strcmp(argv[1], "--oit-tiles-only") == 0) {
-			for (bool relaxed : {false,true}) { GPU g(relaxed); g.validateZeroAlphaNoOp(); g.validateTiledOIT(); g.validateSourceOverResolve(); g.validatePackedPolygonResolve(); }
+			for (bool relaxed : {false,true}) { GPU g(relaxed); g.validateSharedBindings(); g.validateZeroAlphaNoOp(); g.validateTiledOIT(); g.validateSourceOverResolve(); g.validatePackedPolygonResolve(); }
+			return 0;
+		}
+		if (argc > 1 && strcmp(argv[1], "--draw-plan-only") == 0) {
+			for (bool relaxed : {false,true}) { GPU g(relaxed); g.validateTiledOIT(); }
+			return 0;
+		}
+		if (argc > 1 && strcmp(argv[1], "--proof-cache-only") == 0) {
+			for (bool relaxed : {false,true}) { GPU g(relaxed);validateGeometryProofCache(g); }
 			return 0;
 		}
 		std::vector<std::array<uint8_t,4>> preciseTexelBoundaries;

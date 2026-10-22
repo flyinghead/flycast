@@ -236,6 +236,30 @@ void MetalRenderer::validateSynthetic()
 		NOTICE_LOG(RENDERER, "Metal validation PASS: bounded production pipelines and depth fallbacks (%s)", perPixel ? "OIT" : "standard");
 	}
 	{
+		// Exercise the renderer wrapper as well as the standalone cache. These
+		// explicit resets simulate the immutable snapshot boundary of Render.
+		const auto savedVertices=fixture.verts;
+		geometryProofs.reset();
+		bool expectedUV=false;
+		const float expected=conservativeDepthBound(opaque,0,4,&expectedUV);
+		for(unsigned i=0;i<1000;++i) {
+			bool uv=false;const float actual=cachedDepthBound(opaque,0,4,&uv);
+			if(memcmp(&expected,&actual,sizeof(float))!=0 || uv!=expectedUV)
+				throw RendererException("Metal proof-cache wrapper changed depth/UV bits");
+		}
+		if(geometryProofs.statistics.evaluations!=1 || geometryProofs.statistics.hits!=999)
+			throw RendererException("Metal repeated proof range was not reused");
+		disableDepthBounds=true;bool uv=true;
+		if(cachedDepthBound(opaque,0,4,&uv)!=0 || uv)
+			throw RendererException("Metal disabled depth proof used a cached value");
+		disableDepthBounds=false;
+		fixture.verts[0].z=0;geometryProofs.reset();uv=true;
+		if(cachedDepthBound(opaque,0,4,&uv)!=0 || uv)
+			throw RendererException("Metal proof cache survived a changed vertex snapshot");
+		fixture.verts=savedVertices;geometryProofs.reset();
+		NOTICE_LOG(RENDERER,"Metal validation PASS: proof-cache wrapper bits, reuse, consumer disable and snapshot reset");
+	}
+	{
 		const auto savedVertices = fixture.verts;
 		const auto savedOpaque = fixture.global_param_op;
 		const bool oldNative = config::NativeDepthInterpolation;
@@ -811,6 +835,60 @@ void MetalRenderer::validateSynthetic()
 		NOTICE_LOG(RENDERER,"Metal validation PASS: 780 dense/linked full-frame comparisons, packed/unpacked linked and dense metadata, all blend/accumulator modes and source-over/additive layouts");
 	}
 	if (perPixel) {
+		const auto savedVertices = fixture.verts;
+		const auto savedIndices = fixture.idx;
+		const auto savedTranslucent = fixture.global_param_tr;
+		const auto savedPasses = fixture.render_passes;
+		const auto savedBudget = config::PixelBufferSize.get();
+		const bool savedNative = config::NativeDepthInterpolation;
+		fixture.framebufferWidth = 129; fixture.framebufferHeight = 97;
+		fixture.verts.resize(4); fixture.idx = {0,1,2,3}; fixture.global_param_tr.clear();
+		for (u32 poly = 0; poly < 8; ++poly) {
+			PolyParam p = tr; p.first = fixture.idx.size(); p.count = poly == 7 ? 9 : 4;
+			p.tileclip = poly == 6 ? (3u << 28) | (1u << 6) | (3u << 12) | (10u << 17) : 0;
+			const u32 base = fixture.verts.size();
+			for (u32 j = 0; j < 4; ++j) {
+				auto v = savedVertices[4 + j];
+				v.x = float(poly % 4) * 160 + ((j & 1) ? 150 : 0);
+				v.y = float(poly / 4) * 240 + ((j & 2) ? 230 : 0);
+				v.col[0] = 27 + poly * 29; v.col[1] = 201 - poly * 13; v.col[2] = 53; v.col[3] = 111;
+				fixture.verts.push_back(v); fixture.idx.push_back(base + j);
+			}
+			if (poly == 7) fixture.idx.insert(fixture.idx.end(), {~0u,base,base+1,base+2,base+3});
+			fixture.global_param_tr.push_back(p);
+		}
+		// Parser tombstones must be ignored even with an obsolete index range.
+		PolyParam empty = tr; empty.count = 0; empty.first = ~0u;
+		fixture.global_param_tr.push_back(empty); fixture.render_passes[0].tr_count = fixture.global_param_tr.size();
+		config::PixelBufferSize = 4096;
+		for (bool native : {false,true}) for (bool general : {false,true}) {
+			config::NativeDepthInterpolation = native;
+			fixture.global_param_tr[1].tsp.DstInstr = general ? 1 : 5;
+			disableOITDrawReuse = disableOITMetadataElision = true;
+			oitPolygonDraws = oitPolygonPreparations = 0;
+			if (!Render()) throw RendererException("Metal repeated-draw reference failed");
+			std::vector<u8> reference; context()->readTexture(screen, reference);
+			const u64 referenceDraws = oitPolygonDraws, referencePreparations = oitPolygonPreparations;
+			const size_t referenceUploads = frameResources[currentFrameResource].polyUniformCursor;
+			disableOITDrawReuse = disableOITMetadataElision = false;
+			oitPolygonDraws = oitPolygonPreparations = 0;
+			if (!Render()) throw RendererException("Metal reused-draw candidate failed");
+			std::vector<u8> candidate; context()->readTexture(screen, candidate);
+			if (candidate != reference) throw RendererException("Metal geometry selection/material reuse changed pixels");
+			if (oitPolygonDraws >= referenceDraws || oitPolygonPreparations >= referencePreparations
+					|| oitPolygonPreparations > 8) throw RendererException("Metal repeated draw work was not reduced");
+			if (frameResources[currentFrameResource].polyUniformCursor >= referenceUploads)
+				throw RendererException("Metal repeated polygon uniform uploads were not reduced");
+			if ((oitPolygons == counter) == general) throw RendererException("Metal polygon table consumer selection is incorrect");
+			NOTICE_LOG(RENDERER, "Metal validation PASS: tiled reuse native=%d general=%d, draws %llu -> %llu, preparations %llu -> %llu",
+				native, general, referenceDraws, oitPolygonDraws, referencePreparations, oitPolygonPreparations);
+		}
+		fixture.verts = savedVertices; fixture.idx = savedIndices;
+		fixture.global_param_tr = savedTranslucent; fixture.render_passes = savedPasses;
+		fixture.framebufferWidth = 64; fixture.framebufferHeight = 48;
+		config::PixelBufferSize = savedBudget; config::NativeDepthInterpolation = savedNative;
+	}
+	if (perPixel) {
 		// Compare the actual GPU raster/resolve against a full-screen coverage
 		// bound. Large off-screen coordinates must not force needless tiles,
 		// but clipping and native-depth interpolation must keep exact pixels.
@@ -898,6 +976,49 @@ void MetalRenderer::validateSynthetic()
 	fixture.global_param_mvo.push_back(mv); fixture.render_passes[0].mvo_count = 1;
 	// Validate stencil geometry and compare the production shadow result.
 	check("opaque modifier stencil", int(std::round(FPU_SHAD_SCALE.scale_factor / 256.f * 255)), 0, 0);
+	auto checkModifierPreparation = [&](const char *name) {
+		const auto triangles = fixture.modtrig;
+		const auto opaqueVolumes = fixture.global_param_mvo;
+		const auto translucentVolumes = fixture.global_param_mvo_tr;
+		const bool oldNative = config::NativeDepthInterpolation;
+		size_t pairs = 0;
+		for (bool native : {false, true}) for (unsigned shape = 0; shape < 5; ++shape)
+			for (u32 mode = 0; mode < 4; ++mode) for (bool last : {false, true}) {
+				config::NativeDepthInterpolation = native;
+				fixture.modtrig = triangles;
+				const float z = settings.platform.isNaomi2() ? -.5f : 3.f;
+				const ModTriangle cap{-1e10f,-1e10f,z, 1e10f,-1e10f,z, 0,1e10f,z};
+				const ModTriangle outside{1e10f,-1e10f,z, 2e10f,-1e10f,z, 1e10f,1e10f,z};
+				if (shape == 1) fixture.modtrig.push_back(cap);
+				if (shape == 2) fixture.modtrig.insert(fixture.modtrig.begin(), cap);
+				if (shape == 3) fixture.modtrig.insert(fixture.modtrig.begin(), outside);
+				if (shape == 4) fixture.modtrig = {outside};
+				for (auto *volumes : {&fixture.global_param_mvo, &fixture.global_param_mvo_tr})
+					for (auto& volume : *volumes) {
+						volume.first = 0; volume.count = fixture.modtrig.size();
+						volume.isp.DepthMode = mode; volume.isp.VolumeLast = last;
+					}
+				eagerModifierPreparation = true;
+				if (!Render()) throw RendererException("Metal eager modifier reference failed");
+				std::vector<u8> reference; context()->readTexture(screen, reference);
+				const auto expectedOffsets = modifierTriangleOffsets;
+				const size_t bytes = expectedOffsets.back() * sizeof(ModTriangle);
+				std::vector<u8> expectedBytes(bytes);
+				if (bytes) memcpy(expectedBytes.data(), modifiers.contents, bytes);
+				eagerModifierPreparation = false;
+				if (!Render()) throw RendererException("Metal lazy modifier candidate failed");
+				std::vector<u8> candidate; context()->readTexture(screen, candidate);
+				if (reference != candidate || modifierTriangleOffsets != expectedOffsets
+						|| (bytes && memcmp(expectedBytes.data(), modifiers.contents, bytes) != 0))
+					throw RendererException("Metal lazy modifier pixels, offsets or uploaded bytes differ");
+				++pairs;
+			}
+		fixture.modtrig = triangles; fixture.global_param_mvo = opaqueVolumes;
+		fixture.global_param_mvo_tr = translucentVolumes; config::NativeDepthInterpolation = oldNative;
+		NOTICE_LOG(RENDERER, "Metal validation PASS: %zu complete modifier preparation image/upload pairs %s (%s)",
+			pairs, name, perPixel ? "OIT" : "standard");
+	};
+	checkModifierPreparation("opaque");
 	if (perPixel) {
 		fixture.global_param_op[0].tsp1 = opaque.tsp;
 		fixture.global_param_op[0].tcw1.full = 0;
@@ -917,6 +1038,7 @@ void MetalRenderer::validateSynthetic()
 		tr.pcw.Shadow = 1; fixture.global_param_tr.push_back(tr); fixture.render_passes[0].tr_count = 1;
 		fixture.global_param_mvo_tr.push_back(mv); fixture.render_passes[0].mvo_tr_count = 1;
 		check("translucent production modifiers", 127, 0, int(std::round(128 * FPU_SHAD_SCALE.scale_factor / 256.f)));
+		checkModifierPreparation("translucent");
 		if(shadowDepth==depth)throw RendererException("Metal modifier consumer used shared opaque depth");
 		if (context()->device().rasterOrderGroupsSupported) {
 			const auto savedTriangles = fixture.modtrig;
@@ -1022,6 +1144,7 @@ void MetalRenderer::validateSynthetic()
 	ModifierVolumeParam n2mv = mv; n2mv.mvMatrix = 0; n2mv.projMatrix = 1;
 	fixture.global_param_mvo.push_back(n2mv); fixture.render_passes[0].mvo_count = 1;
 	check("Naomi2 production modifier transform", int(std::round(FPU_SHAD_SCALE.scale_factor / 256.f * 255)), 0, 0);
+	checkModifierPreparation("Naomi2");
 	if (perPixel) {
 		n2.constantColor[1] = false; n2.lightModel = 0;
 		fixture.lightModels[0].ambientBase[1][1] = .25f;

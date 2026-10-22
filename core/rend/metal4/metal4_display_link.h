@@ -11,21 +11,16 @@
 #include <atomic>
 #include <deque>
 #include <thread>
+#include "metal4_upload_state.h"
 
-// Only immutable compositions cross from the renderer to the
-// display thread. The last reference releases a bounded composition slot.
-struct API_AVAILABLE(macos(26.0)) MetalDisplayImage {
-	id<MTLTexture> texture;
-	id<MTLSharedEvent> readyEvent;
-	u64 readyValue = 0;
-	double target = 0;
-	u64 content = 0;
-};
+// Immutable commands and leased source/UI snapshots cross from the producer
+// to this display queue; drawables remain exclusively on the display thread.
 struct API_AVAILABLE(macos(26.0)) MetalDisplayState {
 	std::mutex mutex;
 	std::deque<std::shared_ptr<MetalDisplayImage>> pending;
 	std::shared_ptr<MetalDisplayImage> visible;
 	std::atomic<bool> active{false};
+	std::atomic<bool> failed{false};
 	std::atomic<double> schedulingLead{0};
 	CAMetalLayer *layer;
 	FCMetal4Queue *queue;
@@ -33,9 +28,11 @@ struct API_AVAILABLE(macos(26.0)) MetalDisplayState {
 	id<MTLSamplerState> sampler;
 	dispatch_group_t submissions;
 	dispatch_semaphore_t flight = dispatch_semaphore_create(2);
-	bool timing = false, repeats = false;
+	bool timing = false, repeats = false, needsPresent = false;
 	u64 presentations = 0;
 	u64 busy = 0, evicted = 0;
+	std::weak_ptr<MetalDisplayImage> resizedImage;
+	id<MTLTexture> resizedComposition;
 };
 
 API_AVAILABLE(macos(26.0))
@@ -55,11 +52,26 @@ API_AVAILABLE(macos(26.0))
 	@autoreleasepool {
 		auto state = _state;
 		if (!state->active) return;
-		// The composition is already rendered. Follow this view's next display
+		if(state->failed.exchange(false,std::memory_order_acq_rel)) {
+			// A failed GPU composition is not a reusable resize snapshot.
+			// Only this display thread changes the cache; feedback sets a flag.
+			state->resizedImage.reset();state->resizedComposition=nil;
+			std::lock_guard<std::mutex> lock(state->mutex);
+			state->needsPresent=bool(state->visible);
+		}
+		// The immutable image is ready to replay. Follow this view's next display
 		// tick rather than acquiring a drawable several refreshes in advance.
 		const double lead = link.targetTimestamp - link.timestamp;
 		if (std::isfinite(lead) && lead > 0 && lead < 1)
 			state->schedulingLead = lead;
+		{
+			std::lock_guard<std::mutex> lock(state->mutex);
+			const bool due = !state->pending.empty() && state->pending.front()->target <= link.targetTimestamp;
+			// With repetition disabled, keep an idle callback from acquiring a
+			// drawable it cannot present. Do not advance the pending queue here:
+			// GPU capacity and a drawable must be reserved first.
+			if (!due && (!state->visible || (!state->repeats && !state->needsPresent))) return;
+		}
 		// Reserve GPU capacity before advancing the visible image. Otherwise a
 		// busy output queue consumes game images without ever presenting them.
 		if (dispatch_semaphore_wait(state->flight, DISPATCH_TIME_NOW) != 0) {
@@ -74,7 +86,7 @@ API_AVAILABLE(macos(26.0))
 		}
 		if (!drawable) { dispatch_semaphore_signal(state->flight); return; }
 		std::shared_ptr<MetalDisplayImage> image;
-		bool changed = false, repeats;
+		bool changed = false, repeats, needsPresent;
 		{
 			std::lock_guard<std::mutex> lock(state->mutex);
 			// Keep source order when rendering arrives in bursts. Each display
@@ -83,38 +95,69 @@ API_AVAILABLE(macos(26.0))
 			// waiting for GPU completion on the display or emulation thread.
 			if (!state->pending.empty() && state->pending.front()->target <= link.targetTimestamp) {
 				state->visible = std::move(state->pending.front());
-				state->pending.pop_front(); changed = true;
+				state->pending.pop_front(); changed = true;state->needsPresent=true;
 			}
 			image = state->visible;
 			repeats = state->repeats;
+			needsPresent=state->needsPresent;
 		}
-		if (!image || (!changed && !repeats)) {
+		if (!image || (!changed && !repeats && !needsPresent)) {
 			dispatch_semaphore_signal(state->flight); return;
 		}
+		bool ownsFlight=true;
 		try {
 			FCMetal4Commands *command = [state->queue commandBuffer];
+			if(!command)throw RendererException("Cannot allocate Metal display command buffer");
+			metal_upload::adoptSlot(command,state->flight);ownsFlight=false;
 			[command waitForEvent:image->readyEvent value:image->readyValue];
 			[command useDrawable:drawable];
+			id<MTLTexture> texture = image->texture;
+			id<MTLTexture> newResizeComposition;
+			if (image->recording && (image->width != drawable.texture.width || image->height != drawable.texture.height)) {
+				// Match the old nearest resampling of an already composed image
+				// during resize. Reuse it on this queue until the visible image changes.
+				if (state->resizedImage.lock() != image || !state->resizedComposition) {
+					MTLTextureDescriptor *d = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+						width:image->width height:image->height mipmapped:NO];
+					d.storageMode = MTLStorageModePrivate; d.hazardTrackingMode = MTLHazardTrackingModeUntracked;
+					d.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+					id<MTLTexture> composed = [state->queue.device newTextureWithDescriptor:d];
+					if (!composed) throw RendererException("Cannot allocate Metal resized presentation");
+					MTL4RenderPassDescriptor *p = [MTL4RenderPassDescriptor new];
+					p.colorAttachments[0].texture = composed; p.colorAttachments[0].loadAction = MTLLoadActionClear;
+					p.colorAttachments[0].storeAction = MTLStoreActionStore; p.colorAttachments[0].clearColor = image->clearColor;
+					FCMetal4RenderEncoder *e = [command renderCommandEncoderWithDescriptor:p];
+					[image->recording encodeTo:e opaque:NO]; [e endEncoding];
+					newResizeComposition = composed;
+				}
+				texture = newResizeComposition ?: state->resizedComposition;
+			} else { state->resizedImage.reset(); state->resizedComposition = nil; }
+			const bool direct = image->recording && image->width == drawable.texture.width && image->height == drawable.texture.height;
 			MTL4RenderPassDescriptor *pass = [MTL4RenderPassDescriptor new];
 			pass.colorAttachments[0].texture = drawable.texture;
-			pass.colorAttachments[0].loadAction = MTLLoadActionDontCare;
+			pass.colorAttachments[0].loadAction = direct ? MTLLoadActionClear : MTLLoadActionDontCare;
 			pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+			pass.colorAttachments[0].clearColor = image->clearColor;
 			FCMetal4RenderEncoder *encoder = [command renderCommandEncoderWithDescriptor:pass];
-			struct alignas(16) Uniform { float color[4]; u32 rotate, ignoreAlpha; } u{{1,1,1,1},0,1};
-			[encoder setRenderPipelineState:state->pipeline];
-			[encoder setCullMode:MTLCullModeNone];
-			[encoder setViewport:MTLViewport{0,0,double(drawable.texture.width),double(drawable.texture.height),0,1}];
-			[encoder setVertexBytes:&u length:sizeof(u) atIndex:0];
-			[encoder setFragmentBytes:&u length:sizeof(u) atIndex:0];
-			[encoder setFragmentTexture:image->texture atIndex:0];
-			[encoder setFragmentSamplerState:state->sampler atIndex:0];
-			[encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+			if (direct) [image->recording encodeTo:encoder opaque:YES];
+			else {
+				struct alignas(16) Uniform { float color[4]; u32 rotate, ignoreAlpha; } u{{1,1,1,1},0,1};
+				[encoder setRenderPipelineState:state->pipeline];
+				[encoder setCullMode:MTLCullModeNone];
+				[encoder setViewport:MTLViewport{0,0,double(drawable.texture.width),double(drawable.texture.height),0,1}];
+				[encoder setSharedBytes:&u length:sizeof(u) atIndex:0];
+				[encoder setFragmentTexture:texture atIndex:0];
+				[encoder setFragmentSamplerState:state->sampler atIndex:0];
+				[encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+			}
 			[encoder endEncoding];
 			[command addCompletedHandler:^(FCMetal4Commands *finished) {
 				// Keep the image's pool lease until this GPU read completes.
 				(void)image;
-				if (finished.status == FCMetal4StatusError) ERROR_LOG(RENDERER, "Metal display: %s", finished.error.localizedDescription.UTF8String);
-				dispatch_semaphore_signal(state->flight);
+				if (finished.status == FCMetal4StatusError) {
+					state->failed.store(true,std::memory_order_release);
+					ERROR_LOG(RENDERER, "Metal display: %s", finished.error.localizedDescription.UTF8String);
+				}
 			}];
 			if (state->timing && state->presentations < 18000) {
 				const u64 number = ++state->presentations, content = image->content;
@@ -130,8 +173,13 @@ API_AVAILABLE(macos(26.0))
 			// Submit promptly for the next display tick; never delay the producer.
 			[command presentDrawable:drawable];
 			commitCommands(command, state->submissions);
+			// A failed encoding/submission must not publish an unrendered cache.
+			if (newResizeComposition) {
+				state->resizedComposition = newResizeComposition; state->resizedImage = image;
+			}
+			{std::lock_guard<std::mutex> lock(state->mutex);state->needsPresent=false;}
 		} catch (const std::exception& failure) {
-			dispatch_semaphore_signal(state->flight);
+			if(ownsFlight)dispatch_semaphore_signal(state->flight);
 			ERROR_LOG(RENDERER, "Metal display failed: %s", failure.what());
 		}
 	}
@@ -196,7 +244,7 @@ public:
 		CFRunLoopWakeUp(runLoop); dispatch_semaphore_wait(done, DISPATCH_TIME_FOREVER);
 		{
 			std::lock_guard<std::mutex> lock(state->mutex);
-			state->pending.clear(); state->visible.reset(); state->repeats = repeats;
+			state->pending.clear(); state->visible.reset(); state->repeats = repeats;state->needsPresent=false;
 		}
 		state->active = active;
 	}

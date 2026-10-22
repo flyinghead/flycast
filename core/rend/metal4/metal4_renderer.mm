@@ -3,6 +3,14 @@
 #include "metal4_texture.h"
 #include "metal4_shaders.h"
 #include "metal4_oit_tiling.h"
+#include "metal4_oit_geometry.h"
+#include "metal4_oit_storage.h"
+#include "metal4_oit_draw_plan.h"
+#include "metal4_oit_plan.h"
+#include "metal4_geometry_proof.h"
+#include "metal4_preload.h"
+#include "metal4_preload_lookup.h"
+#include "metal4_upload_scope.h"
 #include "metal4_oit_sequence.h"
 #include "metal4_modifier_clip.h"
 #include "hw/pvr/ta.h"
@@ -16,10 +24,24 @@
 #include <array>
 #include <cmath>
 #include <chrono>
+#include <cstdio>
 #include <atomic>
 #include <limits>
 #include <new>
 #include "ui/gui.h"
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+#include <fstream>
+#include <filesystem>
+#include <unordered_set>
+#include <thread>
+#include <stb_image_write.h>
+#include "metal4_preload.h"
+#include "../../../tests/metal/metal_offscreen_test_hooks.h"
+extern bool metalOffscreenAllowExpectedNotification;
+extern unsigned metalOffscreenExpectedNotificationCount;
+extern std::string metalOffscreenCacheRoot;
+
+#endif
 #ifdef FLYCAST_FRAME_CAPTURE_TESTS
 #include "emulator.h"
 #include "../../../tests/metal/metal_frame_capture.inc"
@@ -44,7 +66,7 @@ constexpr u32 Texture = 1 << 0, Offset = 1 << 1, Gouraud = 1 << 2, Bump = 1 << 3
 	IgnoreAlpha0 = 1 << 11, IgnoreAlpha1 = 1 << 12;
 constexpr u32 ColorShadow = 1 << 13, LightOff = 1 << 14, DeferDither = 1 << 15;
 constexpr u32 ColourUV = 1u << 18;
-constexpr float ColourUVCoordinateLimit = 4.f;
+constexpr float ColourUVCoordinateLimit = metal_geometry::ColourUVCoordinateLimit;
 constexpr u32 ShadingTspMask = (3u << 6) | (31u << 19);
 enum class PolyPass { Direct, Depth, Color0, OIT, DepthOnly };
 enum class RenderAttachments { ColorDepth, DepthOnly, None };
@@ -118,7 +140,10 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	MetalTextureCache textureCache;
 	MetalTexture fog, palette, framebuffer;
 	id<MTLTexture> screen, screenDepth, depth, shadowDepth, shadowStencil, emptyStencil, target, white;
+	id<MTLTexture> secondaryColor, screenSecondary;
+	bool directAccumulator = false, initializeSecondary = false;
 	id<MTLBuffer> vertices, indices, modifiers, lights, nodes, oitColors1, heads, counter, oitPolygons, frameUniforms;
+	NSUInteger oitColorOffset = 0;
 	std::vector<u32> modifierTriangleOffsets;
 	std::vector<metal_modifier::Triangle> clippedModifierTriangles;
 	id<MTLBuffer> emptyLights, emptyNaomi2, naomi2;
@@ -140,7 +165,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		id<MTLComputePipelineState> state = nil;
 		MTLSize threads = MTLSizeMake(1, 1, 1);
 	};
-	ResolvePipeline resolve, finish;
+	ResolvePipeline finish;
 	std::map<u32, ResolvePipeline> resolvePipelines;
 	id<MTLDepthStencilState> disabledDepth;
 	id<MTLRenderPipelineState> scalePipeline;
@@ -176,23 +201,41 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	bool packedListOIT = false;
 	NSUInteger clearedOITHeadBytes = 0;
 	struct PassState {
-		bool sortedFragments, colorModifiers, oitModifiers, resetOITHeads;
+		bool sortedFragments, colorModifiers, oitModifiers, resetOITHeads, sourceOver;
 	};
 	std::vector<PassState> passStates;
 	size_t shadowDepthPassCount = 0;
 	bool frameTimings = false;
+	bool gpuPreloadOnDemand = false, gpuPreloadFinished = false, gpuPreloadCursorValid = false;
+	u32 gpuPreloadCursor = 0;
+	u64 gpuPreloadGeneration = 0;
+	std::unordered_map<u32, id<MTLTexture>> gpuPreloadedTextures;
+	void clearGpuPreloadedTextures() {
+		gpuPreloadedTextures.clear();gpuPreloadFinished=false;gpuPreloadCursorValid=false;
+	}
 	u64 profilingLimit = 900;
 	u64 profilingFrame = 0;
 	u64 profilingProcess = 0;
 	u32 profilingBoundEligible = 0, profilingBoundActive = 0;
 	u32 profilingUVEligible = 0, profilingUVActive = 0;
+	struct GPUIntermediates {
+		id<MTLTexture> shadowDepth, shadowStencil, rasterColor;
+		std::array<id<MTLTexture>, 2> resolveScratch;
+	};
+	// GPU-only images never escape to presentation/RTT consumers. Consecutive
+	// renders on this queue can reuse them under the existing command barriers,
+	// just like the shared OIT nodes. CPU-written inputs and final images still
+	// belong to completion-owned frame slots.
+	GPUIntermediates gpuIntermediates;
 	struct FrameResources {
 		dispatch_semaphore_t available = dispatch_semaphore_create(1);
 		id<MTLBuffer> counter;
 		id<MTLBuffer> vertices, indices, modifiers, lights, oitPolygons, naomi2, frameUniforms;
-		id<MTLTexture> shadowDepth, shadowStencil, rasterColor;
+		id<MTLTexture> secondaryColor;
 		id<MTLTexture> screenOutput, rttReadbackOutput, framebufferScale;
-		std::array<id<MTLTexture>, 2> resolveScratch;
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		GPUIntermediates legacyIntermediates;
+#endif
 		std::vector<id<MTLBuffer>> polyUniformPages;
 		size_t polyUniformCursor = 0;
 	};
@@ -200,15 +243,24 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	size_t nextFrameResource = 0, currentFrameResource = 0;
 	struct RenderAbortState { std::atomic<bool> canceled{false}; };
 	std::shared_ptr<RenderAbortState> renderAbort = std::make_shared<RenderAbortState>();
-	void recoverCanceledRender()
+	bool recoverCanceledRender()
 	{
-		if (!renderAbort->canceled.exchange(false)) return;
+		const bool uploadFailed=context()->consumeTextureUploadFailure();
+		const bool canceled=renderAbort->canceled.exchange(false);
+		if(!uploadFailed && !canceled)return false;
+		if(uploadFailed) {
+			// Clear maps only on the renderer thread. Already adopted entries
+			// are invalidated at the next Process before parsing new pointers.
+			clearGpuPreloadedTextures();gpuPreloadOnDemand=true;
+			framebufferRendered=false;rc=nullptr;
+		}
 		clearedOITHeadBytes = 0;
 		resetTextureCache = updateFogTable = updatePalette = true;
 		// A canceled batch may include earlier renders whose image was already
 		// recorded as pending. Keep the previously presented image available.
-		screen = screenDepth = target = nil;
+		screen = screenDepth = screenSecondary = target = nil;
 		screenRendered = false;
+		return true;
 	}
 	struct DrawState {
 		id<MTLRenderPipelineState> pipeline = nil;
@@ -240,58 +292,72 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	bool disableDepthBounds = false;
 	bool disableColourUV = false;
 	bool disableOrderedModifiers = false;
+	bool eagerModifierPreparation = false;
 	bool disableOITBounds = false;
 	bool disableDenseOIT = false;
 	bool disablePackedOIT = false;
 	bool disableOITDepthSharing = false, disableOITHeadReuse = false;
 	u64 oitHeadClearCount = 0;
+	bool disableOITDrawReuse = false, disableOITMetadataElision = false;
+	u64 oitPolygonPreparations = 0, oitPolygonDraws = 0;
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+	bool legacyOITStorage = false, measureOITStorage = false;
+	bool perSlotIntermediates = false;
+	bool disableProofCache = false, measureProofWork = false;
+	mutable u64 measuredProofEvaluations = 0, measuredProofVertices = 0;
+	bool legacyOITPlanning = false, measureOITPlan = false, countOITPlan = false;
+	mutable std::vector<metal_oit::Tile> legacyOITTileResults;
+	std::vector<metal_oit::Tile> legacyOITPolygonBounds;
+	u64 measuredOITCandidates = 0, measuredOITIndexedPasses = 0, measuredOITHierarchyPasses = 0;
+	u64 measuredOITPlanAllocations = 0, measuredOITPlanAllocatedBytes = 0, measuredOITPreparedPeak = 0;
+	double measuredOITDrawEncodingUs = 0;
+	id<MTLBuffer> legacyOITColors;
+	u64 measuredOITTiles = 0;
+	double measuredOITPlanningUs = 0;
 #endif
+#endif
+	mutable metal_geometry::ProofCache geometryProofs;
+	metal_geometry::Proof evaluateDepthProof(u32 first,u32 count,bool uv) const
+	{
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		if(measureProofWork) {
+			++measuredProofEvaluations;
+			struct CountedVertices {
+				const std::vector<Vertex>& data;u64& reads;
+				size_t size() const{return data.size();}
+				const Vertex& operator[](size_t index) const{++reads;return data[index];}
+			} vertices{rc->verts,measuredProofVertices};
+			return metal_geometry::prove(frame.ndc,rc->idx,vertices,first,count,uv);
+		}
+#endif
+		return metal_geometry::prove(frame.ndc,rc->idx,rc->verts,first,count,uv);
+	}
 	float conservativeDepthBound(const PolyParam& poly, u32 first, u32 count, bool *colourCoordinates = nullptr) const
 	{
 		if (colourCoordinates) *colourCoordinates = false;
 #ifdef METAL_RENDERER_TESTS
 		if (disableDepthBounds) return 0;
 #endif
-		if (poly.isNaomi2() || count < 3 || first > rc->idx.size() || count > rc->idx.size() - first)
-			return 0;
-		const auto& m = frame.ndc;
-		// The PVR reciprocal must be a positive scale of input Z. Other
-		// projections retain depth(any), including every Naomi2 projection.
-		if (m[0][2] != 0 || m[1][2] != 0 || m[3][2] != 0
-				|| m[0][3] != 0 || m[1][3] != 0 || m[2][3] != 0 || m[3][3] != 1
-				|| !std::isnormal(m[2][2]) || m[2][2] <= 0) return 0;
-		bool boundedUV = colourCoordinates != nullptr;
-		double minimum = std::numeric_limits<double>::infinity(), maximum = 0;
-		for (size_t i = first; i < size_t(first) + count; ++i) {
-			const u32 index = rc->idx[i];
-			if (index == ~0u) continue;
-			if (index >= rc->verts.size()) return 0;
-			const auto& v = rc->verts[index];
-			// Metal may flush subnormal operands to zero before multiplying.
-			// A positive CPU double product cannot prove positive GPU Z then.
-			if (!std::isfinite(v.x) || !std::isfinite(v.y) || !std::isnormal(v.z)) return 0;
-			if (boundedUV && (!std::isfinite(v.u) || !std::isfinite(v.v)
-					|| std::abs(v.u) > ColourUVCoordinateLimit || std::abs(v.v) > ColourUVCoordinateLimit)) boundedUV = false;
-			const double z = double(m[2][2]) * v.z;
-			if (z < 1.e-12 || z > 1.e5) return 0;
-			// Limit cancellation and clipping/interpolation ranges. The bound
-			// has a wide margin rather than relying on exact CPU/GPU rounding.
-			for (int axis = 0; axis < 2; ++axis) {
-				const double extent = std::abs(double(m[0][axis]) * v.x)
-					+ std::abs(double(m[1][axis]) * v.y) + std::abs(double(m[2][axis]) * v.z)
-					+ std::abs(double(m[3][axis]));
-				if (!std::isfinite(extent) || extent > 65536) return 0;
-				if (extent > 4) boundedUV = false;
-			}
-			minimum = std::min(minimum, z); maximum = std::max(maximum, z);
-		}
-		if (maximum == 0 || maximum / minimum > 65536) return 0;
-		if (colourCoordinates) *colourCoordinates = boundedUV;
-		// Both interpolation modes reconstruct a positive screen-linear Z.
-		// log2(1 + 100000*Z) is increasing, so max(vertex Z) bounds its
-		// covered fragments. Inflate Z by 12.5% and add a depth margin for
-		// matrix, reciprocal, raster and logarithm rounding at either end.
-		return float(std::log1p(100000.0 * maximum * 1.125) / (std::log(2.0) * 34.0) + 0x1p-16);
+		if (poly.isNaomi2()) return 0;
+		const auto proof = evaluateDepthProof(first,count,colourCoordinates != nullptr);
+		if (colourCoordinates) *colourCoordinates = proof.colourCoordinates;
+		return proof.depth;
+	}
+	float cachedDepthBound(const PolyParam& poly, u32 first, u32 count, bool *colourCoordinates = nullptr) const
+	{
+		if (colourCoordinates) *colourCoordinates = false;
+#ifdef METAL_RENDERER_TESTS
+		if (disableDepthBounds) return 0;
+#endif
+		if (poly.isNaomi2()) return 0;
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		if(disableProofCache)return conservativeDepthBound(poly,first,count,colourCoordinates);
+#endif
+		const auto proof = geometryProofs.get(first,count,colourCoordinates != nullptr,[&](bool needUV) {
+			return evaluateDepthProof(first,count,needUV);
+		});
+		if (colourCoordinates) *colourCoordinates = proof.colourCoordinates;
+		return proof.depth;
 	}
 	bool allowsColourUV(const PolyParam& poly, const MetalPolyUniforms& p) const
 	{
@@ -337,7 +403,8 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (poly.count != 4 || poly.first > rc->idx.size() || rc->idx.size() - poly.first < 4
 				|| poly.isp.DepthMode != 7 || poly.isp.CullMode > 1 || poly.tileclip != 0
 				|| poly.isNaomi2() || hasTwoVolumes(poly)
-				|| poly.tsp.SrcInstr != 1 || poly.tsp.DstInstr != 0) return false;
+				|| poly.tsp.SrcInstr != 1 || poly.tsp.DstInstr != 0
+				|| poly.tsp.SrcSelect || poly.tsp.DstSelect) return false;
 		// Limit the proof to an axis-aligned DC transform with constant W/Z.
 		// Rotated or projected geometry retains the original copy/load path.
 		const auto& m = frame.ndc;
@@ -374,12 +441,12 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			&& a.x + errorX <= -1 + .5 / frame.width && b.x - errorX >= 1 - .5 / frame.width
 			&& a.y - errorY >= 1 - .5 / frame.height && c.y + errorY <= -1 + .5 / frame.height;
 	}
-	bool prepareBackgroundClear()
+	bool prepareBackgroundClear(bool replacesColor)
 	{
 #ifdef METAL_RENDERER_TESTS
 		if (disableBackgroundClear) return false;
 #endif
-		if (!replacesFramebufferColor() || frame.dithering
+		if (!replacesColor || frame.dithering
 				|| (perPixel && !passStates.empty() && passStates.front().colorModifiers)) return false;
 		const PolyParam& poly = rc->global_param_op.front();
 		// A clear replaces only the constant color calculation. Keep the
@@ -407,7 +474,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	id<MTLBuffer> upload(const void *data, size_t size)
 	{
 		if (size == 0) return nil;
-		id<MTLBuffer> buffer = [context()->device() newBufferWithBytes:data length:size options:MTLResourceStorageModeShared];
+		id<MTLBuffer> buffer = FCMetal4CreateBufferWithBytes(context()->device(),data,size,MTLResourceStorageModeShared);
 		if (!buffer) throw RendererException("Metal geometry buffer allocation failed");
 		return buffer;
 	}
@@ -422,7 +489,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			if (size > maximum) throw RendererException("Metal buffer exceeds the device buffer limit");
 			NSUInteger capacity = std::min<NSUInteger>(4096, maximum);
 			while (capacity < size) capacity = capacity <= maximum / 2 ? capacity * 2 : maximum;
-			id<MTLBuffer> allocated = [context()->device() newBufferWithLength:capacity options:options];
+			id<MTLBuffer> allocated = FCMetal4CreateBuffer(context()->device(),capacity,options);
 			if (!allocated) throw RendererException("Metal buffer allocation failed");
 			storage = allocated;
 		}
@@ -440,6 +507,13 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (!storage || storage.width != frame.width || storage.height != frame.height)
 			storage = context()->makeTexture(frame.width, frame.height, format, usage);
 		return storage;
+	}
+	GPUIntermediates& intermediateImages(FrameResources& resources)
+	{
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		if (perSlotIntermediates) return resources.legacyIntermediates;
+#endif
+		return gpuIntermediates;
 	}
 	bool renderSamplesTexture(id<MTLTexture> image) const
 	{
@@ -469,7 +543,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			MetalTexture *texture = textureCache.getRTTexture(rc->fb_W_SOF1 & VRAM_MASK,
 				rc->fb_W_CTRL.fb_packmode, width, height);
 			id<MTLTexture> output = texture->image;
-			if (context()->canReuseTextureWrites(output) && output != screen && output != resolveInput
+			if (!texture->sharedPreloadImage && context()->canReuseTextureWrites(output) && output != screen && output != resolveInput
 					&& output.pixelFormat == MTLPixelFormatRGBA8Unorm
 					&& output.width == frame.width && output.height == frame.height
 					&& output.mipmapLevelCount == 1 && (output.usage & usage) == usage
@@ -669,9 +743,9 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 						const auto& poly = list[j];
 						if (poly.count < 3) continue;
 						const bool twoVolumes = activeTwoVolumes(poly, drawPass, state.colorModifiers, state.oitModifiers);
-						// Source-select applies only to OIT. Color0 shades both
-						// active areas irrespective of their accumulator controls.
-						const u32 sourceSelect = drawPass == PolyPass::OIT ? 1u << 25 : 0;
+						// Accumulator sources consume no vertex lighting in either
+						// OIT or the direct color path.
+						const u32 sourceSelect = drawPass == PolyPass::OIT || directAccumulator ? 1u << 25 : 0;
 						select(poly, twoVolumes, !(poly.tsp.full & sourceSelect), !(poly.tsp1.full & sourceSelect));
 					}
 				};
@@ -688,7 +762,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			for (const auto *list : {&rc->global_param_op, &rc->global_param_pt, &rc->global_param_tr}) {
 				if (used == lightOffsets.size()) break;
 				for (const auto& poly : *list) {
-					select(poly, false, true, false);
+					select(poly, false, !directAccumulator || !poly.tsp.SrcSelect, false);
 					if (used == lightOffsets.size()) break;
 				}
 			}
@@ -751,8 +825,10 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	void normalizePoly(MetalPolyUniforms& p, PolyPass pass) const
 	{
 		// Blend and sampler controls use the original PolyParam separately.
-		// OIT also keeps source-select: an accumulator source needs no shade.
-		const u32 sourceSelect = pass == PolyPass::OIT ? 1u << 25 : 0;
+		// Keep source-select for OIT and full blend controls for direct
+		// accumulator colors, including per-pixel two-volume selection.
+		const bool accumulatorColor = directAccumulator && (pass == PolyPass::Direct || pass == PolyPass::Color0);
+		const u32 sourceSelect = accumulatorColor ? 0xffu << 24 : pass == PolyPass::OIT ? 1u << 25 : 0;
 		p.tsp0 &= ShadingTspMask | sourceSelect;
 		p.tsp1 &= (ShadingTspMask & ~(1u << 21)) | sourceSelect; // Clamp comes from area 0.
 		constexpr u32 ignoreTexAlpha = 1u << 19, paletteModes = 3u << 16;
@@ -821,14 +897,18 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		// per-pixel depth and buffer-writing OIT passes have no color attachment.
 		const MTLPixelFormat colorFormat = pass == PolyPass::OIT || (perPixel && depthPass)
 			? MTLPixelFormatInvalid : MTLPixelFormatRGBA8Unorm;
+		const bool secondaryAttachment = directAccumulator && colorFormat != MTLPixelFormatInvalid;
+		const bool volumeAccumulator = secondaryAttachment && color && material && (material->flags & TwoVolumes);
+		const bool secondaryDestination = secondaryAttachment && color && !volumeAccumulator && tsp.DstSelect;
 		// Colorless passes do not depend on blend instructions. One pipeline
 		// covers every opaque/translucent depth mask; punch-through remains
 		// separate because its texture and color inputs determine rejection.
-		u64 key = (color ? tsp.SrcInstr | (tsp.DstInstr << 3) : 0)
+		u64 key = (color && !volumeAccumulator ? tsp.SrcInstr | (tsp.DstInstr << 3) : 0)
 			| (u64(depthPass ? PolyPass::Depth : pass) << 6)
 			| (u64(depthAttachment) << 10) | (u64(depthPass && alphaTest) << 11)
 			// Bits 12..43 hold material constants; keep vertex families separate.
-			| (u64(naomi2Vertex) << 44) | (u64(colorlessOIT) << 45) | (u64(backgroundDepth) << 46);
+			| (u64(naomi2Vertex) << 44) | (u64(colorlessOIT) << 45) | (u64(backgroundDepth) << 46)
+			| (u64(secondaryAttachment) << 49) | (u64(secondaryDestination) << 50) | (u64(volumeAccumulator) << 51);
 		MTLVertexDescriptor *fullLayout = naomi2Vertex ? vertexLayout : dcVertexLayout;
 		constexpr u32 shadingMask = ShadingTspMask;
 		// ColorClamp is controlled by TSP0 for both volumes. Its TSP1 bit
@@ -836,7 +916,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		constexpr u32 volume1ShadingMask = shadingMask & ~(1u << 21);
 		u64 materialKey = 0;
 		u32 flags = 0, tsp0 = 0, tsp1 = 0;
-		const bool specialize = material && !positionOnly;
+		const bool specialize = material && !positionOnly && !secondaryAttachment;
 		const bool bounded = specialize && !naomi2Vertex && pass != PolyPass::OIT && material->depthBound > 0;
 		if (specialize) {
 			flags = material->flags & ((1u << 19) - 1);
@@ -893,14 +973,20 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		auto& state = pipelines[key];
 		if (!state) {
 			const auto started = frameTimings ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
-			MTL4RenderPipelineColorAttachmentDescriptor *blend = polygonBlend(tsp, color);
+			MTL4RenderPipelineColorAttachmentDescriptor *blend = polygonBlend(tsp, color && !secondaryDestination);
+			MTL4RenderPipelineColorAttachmentDescriptor *secondaryBlend = secondaryAttachment ? polygonBlend(tsp, secondaryDestination) : nil;
+			if (volumeAccumulator) {
+				blend.blendingState = secondaryBlend.blendingState = MTL4BlendStateDisabled;
+				blend.writeMask = secondaryBlend.writeMask = MTLColorWriteMaskAll;
+			}
 			NSString *fragment = colorlessOIT ? @"oit_position_fragment" : pass == PolyPass::OIT ? @"oit_fragment"
-				: positionOnly ? @"pvr_position_fragment" : depthPass ? @"pvr_depth_fragment" : @"pvr_fragment";
+				: positionOnly ? @"pvr_position_fragment" : depthPass ? @"pvr_depth_fragment"
+				: volumeAccumulator ? @"pvr_volume_accumulator_fragment" : secondaryAttachment ? @"pvr_accumulator_fragment" : @"pvr_fragment";
 			NSString *vertex = colorlessOIT ? @"oit_position_vertex" : positionOnly ? @"pvr_position_vertex"
 				: naomi2Vertex ? @"pvr_vertex" : @"pvr_dc_vertex";
 			state = context()->makePipeline(vertex, fragment,
 				positionOnly ? depthLayout : fullLayout,
-				colorFormat, depthAttachment, blend);
+				colorFormat, depthAttachment, blend, secondaryBlend);
 			if (frameTimings)
 				NOTICE_LOG(RENDERER, "Metal timing pipeline %llu: %.3f ms", (unsigned long long)key,
 					std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count());
@@ -961,7 +1047,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 	void bindGeometry(FCMetal4RenderEncoder * e, id<MTLBuffer> buffer)
 	{
 		if (drawState.geometry != buffer) {
-			[e setVertexBuffer:buffer offset:0 atIndex:0]; drawState.geometry = buffer;
+			[e setVertexBuffer:buffer offset:0 atIndex:0 usage:MTLResourceUsageRead]; drawState.geometry = buffer;
 		}
 	}
 	void bindNaomi2(FCMetal4RenderEncoder * e, NSUInteger offset)
@@ -970,7 +1056,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			if (naomi2 && drawState.naomi2Buffer == naomi2)
 				[e setVertexBufferOffset:offset atIndex:4];
 			else
-				[e setVertexBuffer:naomi2 offset:offset atIndex:4];
+				[e setVertexBuffer:naomi2 offset:offset atIndex:4 usage:MTLResourceUsageRead];
 			drawState.naomi2Buffer = naomi2; drawState.naomi2Offset = offset;
 		}
 	}
@@ -989,7 +1075,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			memcpy((u8 *)frameUniforms.contents + frameUniformStride, &withoutDither, sizeof(withoutDither));
 		}
 	}
-	void bindFrame(FCMetal4RenderEncoder * e)
+	void bindFrame(FCMetal4RenderEncoder * e, const MetalFrameUniforms *fragmentFrame = nullptr)
 	{
 		// Cached bindings belong to this encoder. Modifier draws update them;
 		// a new render also needs its own geometry and uniform snapshot, even
@@ -997,13 +1083,38 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		drawState = {};
 		[e setViewport:MTLViewport{0, 0, (double)frame.width, (double)frame.height, 0, 1}];
 		[e setFrontFacingWinding:MTLWindingCounterClockwise];
-		[e setVertexBuffer:frameUniforms offset:0 atIndex:1];
-		[e setFragmentBuffer:frameUniforms offset:0 atIndex:1];
+		[e setVertexBuffer:frameUniforms offset:0 atIndex:1 usage:MTLResourceUsageRead];
+		if (fragmentFrame) [e setFragmentBytes:fragmentFrame length:sizeof(*fragmentFrame) atIndex:1];
+		else [e setFragmentBuffer:frameUniforms offset:0 atIndex:1 usage:MTLResourceUsageRead];
 		// Geometry, Naomi2 records and shading textures are bound by their
 		// first draw. Empty, position-only and modifier encoders need no
 		// speculative fog/palette bindings or geometry immediately replaced.
 	}
-	void bindPoly(FCMetal4RenderEncoder * e, const MetalPolyUniforms& p)
+	struct PolyUniformRecord { id<MTLBuffer> buffer = nil; NSUInteger offset = 0; };
+	struct ShadingResources {
+		id<MTLBuffer> light = nil;
+		NSUInteger lightOffset = 0;
+		id<MTLTexture> textures[2]{};
+		id<MTLSamplerState> samplers[2]{};
+	};
+	struct PreparedOITPoly {
+		bool ready = false;
+		bool positionOnly = false;
+		MetalPolyUniforms uniforms{};
+		PipelineSelection pipeline;
+		ShadingResources shading;
+		NSUInteger naomi2Offset = 0;
+		PolyUniformRecord record;
+	};
+	std::vector<PreparedOITPoly> preparedOITPolygons;
+	std::vector<metal_oit::BoundedPolygon> boundedOITPolygons;
+	metal_oit::DrawPlan oitDrawPlan;
+	mutable std::vector<metal_oit::Tile> oitTriangles;
+	mutable metal_oit::CoverageWorkspace oitCoverageWorkspace;
+	mutable metal_oit::TilePlanner oitTilePlanner;
+	mutable metal_oit::GeometryBounds oitGeometry;
+	mutable bool oitGeometryValid = false;
+	void bindPoly(FCMetal4RenderEncoder * e, const MetalPolyUniforms& p, PolyUniformRecord *prepared = nullptr)
 	{
 		// Compare all shader inputs, including the second volume's LOD bias,
 		// while excluding any alignment padding after the last field.
@@ -1016,19 +1127,25 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		constexpr NSUInteger stride = (sizeof(MetalPolyUniforms) + 31) & ~NSUInteger(31);
 		constexpr NSUInteger pageBytes = 64 * 1024;
 		constexpr NSUInteger recordsPerPage = pageBytes / stride;
-		auto& resources = frameResources[currentFrameResource];
-		const size_t record = resources.polyUniformCursor;
-		const size_t page = record / recordsPerPage;
-		if (page == resources.polyUniformPages.size()) {
-			id<MTLBuffer> buffer = [context()->device() newBufferWithLength:pageBytes options:MTLResourceStorageModeShared];
-			if (!buffer) throw RendererException("Metal polygon uniform buffer allocation failed");
-			resources.polyUniformPages.push_back(buffer);
+		PolyUniformRecord local;
+		auto& record = prepared ? *prepared : local;
+		if (!record.buffer) {
+			auto& resources = frameResources[currentFrameResource];
+			const size_t cursor = resources.polyUniformCursor;
+			const size_t page = cursor / recordsPerPage;
+			if (page == resources.polyUniformPages.size()) {
+				id<MTLBuffer> buffer = FCMetal4CreateBuffer(context()->device(),pageBytes,MTLResourceStorageModeShared);
+				if (!buffer) throw RendererException("Metal polygon uniform buffer allocation failed");
+				resources.polyUniformPages.push_back(buffer);
+			}
+			record.buffer = resources.polyUniformPages[page];
+			record.offset = (cursor % recordsPerPage) * stride;
+			memcpy((u8 *)record.buffer.contents + record.offset, &p, sizeof(p));
+			++resources.polyUniformCursor;
 		}
-		id<MTLBuffer> buffer = resources.polyUniformPages[page];
-		const NSUInteger offset = (record % recordsPerPage) * stride;
-		memcpy((u8 *)buffer.contents + offset, &p, sizeof(p));
-		++resources.polyUniformCursor;
-		// Vertex entries consume only vertex flags, dynamic OIT source-select
+		id<MTLBuffer> buffer = record.buffer;
+		const NSUInteger offset = record.offset;
+		// Vertex entries consume only vertex flags, dynamic source-select
 		// and sequence from Poly. Keep their preceding immutable record when
 		// only fragment shading/clip/palette/LOD changes. Both stages can then
 		// retain different pages, so track their buffer bindings independently.
@@ -1040,7 +1157,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			if (drawState.vertexPolyUniformBuffer == buffer)
 				[e setVertexBufferOffset:offset atIndex:2];
 			else
-				[e setVertexBuffer:buffer offset:offset atIndex:2];
+				[e setVertexBuffer:buffer offset:offset atIndex:2 usage:MTLResourceUsageRead];
 			drawState.vertexPolyUniformBuffer = buffer;
 			drawState.vertexPolyFlags = vertexFlags; drawState.vertexPolySources = vertexSources;
 			drawState.vertexPolySequence = p.sequence;
@@ -1048,53 +1165,115 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (drawState.fragmentPolyUniformBuffer == buffer)
 			[e setFragmentBufferOffset:offset atIndex:2];
 		else {
-			[e setFragmentBuffer:buffer offset:offset atIndex:2];
+			[e setFragmentBuffer:buffer offset:offset atIndex:2 usage:MTLResourceUsageRead];
 			drawState.fragmentPolyUniformBuffer = buffer;
 		}
 		memcpy(&drawState.uniforms, &p, sizeof(p)); drawState.uniformsValid = true;
 	}
-	void drawPoly(FCMetal4RenderEncoder * e, const PolyParam& pp, u32 list, bool sorted, PolyPass pass, u32 first, u32 count)
+	ShadingResources prepareShading(const PolyParam& pp, u32 list, const MetalPolyUniforms& p)
+	{
+		const bool textured = (p.flags & Texture) != 0;
+		const bool twoVolumes = (p.flags & TwoVolumes) != 0;
+		// Match the fragment's actual color consumers before resolving
+		// texture/sampler state for direct or OIT accumulator sources.
+		const bool color0 = !(p.tsp0 & (1u << 25));
+		const bool color1 = twoVolumes && !(p.tsp1 & (1u << 25));
+		const bool hasLights = !(p.flags & LightOff)
+			&& needsLights(pp, twoVolumes, color0, color1) && lights
+			&& pp.lightModel >= 0 && size_t(pp.lightModel) < lightOffsets.size()
+			&& lightOffsets[pp.lightModel] != unusedLight;
+		id<MTLBuffer> lightBuffer = hasLights ? lights : emptyLights;
+		const NSUInteger lightOffset = hasLights ? lightOffsets[pp.lightModel] : 0;
+		const bool sample0 = textured && color0, sample1 = textured && color1;
+		MetalTexture *t0 = sample0 ? static_cast<MetalTexture *>(pp.texture) : nullptr;
+		MetalTexture *t1 = sample1 ? static_cast<MetalTexture *>(pp.texture1) : nullptr;
+		const id<MTLTexture> textures[] = {t0 && t0->image ? t0->image : white,
+			t1 && t1->image ? t1->image : white};
+		id<MTLSamplerState> sampler0 = sample0
+			? sampler(pp.tsp, list == ListType_Punch_Through, t0 && t0->gpuPalette) : nil;
+		id<MTLSamplerState> sampler1 = sample1
+			? sampler(pp.tsp1, list == ListType_Punch_Through, t1 && t1->gpuPalette) : sampler0;
+		// Keep every generic shader argument valid. An unused area shares
+		// the active area's sampler, or the untextured placeholder when neither samples.
+		if (!sampler0) sampler0 = sampler1 ? sampler1 : sampler(pp.tsp, false, false, false);
+		if (!sampler1) sampler1 = sampler0;
+		return {lightBuffer, lightOffset, {textures[0], textures[1]}, {sampler0, sampler1}};
+	}
+	void drawPoly(FCMetal4RenderEncoder * e, const PolyParam& pp, u32 list, bool sorted, PolyPass pass, u32 first, u32 count, PreparedOITPoly *prepared = nullptr)
 	{
 		if (count < 3) return;
 		if (skipBackgroundDepth && list == ListType_Opaque && &pp == &rc->global_param_op.front()
 				&& (pass == PolyPass::Direct || pass == PolyPass::Color0 || pass == PolyPass::Depth)) return;
+#ifdef METAL_RENDERER_TESTS
+		if (pass == PolyPass::OIT) {
+			++oitPolygonDraws;
+			if (!prepared || !prepared->ready) ++oitPolygonPreparations;
+		}
+#endif
 		const bool backgroundDepth = backgroundColorCleared && list == ListType_Opaque
 			&& &pp == &rc->global_param_op.front() && (pass == PolyPass::Direct || pass == PolyPass::Color0);
-		const bool depthPositionOnly = (pass == PolyPass::Depth || pass == PolyPass::DepthOnly)
-			&& list != ListType_Punch_Through;
 		MetalPolyUniforms p{};
-		if (depthPositionOnly) {
-			p.flags = (pp.isNaomi2() ? Naomi2 : 0)
-				| (!settings.platform.isNaomi2() && config::NativeDepthInterpolation ? NativeDepth : 0);
-		} else p = uniforms(pp, list);
-		if (perPixel) p.flags |= DeferDither;
-		if (pass == PolyPass::Color0 && colorModifiers) p.flags |= ColorShadow;
-		if (pass == PolyPass::Depth) p.flags |= LightOff;
-		// Area 1 cannot be consumed without the corresponding modifier
-		// operation. Punch-through depth always shades only area 0.
-		if (!activeTwoVolumes(pp, pass, colorModifiers, oitModifiers))
-			p.flags &= ~TwoVolumes;
-		// Blending controls are deliberately absent from material keys. Keep
-		// this proof dynamic and check every area which a modifier may select.
-		if (pass == PolyPass::OIT && zeroAlphaIdentity(pp.tsp)
-				&& (!(p.flags & TwoVolumes) || zeroAlphaIdentity(pp.tsp1))) p.flags |= MetalOITZeroAlphaNoOp;
-		if (pass == PolyPass::OIT && denseOIT)
-			p.flags |= MetalOITDense | (denseColorOIT ? MetalOITDenseColor : 0) | (densePackedOIT ? MetalOITDensePacked : 0);
-		if (pass == PolyPass::OIT && packedListOIT) p.flags |= MetalOITPackedList;
-		normalizePoly(p, pass);
-		const bool positionOnly = depthPositionOnly || backgroundDepth || (pass == PolyPass::OIT && !needsOITColor(p));
-		const bool needsBound = !positionOnly && pass != PolyPass::OIT
-			&& (sorted || list == ListType_Punch_Through || pp.isp.DepthMode == 4 || pp.isp.DepthMode == 6);
-		const bool colourMaterial = !positionOnly && allowsColourUV(pp, p);
-		if (needsBound || colourMaterial) {
-			bool coordinates = false;
-			const float bound = conservativeDepthBound(pp, first, count, colourMaterial ? &coordinates : nullptr);
-			if (needsBound) p.depthBound = bound;
-			if (coordinates) p.flags |= ColourUV;
+		bool positionOnly;
+		if (prepared && prepared->ready) {
+			p = prepared->uniforms; positionOnly = prepared->positionOnly;
+		} else {
+			const bool depthPositionOnly = (pass == PolyPass::Depth || pass == PolyPass::DepthOnly)
+				&& list != ListType_Punch_Through;
+			if (depthPositionOnly) {
+				p.flags = (pp.isNaomi2() ? Naomi2 : 0)
+					| (!settings.platform.isNaomi2() && config::NativeDepthInterpolation ? NativeDepth : 0);
+			} else p = uniforms(pp, list);
+			if (perPixel) p.flags |= DeferDither;
+			if (pass == PolyPass::Color0 && colorModifiers) p.flags |= ColorShadow;
+			if (pass == PolyPass::Depth) p.flags |= LightOff;
+			// An accumulator source bypasses punch-through texture/alpha shading,
+			// matching the direct color consumer. Its depth still participates.
+			if (directAccumulator && pass == PolyPass::Depth && pp.tsp.SrcSelect) p.flags &= ~AlphaTest;
+			// Area 1 cannot be consumed without the corresponding modifier
+			// operation. Punch-through depth always shades only area 0.
+			if (!activeTwoVolumes(pp, pass, colorModifiers, oitModifiers))
+				p.flags &= ~TwoVolumes;
+			// Blending controls are deliberately absent from material keys. Keep
+			// this proof dynamic and check every area which a modifier may select.
+			if (pass == PolyPass::OIT && zeroAlphaIdentity(pp.tsp)
+					&& (!(p.flags & TwoVolumes) || zeroAlphaIdentity(pp.tsp1))) p.flags |= MetalOITZeroAlphaNoOp;
+			if (pass == PolyPass::OIT && denseOIT)
+				p.flags |= MetalOITDense | (denseColorOIT ? MetalOITDenseColor : 0) | (densePackedOIT ? MetalOITDensePacked : 0);
+			if (pass == PolyPass::OIT && packedListOIT) p.flags |= MetalOITPackedList;
+			normalizePoly(p, pass);
+			positionOnly = depthPositionOnly || backgroundDepth || (pass == PolyPass::OIT && !needsOITColor(p));
+			const bool needsBound = !positionOnly && pass != PolyPass::OIT
+				&& (sorted || list == ListType_Punch_Through || pp.isp.DepthMode == 4 || pp.isp.DepthMode == 6);
+			const bool colourMaterial = !positionOnly && allowsColourUV(pp, p);
+			if (needsBound || colourMaterial) {
+				bool coordinates = false;
+				// OIT already memoizes prepared polygon uniforms across tiles.
+				// Sorted three-index draws are normally unique, and their short
+				// one-shot scan measured faster than inserting a cache entry.
+				const bool memoizeProof = pass != PolyPass::OIT && !(sorted && count == 3);
+				const float bound = memoizeProof
+					? cachedDepthBound(pp,first,count,colourMaterial ? &coordinates : nullptr)
+					: conservativeDepthBound(pp,first,count,colourMaterial ? &coordinates : nullptr);
+				if (needsBound) p.depthBound = bound;
+				if (coordinates) p.flags |= ColourUV;
+			}
 		}
 		if (!setClip(e, pp.tileclip, p)) return;
 		bindGeometry(e, vertices);
-		id<MTLRenderPipelineState> pipe = pipeline(pp, pass, pass != PolyPass::OIT, list == ListType_Punch_Through, &p, backgroundDepth);
+		id<MTLRenderPipelineState> pipe;
+		if (prepared && prepared->ready) {
+			pipelineSelection = prepared->pipeline;
+			pipe = pipelineSelection.state;
+		} else {
+			pipe = pipeline(pp, pass, pass != PolyPass::OIT, list == ListType_Punch_Through, &p, backgroundDepth);
+			if (prepared) {
+				prepared->uniforms = p; prepared->positionOnly = positionOnly;
+				prepared->pipeline = pipelineSelection;
+				if (!positionOnly) prepared->shading = prepareShading(pp, list, p);
+				prepared->naomi2Offset = pp.isNaomi2() ? naomi2Offsets[N2Translucent].at(&pp - rc->global_param_tr.data()) : 0;
+				prepared->ready = true;
+			}
+		}
 		if (frameTimings && p.depthBound > 0) {
 			++profilingBoundEligible;
 			auto specialized = materialPipelines.find(pipelineSelection.key);
@@ -1112,9 +1291,9 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (drawState.stencil != stencil) { [e setStencilReferenceValue:stencil]; drawState.stencil = stencil; }
 		const MTLCullMode cull = pp.isp.CullMode == 3 ? MTLCullModeBack : pp.isp.CullMode == 2 ? MTLCullModeFront : MTLCullModeNone;
 		if (!drawState.cullValid || drawState.cull != cull) { [e setCullMode:cull]; drawState.cull = cull; drawState.cullValid = true; }
-		bindPoly(e, p);
-		NSUInteger n2Offset = 0;
-		if (pp.isNaomi2()) {
+		bindPoly(e, p, prepared ? &prepared->record : nullptr);
+		NSUInteger n2Offset = prepared ? prepared->naomi2Offset : 0;
+		if (!prepared && pp.isNaomi2()) {
 			const size_t bank = list == ListType_Opaque ? N2Opaque : list == ListType_Punch_Through ? N2PunchThrough : N2Translucent;
 			const auto& parameters = list == ListType_Opaque ? rc->global_param_op
 				: list == ListType_Punch_Through ? rc->global_param_pt : rc->global_param_tr;
@@ -1127,56 +1306,35 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			// texture arguments. Keep generic shading arguments valid even
 			// when a material specialization removes their actual reads.
 			if (!drawState.shadingTexturesBound) {
-				[e setFragmentTexture:fog.image atIndex:2];
-				[e setFragmentTexture:palette.image atIndex:3];
+				[e setFragmentTexture:fog.image atIndex:2 usage:MTLResourceUsageRead];
+				[e setFragmentTexture:palette.image atIndex:3 usage:MTLResourceUsageRead];
 				drawState.shadingTexturesBound = true;
 			}
-			const bool textured = (p.flags & Texture) != 0;
-			const bool twoVolumes = (p.flags & TwoVolumes) != 0;
-			// Source-select survives normalization only in OIT. Match the
-			// fragment's color consumers before resolving texture/sampler state.
-			const bool color0 = !(p.tsp0 & (1u << 25));
-			const bool color1 = twoVolumes && !(p.tsp1 & (1u << 25));
-			const bool hasLights = !(p.flags & LightOff)
-				&& needsLights(pp, twoVolumes, color0, color1) && lights
-				&& pp.lightModel >= 0 && size_t(pp.lightModel) < lightOffsets.size()
-				&& lightOffsets[pp.lightModel] != unusedLight;
-			id<MTLBuffer> lightBuffer = hasLights ? lights : emptyLights;
-			const NSUInteger lightOffset = hasLights ? lightOffsets[pp.lightModel] : 0;
+			const auto shading = prepared ? prepared->shading : prepareShading(pp, list, p);
+			id<MTLBuffer> lightBuffer = shading.light;
+			const NSUInteger lightOffset = shading.lightOffset;
 			if (drawState.lightBuffer != lightBuffer || drawState.lightOffset != lightOffset) {
 				if (lightBuffer && drawState.lightBuffer == lightBuffer)
 					[e setVertexBufferOffset:lightOffset atIndex:3];
 				else
-					[e setVertexBuffer:lightBuffer offset:lightOffset atIndex:3];
+					[e setVertexBuffer:lightBuffer offset:lightOffset atIndex:3 usage:MTLResourceUsageRead];
 				drawState.lightBuffer = lightBuffer; drawState.lightOffset = lightOffset;
 			}
-			const bool sample0 = textured && color0, sample1 = textured && color1;
-			MetalTexture *t0 = sample0 ? static_cast<MetalTexture *>(pp.texture) : nullptr;
-			MetalTexture *t1 = sample1 ? static_cast<MetalTexture *>(pp.texture1) : nullptr;
-			const id<MTLTexture> textures[] = {t0 && t0->image ? t0->image : white,
-				t1 && t1->image ? t1->image : white};
-			id<MTLSamplerState> sampler0 = sample0
-				? sampler(pp.tsp, list == ListType_Punch_Through, t0 && t0->gpuPalette) : nil;
-			id<MTLSamplerState> sampler1 = sample1
-				? sampler(pp.tsp1, list == ListType_Punch_Through, t1 && t1->gpuPalette) : sampler0;
-			// Keep every generic shader argument valid. An unused area shares
-			// the active area's sampler, or the untextured placeholder when neither samples.
-			if (!sampler0) sampler0 = sampler1 ? sampler1 : sampler(pp.tsp, false, false, false);
-			if (!sampler1) sampler1 = sampler0;
-			const id<MTLSamplerState> textureSamplers[] = {sampler0, sampler1};
+			const auto& textures = shading.textures;
+			const auto& textureSamplers = shading.samplers;
 			for (NSUInteger i = 0; i < 2; ++i) {
-				if (drawState.textures[i] != textures[i]) { [e setFragmentTexture:textures[i] atIndex:i]; drawState.textures[i] = textures[i]; }
+				if (drawState.textures[i] != textures[i]) { [e setFragmentTexture:textures[i] atIndex:i usage:MTLResourceUsageRead]; drawState.textures[i] = textures[i]; }
 				id<MTLSamplerState> ss = textureSamplers[i];
 				if (drawState.samplers[i] != ss) { [e setFragmentSamplerState:ss atIndex:i]; drawState.samplers[i] = ss; }
 			}
 			id<MTLTexture> stencilTexture = pass == PolyPass::Color0 && colorModifiers ? shadowStencil : emptyStencil;
-			if (drawState.textures[5] != stencilTexture) { [e setFragmentTexture:stencilTexture atIndex:5]; drawState.textures[5] = stencilTexture; }
+			if (drawState.textures[5] != stencilTexture) { [e setFragmentTexture:stencilTexture atIndex:5 usage:MTLResourceUsageRead]; drawState.textures[5] = stencilTexture; }
 		}
 		// Position-only OIT still publishes depth/sequence/links for blending.
 		if (pass == PolyPass::OIT && !drawState.oitBound) {
 			[e setFragmentBuffer:nodes offset:0 atIndex:4]; [e setFragmentBuffer:heads offset:0 atIndex:5];
-			[e setFragmentBuffer:counter offset:0 atIndex:6]; [e setFragmentTexture:shadowDepth atIndex:4];
-			[e setFragmentBuffer:(oitColors1 ? oitColors1 : counter) offset:0 atIndex:8];
+			[e setFragmentBuffer:counter offset:0 atIndex:6]; [e setFragmentTexture:shadowDepth atIndex:4 usage:MTLResourceUsageRead];
+			[e setFragmentBuffer:(oitColors1 ? oitColors1 : counter) offset:oitColorOffset atIndex:8];
 			drawState.oitBound = true;
 		}
 		if (sorted && !perPixel && !config::PerStripSorting) {
@@ -1204,14 +1362,15 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (!setClip(e, pp.tileclip, p)) return;
 		// Mode is a shader uniform and a dynamic depth/stencil state;
 		// it does not change this render-pipeline descriptor.
-		const u64 pipelineKey = 0x10000 | u64(translucent);
+		const bool secondaryAttachment = directAccumulator && !perPixel && !translucent;
+		const u64 pipelineKey = 0x10000 | u64(translucent) | (u64(secondaryAttachment) << 49);
 		auto& pipe = pipelines[pipelineKey];
 		if (!pipe) {
 			MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
 			blend.writeMask = MTLColorWriteMaskNone;
 			const MTLPixelFormat colorFormat = translucent || perPixel ? MTLPixelFormatInvalid : MTLPixelFormatRGBA8Unorm;
 			pipe = context()->makePipeline(@"mod_vertex", translucent ? @"tr_mod_fragment" : @"mod_depth_fragment",
-				modLayout, colorFormat, !translucent, blend);
+				modLayout, colorFormat, !translucent, blend, secondaryAttachment ? polygonBlend(TSP{}, false) : nil);
 		}
 		if (drawState.pipeline != pipe) { [e setRenderPipelineState:pipe]; drawState.pipeline = pipe; }
 		bindGeometry(e, modifiers);
@@ -1223,7 +1382,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			if (drawState.depth != disabledDepth) { [e setDepthStencilState:disabledDepth]; drawState.depth = disabledDepth; }
 			if (!drawState.trModifiersBound) {
 				[e setFragmentBuffer:nodes offset:0 atIndex:4]; [e setFragmentBuffer:heads offset:0 atIndex:5];
-				[e setFragmentBuffer:oitPolygons offset:0 atIndex:7];
+				[e setFragmentBuffer:oitPolygons offset:0 atIndex:7 usage:MTLResourceUsageRead];
 				drawState.trModifiersBound = true;
 			}
 			// End/renew encoders between dependent modifier-volume draws at the call site.
@@ -1268,23 +1427,34 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 					throw RendererException("Metal modifier geometry range is invalid");
 				projected |= volume.isNaomi2();
 			}
-		modifierTriangleOffsets.reserve(rc->modtrig.size() + 1);
-		clippedModifierTriangles.reserve(rc->modtrig.size());
 		const bool nativeDepth = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 		bool clip = true;
 #ifdef FLYCAST_FRAME_CAPTURE_TESTS
 		clip = std::getenv("FLYCAST_CAPTURE_DISABLE_MODIFIER_CLIP") == nullptr;
 #endif
-		for (size_t i = 0; i < rc->modtrig.size(); ++i) {
+#ifdef METAL_RENDERER_TESTS
+		if (eagerModifierPreparation) {
+			modifierTriangleOffsets.reserve(rc->modtrig.size() + 1);
+			clippedModifierTriangles.reserve(rc->modtrig.size());
+			for (const auto& source : rc->modtrig) {
+				modifierTriangleOffsets.push_back(clippedModifierTriangles.size());
+				metal_modifier::Triangle triangle;
+				memcpy(triangle.data(), &source, sizeof(triangle));
+				if (!clip || projected || !metal_modifier::appendClipped(triangle, glm::value_ptr(frame.ndc),
+						clippedModifierTriangles, nativeDepth)) clippedModifierTriangles.push_back(triangle);
+			}
 			modifierTriangleOffsets.push_back(clippedModifierTriangles.size());
-			metal_modifier::Triangle triangle;
-			memcpy(triangle.data(), &rc->modtrig[i], sizeof(triangle));
-			if (!clip || projected || !metal_modifier::appendClipped(triangle, glm::value_ptr(frame.ndc),
-					clippedModifierTriangles, nativeDepth)) clippedModifierTriangles.push_back(triangle);
+			modifiers = clippedModifierTriangles.empty() ? nil : upload(clippedModifierTriangles.data(),
+				clippedModifierTriangles.size() * sizeof(metal_modifier::Triangle), resources.modifiers);
+			return;
 		}
-		modifierTriangleOffsets.push_back(clippedModifierTriangles.size());
-		modifiers = clippedModifierTriangles.empty() ? nil : upload(clippedModifierTriangles.data(),
-			clippedModifierTriangles.size() * sizeof(metal_modifier::Triangle), resources.modifiers);
+#endif
+		const bool changed = metal_modifier::prepare(rc->modtrig.data(), rc->modtrig.size(),
+			glm::value_ptr(frame.ndc), clip && !projected, nativeDepth,
+			clippedModifierTriangles, modifierTriangleOffsets);
+		const void *source = changed ? static_cast<const void *>(clippedModifierTriangles.data()) : rc->modtrig.data();
+		const size_t count = changed ? clippedModifierTriangles.size() : rc->modtrig.size();
+		modifiers = count == 0 ? nil : upload(source, count * sizeof(metal_modifier::Triangle), resources.modifiers);
 	}
 	void drawFinalModifier(FCMetal4RenderEncoder * e)
 	{
@@ -1294,14 +1464,15 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		const bool shadingTexturesBound = drawState.shadingTexturesBound;
 		drawState = {};
 		drawState.shadingTexturesBound = shadingTexturesBound;
-		constexpr u64 key = 0x20000;
+		const u64 key = 0x20000 | (u64(directAccumulator) << 49);
 		auto& pipe = pipelines[key];
 		if (!pipe) {
 			MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
 			blend.blendingState = MTL4BlendStateEnabled;
 			blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
 			blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-			pipe = context()->makePipeline(@"mod_vertex", @"mod_fragment", vertexLayout, MTLPixelFormatRGBA8Unorm, true, blend);
+			pipe = context()->makePipeline(@"mod_vertex", @"mod_fragment", vertexLayout, MTLPixelFormatRGBA8Unorm, true, blend,
+				directAccumulator ? polygonBlend(TSP{}, false) : nil);
 		}
 		auto& state = finalModifierDepth;
 		if (!state) {
@@ -1326,7 +1497,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 
 	FCMetal4RenderEncoder * encoder(FCMetal4Commands * cb, RenderAttachments attachments,
 		bool clearColor = false, bool clearDepth = false, bool clearStencil = false, id<MTLTexture> depthOverride = nil,
-		bool preserveDepth = true, bool deferredDepthStore = false)
+		bool preserveDepth = true, bool deferredDepthStore = false, const MetalFrameUniforms *fragmentFrame = nullptr)
 	{
 		MTL4RenderPassDescriptor *pass = [MTL4RenderPassDescriptor new];
 		if (attachments == RenderAttachments::ColorDepth) {
@@ -1338,6 +1509,13 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			pass.colorAttachments[0].clearColor = initialColorClear ? backgroundClearColor
 				: rc->isRTT ? MTLClearColorMake(0, 0, 0, 1) : MTLClearColorMake(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1);
 			initialColorClear = false;
+			if (directAccumulator) {
+				pass.colorAttachments[1].texture = secondaryColor;
+				pass.colorAttachments[1].loadAction = initializeSecondary ? MTLLoadActionClear : MTLLoadActionLoad;
+				pass.colorAttachments[1].storeAction = MTLStoreActionStore;
+				pass.colorAttachments[1].clearColor = MTLClearColorMake(0, 0, 0, 0);
+				initializeSecondary = false;
+			}
 		}
 		if (attachments != RenderAttachments::None) {
 			pass.depthAttachment.texture = pass.stencilAttachment.texture = depthOverride ? depthOverride : depth;
@@ -1368,7 +1546,8 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		}
 		FCMetal4RenderEncoder * e = [cb renderCommandEncoderWithDescriptor:pass];
 		if (!e) throw RendererException("Metal render encoder allocation failed");
-		bindFrame(e);
+		[e setDirectShaderBindings:YES];
+		bindFrame(e, fragmentFrame);
 		return e;
 	}
 	bool hasModifierVolumes(const std::vector<ModifierVolumeParam>& list, u32 first, u32 last) const
@@ -1397,7 +1576,10 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			const bool color = hasModifierVolumes(rc->global_param_mvo, previous.mvo_count, pass.mvo_count);
 			const bool oit = sorted && (pass.mv_op_tr_shared ? color
 				: hasModifierVolumes(rc->global_param_mvo_tr, previous.mvo_tr_count, pass.mvo_tr_count));
-			passStates.push_back({sorted, color, oit, false});
+			const bool sourceOver = sorted && !oit && std::all_of(
+				rc->global_param_tr.begin() + previous.tr_count, rc->global_param_tr.begin() + pass.tr_count,
+				[](const PolyParam& poly) { return poly.count < 3 || sourceOverBlend(poly.tsp); });
+			passStates.push_back({sorted, color, oit, false, sourceOver});
 			// Shadow depth accumulates opaque/punch-through and preceding
 			// translucent depths up to its last OIT/modifier consumer. Later
 			// color-only passes use their own depth attachment, never this one.
@@ -1412,6 +1594,25 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			previous = pass;
 		}
 		return useOIT;
+	}
+	bool needsDirectAccumulator() const
+	{
+		const auto selected = [&](const PolyParam& poly) {
+			return poly.tsp.SrcSelect || poly.tsp.DstSelect
+				|| (perPixel && hasTwoVolumes(poly) && poly.pcw.Shadow
+					&& (poly.tsp1.SrcSelect || poly.tsp1.DstSelect));
+		};
+		for (const auto *list : {&rc->global_param_op, &rc->global_param_pt})
+			if (std::any_of(list->begin(), list->end(), selected)) return true;
+		if (!perPixel) return std::any_of(rc->global_param_tr.begin(), rc->global_param_tr.end(), selected);
+		u32 first = 0;
+		for (size_t i = 0; i < rc->render_passes.size(); ++i) {
+			const u32 last = rc->render_passes[i].tr_count;
+			if (!passStates[i].sortedFragments
+					&& std::any_of(rc->global_param_tr.begin() + first, rc->global_param_tr.begin() + last, selected)) return true;
+			first = last;
+		}
+		return false;
 	}
 	void drawModifiers(FCMetal4Commands * cb, FCMetal4RenderEncoder * __strong& e, const std::vector<ModifierVolumeParam>& list, u32 first, u32 last, bool translucent)
 	{
@@ -1509,29 +1710,26 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		// an active two-volume modifier. As with later buffer replacements,
 		// only heads/counters need initialization;
 		// clearing all node capacity would add work and a startup GPU wait.
-		const NSUInteger bytes = oitNodeBytes() / MetalOITNodeBudgetStride * sizeof(MetalOITNode);
+		const NSUInteger bytes = oitNodeBytes();
 		nodes = [context()->device() newBufferWithLength:bytes
 			options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked];
 		if (!nodes) throw RendererException("Metal OIT warmup allocation failed");
 		for (auto& resources : frameResources) {
-			resources.counter = [context()->device() newBufferWithLength:8 options:MTLResourceStorageModeShared];
+			resources.counter = FCMetal4CreateBuffer(context()->device(),8,MTLResourceStorageModeShared);
 			if (!resources.counter) throw RendererException("Metal OIT warmup allocation failed");
 		}
-		NOTICE_LOG(RENDERER, "Metal OIT node buffer allocated: %llu bytes; optional area-1 colors allocated on demand", (unsigned long long)bytes);
+		NOTICE_LOG(RENDERER, "Metal OIT shared node/color budget allocated: %llu bytes", (unsigned long long)bytes);
 	}
 	void makeOITBuffers(FrameResources& resources)
 	{
-		// A 20-byte node plus optional 4-byte area-1 color keeps the previous
-		// capacity and total budget. Separating colors makes linked traversal
-		// denser without changing sequence or modifier metadata precision.
-		frame.capacity = oitNodeBytes() / MetalOITNodeBudgetStride;
+		// The complete configured budget is one GPU allocation. Keep area-1
+		// colors in its tail only when a shader can consume them; otherwise
+		// use those bytes for more full-precision 20-byte nodes.
 		frame.maxLayers = std::clamp(config::PerPixelLayers.get(), 1, 256);
-		resolve = resolvePipeline(frame.maxLayers);
 		// Explicit Metal 4 queue barriers order GPU-only storage reuse.
 		// Growth replaces the buffer; submitted commands retain the old one.
 		// Smaller images reuse capacity, with only their active heads cleared.
 		// CPU counter storage still waits for its own completion semaphore.
-		const NSUInteger nodeBytes = frame.capacity * sizeof(MetalOITNode);
 		// The shader addresses heads with a uint pixel index. Validate before
 		// multiplying so neither that index nor the host allocation can wrap.
 		const NSUInteger maximumHeads = std::min<NSUInteger>(context()->device().maxBufferLength / sizeof(u32),
@@ -1539,59 +1737,84 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		if (!frame.width || !frame.height || frame.width > maximumHeads / frame.height)
 			throw RendererException("Metal OIT head buffer exceeds the device or shader index limit");
 		const NSUInteger headBytes = NSUInteger(frame.width) * frame.height * sizeof(u32);
-		if (!nodes || nodes.length != nodeBytes)
-			nodes = [context()->device() newBufferWithLength:nodeBytes
-				options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked];
-		const NSUInteger color1Bytes = frame.capacity * sizeof(u32);
-		if (oitColors1 && oitColors1.length != color1Bytes) oitColors1 = nil;
 		const id<MTLBuffer> previousHeads = heads;
 		reserveBuffer(headBytes, heads, MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked);
 		if (heads != previousHeads) clearedOITHeadBytes = 0;
 		if (!resources.counter)
-			resources.counter = [context()->device() newBufferWithLength:8 options:MTLResourceStorageModeShared];
+			resources.counter = FCMetal4CreateBuffer(context()->device(),8,MTLResourceStorageModeShared);
 		counter = resources.counter;
-		if (!nodes || !heads || !counter) throw RendererException("Metal per-pixel buffer allocation failed");
+		if (!heads || !counter) throw RendererException("Metal per-pixel buffer allocation failed");
 		// Store immutable per-polygon blend/shadow instructions once, as
 		// Vulkan does. Completion-owned slots protect the CPU-written table.
 		if (rc->global_param_tr.size() > (size_t(1) << 30))
 			throw RendererException("Metal OIT polygon index exceeds metadata storage");
-		const size_t polygonCount = std::max<size_t>(1, rc->global_param_tr.size());
-		if (polygonCount > context()->device().maxBufferLength / sizeof(MetalOITPoly))
-			throw RendererException("Metal OIT polygon table exceeds the device buffer limit");
-		// The frame slot was acquired before building this table. Pack its
-		// immutable records directly into shared GPU storage, avoiding a
-		// temporary CPU vector and the following full-table upload copy.
-		oitPolygons = reserveBuffer(polygonCount * sizeof(MetalOITPoly), resources.oitPolygons);
-		auto *polygonData = static_cast<u8 *>(oitPolygons.contents);
-		if (rc->global_param_tr.empty()) new (polygonData) MetalOITPoly{};
+		bool needsTable = std::any_of(passStates.begin(), passStates.end(),
+			[](const PassState& pass) { return pass.sortedFragments && !pass.sourceOver; });
+#ifdef METAL_RENDERER_TESTS
+		needsTable |= disableOITMetadataElision;
+#endif
 		bool needsColors1 = false;
-		size_t passIndex = 0;
-		for (size_t i = 0; i < rc->global_param_tr.size(); ++i) {
-			const PolyParam& poly = rc->global_param_tr[i];
-			const bool twoVolumes = hasTwoVolumes(poly);
-			if (!needsColors1 && twoVolumes && poly.count >= 3 && !(poly.tsp1.full & (1u << 25))) {
-				// Match the OIT shader's actual area-1 color writer. Unsorted,
-				// unshadowable and accumulator-source polygons cannot access
-				// this stream, even though their immutable table keeps both TSPs.
-				while (passIndex < rc->render_passes.size() && i >= rc->render_passes[passIndex].tr_count)
-					++passIndex;
-				if (passIndex < passStates.size()) {
-					const auto& state = passStates[passIndex];
-					needsColors1 = state.sortedFragments
-						&& activeTwoVolumes(poly, PolyPass::OIT, state.colorModifiers, state.oitModifiers);
+		if (!needsTable) {
+			// Source-over has no polygon-table or area-1 reads. A resident dummy
+			// keeps generic argument bindings valid without packing unused data.
+			oitPolygons = counter;
+		} else {
+			const size_t polygonCount = std::max<size_t>(1, rc->global_param_tr.size());
+			if (polygonCount > context()->device().maxBufferLength / sizeof(MetalOITPoly))
+				throw RendererException("Metal OIT polygon table exceeds the device buffer limit");
+			// The frame slot was acquired before building this table. Pack its
+			// immutable records directly into shared GPU storage, avoiding a
+			// temporary CPU vector and the following full-table upload copy.
+			oitPolygons = reserveBuffer(polygonCount * sizeof(MetalOITPoly), resources.oitPolygons);
+			auto *polygonData = static_cast<u8 *>(oitPolygons.contents);
+			if (rc->global_param_tr.empty()) new (polygonData) MetalOITPoly{};
+			size_t passIndex = 0;
+			for (size_t i = 0; i < rc->global_param_tr.size(); ++i) {
+				const PolyParam& poly = rc->global_param_tr[i];
+				const bool twoVolumes = hasTwoVolumes(poly);
+				if (!needsColors1 && twoVolumes && poly.count >= 3 && !(poly.tsp1.full & (1u << 25))) {
+					// Match the OIT shader's actual area-1 color writer. Unsorted,
+					// unshadowable and accumulator-source polygons cannot access
+					// this stream, even though their immutable table keeps both TSPs.
+					while (passIndex < rc->render_passes.size() && i >= rc->render_passes[passIndex].tr_count)
+						++passIndex;
+					if (passIndex < passStates.size()) {
+						const auto& state = passStates[passIndex];
+						needsColors1 = state.sortedFragments
+							&& activeTwoVolumes(poly, PolyPass::OIT, state.colorModifiers, state.oitModifiers);
+					}
 				}
+				new (polygonData + i * sizeof(MetalOITPoly)) MetalOITPoly{(poly.tsp.full & ~3u) | (poly.pcw.Shadow ? 1u : 0u)
+					| (twoVolumes ? 2u : 0u), poly.tsp1.full};
 			}
-			new (polygonData + i * sizeof(MetalOITPoly)) MetalOITPoly{(poly.tsp.full & ~3u) | (poly.pcw.Shadow ? 1u : 0u)
-				| (twoVolumes ? 2u : 0u), poly.tsp1.full};
 		}
-		// Area-1 accumulator sources need no stored color. With no matching
-		// modifier, metadata cannot select area 1 either. Keep allocated storage
-		// across renders instead of reallocating on later volume transitions.
-		if (needsColors1 && !oitColors1) {
-			oitColors1 = [context()->device() newBufferWithLength:color1Bytes
+		const NSUInteger bytes = oitNodeBytes();
+		NSUInteger nodeBytes = bytes;
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		if (legacyOITStorage) nodeBytes = (bytes / MetalOITNodeBudgetStride) * sizeof(MetalOITNode);
+#endif
+		if (!nodes || nodes.length != nodeBytes)
+			nodes = [context()->device() newBufferWithLength:nodeBytes
 				options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked];
-			if (!oitColors1) throw RendererException("Metal OIT area-1 color allocation failed");
+		if (!nodes) throw RendererException("Metal OIT node allocation failed");
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		// Historical allocation/capacity control, exclusively in the offscreen
+		// target. The production shader, planner and encoding stay unchanged.
+		if (legacyOITStorage) {
+			frame.capacity = bytes / MetalOITNodeBudgetStride;
+			if (needsColors1 && (!legacyOITColors || legacyOITColors.length != frame.capacity * sizeof(u32)))
+				legacyOITColors = [context()->device() newBufferWithLength:frame.capacity * sizeof(u32)
+					options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked];
+			if (needsColors1 && !legacyOITColors) throw RendererException("Legacy OIT measurement color allocation failed");
+			if (!needsColors1) legacyOITColors = nil;
+			oitColors1 = legacyOITColors; oitColorOffset = 0; return;
 		}
+		legacyOITColors = nil;
+#endif
+		const auto layout = metal_oit::storageLayout(bytes, needsColors1);
+		frame.capacity = layout.capacity;
+		oitColors1 = needsColors1 ? nodes : nil;
+		oitColorOffset = layout.colorOffset;
 		// Until area 1 is needed, the counter supplies a valid dummy binding
 		// at index 8. Shaders guard every color access; it is never dereferenced.
 	}
@@ -1619,9 +1842,10 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		// Intermediate images never escape this render. Screen output is
 		// pooled only when no longer retained as the pending or displayed
 		// image; RTT output selection also preserves sampled feedback images.
-		const size_t scratch = target == resources.resolveScratch[0] ? 1 : 0;
+		auto& scratchImages = intermediateImages(resources).resolveScratch;
+		const size_t scratch = target == scratchImages[0] ? 1 : 0;
 		id<MTLTexture> output = tiledOutput ? tiledOutput : finalPass ? outputTexture(resources, usage, target)
-			: attachment(resources.resolveScratch[scratch], MTLPixelFormatRGBA8Unorm, usage);
+			: attachment(scratchImages[scratch], MTLPixelFormatRGBA8Unorm, usage);
 		if (copyOnly) {
 			// No fragment list and no final dither: finish the output with a
 			// texture copy, without invoking a sort kernel.
@@ -1634,6 +1858,7 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			const ResolvePipeline& pipeline = oit ? resolvePipeline(layerBound ? layerBound : frame.maxLayers, resetHeads, sourceOver, dense, packed) : finish;
 			FCMetal4ComputeEncoder * c = [cb computeCommandEncoder];
 			if (!c) throw RendererException("Metal framebuffer resolve encoder allocation failed");
+			[c setDirectShaderBindings:YES];
 			const NSUInteger frameOffset = !finalPass && frame.dithering ? frameUniformStride : 0;
 			[c setComputePipelineState:pipeline.state];
 			if (tile) {
@@ -1644,13 +1869,13 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 				if (dense) tiledFrame.maxLayers = layerBound;
 				if (!finalPass) tiledFrame.dithering = 0;
 				[c setBytes:&tiledFrame length:sizeof(tiledFrame) atIndex:1];
-			} else [c setBuffer:frameUniforms offset:frameOffset atIndex:1];
+			} else [c setBuffer:frameUniforms offset:frameOffset atIndex:1 usage:MTLResourceUsageRead];
 			if (oit) {
 				[c setBuffer:nodes offset:0 atIndex:4]; [c setBuffer:heads offset:0 atIndex:5]; [c setBuffer:counter offset:0 atIndex:6];
-				[c setBuffer:oitPolygons offset:0 atIndex:7];
-				[c setBuffer:(oitColors1 ? oitColors1 : counter) offset:0 atIndex:8];
+				[c setBuffer:oitPolygons offset:0 atIndex:7 usage:MTLResourceUsageRead];
+				[c setBuffer:(oitColors1 ? oitColors1 : counter) offset:oitColorOffset atIndex:8];
 			}
-			[c setTexture:target atIndex:0]; [c setTexture:output atIndex:1];
+			[c setTexture:target atIndex:0 usage:MTLResourceUsageRead]; [c setTexture:output atIndex:1 usage:MTLResourceUsageWrite];
 			[c dispatchThreads:MTLSizeMake(tile ? tile->width : frame.width, tile ? tile->height : frame.height, 1)
 				threadsPerThreadgroup:pipeline.threads];
 			[c endEncoding];
@@ -1680,10 +1905,24 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		return true;
 	}
 
-	std::vector<metal_oit::Tile> oitTiles(u32 first, u32 last, u32& layerBound, bool& dense, bool compactColor, u32 linkedCapacity = 0) const
+	const std::vector<metal_oit::Tile>& oitTiles(u32 first, u32 last, u32& layerBound, bool& dense, bool compactColor, u32 linkedCapacity = 0, std::vector<metal_oit::BoundedPolygon> *polygonBounds = nullptr) const
 	{
-		std::vector<metal_oit::Tile> triangles;
-		const metal_oit::Tile whole{0, 0, frame.width, frame.height};
+		auto& triangles = oitTriangles;
+		triangles.clear();
+		uint64_t totalCoverage = 0;
+		bool boundsEnabled = true;
+#ifdef METAL_RENDERER_TESTS
+		boundsEnabled = !disableOITBounds;
+#endif
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		if(legacyOITPlanning)oitGeometryValid=false;
+#endif
+		if (!oitGeometryValid) {
+			oitGeometry.reset(frame.ndc,frame.width,frame.height,rc->verts.size(),boundsEnabled);
+			oitGeometryValid = true;
+		}
+		auto& geometry = oitGeometry;
+		if (polygonBounds) polygonBounds->clear();
 		for (u32 p = first; p < last; ++p) {
 			const PolyParam& poly = rc->global_param_tr[p];
 			// The parser merges strips into an earlier polygon and leaves a
@@ -1692,75 +1931,41 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 			if (poly.count < 3) continue;
 			if (poly.first > rc->idx.size() || poly.count > rc->idx.size() - poly.first)
 				throw RendererException("Metal OIT primitive index range is invalid");
+			metal_oit::Tile polygon{};
 			for (u32 i = 0; i + 2 < poly.count; ++i) {
 				const u32 *index = rc->idx.data() + poly.first + i;
 				if (index[0] == ~0u || index[1] == ~0u || index[2] == ~0u) continue;
-				// Naomi2's shader transforms, or a noncanonical projection, need
-				// the full screen bound. Positive Dreamcast W is constant one;
-				// native-depth division cancels when forming screen X/Y as well.
-				const auto& m = frame.ndc;
-				bool bounded = !poly.isNaomi2() && m[0][3] == 0 && m[1][3] == 0 && m[2][3] == 0 && m[3][3] == 1
-					&& m[0][2] == 0 && m[1][2] == 0 && m[3][2] == 0 && std::isnormal(m[2][2]) && m[2][2] > 0;
-#ifdef METAL_RENDERER_TESTS
-				if (disableOITBounds) bounded = false;
-#endif
-				double left = frame.width, top = frame.height, right = 0, bottom = 0;
-				for (int j = 0; j < 3 && bounded; ++j) {
-					if (index[j] >= rc->verts.size()) { bounded = false; break; }
-					const auto& v = rc->verts[index[j]];
-					// A nonpositive/subnormal reciprocal can cross homogeneous W
-					// during native-depth clipping; vertex X/Y no longer bounds it.
-					if (!std::isnormal(v.z) || v.z <= 0) { bounded = false; break; }
-					const double reciprocal = double(m[2][2]) * v.z;
-					if (reciprocal < 1.e-12 || reciprocal > 1.e5) { bounded = false; break; }
-					const double values[]{v.x, v.y, v.z, 1};
-					double screen[2]{};
-					for (int axis = 0; axis < 2; ++axis) {
-						double value = 0, magnitude = 0;
-						for (int k = 0; k < 4; ++k) { const double term = double(m[k][axis]) * values[k]; value += term; magnitude += std::abs(term); }
-						// Clipped strips can have very large off-screen vertices.
-						// Their rounding margin below remains conservative; only
-						// float overflow, including native-depth division, requires
-						// the full-screen fallback, not a fixed coordinate cutoff.
-						const double safeMagnitude = double(std::numeric_limits<float>::max())
-							* std::min(1.0, reciprocal) / 16;
-						if (!std::isfinite(value) || !std::isfinite(magnitude) || magnitude > safeMagnitude) { bounded = false; break; }
-						// Include raster subpixel rounding and float matrix error.
-						const double size = axis == 0 ? frame.width : frame.height;
-						const double margin = 4 + magnitude * std::numeric_limits<float>::epsilon() * 16 * size;
-						screen[axis] = (value + 1) * size * .5;
-						if (axis == 0) { left = std::min(left, screen[axis] - margin); right = std::max(right, screen[axis] + margin); }
-						else { top = std::min(top, screen[axis] - margin); bottom = std::max(bottom, screen[axis] + margin); }
-					}
-				}
-				if (!bounded) triangles.push_back(whole);
-				else {
-					const u32 x = u32(std::clamp(std::floor(left), 0.0, double(frame.width)));
-					const u32 y = u32(std::clamp(std::floor(top), 0.0, double(frame.height)));
-					const u32 endX = u32(std::clamp(std::ceil(right), 0.0, double(frame.width)));
-					const u32 endY = u32(std::clamp(std::ceil(bottom), 0.0, double(frame.height)));
-					if (endX > x && endY > y) triangles.push_back({x, y, endX - x, endY - y});
+				const auto bounds = geometry.triangle(index, rc->verts, poly.isNaomi2());
+				if (bounds.width && bounds.height) {
+					triangles.push_back(bounds);
+					metal_oit::TilePlanner::addCoverage(totalCoverage,bounds);
+					if (polygonBounds) polygon = metal_oit::coverageUnion(polygon, bounds);
 				}
 			}
+			if (polygonBounds && polygon.width && polygon.height) polygonBounds->push_back({p,polygon});
 		}
 		// At most one fragment per original triangle reaches a pixel. A
 		// small pass therefore needs no large thread-local sorting array.
 		// This bound never truncates the configured or attainable layer count.
 		layerBound = u32(std::max<size_t>(1, std::min<size_t>(frame.maxLayers, triangles.size())));
 		if (dense) {
-			const u32 peak = std::max(1u,metal_oit::peakCoverage(triangles,frame.maxLayers+1));
+			const u32 peak = std::max(1u,metal_oit::peakCoverage(triangles,frame.maxLayers+1,&oitCoverageWorkspace));
 			const size_t stride = compactColor ? sizeof(MetalOITDenseColorNode) : sizeof(MetalOITDenseNode);
 			const size_t pixels = std::min<size_t>(nodes.length/stride,std::numeric_limits<u32>::max())/peak;
 			if (peak <= frame.maxLayers && pixels) {
 				layerBound = peak;
-				return metal_oit::plan(frame.width,frame.height,{whole},pixels);
+				return oitTilePlanner.uniform(frame.width,frame.height,pixels);
 			}
 			dense = false;
 		}
-		return metal_oit::plan(frame.width, frame.height, triangles, linkedCapacity ? linkedCapacity : frame.capacity);
+		const auto capacity=linkedCapacity ? linkedCapacity : frame.capacity;
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		if(legacyOITPlanning){legacyOITTileResults.clear();metal_oit::partition({0,0,frame.width,frame.height},triangles,capacity,legacyOITTileResults);return legacyOITTileResults;}
+#endif
+		return oitTilePlanner.plan(frame.width,frame.height,triangles,capacity,totalCoverage);
 	}
 
-	std::vector<metal_oit::Tile> oitTiles(u32 first,u32 last,u32& layerBound) const {
+	const std::vector<metal_oit::Tile>& oitTiles(u32 first,u32 last,u32& layerBound) const {
 		bool dense = false; return oitTiles(first,last,layerBound,dense,false);
 	}
 
@@ -1779,10 +1984,11 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 		p.colorAttachments[0].texture = output; p.colorAttachments[0].loadAction = MTLLoadActionDontCare; p.colorAttachments[0].storeAction = MTLStoreActionStore;
 		FCMetal4RenderEncoder * e = [cb renderCommandEncoderWithDescriptor:p];
 		if (!e) throw RendererException("Metal framebuffer scale encoder allocation failed");
+		[e setDirectShaderBindings:YES];
 		[e setRenderPipelineState:scalePipeline]; [e setViewport:MTLViewport{0, 0, (double)width, (double)height, 0, 1}];
 		struct alignas(16) QuadUniform { float color[4]; u32 rotate, ignoreAlpha; } u{{1, 1, 1, 1}, u32(rotate), 0};
-		[e setVertexBytes:&u length:sizeof(u) atIndex:0]; [e setFragmentBytes:&u length:sizeof(u) atIndex:0];
-		[e setFragmentTexture:image atIndex:0];
+		[e setSharedBytes:&u length:sizeof(u) atIndex:0];
+		[e setFragmentTexture:image atIndex:0 usage:MTLResourceUsageRead];
 		// Framebuffer resampling uses Vulkan's fixed linear blit filter.
 		// These single-level images need clamp, no anisotropy and no mip blend.
 		[e setFragmentSamplerState:samplerState(2, 2, true, false, 1) atIndex:0];
@@ -1794,6 +2000,17 @@ class API_AVAILABLE(macos(26.0)) MetalRenderer final : public Renderer
 public:
 #ifdef METAL_RENDERER_TESTS
 	void validateSynthetic();
+	void validateSyntheticAccumulator();
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+	void validateSyntheticRecovery();
+	void validateSyntheticStorageProfile();
+	void validateSyntheticStorageLifetime();
+	void validateSyntheticIntermediates();
+	void validateSyntheticProofProfile();
+	void validateSyntheticPlanProfile();
+	void validateSyntheticPoolProfile();
+	void validateSyntheticCacheProfile();
+#endif
 #endif
 	explicit MetalRenderer(bool perPixel) : perPixel(perPixel) {}
 	~MetalRenderer() override
@@ -1835,7 +2052,7 @@ public:
 			modLayout.attributes[0].format = MTLVertexFormatFloat3; modLayout.layouts[0].stride = 3 * sizeof(float);
 			if (perPixel) {
 				const u32 layers = std::clamp(config::PerPixelLayers.get(), 1, 256);
-				resolve = resolvePipeline(layers);
+				resolvePipeline(layers);
 				resolvePipeline(layers, true);
 				finish = makeResolvePipeline(@"framebuffer_finish");
 			}
@@ -1887,8 +2104,12 @@ public:
 	void Term() override
 	{
 		if (pipelineResults) pipelineResults->active.store(false);
-		context()->waitIdle(); context()->setLastFrame(nil, 4.f / 3.f);
-		textureCache.Clear(); fog.Delete(); palette.Delete(); framebuffer.Delete();
+		try { context()->waitIdle(); }
+		catch(const std::exception& failure) { std::fprintf(stderr,"Metal renderer shutdown: %s\n",failure.what()); }
+		catch(...) { std::fputs("Metal renderer shutdown failed after drain\n",stderr); }
+		context()->setLastFrame(nil, 4.f / 3.f);
+		textureCache.Clear(); clearGpuPreloadedTextures(); fog.Delete(); palette.Delete(); framebuffer.Delete();
+		gpuPreloadOnDemand = false;
 		pipelines.clear(); depths.fill(nil); modifierDepths.fill(nil); finalModifierDepth = nil;
 		samplers.fill(nil); resolvePipelines.clear();
 		materialPipelines.clear(); pipelineResults.reset();
@@ -1898,17 +2119,25 @@ public:
 		for (auto& resources : frameResources) {
 			resources.counter = nil;
 			resources.vertices = resources.indices = resources.modifiers = resources.lights = resources.oitPolygons = resources.naomi2 = resources.frameUniforms = nil;
-			resources.shadowDepth = resources.shadowStencil = resources.rasterColor = nil;
+			resources.secondaryColor = nil;
 			resources.screenOutput = resources.rttReadbackOutput = resources.framebufferScale = nil;
-			resources.resolveScratch.fill(nil);
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+			resources.legacyIntermediates = {};
+#endif
 			resources.polyUniformPages.clear(); resources.polyUniformCursor = 0;
 		}
+		gpuIntermediates = {};
 		nextFrameResource = currentFrameResource = 0;
 		naomi2 = emptyNaomi2 = nil;
 		for (auto& offsets : naomi2Offsets) offsets.clear();
 		frameUniforms = nil;
-		screen = screenDepth = depth = shadowDepth = shadowStencil = emptyStencil = target = white = nil; vertices = indices = modifiers = lights = nodes = oitColors1 = heads = counter = emptyLights = oitPolygons = nil;
-		resolve = {}; finish = {}; disabledDepth = nil; scalePipeline = nil; rttReinterpretPipeline = nil; rc = nullptr;
+		screen = screenDepth = screenSecondary = secondaryColor = depth = shadowDepth = shadowStencil = emptyStencil = target = white = nil; vertices = indices = modifiers = lights = nodes = oitColors1 = heads = counter = emptyLights = oitPolygons = nil;
+		directAccumulator = initializeSecondary = false;
+		oitColorOffset = 0;
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+		legacyOITColors = nil;
+#endif
+		finish = {}; disabledDepth = nil; scalePipeline = nil; rttReinterpretPipeline = nil; rc = nullptr;
 		screenRendered = framebufferRendered = false;
 		discardInitialColor = false;
 		backgroundColorCleared = initialColorClear = false;
@@ -1916,6 +2145,13 @@ public:
 		colorModifiers = oitModifiers = denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
 		clearedOITHeadBytes = 0;
 		passStates.clear();
+		preparedOITPolygons = std::vector<PreparedOITPoly>();
+		boundedOITPolygons = std::vector<metal_oit::BoundedPolygon>();
+		oitTriangles = std::vector<metal_oit::Tile>();
+		oitDrawPlan = {}; oitCoverageWorkspace = {};
+		oitTilePlanner = {};
+		oitGeometry = {}; oitGeometryValid = false;
+		geometryProofs.reset();
 		shadowDepthPassCount = 0;
 		lightOffsets.clear();
 	}
@@ -1938,10 +2174,11 @@ public:
 				if (!command) throw RendererException("Metal RTT reinterpret command allocation failed");
 				FCMetal4ComputeEncoder *encoder = [command computeCommandEncoder];
 				if (!encoder) throw RendererException("Metal RTT reinterpret encoder allocation failed");
+				[encoder setDirectShaderBindings:YES];
 				const u32 control[]{source->renderTargetControl.full, tcw.PixelFmt, u32(config::EmulateFramebuffer), 0};
 				[encoder setComputePipelineState:rttReinterpretPipeline];
 				[encoder setBytes:control length:sizeof(control) atIndex:0];
-				[encoder setTexture:source->image atIndex:0]; [encoder setTexture:texture->image atIndex:1];
+				[encoder setTexture:source->image atIndex:0 usage:MTLResourceUsageRead]; [encoder setTexture:texture->image atIndex:1 usage:MTLResourceUsageWrite];
 				const NSUInteger width = std::min<NSUInteger>(rttReinterpretPipeline.threadExecutionWidth, rttReinterpretPipeline.maxTotalThreadsPerThreadgroup);
 				[encoder dispatchThreads:MTLSizeMake(texture->image.width, texture->image.height, 1) threadsPerThreadgroup:MTLSizeMake(width, 1, 1)];
 				[encoder endEncoding]; context()->submitCommandBuffer(command);
@@ -1950,9 +2187,46 @@ public:
 			}
 			return texture;
 		}
+		texture->preloadOwner=this;
+		texture->preloadLookup=[](void *owner,u32 hash,u32 oldVq,u32 old) -> id<MTLTexture> {
+			return static_cast<MetalRenderer *>(owner)->findGpuPreloadedTexture(hash,oldVq,old);
+		};
 		if (texture->NeedsUpdate()) { if (!texture->Update()) return nullptr; }
 		else if (texture->IsCustomTextureAvailable()) texture->CheckCustomTexture();
 		return texture;
+	}
+	id<MTLTexture> findGpuPreloadedTexture(u32 hash,u32 oldVq,u32 old) const
+	{
+		if (gpuPreloadedTextures.empty()) return nil;
+		return metal_preload::findResident(gpuPreloadedTextures,hash,oldVq,old,
+			[](u32 key) { return custom_texture.hasReplacement(key); },
+			[this](id<MTLTexture> image) { return metal_preload::usable(image,context()->queue()); });
+	}
+	void processCustomTexturePreloads()
+	{
+		if (!custom_texture.enabled()) { clearGpuPreloadedTextures();gpuPreloadGeneration=0;gpuPreloadOnDemand=false;return; }
+		const auto generation=custom_texture.preloadGeneration();
+		if (generation != gpuPreloadGeneration) {
+			clearGpuPreloadedTextures();gpuPreloadGeneration=generation;gpuPreloadOnDemand=false;
+		}
+		if (custom_texture.isPreloading() || gpuPreloadFinished || gpuPreloadOnDemand) return;
+		MetalContext *ctx=context();metal_upload::Scope updates(ctx);unsigned count=0;
+		gpuPreloadFinished=custom_texture.visitPreloadedTextures(gpuPreloadCursor,!gpuPreloadCursorValid,
+			[&](u32 hash,const TextureData& texture) {
+				if (count++ == 8) return false;
+				auto allocated=metal_preload::allocate(ctx->device(),texture,metal_preload::deviceBudget(ctx->device()));
+				if (allocated.deferred) { gpuPreloadOnDemand=true;return false; }
+				if (allocated.image) {
+					ctx->uploadTextureLevel(allocated.image,0,texture.data.data(),NSUInteger(texture.w)*4);
+					ctx->generateMipmaps(allocated.image);
+					metal_preload::trackUpload(allocated.image,ctx->textureUploadState());
+					gpuPreloadedTextures[hash]=allocated.image;
+				}
+				gpuPreloadCursor=hash;gpuPreloadCursorValid=true;return true;
+			});
+	}
+	void clearTextureCache() {
+		textureCache.Clear(); clearGpuPreloadedTextures();drawState={};
 	}
 	void Process(TA_context *ctx) override
 	{
@@ -1963,14 +2237,10 @@ public:
 			{
 				recoverCanceledRender();
 				if (ctx->rend.isRTT || config::EmulateFramebuffer) context()->flushRenderCommands();
-				struct TextureUpdates {
-					MetalContext *context;
-					bool readyForRender = false;
-					explicit TextureUpdates(MetalContext *context) : context(context) { context->beginTextureUpdates(); }
-					~TextureUpdates() { context->endTextureUpdates(readyForRender); }
-				} textureUpdates(context());
+				metal_upload::Scope textureUpdates(context(),true);
 				rc = &ctx->rend;
-				if (resetTextureCache) { textureCache.Clear(); resetTextureCache = false; }
+				if (resetTextureCache) { clearTextureCache(); resetTextureCache = false; }
+				processCustomTexturePreloads();
 				textureCache.CollectCleanup();
 				if (!rc->isRTT) { framebufferRendered = false; if (!config::EmulateFramebuffer) clearLastFrame = false; }
 				if (!rc->isRTT && rc->swapInterval > 0) context()->setSwapInterval(rc->swapInterval);
@@ -1982,7 +2252,6 @@ public:
 				if (updatePalette || !palette.image) {
 					palette.tex_type = TextureType::_8888; palette.UploadToGPU(1024, 1, (u8 *)palette32_ram, false); updatePalette = false;
 				}
-				textureUpdates.readyForRender = true;
 			}
 #ifdef FLYCAST_FRAME_CAPTURE_TESTS
 			metal_capture::fingerprint(ctx->rend);
@@ -2000,7 +2269,7 @@ public:
 			discardInitialColor = false;
 			backgroundColorCleared = initialColorClear = false;
 			skipBackgroundDepth = false;
-			recoverCanceledRender();
+			if(recoverCanceledRender())return false;
 			if (!rc || rc->framebufferWidth == 0 || rc->framebufferHeight == 0) {
 				context()->flushTextureUpdates();
 				return false;
@@ -2054,6 +2323,10 @@ public:
 			// Build all per-render resources before encoding. The Metal 4 submission
 			// owner retains bound resources, including prior RTT feedback images.
 			frame = {}; denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
+			// The uploaded vertices and projection are immutable across this
+			// render's logical passes. Never carry their proof into another render.
+			oitGeometryValid = false;
+			geometryProofs.reset();
 			oitRasterTile = {};
 			frame.width = rc->framebufferWidth; frame.height = rc->framebufferHeight;
 			matrices.CalcMatrices(rc, frame.width, frame.height); frame.ndc = matrices.GetNormalMatrix();
@@ -2071,6 +2344,9 @@ public:
 			vertices = upload(rc->verts.data(), rc->verts.size() * sizeof(Vertex), resources.vertices);
 			indices = upload(rc->idx.data(), rc->idx.size() * sizeof(u32), resources.indices);
 			const bool useOIT = preparePassStates();
+			directAccumulator = needsDirectAccumulator();
+			if (directAccumulator && !context()->device().rasterOrderGroupsSupported)
+				throw RendererException("Metal secondary accumulation requires raster-order groups");
 			// Per-pixel modifiers need a selected nonempty color/OIT consumer.
 			// Standard passes retain their final quad even for zero-count entries;
 			// their cumulative opaque range therefore remains the conservative gate.
@@ -2100,8 +2376,9 @@ public:
 			prepareNaomi2(resources);
 			const bool clear = rc->isRTT || rc->clearFramebuffer || !screen
 				|| screen.width != frame.width || screen.height != frame.height;
-			discardInitialColor = !clear && replacesFramebufferColor();
-			backgroundColorCleared = initialColorClear = prepareBackgroundClear();
+			const bool replacesColor = replacesFramebufferColor();
+			discardInitialColor = !clear && replacesColor;
+			backgroundColorCleared = initialColorClear = prepareBackgroundClear(replacesColor);
 			const MTLTextureUsage colorUsage = MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget;
 			// Multiple renders can build one pending image before Present, as
 			// Vulkan's open screen pass does. Continue that unpublished image
@@ -2110,8 +2387,9 @@ public:
 			// an image handed to the presentation/UI path must remain separate.
 			const bool reusePending = !clear && screenRendered && screen != context()->lastFrame()
 				&& (screen.usage & colorUsage) == colorUsage;
+			auto& intermediates = intermediateImages(resources);
 			if (reusePending) target = screen;
-			else target = useResolve && !rc->render_passes.empty() ? attachment(resources.rasterColor, MTLPixelFormatRGBA8Unorm)
+			else target = useResolve && !rc->render_passes.empty() ? attachment(intermediates.rasterColor, MTLPixelFormatRGBA8Unorm)
 				: outputTexture(resources, colorUsage);
 			// Vulkan's standard screen render pass remains open across renders
 			// until Present (or RTT). Preserve its depth for the same pending
@@ -2123,7 +2401,21 @@ public:
 			// This GPU-only attachment stays on one queue. Metal 4 barriers order
 			// reuse across submissions; screenDepth retains pending continuations.
 			depth = continueDepth ? screenDepth : attachment(depth, MTLPixelFormatDepth32Float_Stencil8);
-			const bool keepStandardRaster = preserveScreenDepth;
+			// Keep the secondary image through pending screen continuations,
+			// including intervening renders which do not access it. New frames
+			// and RTT begin with an empty secondary accumulator.
+			secondaryColor = continueDepth ? screenSecondary : nil;
+			initializeSecondary = false;
+			if (directAccumulator) {
+				if (!secondaryColor || secondaryColor.width != frame.width || secondaryColor.height != frame.height) {
+					secondaryColor = attachment(resources.secondaryColor, MTLPixelFormatRGBA8Unorm);
+					initializeSecondary = true;
+				}
+			}
+			// The command owner's retained-encoder identity has one color target.
+			// Close MRT encoders here; their stored depth/secondary contents still
+			// continue without any CPU wait or extra image copy.
+			const bool keepStandardRaster = preserveScreenDepth && !directAccumulator;
 			FCMetal4RenderEncoder * standardEncoder = nil;
 			if (keepStandardRaster && !clear && continueDepth && target == screen)
 				standardEncoder = commands.continuingRasterEncoder(target, depth);
@@ -2145,12 +2437,12 @@ public:
 				// depth. Store it before the separate OIT capture encoder reads it.
 				shadowDepth = depth; shadowStencil = nil;
 			} else if (useShadowDepth) {
-				shadowDepth = attachment(resources.shadowDepth, MTLPixelFormatDepth32Float_Stencil8,
+				shadowDepth = attachment(intermediates.shadowDepth, MTLPixelFormatDepth32Float_Stencil8,
 					MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget | MTLTextureUsagePixelFormatView);
-				if (!resources.shadowStencil || resources.shadowStencil.parentTexture != shadowDepth)
-					resources.shadowStencil = [shadowDepth newTextureViewWithPixelFormat:MTLPixelFormatX32_Stencil8];
-				if (!resources.shadowStencil) throw RendererException("Metal shadow stencil view allocation failed");
-				shadowStencil = resources.shadowStencil;
+				if (!intermediates.shadowStencil || intermediates.shadowStencil.parentTexture != shadowDepth)
+					intermediates.shadowStencil = [shadowDepth newTextureViewWithPixelFormat:MTLPixelFormatX32_Stencil8];
+				if (!intermediates.shadowStencil) throw RendererException("Metal shadow stencil view allocation failed");
+				shadowStencil = intermediates.shadowStencil;
 			} else shadowDepth = shadowStencil = nil;
 			if (!clear && target != screen && !discardInitialColor) {
 				FCMetal4ComputeEncoder * b = [cb transferEncoder];
@@ -2267,10 +2559,7 @@ public:
 						u32 layerBound;
 						// Only the OIT modifier path can change node shadow/area bits.
 						// Mixed blending or active modifiers use the general resolver.
-						const bool sourceOver = !oitModifiers && std::all_of(rc->global_param_tr.begin() + previous.tr_count,
-							rc->global_param_tr.begin() + pass.tr_count, [](const PolyParam& poly) {
-								return poly.count < 3 || sourceOverBlend(poly.tsp);
-							});
+						const bool sourceOver = passStates[passIndex].sourceOver;
 						denseOIT = !oitModifiers; denseColorOIT = sourceOver;
 						densePackedOIT = denseOIT && !sourceOver && sequenceCarriesPolygon(previous.tr_count, pass.tr_count);
 						bool packedListAllowed = !oitModifiers && (sourceOver || densePackedOIT);
@@ -2285,33 +2574,99 @@ public:
 						// address more nodes, but never more bytes than that buffer.
 						const u32 linkedCapacity = packedListAllowed ? u32(std::min<NSUInteger>(
 							nodes.length / sizeof(MetalOITPackedNode), std::numeric_limits<u32>::max())) : frame.capacity;
-						const auto tiles = oitTiles(previous.tr_count,pass.tr_count,layerBound,denseOIT,sourceOver || densePackedOIT,linkedCapacity);
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+						const auto planningStarted = measureOITStorage || measureOITPlan ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+						if(countOITPlan)metalOffscreenBeginAllocations();
+						struct EndObservation {bool active;~EndObservation(){if(active)metalOffscreenEndAllocations();}} endObservation{countOITPlan};
+#endif
+						const auto& tiles = oitTiles(previous.tr_count,pass.tr_count,layerBound,denseOIT,sourceOver || densePackedOIT,linkedCapacity,&boundedOITPolygons);
 						packedListOIT = packedListAllowed && !denseOIT;
 						const bool tiled = tiles.size() > 1;
+						// Cache only repeated draws; a single tile keeps the ordinary path.
+						bool reuseDraws = true;
+#ifdef METAL_RENDERER_TESTS
+						reuseDraws = !disableOITDrawReuse;
+#endif
+						auto& prepared = preparedOITPolygons;
+						prepared.clear();
+						if (tiled && reuseDraws) prepared.resize(boundedOITPolygons.size());
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+						if(legacyOITPlanning){
+							legacyOITPolygonBounds.assign(pass.tr_count-previous.tr_count,{});
+							for(const auto& poly:boundedOITPolygons)legacyOITPolygonBounds[poly.index-previous.tr_count]=poly.bounds;
+							if(tiled && reuseDraws)prepared.resize(legacyOITPolygonBounds.size());
+						}
+#endif
+						// Keep the measured small-pass fallback and bound tree memory.
+						bool indexedDraws = reuseDraws && metal_oit::DrawPlan::worthIndexing(tiles.size(),boundedOITPolygons.size());
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+						if(legacyOITPlanning)indexedDraws=false;
+#endif
+						if (indexedDraws) oitDrawPlan.prepare(tiles,boundedOITPolygons);
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+						if(countOITPlan){const auto a=metalOffscreenEndAllocations();endObservation.active=false;measuredOITPlanAllocations+=a.calls;measuredOITPlanAllocatedBytes+=a.bytes;}
+						if (measureOITStorage || measureOITPlan) {
+							measuredOITTiles += tiles.size();
+							measuredOITPlanningUs += std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-planningStarted).count();
+						}
+						if(measureOITPlan){measuredOITIndexedPasses+=indexedDraws;measuredOITHierarchyPasses+=!legacyOITPlanning && oitTilePlanner.usedHierarchy();measuredOITPreparedPeak=std::max<u64>(measuredOITPreparedPeak,prepared.size());}
+#endif
 						const bool resetHeads = tiled || passStates[passIndex].resetOITHeads;
 						id<MTLTexture> tiledOutput = nil;
 						if (tiled) {
 							const MTLTextureUsage usage = MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite | MTLTextureUsageRenderTarget;
-							const size_t scratch = target == resources.resolveScratch[0] ? 1 : 0;
+							const size_t scratch = target == intermediates.resolveScratch[0] ? 1 : 0;
 							tiledOutput = finalPass ? outputTexture(resources, usage, target)
-								: attachment(resources.resolveScratch[scratch], MTLPixelFormatRGBA8Unorm, usage);
+									: attachment(intermediates.resolveScratch[scratch], MTLPixelFormatRGBA8Unorm, usage);
 							if (profile) NOTICE_LOG(RENDERER, "Metal OIT bounded pass: %zu tiles, %u nodes", tiles.size(), frame.capacity);
 						}
-						for (const auto& tile : tiles) {
+						for (size_t tileIndex = 0; tileIndex < tiles.size(); ++tileIndex) {
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+							const auto drawStarted=measureOITPlan?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+#endif
+							const auto& tile = tiles[tileIndex];
 							// Scissors split screen coverage, never geometry or sort keys.
 							// The same full-frame viewport preserves derivatives and seams.
 							oitRasterTile = tiled ? tile : metal_oit::Tile{};
-							e = encoder(cb, RenderAttachments::None);
+							auto rasterFrame = frame;
 							if (denseOIT) {
-								auto denseFrame = frame; denseFrame.oitTile = {tile.x,tile.y,tile.width,tile.height}; denseFrame.maxLayers = layerBound;
-								[e setFragmentBytes:&denseFrame length:sizeof(denseFrame) atIndex:1];
-							} else if (packedListOIT) {
-								auto packedFrame = frame; packedFrame.capacity = linkedCapacity;
-								[e setFragmentBytes:&packedFrame length:sizeof(packedFrame) atIndex:1];
-							}
+								rasterFrame.oitTile = {tile.x,tile.y,tile.width,tile.height}; rasterFrame.maxLayers = layerBound;
+							} else if (packedListOIT) rasterFrame.capacity = linkedCapacity;
+							e = encoder(cb, RenderAttachments::None, false, false, false, nil, true, false,
+								denseOIT || packedListOIT ? &rasterFrame : nullptr);
 
-							drawList(e, rc->global_param_tr, previous.tr_count, pass.tr_count, ListType_Translucent, false, PolyPass::OIT);
+							// Skip only provably disjoint geometry. Full-screen fallbacks,
+							// original index ranges, viewport and sequence remain unchanged.
+							const auto drawActive = [&](u32 active) {
+								const auto& pp = rc->global_param_tr[boundedOITPolygons[active].index];
+								drawPoly(e,pp,ListType_Translucent,false,PolyPass::OIT,pp.first,pp.count,
+									prepared.empty() ? nullptr : &prepared[active]);
+							};
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+							const u64 drawsBefore=oitPolygonDraws;
+							if(countOITPlan && !indexedDraws)measuredOITCandidates+=legacyOITPlanning?pass.tr_count-previous.tr_count:boundedOITPolygons.size();
+#endif
+							if (indexedDraws) oitDrawPlan.forEach(tileIndex,drawActive);
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+							else if(legacyOITPlanning && reuseDraws)for(u32 poly=previous.tr_count;poly<pass.tr_count;++poly){
+								const auto& pp=rc->global_param_tr[poly];if(pp.count<3)continue;
+								const auto overlap=metal_oit::intersection(tile,legacyOITPolygonBounds[poly-previous.tr_count]);
+								if(!tiled || (overlap.width && overlap.height))drawPoly(e,pp,ListType_Translucent,false,PolyPass::OIT,pp.first,pp.count,prepared.empty()?nullptr:&prepared[poly-previous.tr_count]);
+							}
+#endif
+							else if (reuseDraws) for (u32 active = 0; active < boundedOITPolygons.size(); ++active) {
+								const auto overlap = metal_oit::intersection(tile,boundedOITPolygons[active].bounds);
+								if (!tiled || (overlap.width && overlap.height)) drawActive(active);
+							}
+							else for (u32 poly = previous.tr_count; poly < pass.tr_count; ++poly) {
+								const auto& pp = rc->global_param_tr[poly];
+								drawPoly(e,pp,ListType_Translucent,false,PolyPass::OIT,pp.first,pp.count);
+							}
 							[e endEncoding]; e = nil; traceGPU(@"OIT-fragments");
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_TEST_FIXTURE_ROOT)
+							if(countOITPlan && indexedDraws)measuredOITCandidates+=oitPolygonDraws-drawsBefore;
+							if(measureOITPlan)measuredOITDrawEncodingUs+=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-drawStarted).count();
+#endif
 							if (pass.mv_op_tr_shared) drawModifiers(cb, e, rc->global_param_mvo, previous.mvo_count, pass.mvo_count, true);
 							else drawModifiers(cb, e, rc->global_param_mvo_tr, previous.mvo_tr_count, pass.mvo_tr_count, true);
 #ifdef FLYCAST_FRAME_CAPTURE_TESTS
@@ -2326,6 +2681,8 @@ public:
 							traceGPU(@"OIT-resolve");
 						}
 						if (resetHeads) clearedOITHeadBytes = NSUInteger(frame.width) * frame.height * sizeof(u32);
+						// Release temporary strong GPU references; retain only CPU capacity.
+						prepared.clear();
 						denseOIT = denseColorOIT = densePackedOIT = packedListOIT = false;
 						oitRasterTile = {};
 						if (tiledOutput) target = tiledOutput;
@@ -2396,6 +2753,8 @@ public:
 				std::chrono::duration<double, std::milli>(encodingStarted - started).count(),
 				std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - encodingStarted).count(), backgroundColorCleared, skipBackgroundDepth,
 				profilingBoundEligible, profilingBoundActive, profilingUVEligible, profilingUVActive);
+			if (profile) NOTICE_LOG(RENDERER,"Metal proof cache render %llu hits: %llu evaluations: %llu",(unsigned long long)frameNumber,
+				(unsigned long long)geometryProofs.statistics.hits,(unsigned long long)geometryProofs.statistics.evaluations);
 			if (!rc->isRTT && !config::EmulateFramebuffer)
 				context()->deferRenderCommands(std::move(commands));
 			else commands.commit();
@@ -2413,6 +2772,7 @@ public:
 			} else {
 				screen = target;
 				screenDepth = preserveScreenDepth ? depth : nil;
+				screenSecondary = preserveScreenDepth ? secondaryColor : nil;
 				screenRendered = !config::EmulateFramebuffer;
 				if (config::EmulateFramebuffer) {
 					WriteFramebuffer(framebufferSize.x, framebufferSize.y, pixels, rc->fb_W_SOF1 & VRAM_MASK,
@@ -2428,6 +2788,7 @@ public:
 	void RenderFramebuffer(const FramebufferInfo& info) override
 	{
 		@autoreleasepool {
+			recoverCanceledRender();
 			context()->flushRenderCommands();
 			framebuffer.tex_type = TextureType::_8888;
 			if (!info.fb_r_ctrl.fb_enable || info.vo_control.blank_video) {
@@ -2462,7 +2823,7 @@ public:
 		}
 		imguiDriver->setFrameRendered();
 		screenRendered = false;
-		screenDepth = nil;
+		screenDepth = screenSecondary = nil;
 		context()->drawOverlays();
 		gui_display_osd();
 #ifdef FLYCAST_FRAME_CAPTURE_TESTS
@@ -2520,6 +2881,17 @@ public:
 };
 #ifdef METAL_RENDERER_TESTS
 #include "../../../tests/metal/metal_renderer_validation.inc"
+#include "../../../tests/metal/metal_accumulator_validation.inc"
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+#include "../../../tests/metal/metal_recovery_validation.inc"
+#include "../../../tests/metal/metal_storage_profile_validation.inc"
+#include "../../../tests/metal/metal_storage_lifetime_validation.inc"
+#include "../../../tests/metal/metal_intermediates_validation.inc"
+#include "../../../tests/metal/metal_proof_profile_validation.inc"
+#include "../../../tests/metal/metal_plan_profile_validation.inc"
+#include "../../../tests/metal/metal_pool_profile_validation.inc"
+#include "../../../tests/metal/metal_cache_profile_validation.inc"
+#endif
 #endif
 }
 
@@ -2541,12 +2913,68 @@ void metalValidateRenderer()
 	std::vector<u8> testVRAM(8_MB);
 	vram.setRegion(testVRAM.data(), testVRAM.size());
 	try {
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+		if(metalOffscreenCacheProfile){
+			const auto oldBudget=config::PixelBufferSize.get();config::PixelBufferSize=1_MB;
+			struct RestoreBudget{int64_t value;~RestoreBudget(){config::PixelBufferSize=value;}} restoreBudget{oldBudget};
+			for(bool perPixel:{false,true}){MetalRenderer native(perPixel);if(!native.Init())throw RendererException("Metal cache profile initialization failed");native.validateSyntheticCacheProfile();native.Term();}
+		} else if(metalOffscreenPoolProfile){
+			const auto oldBudget=config::PixelBufferSize.get();config::PixelBufferSize=1_MB;
+			struct RestoreBudget{int64_t value;~RestoreBudget(){config::PixelBufferSize=value;}} restoreBudget{oldBudget};
+			for(bool perPixel:{false,true}){MetalRenderer native(perPixel);if(!native.Init())throw RendererException("Metal pool profile initialization failed");native.validateSyntheticPoolProfile();native.Term();}
+		} else if(metalOffscreenPlanProfile){
+			const auto oldBudget=config::PixelBufferSize.get();config::PixelBufferSize=1_MB;
+			struct RestoreBudget{int64_t value;~RestoreBudget(){config::PixelBufferSize=value;}} restoreBudget{oldBudget};
+			MetalRenderer native(true);if(!native.Init())throw RendererException("Metal planning profile initialization failed");
+			native.validateSyntheticPlanProfile();native.Term();
+		} else if(metalOffscreenProofProfile) {
+			const auto oldBudget=config::PixelBufferSize.get();config::PixelBufferSize=1_MB;
+			struct RestoreBudget{int64_t value;~RestoreBudget(){config::PixelBufferSize=value;}} restoreBudget{oldBudget};
+			for(bool perPixel:{false,true}) {
+				MetalRenderer native(perPixel);
+				if(!native.Init())throw RendererException("Metal proof profile initialization failed");
+				native.validateSyntheticProofProfile();native.Term();
+			}
+		} else if (metalOffscreenStorageOnly) {
+			MetalRenderer native(true);
+			if(!native.Init())throw RendererException("Metal storage profile initialization failed");
+			if(metalOffscreenIntermediates)native.validateSyntheticIntermediates();
+			else if(metalOffscreenStorageLifetimeOnly)native.validateSyntheticStorageLifetime();
+			else native.validateSyntheticStorageProfile();
+			native.Term();
+		} else {
+		if(!metalOffscreenRecoveryOnly)
+#endif
 		for (bool perPixel : {false, true}) {
 			MetalRenderer native(perPixel);
 			if (!native.Init()) throw RendererException("Metal validation initialization failed");
 			native.validateSynthetic();
+			native.validateSyntheticAccumulator();
 			native.Term();
 		}
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+		for(bool perPixel:{false,true}) {
+			MetalRenderer native(perPixel);
+			if(!native.Init())throw RendererException("Metal recovery validation initialization failed");
+			native.validateSyntheticRecovery();native.Term();
+		}
+		if(!metalOffscreenRecoveryOnly) {
+			MetalRenderer native(true);
+			if(!native.Init())throw RendererException("Metal storage validation initialization failed");
+			native.validateSyntheticStorageProfile();native.Term();
+			MetalRenderer queued(true);
+			if(!queued.Init())throw RendererException("Metal storage lifetime initialization failed");
+			queued.validateSyntheticStorageLifetime();queued.Term();
+			MetalRenderer intermediates(true);
+			if(!intermediates.Init())throw RendererException("Metal intermediates validation initialization failed");
+			intermediates.validateSyntheticIntermediates();intermediates.Term();
+			struct RestoreBoundaryProfile{bool value;~RestoreBoundaryProfile(){metalOffscreenBoundaryProfile=value;}} restoreBoundaryProfile{metalOffscreenBoundaryProfile};
+			metalOffscreenBoundaryProfile=true;MetalRenderer boundaries(true);
+			if(!boundaries.Init())throw RendererException("Metal boundary profile validation initialization failed");
+			boundaries.validateSyntheticStorageProfile();boundaries.Term();
+		}
+		}
+#endif
 	} catch (const std::exception& error) {
 		ERROR_LOG(RENDERER, "Metal production validation failed: %s", error.what());
 		vram = previousVRAM; settings.platform = previousPlatform; throw;

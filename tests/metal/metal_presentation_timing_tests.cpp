@@ -2,6 +2,41 @@
 #include "rend/metal4/metal4_presentation_timing.h"
 #include <cstdio>
 #include <limits>
+#include <deque>
+#include <vector>
+
+// Independent producer/callback events exercise the bounded three-image queue.
+// In particular, the producer can win the race at a display boundary. Deadlines
+// that look regular in isolation must not evict still-valid queued contents.
+static unsigned queueEvictions(double fieldHz, int gameInterval, double displayHz,
+		double phase, bool previousExtraRefresh)
+{
+	struct Event { double at; bool producer; unsigned content; };
+	std::vector<Event> events;
+	const double sourceInterval = gameInterval / fieldHz, displayInterval = 1 / displayHz;
+	for (unsigned n = 0; n < 600; ++n)
+		events.push_back({n * sourceInterval + (n % 5) * .0004, true, n});
+	for (unsigned n = 0; n * displayInterval < 600 * sourceInterval + 1; ++n)
+		events.push_back({phase + n * displayInterval + (n % 3) * .0002, false, 0});
+	std::stable_sort(events.begin(),events.end(),[](const Event& a,const Event& b) { return a.at < b.at; });
+	metal::PresentationTimeline timeline;
+	std::deque<double> queue;
+	unsigned evicted = 0, presented = 0;
+	for (const auto& event : events) {
+		if (event.producer) {
+			const double buffer = previousExtraRefresh ? 2 / fieldHz + displayInterval
+				: metal::presentationBufferDuration(1 / fieldHz);
+			const double target = timeline.videoFrame(100 + event.at,
+				10 + event.content * sourceInterval, buffer, displayInterval);
+			if (queue.size() == 3) { queue.pop_front(); ++evicted; }
+			queue.push_back(target);
+		} else if (!queue.empty() && queue.front() <= 100 + event.at + displayInterval) {
+			queue.pop_front(); ++presented;
+		}
+	}
+	if (presented + evicted != 600 || !queue.empty()) return 600;
+	return evicted;
+}
 
 int main()
 {
@@ -75,6 +110,18 @@ int main()
 			std::fprintf(stderr, "FAIL: pause/reset/invalid clock handling\n"); return 1;
 		}
 	}
-	std::printf("PASS: 34 presentation policies and 60000 PAL/NTSC video deadlines (jitter, variable cadence, display lead, pause/reset)\n");
+	unsigned previousEvictions = 0;
+	for (double fieldHz : {50.0, 59.94, 60.0})
+		for (int interval : {1,2})
+			for (double displayHz : {60.0,120.0})
+				for (unsigned phase = 0; phase < 16; ++phase) {
+					if (queueEvictions(fieldHz,interval,displayHz,phase / displayHz / 16,false)) {
+						std::fprintf(stderr,"FAIL: valid contents evicted at field %.2f interval %d display %.0f phase %u\n",
+							fieldHz,interval,displayHz,phase); return 1;
+					}
+					previousEvictions += queueEvictions(fieldHz,interval,displayHz,phase / displayHz / 16,true);
+				}
+	if (!previousEvictions) { std::fprintf(stderr,"FAIL: queue regression did not detect the previous overlong horizon\n"); return 1; }
+	std::printf("PASS: 34 presentation policies, 60000 PAL/NTSC deadlines and 192 producer/display queue schedules; previous horizon evicted %u valid contents\n",previousEvictions);
 	return 0;
 }

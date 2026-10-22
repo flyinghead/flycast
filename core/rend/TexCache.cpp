@@ -522,6 +522,11 @@ bool BaseTextureCacheData::Update()
 			size = originalSize;
 			return true;
 		}
+		if (UseGpuCustomTexture()) {
+			tex_type = TextureType::_8888; gpuPalette = false; is_custom_replaced = true;
+			protectVRam(); size = originalSize;
+			return true;
+		}
 		custom_texture.loadCustomTextureAsync(this);
 	}
 	is_custom_replaced = false;

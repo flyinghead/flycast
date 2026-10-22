@@ -24,6 +24,7 @@
 #include <vector>
 #include <atomic>
 #include <functional>
+#include <mutex>
 
 class BaseTextureCacheData;
 class WorkerThread;
@@ -63,6 +64,12 @@ public:
 	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer);
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loaded_size) const;
+	// A renderer may upload the existing RGBA catalog in bounded batches.
+	// The visitor must not re-enter CustomTexture while holding this view.
+	using PreloadVisitor = std::function<bool(u32, const TextureData&)>;
+	bool hasReplacement(u32 hash) const;
+	bool visitPreloadedTextures(u32 after, bool first, const PreloadVisitor& visitor) const;
+	u64 preloadGeneration() const { return preload_generation.load(); }
 
 private:
 	u8* loadTexture(u32 hash, int& width, int& height);
@@ -76,6 +83,8 @@ private:
 	std::vector<std::unique_ptr<BaseCustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
 	std::map<u32, TextureData> preloaded_textures;
+	mutable std::mutex preload_mutex;
+	std::atomic<u64> preload_generation { 1 };
 	std::atomic<int> preload_total { 0 };
 	std::atomic<int> preload_loaded { 0 };
 	std::atomic<size_t> preload_loaded_size { 0 };

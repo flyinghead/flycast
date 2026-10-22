@@ -243,24 +243,27 @@ void CustomTexture::terminate()
 	for (auto& source : sources)
 		source->terminate();
 	sources.clear();
-	preloaded_textures.clear();
+	{ std::lock_guard<std::mutex> lock(preload_mutex); preloaded_textures.clear(); ++preload_generation; }
 	resetPreloadProgress();
 	initialized = false;
 }
 
 u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 {
-	auto it = preloaded_textures.find(hash);
-	if (it != preloaded_textures.end())
 	{
-		width = it->second.w;
-		height = it->second.h;
-		size_t size = (size_t)width * height * 4;
-		u8* buffer = (u8*)malloc(size);
-		if (buffer == nullptr)
-			return nullptr;
-		memcpy(buffer, it->second.data.data(), size);
-		return buffer;
+		std::lock_guard<std::mutex> lock(preload_mutex);
+		auto it = preloaded_textures.find(hash);
+		if (it != preloaded_textures.end())
+		{
+			width = it->second.w;
+			height = it->second.h;
+			size_t size = (size_t)width * height * 4;
+			u8* buffer = (u8*)malloc(size);
+			if (buffer == nullptr)
+				return nullptr;
+			memcpy(buffer, it->second.data.data(), size);
+			return buffer;
+		}
 	}
 
 	for (auto it = sources.begin(); it != sources.end(); ++it)
@@ -278,12 +281,15 @@ u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 
 bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture)
 {
-	if (preloaded_textures.count(texture->texture_hash))
-		return true;
-	if (texture->old_vqtexture_hash != 0 && preloaded_textures.count(texture->old_vqtexture_hash))
-		return true;
-	if (texture->old_texture_hash != 0 && preloaded_textures.count(texture->old_texture_hash))
-		return true;
+	{
+		std::lock_guard<std::mutex> lock(preload_mutex);
+		if (preloaded_textures.count(texture->texture_hash))
+			return true;
+		if (texture->old_vqtexture_hash != 0 && preloaded_textures.count(texture->old_vqtexture_hash))
+			return true;
+		if (texture->old_texture_hash != 0 && preloaded_textures.count(texture->old_texture_hash))
+			return true;
+	}
 
 	for (auto it = sources.begin(); it != sources.end(); ++it)
 	{
@@ -468,7 +474,7 @@ void CustomTexture::prepareSource(BaseCustomTextureSource* source)
 				preload_total += count;
 				auto callback = [this](u32 hash, TextureData&& data) {
 					size_t size = data.data.size();
-					preloaded_textures[hash] = std::move(data);
+					{ std::lock_guard<std::mutex> lock(preload_mutex); preloaded_textures[hash] = std::move(data); ++preload_generation; }
 					preload_loaded++;
 					preload_loaded_size += size;
 				};
@@ -495,4 +501,22 @@ void CustomTexture::resetPreloadProgress()
 	preload_total = 0;
 	preload_loaded = 0;
 	preload_loaded_size = 0;
+}
+
+// Reading a stable, locked view avoids copying whole RGBA images just to preload.
+bool CustomTexture::visitPreloadedTextures(u32 after, bool first, const PreloadVisitor& visitor) const
+{
+	std::lock_guard<std::mutex> lock(preload_mutex);
+	for (auto it = first ? preloaded_textures.begin() : preloaded_textures.upper_bound(after);
+			it != preloaded_textures.end(); ++it)
+		if (!visitor(it->first, it->second)) return false;
+	return true;
+}
+
+bool CustomTexture::hasReplacement(u32 hash) const
+{
+	{ std::lock_guard<std::mutex> lock(preload_mutex); if (preloaded_textures.count(hash)) return true; }
+	for (const auto& source:sources)
+		if (source->shouldReplace() && source->isTextureReplaced(hash)) return true;
+	return false;
 }

@@ -14,6 +14,7 @@
 
 #include <mutex>
 #include <deque>
+#include <exception>
 
 #ifdef LIBRETRO
 void retro_rend_present();
@@ -126,6 +127,21 @@ public:
 	bool waitAndExecute(int timeoutMs = -1)
 	{
 		return execute(dequeue(timeoutMs));
+	}
+
+	// Called by the renderer owner after cancellation has placed Stop behind
+	// any remaining Render. Finish those TA contexts against the old backend,
+	// even when an earlier Process/Render throws. No work may cross handoff.
+	void drain()
+	{
+		std::exception_ptr failure;
+		while (true)
+			try {
+				if (!waitAndExecute(0)) break;
+			} catch (...) {
+				if (!failure) failure = std::current_exception();
+			}
+		if (failure) std::rethrow_exception(failure);
 	}
 
 	void reset() {
@@ -285,6 +301,21 @@ private:
 };
 
 static PvrMessageQueue pvrQueue;
+
+#if defined(METAL_RENDERER_TESTS) && defined(FLYCAST_METAL_STANDALONE)
+// Test entrypoints only: use the real TA queue and PVR dispatcher without an
+// emulated CPU or a ROM. The producer supplies already parsed synthetic TA data.
+bool metalOffscreenQueueRender(TA_context *context)
+{
+	if (!config::ThreadedRendering)
+		throw RendererException("Offscreen PVR producer requires threaded rendering");
+	if (!QueueRender(context)) return false;
+	pvrQueue.enqueue(PvrMessageQueue::Render);
+	pvrQueue.enqueue(PvrMessageQueue::Present);
+	return true;
+}
+bool metalOffscreenPumpPvr() { return pvrQueue.waitAndExecute(0); }
+#endif
 
 bool rend_single_frame(const bool& enabled)
 {
@@ -490,22 +521,25 @@ bool rend_init_renderer()
 
 void rend_term_renderer()
 {
-	// Drain and stop the queue first so that any in-flight Render/Present
-	// messages cannot be dispatched against a renderer that is about to be
-	// destroyed. This is called from many libretro entry points (context
-	// reset/destroy, deinit, content load, renderer switch) where the emu
-	// thread may still be holding queued work; without cancelling first
-	// we can race the consumer thread into a null renderer dereference and
-	// also leave the producer side wedged, which manifests as audio/video
-	// drift after a renderer switch.
+	// Wake producer waits and cancel pending swaps. Cancellation deliberately
+	// retains queued Render messages so their TA contexts can be finished by
+	// the renderer owner. Drain them before deleting that renderer; otherwise
+	// they would reach the next backend with the old TA/texture state.
 	rend_cancel_emu_wait();
+	std::exception_ptr failure;
+	try { pvrQueue.drain(); }
+	catch (...) { failure = std::current_exception(); }
 
 	if (renderer != nullptr)
 	{
-		renderer->Term();
+		try { renderer->Term(); }
+		catch (...) {
+			if (!failure) failure = std::current_exception();
+		}
 		delete renderer;
 		renderer = nullptr;
 	}
+	if (failure) std::rethrow_exception(failure);
 }
 
 void rend_reset()
