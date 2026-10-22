@@ -259,6 +259,7 @@ Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
 // RetroAchievements
 
 Option<bool> EnableAchievements("Enabled", false, "achievements");
+Option<bool> ShowAchievementPopups("Show", true, "achievements");
 Option<bool> AchievementsHardcoreMode("HardcoreMode", false, "achievements");
 OptionString AchievementsUserName("UserName", "", "achievements");
 OptionString AchievementsToken("Token", "", "achievements");

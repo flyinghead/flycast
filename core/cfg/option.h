@@ -579,6 +579,7 @@ extern Option<std::string, false> LuaFileName;
 // RetroAchievements
 
 extern Option<bool> EnableAchievements;
+extern Option<bool> ShowAchievementPopups;
 extern Option<bool> AchievementsHardcoreMode;
 extern OptionString AchievementsUserName;
 extern OptionString AchievementsToken;
