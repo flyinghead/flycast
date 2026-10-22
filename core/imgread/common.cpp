@@ -97,24 +97,37 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 	throw FlycastException(i18n::Ts("Unknown disk format"));
 }
 
+// A disc inserted while the lid is closed on another disc goes through an open
+// phase first: the lid stays open for one guest second, then the new disc goes
+// in and the drive is busy for the usual second. The hardware can't hot-swap,
+// and a game whose change-disc prompt waits for the tray to open (Resident
+// Evil Code Veronica) never continues without it. The image is opened by the
+// caller, so a bad one still fails right there, but the drive only switches to
+// it in discSwapCallback(), on the SH4 thread, so no read is in flight against
+// the disc being replaced.
+static Disc *pendingDisc;
+
 namespace gdr {
+
+static Disc *openDisk(const std::string& path)
+{
+	std::vector<u8> digest;
+	Disc *newDisc = OpenDisc(path, config::GGPOEnable ? &digest : nullptr);
+	if (config::GGPOEnable)
+		MD5Sum().add(digest)
+				.getDigest(settings.network.md5.game);
+	INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", path.c_str());
+	return newDisc;
+}
 
 static bool loadDisk(const std::string& path)
 {
 	termDrive();
 
 	//try all drivers
-	std::vector<u8> digest;
-	disc = OpenDisc(path, config::GGPOEnable ? &digest : nullptr);
+	disc = openDisk(path);
 
-	if (disc != NULL)
-	{
-		if (config::GGPOEnable)
-			MD5Sum().add(digest)
-					.getDigest(settings.network.md5.game);
-		INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", path.c_str());
-	}
-	else
+	if (disc == NULL)
 	{
 		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", path.c_str());
 		NullDriveDiscType = NoDisk;
@@ -174,6 +187,8 @@ void termDrive()
 	sh4_sched_request(schedId, -1);
 	delete disc;
 	disc = nullptr;
+	delete pendingDisc;
+	pendingDisc = nullptr;
 }
 
 bool isOpen() {
@@ -350,6 +365,20 @@ u32 libGDR_GetDiscType()
 
 static int discSwapCallback(int tag, int sch_cycl, int jitter, void *arg)
 {
+	if (pendingDisc != nullptr)
+	{
+		// The lid has been open for a second: the pending disc goes in and the
+		// drive is busy for another second, as after insertDisk().
+		disc = pendingDisc;
+		pendingDisc = nullptr;
+		NullDriveDiscType = NoDisk;
+		sns_asc = 4;
+		sns_ascq = 1;
+		sns_key = 2;
+		SecNumber.Status = GD_BUSY;
+		sh4_sched_request(schedId, SH4_MAIN_CLOCK); // 1 s
+		return 0;
+	}
 	if (disc != nullptr)
 		// The lid was closed
 		sns_asc = 0x28;
@@ -368,6 +397,16 @@ namespace gdr
 
 void insertDisk(const std::string& path)
 {
+	if (disc != nullptr && !path.empty())
+	{
+		// The lid is closed on a disc: open it first. See discSwapCallback().
+		Disc *newDisc = openDisk(path);
+		openLid();
+		pendingDisc = newDisc;
+		settings.content.path = path;
+		sh4_sched_request(schedId, SH4_MAIN_CLOCK); // lid open for 1 s
+		return;
+	}
 	if (!doDiscSwap(path))
 		throw FlycastException(i18n::Ts("This media cannot be loaded"));
 	settings.content.path = path;
