@@ -22,6 +22,8 @@
 
 #include "types.h"
 #include "oslib/storage.h"
+#include <string>
+#include <vector>
 
 class ArchiveFile
 {
@@ -38,6 +40,8 @@ public:
 	virtual ~Archive() = default;
 	virtual ArchiveFile *OpenFile(const char *name) = 0;
 	virtual ArchiveFile *OpenFileByCrc(u32 crc) = 0;
+	// Names of the files in the archive (no directories), without decompressing.
+	virtual std::vector<std::string> listFiles() = 0;
 
 protected:
 	virtual bool Open(hostfs::File *file) = 0;
