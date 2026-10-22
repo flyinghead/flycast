@@ -23,47 +23,8 @@
 #include "serialize.h"
 #include "hw/sh4/sh4_sched.h"
 #include "cfg/option.h"
-#include <atomic>
-#include <deque>
-#include <mutex>
-#include <vector>
 
 static RTL8139State *rtl8139device;
-
-// The network backends (picotcp, DCNet) deliver frames from their own
-// threads, but the RTL8139 model and the SH-4 interrupt controller belong to
-// the emulation thread: raising the receive interrupt from another thread
-// races with SIIDRebuild() and can leave stray pending interrupts, which
-// the guest sees as an unhandled IRQ. Queue the frames here and hand them
-// to the chip from the SH-4 scheduler.
-static std::mutex rxMutex;
-static std::deque<std::vector<u8>> rxQueue;
-static std::atomic<bool> rxPending;
-static int rxSchedId = -1;
-constexpr size_t RX_QUEUE_MAX = 64;
-constexpr int RX_POLL_CYCLES = 1_sh4ms;
-
-static int rxDeliver(int tag, int cycles, int jitter, void *arg)
-{
-	if (rxPending.load(std::memory_order_acquire) && rtl8139device != nullptr)
-	{
-		std::lock_guard<std::mutex> _(rxMutex);
-		while (!rxQueue.empty() && rtl8139_can_receive(rtl8139device))
-		{
-			rtl8139_receive(rtl8139device, rxQueue.front().data(), rxQueue.front().size());
-			rxQueue.pop_front();
-		}
-		rxPending = !rxQueue.empty();
-	}
-	return RX_POLL_CYCLES;
-}
-
-static void rxClear()
-{
-	std::lock_guard<std::mutex> _(rxMutex);
-	rxQueue.clear();
-	rxPending = false;
-}
 
 // 1400 - 1600 GAPSPCI bridge registers
 // 1600 - 1700 standard PCI config
@@ -91,6 +52,23 @@ static u8 GAPS_regs[GAPSPCI_REGS_SIZE];
 static u32 dmaOffset;
 static bool interruptPending;
 static constexpr u32 MAX_ETH_FRAME_SIZE = 1514;
+static int rxSchedId = -1;
+constexpr int RX_POLL_CYCLES = 5_sh4ms;
+
+static int rxDeliver(int tag, int cycles, int jitter, void *arg)
+{
+	u8 frame[MAX_ETH_FRAME_SIZE];
+	while (rtl8139_can_receive(rtl8139device))
+	{
+		const u32 size = net::modbba::sendEthFrame(frame);
+		if (size == 0)
+			break;
+		if (size < 6 || size > MAX_ETH_FRAME_SIZE)
+			continue;
+		rtl8139_receive(rtl8139device, frame, size);
+	}
+	return RX_POLL_CYCLES;
+}
 
 static void setInterrupt()
 {
@@ -116,7 +94,6 @@ static void bba_Init()
 	memcpy(&GAPS_regs[0], "GAPSPCI_BRIDGE_2", 0x10);
 	memcpy(&GAPS_regs[0x1c], "SEGA", 4);
 
-	rxClear();
 	rxSchedId = sh4_sched_register(0, rxDeliver);
 	sh4_sched_request(rxSchedId, RX_POLL_CYCLES);
 }
@@ -134,7 +111,6 @@ void bba_Term()
 		sh4_sched_unregister(rxSchedId);
 		rxSchedId = -1;
 	}
-	rxClear();
 }
 
 void bba_Reset(bool hard)
@@ -264,20 +240,6 @@ ssize_t qemu_send_packet(RTL8139State *s, const uint8_t *buf, int size)
 	net::modbba::receiveEthFrame(buf, size);
 
 	return size;
-}
-
-// Called from the network threads
-int bba_recv_frame(const u8 *data, u32 len)
-{
-	if (len < 6 || len > MAX_ETH_FRAME_SIZE)
-		return 0;
-	std::lock_guard<std::mutex> _(rxMutex);
-	if (rxQueue.size() >= RX_QUEUE_MAX)
-		return 0;
-	rxQueue.emplace_back(data, data + len);
-	rxPending.store(true, std::memory_order_release);
-
-	return 1;
 }
 
 void pci_dma_read(PCIDevice *dev, dma_addr_t addr, void *buf, dma_addr_t len)

@@ -22,7 +22,6 @@
 #include "util/tsqueue.h"
 #include "oslib/oslib.h"
 #include "emulator.h"
-#include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "stdclass.h"
 #include "oslib/i18n.h"
@@ -55,6 +54,7 @@ public:
 	int modemAvailable() override;
 
 	void receiveEthFrame(const u8 *frame, u32 size) override;
+	u32 sendEthFrame(u8 *frame) override;
 };
 
 class PPPSocket
@@ -236,9 +236,9 @@ private:
 class EthSocket
 {
 public:
-	EthSocket(asio::io_context& io_context, const asio::ip::tcp::endpoint& endpoint,
+	EthSocket(asio::io_context& io_context, TsQueue<std::vector<u8>>& bbaQueue, const asio::ip::tcp::endpoint& endpoint,
 			const std::string& endpointName = "")
-		: socket(io_context)
+		: socket(io_context), bbaQueue(bbaQueue)
 	{
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
@@ -319,7 +319,7 @@ private:
 					*(u16 *)&recvBuffer[14], (int)len - 2);
 				*/
 				ethdump(&recvBuffer[2], len - 2);
-				bba_recv_frame(&recvBuffer[2], len - 2);
+				bbaQueue.push(std::vector<u8>(&recvBuffer[2], &recvBuffer[len]));
 				if (len < recvBuffer.size())
 					recvBuffer.erase(recvBuffer.begin(), recvBuffer.begin() + len);
 				else
@@ -414,6 +414,7 @@ private:
 	std::array<u8, 1600> sendBuffer;
 	u32 sendBufferIdx = 0;
 	bool sending = false;
+	TsQueue<std::vector<u8>>& bbaQueue;
 
 	FILE *dumpfp = nullptr;
 };
@@ -662,6 +663,17 @@ public:
 		}
 	}
 
+	u32 recvEthFrame(u8 *frame)
+	{
+		if (bbaQueue.empty())
+			return 0;
+		const std::vector<u8> v = bbaQueue.pop();
+		if (v.size() > 1514)
+			return 0;
+		memcpy(frame, v.data(), v.size());
+		return v.size();
+	}
+
 private:
 	void run();
 	void connect(const asio::ip::address& address = {}, const std::string& apname = {});
@@ -670,6 +682,7 @@ private:
 	std::unique_ptr<asio::io_context> io_context;
 	std::unique_ptr<PPPSocket> pppSocket;
 	std::unique_ptr<EthSocket> ethSocket;
+	TsQueue<std::vector<u8>> bbaQueue;
 
 	static constexpr uint16_t PPP_PORT = 7654;
 	static constexpr uint16_t TAP_PORT = 7655;
@@ -737,6 +750,10 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 	thread.sendEthFrame(frame, len);
 }
 
+u32 DCNetService::sendEthFrame(u8 *frame) {
+	return thread.recvEthFrame(frame);
+}
+
 void DCNetThread::connect(const asio::ip::address& address, const std::string& apname)
 {
 	const bool powerSmash = settings.content.gameId == "HDR-0113"	// Power Smash
@@ -776,7 +793,7 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 			endpoint.port(PPP_PORT);
 	}
 	if (config::EmulateBBA)
-		ethSocket = std::make_unique<EthSocket>(*io_context, endpoint, apname);
+		ethSocket = std::make_unique<EthSocket>(*io_context, bbaQueue, endpoint, apname);
 	else if (powerSmash)
 		pppSocket = std::make_unique<PowerSmashPPPSocket>(*io_context, endpoint, apname);
 	else
@@ -786,6 +803,7 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 void DCNetThread::run()
 {
 	toModem.clear();
+	bbaQueue.clear();
 	try {
 		std::string hostname;
 #ifndef LIBRETRO

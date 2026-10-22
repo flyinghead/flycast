@@ -301,9 +301,6 @@ public:
 		return rxQueue.size();
 	}
 
-	void receiveEthFrame(const u8 *frame, u32 size) override {
-	}
-
 	juice_agent_t *getJuiceAgent()
 	{
 		if (initStatus.valid())
@@ -775,13 +772,15 @@ void CapcomDirect::startCapcomDirectService()
 }
 void CapcomDirect::stopCapcomDirectService()
 {
-	setCustomService(nullptr);
-	if (capcomService != nullptr) {
+	if (active)
+		resetModemCallbacks();
+	if (capcomService != nullptr)
+	{
+		setCustomService(nullptr);
 		capcomService->realStop();
 		capcomService.reset();
+		INFO_LOG(NETWORK, "Capcom network service stopped");
 	}
-	resetModemCallbacks();
-	INFO_LOG(NETWORK, "Capcom network service stopped");
 }
 
 void CapcomDirect::onNetworkChange()
@@ -821,8 +820,8 @@ void CapcomDirect::onEvent(Event event, void *arg)
 		self->onLoadGame();
 		break;
 	case Event::Terminate:
-		self->active = false;
 		self->stopCapcomDirectService();
+		self->active = false;
 		break;
 	case Event::Network:
 		self->onNetworkChange();

@@ -51,7 +51,6 @@ extern "C" {
 #include "oslib/oslib.h"
 #include "util/tsqueue.h"
 #include "util/shared_this.h"
-#include "hw/bba/bba.h"
 
 #include <unordered_map>
 #include <deque>
@@ -68,6 +67,8 @@ static pico_device *pico_dev;
 
 static TsQueue<u8> in_buffer;
 static TsQueue<u8> out_buffer;
+
+static TsQueue<std::vector<u8>> bbaBuffer;
 
 static pico_ip4 dcaddr;
 static pico_ip4 dnsaddr;
@@ -282,8 +283,10 @@ public:
 		return socket;
 	}
 
-	void close() {
+	void close()
+	{
 		closeAll();
+		detachPicoSocket();
 		directPlay.reset();
 	}
 
@@ -1178,46 +1181,28 @@ static void closeDumpFile()
 		pcapngDump = nullptr;
 	}
 }
-// Frames sent by the emulated BBA arrive on the emulation thread. picotcp is
-// built without PICO_SUPPORT_MUTEX, so pico_queue_protect() does nothing and
-// calling pico_stack_recv() here corrupts the device queue that the pico
-// thread is draining. Queue the frames and feed them from the pico thread.
-static std::mutex ethInMutex;
-static std::deque<std::vector<u8>> ethInQueue;
-constexpr size_t ETH_IN_QUEUE_MAX = 256;
 
+// BBA -> pico stack
 static void pico_receive_eth_frame(const u8 *frame, u32 size)
 {
 	if (pico_dev == nullptr) {
 		start_pico();
 	}
 	else {
-		std::lock_guard<std::mutex> _(ethInMutex);
-		if (ethInQueue.size() < ETH_IN_QUEUE_MAX)
-			ethInQueue.emplace_back(frame, frame + size);
+		dumpFrame(frame, size);
+		pico_stack_recv(pico_dev, (u8 *)frame, size);
 	}
 }
 
-// Called on the pico thread
-static void feed_eth_frames()
+// pico stack -> BBA
+static int send_eth_frame(pico_device *dev, void *data, int len)
 {
-	std::deque<std::vector<u8>> frames;
-	{
-		std::lock_guard<std::mutex> _(ethInMutex);
-		frames.swap(ethInQueue);
-	}
-	if (pico_dev == nullptr)
-		return;
-	for (auto& frame : frames)
-	{
-		dumpFrame(frame.data(), frame.size());
-		pico_stack_recv(pico_dev, frame.data(), frame.size());
-	}
-}
-
-static int send_eth_frame(pico_device *dev, void *data, int len) {
 	dumpFrame((const u8 *)data, len);
-	return bba_recv_frame((const u8 *)data, len);
+	if (len < 6 || len > 1514)
+		// discard
+		return len;
+	bbaBuffer.push(std::vector<u8>((const u8 *)data, (const u8 *)data + len));
+	return len;
 }
 
 static void picoTick(const std::error_code& ec, asio::steady_timer *timer)
@@ -1226,7 +1211,6 @@ static void picoTick(const std::error_code& ec, asio::steady_timer *timer)
 		ERROR_LOG(NETWORK, "picoTick timer error: %s", ec.message().c_str());
 		return;
 	}
-	feed_eth_frames();
 	pico_stack_tick();
 	timer->expires_at(timer->expiry() + asio::chrono::milliseconds(PICO_TICK_MS));
 	timer->async_wait(std::bind(picoTick, asio::placeholders::error, timer));
@@ -1312,6 +1296,7 @@ void PicoThread::run()
 	// Empty queues
 	in_buffer.clear();
 	out_buffer.clear();
+	bbaBuffer.clear();
 
     // Find DNS ip address
 	{
@@ -1488,8 +1473,6 @@ static void stop_pico()
 	emu.setNetworkState(false);
 	pico_thread_running = false;
 	pico_thread.stop();
-	std::lock_guard<std::mutex> _(ethInMutex);
-	ethInQueue.clear();
 }
 
 // picotcp mutex implementation
@@ -1535,6 +1518,15 @@ int PicoTcpService::modemAvailable() {
 
 void PicoTcpService::receiveEthFrame(const u8 *frame, u32 size) {
 	pico_receive_eth_frame(frame, size);
+}
+
+u32 PicoTcpService::sendEthFrame(u8 *frame)
+{
+	if (bbaBuffer.empty())
+		return 0;
+	const std::vector<u8> v = bbaBuffer.pop();
+	memcpy(frame, v.data(), v.size());
+	return v.size();
 }
 
 }

@@ -51,9 +51,13 @@ void stop()
 		service->stop();
 }
 
-void setCustomService(Service *service) {
+void setCustomService(Service *service)
+{
+	if (service == nullptr && net::modbba::service == customService)
+		net::modbba::service = nullptr;
+	else if (service != nullptr)
+		net::modbba::service = service;
 	customService = service;
-	net::modbba::service = service;
 }
 
 void writeModem(u8 b) {
@@ -69,9 +73,17 @@ int modemAvailable() {
 	return service->modemAvailable();
 }
 
-void receiveEthFrame(const u8 *frame, u32 size) {
-	start();
+void receiveEthFrame(const u8 *frame, u32 size)
+{
+	if (!settings.network.online)
+		start();
 	service->receiveEthFrame(frame, size);
+}
+u32 sendEthFrame(u8 *frame)
+{
+	if (!settings.network.online)
+		start();
+	return service->sendEthFrame(frame);
 }
 
 }
