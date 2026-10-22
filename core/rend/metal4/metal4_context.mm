@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
 #include "metal4_context.h"
+#include "metal4_upload_state.h"
+#include "metal4_upload_scope.h"
+#include "metal4_shutdown.h"
 #include "metal4_shaders.h"
 #include "metal4_shader_options.h"
 #include "metal4_pipeline_cache.h"
+#include "metal4_pipeline_identity.h"
 #include "metal4_fx.h"
+#include "metal4_presentation.h"
 #include "metal4_presentation_timing.h"
 #include "ui/imgui_driver.h"
 #include "ui/gui.h"
@@ -22,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 #include <limits>
 #include <exception>
 #include <optional>
@@ -39,25 +45,7 @@ static void checkMetal(NSError *error, const char *operation)
 		throw RendererException(std::string(operation) + ": " + error.localizedDescription.UTF8String);
 }
 
-API_AVAILABLE(macos(26.0))
-static void commitCommands(FCMetal4Commands * command, dispatch_group_t submissions)
-{
-	if (!command || !submissions || command.status >= FCMetal4StatusCommitted)
-		throw RendererException("Invalid Metal command buffer submission");
-	// Completion retains the group independently of the context/owner. An
-	// unsubmitted render batch never enters it and still cancels its own slots.
-	[command addCompletedHandler:^(FCMetal4Commands *) {
-		dispatch_group_leave(submissions);
-	}];
-	dispatch_group_enter(submissions);
-	try {
-		[command commit];
-	} catch (...) {
-		// A validation/allocation failure before submission has no feedback.
-		if (command.status == FCMetal4StatusEncoding) dispatch_group_leave(submissions);
-		throw;
-	}
-}
+#include "metal4_submission.h"
 
 #include "metal4_display_link.h"
 
@@ -112,6 +100,8 @@ struct MetalContext::Impl
 	std::unique_ptr<MetalFXUpscaler> metalFX;
 	bool packedTextures = false;
 	FCMetal4Commands * textureUpdates;
+	std::shared_ptr<metal_upload::State> textureUpdateState;
+	metal_upload::FailureFlag textureUploadFailure=std::make_shared<std::atomic<bool>>(false);
 	FCMetal4ComputeEncoder * textureBlit;
 	unsigned textureUpdateDepth = 0;
 	std::optional<RenderCommands> deferredRender;
@@ -144,12 +134,20 @@ struct MetalContext::Impl
 	metal::PresentationTimeline presentationTimeline;
 	std::unique_ptr<MetalDisplayLink> displayLink;
 	std::shared_ptr<MetalDisplayImage> composition;
+	struct PresentationResources {
+		std::vector<std::array<id<MTLBuffer>, 2>> uiBuffers;
+		size_t uiBufferCursor = 0;
+		std::array<id<MTLTexture>, 8> vmu;
+		std::array<u64, 8> vmuChanged{{~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull}};
+	};
 	struct CompositionSlot {
-		id<MTLTexture> texture;
+		id<MTLTexture> texture, composed;
 		id<MTLSharedEvent> readyEvent;
 		u64 readyValue = 0;
 		dispatch_semaphore_t available = dispatch_semaphore_create(1);
+		PresentationResources resources;
 	};
+	size_t compositionSlot = 0;
 	// Three queued images, one visible image, two display GPU readers and
 	// one producer. A four-slot pool drops valid 60-FPS frames even when
 	// neither GPU queue is overloaded.
@@ -169,10 +167,7 @@ struct MetalContext::Impl
 #endif
 	struct FrameSlot {
 		dispatch_semaphore_t available = dispatch_semaphore_create(1);
-		std::vector<std::array<id<MTLBuffer>, 2>> uiBuffers;
-		size_t uiBufferCursor = 0;
-		std::array<id<MTLTexture>, 8> vmu;
-		std::array<u64, 8> vmuChanged{{~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull, ~0ull}};
+		PresentationResources resources;
 		id<MTLTexture> routed;
 	};
 	std::array<FrameSlot, PresentationSlots> slots;
@@ -180,7 +175,7 @@ struct MetalContext::Impl
 	std::unordered_map<u64, id<MTLRenderPipelineState>> quads;
 	id<MTLSamplerState> nearest, linear;
 	id<MTLTexture> crosshair;
-	id<MTLRenderPipelineState> crosshairPipeline;
+	id<MTLRenderPipelineState> crosshairPipeline, opaqueCrosshairPipeline;
 	~Impl() {
 		if (pipelineCache) {
 			// Producers must finish before the writer's final flush. Pending
@@ -198,7 +193,9 @@ class API_AVAILABLE(macos(26.0)) MetalDriver final : public ImGuiDriver
 	std::unordered_map<std::string, UITexture> textures;
 	std::unordered_map<uintptr_t, id<MTLSamplerState>> textureSamplers;
 	std::unordered_map<ImTextureData *, id<MTLTexture>> atlasTextures;
-	id<MTLRenderPipelineState> pipeline;
+	id<MTLRenderPipelineState> pipeline, opaquePipeline;
+	MTLVertexDescriptor *layout;
+	MTL4RenderPipelineColorAttachmentDescriptor *blend;
 	id<MTLDepthStencilState> disabledDepth;
 	id<MTLSamplerState> linear, point;
 	bool frameRendered = false;
@@ -207,7 +204,7 @@ public:
 	MetalDriver()
 	{
 		auto context = MetalContext::Instance();
-		MTLVertexDescriptor *layout = [MTLVertexDescriptor vertexDescriptor];
+		layout = [MTLVertexDescriptor vertexDescriptor];
 		layout.attributes[0].format = MTLVertexFormatFloat2;
 		layout.attributes[0].offset = offsetof(ImDrawVert, pos);
 		layout.attributes[1].format = MTLVertexFormatFloat2;
@@ -215,7 +212,7 @@ public:
 		layout.attributes[2].format = MTLVertexFormatUChar4Normalized;
 		layout.attributes[2].offset = offsetof(ImDrawVert, col);
 		layout.layouts[0].stride = sizeof(ImDrawVert);
-		MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
+		blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
 		blend.blendingState = MTL4BlendStateEnabled;
 		blend.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
 		blend.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
@@ -311,6 +308,14 @@ public:
 		const auto [surfaceWidth, surfaceHeight] = context->presentationSize();
 		const int clipWidth = std::min(width, surfaceWidth), clipHeight = std::min(height, surfaceHeight);
 		if (clipWidth <= 0 || clipHeight <= 0) return;
+		if (context->recordingPresentation()) {
+			if (!opaquePipeline) {
+				MTL4RenderPipelineColorAttachmentDescriptor *opaqueBlend = [blend copy];
+				opaqueBlend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
+				opaquePipeline = context->makePipeline(@"ui_vertex", @"ui_fragment", layout, MTLPixelFormatBGRA8Unorm, false, opaqueBlend);
+			}
+			context->registerPresentationPipeline(pipeline, opaquePipeline);
+		}
 		const auto buffers = context->uploadUIBuffers(*data);
 		id<MTLBuffer> vertices = buffers.first, indices = buffers.second;
 		float transform[4] = {2 / data->DisplaySize.x, -2 / data->DisplaySize.y,
@@ -335,6 +340,8 @@ public:
 			{
 				if (command.UserCallback)
 				{
+					// Native callbacks retain their original producer-thread timing.
+					context->requirePresentationComposition();
 					if (command.UserCallback == ImDrawCallback_ResetRenderState) setup();
 					else command.UserCallback(list, &command);
 					// Callbacks can replace these bindings on the same encoder.
@@ -362,6 +369,12 @@ public:
 					id<MTLSamplerState> sampler = linear;
 					auto textureSampler = textureSamplers.find((uintptr_t)(__bridge void *)texture);
 					if (textureSampler != textureSamplers.end()) sampler = textureSampler->second;
+					const bool owned = textureSampler != textureSamplers.end()
+						|| std::any_of(atlasTextures.begin(), atlasTextures.end(),
+							[&](const auto& entry) { return entry.second == texture; });
+					// Driver-owned UI textures are replaced on update. An arbitrary
+					// external texture may be mutable, so keep its immediate path.
+					if (!owned) context->requirePresentationComposition();
 					[encoder setFragmentTexture:texture atIndex:0];
 					if (!textureBindingValid || boundSampler != sampler)
 						[encoder setFragmentSamplerState:sampler atIndex:0];
@@ -385,12 +398,23 @@ public:
 	}
 };
 
-MetalContext::MetalContext(void *window, void *display)
+MetalContext::MetalContext(void *window, void *display
+#ifdef FLYCAST_METAL_STANDALONE
+	,FCMetal4Queue *testQueue,CAMetalLayer *testLayer
+#endif
+)
 	: GraphicsContext(window, display), impl(std::make_unique<Impl>())
 {
 	@autoreleasepool {
+#ifdef FLYCAST_METAL_STANDALONE
+		if(!testQueue || !testLayer)throw FlycastException("Offscreen Metal validation requires its queue and layer");
+#endif
 		if (@available(macOS 26.0, *)) {
+#ifdef FLYCAST_METAL_STANDALONE
+			impl->device = testQueue.device;
+#else
 			impl->device = MTLCreateSystemDefaultDevice();
+#endif
 			if (!impl->device || ![impl->device supportsFamily:MTLGPUFamilyApple7]
 					|| ![impl->device supportsFamily:MTLGPUFamilyMetal4])
 				throw FlycastException("Metal 4 on an Apple Silicon GPU is required");
@@ -398,7 +422,11 @@ MetalContext::MetalContext(void *window, void *display)
 			// Every supported Apple Silicon GPU supports these packed formats.
 			impl->packedTextures = true;
 		} else throw FlycastException("Metal 4 requires macOS 26 or later");
+#ifdef FLYCAST_METAL_STANDALONE
+		impl->queue=testQueue;
+#else
 		impl->queue = [[FCMetal4Queue alloc] initWithDevice:impl->device];
+#endif
 		if (!impl->queue) throw FlycastException("Cannot create the Metal command queue");
 		if (!impl->submissions) throw FlycastException("Cannot create Metal submission tracking");
 		impl->shaderQueue = dispatch_queue_create("org.flycast.metal.materials",
@@ -425,11 +453,15 @@ MetalContext::MetalContext(void *window, void *display)
 		impl->pipelineCache = MetalPipelineCache::create(impl->compiler, impl->materialCompiler, MetalShaderSource,
 			sizeof(MetalShaderSource) - 1, options);
 		impl->metalFX = std::make_unique<MetalFXUpscaler>(impl->device, impl->compiler);
+#ifdef FLYCAST_METAL_STANDALONE
+		impl->layer=testLayer;
+#else
 		if (!sdl_recreate_window(SDL_WINDOW_METAL)) throw FlycastException("Cannot create the SDL Metal window");
 		impl->view = SDL_Metal_CreateView((SDL_Window *)this->window);
 		if (!impl->view) throw FlycastException(SDL_GetError());
 		impl->layer = (__bridge CAMetalLayer *)SDL_Metal_GetLayer(impl->view);
 		if (!impl->layer) throw FlycastException("Cannot obtain the SDL Metal layer");
+#endif
 		impl->layer.device = impl->device;
 		impl->layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 		impl->layer.framebufferOnly = YES;
@@ -445,14 +477,16 @@ MetalContext::MetalContext(void *window, void *display)
 		// These two fixed presentation pipelines must be ready before
 		// acquiring a drawable for the first image or a VMU overlay.
 		quadPipeline(true); quadPipeline(false);
+#ifndef FLYCAST_METAL_STANDALONE
 		resize();
+#endif
 		impl->frameTimings = config::loadBool("log", "MetalFrameTiming", false);
 		impl->profilingLimit = std::max(1, config::loadInt("log", "MetalFrameTimingLimit", 900));
 		// Drawable feedback is independently selectable: collecting presented
 		// times may affect the compositor's scheduling during GPU profiling.
 		impl->presentationTimings = config::loadBool("log", "MetalPresentTiming", impl->frameTimings);
 		resetUIDriver();
-#ifdef METAL_RENDERER_TESTS
+#if defined(METAL_RENDERER_TESTS) && !defined(FLYCAST_METAL_STANDALONE)
 		if (config::loadBool("log", "MetalVSyncTests", false)) {
 			NOTICE_LOG(RENDERER, "Metal VSync test ready: focus this window and press F9");
 		} else {
@@ -467,21 +501,58 @@ MetalContext::MetalContext(void *window, void *display)
 	}
 }
 
+#ifdef FLYCAST_METAL_STANDALONE
+MetalContext *MetalContext::CreateOffscreenForTesting(FCMetal4Queue *queue,CAMetalLayer *layer)
+{
+	return new MetalContext(nullptr,nullptr,queue,layer);
+}
+void MetalContext::setOffscreenQueueForTesting(FCMetal4Queue *queue)
+{
+	if(impl->view || !queue || queue.device!=impl->device)
+		throw RendererException("Only an offscreen context may select a same-device test queue");
+	waitIdle();
+	if(impl->frame || impl->displayLink)throw RendererException("Cannot switch an active presentation queue");
+	impl->queue=queue;
+}
+void MetalContext::setOffscreenSizeForTesting(int width,int height)
+{
+	if(impl->view || width<=0 || height<=0)throw RendererException("Invalid offscreen surface size");
+	waitIdle();impl->layer.drawableSize=CGSizeMake(width,height);
+}
+MetalPipelineCache::Statistics MetalContext::pipelineStatisticsForTesting(bool finish)
+{
+	if(impl->view || !impl->pipelineCache)throw RendererException("Offscreen pipeline archive unavailable");
+	if(finish){dispatch_sync(impl->shaderQueue,^{});impl->pipelineCache->finish();}
+	return impl->pipelineCache->statistics();
+}
+void MetalContext::drainMaterialCompilerForTesting(){if(impl->view)throw RendererException("Not an offscreen context");dispatch_sync(impl->shaderQueue,^{});}
+#endif
 void MetalContext::Create(void *window, void *display) { new MetalContext(window, display); }
 #ifdef METAL_RENDERER_TESTS
 void MetalContext::requestVSyncValidation() { impl->vsyncTestWarmup = 2; }
 #endif
 MetalContext::~MetalContext()
 {
-	impl->displayLink.reset();
+	try { waitIdle(); }
+	catch(const std::exception& failure) { std::fprintf(stderr,"Metal context shutdown: %s\n",failure.what()); }
+	catch(...) { std::fputs("Metal context shutdown failed after drain\n",stderr); }
 	imguiDriver.reset();
-	waitIdle();
 #ifdef VIDEO_ROUTING
 	os_VideoRoutingTermMetal();
 #endif
 }
 id<MTLDevice> MetalContext::device() const { return impl->device; }
 FCMetal4Queue * MetalContext::queue() const { return impl->queue; }
+#ifdef METAL_RENDERER_TESTS
+dispatch_semaphore_t MetalContext::testTextureUploadSlot(size_t index) const {
+	if(index>=impl->textureUploadSlots.size())throw RendererException("Invalid upload slot test index");
+	return impl->textureUploadSlots[index].available;
+}
+dispatch_semaphore_t MetalContext::testPresentationSlot(size_t index) const {
+	if(index>=impl->slots.size())throw RendererException("Invalid presentation slot test index");
+	return impl->slots[index].available;
+}
+#endif
 void MetalContext::submitCommandBuffer(FCMetal4Commands * command)
 {
 	if (!command || command.commandQueue != impl->queue)
@@ -499,92 +570,38 @@ void MetalContext::beginTextureUpdates()
 void MetalContext::endTextureUpdates(bool deferForRender)
 {
 	if (impl->textureUpdateDepth == 0 || --impl->textureUpdateDepth != 0) return;
-	if (deferForRender) sealTextureUpdates();
-	else finishTextureUpdates();
+	try {
+		if (deferForRender) sealTextureUpdates();
+		else finishTextureUpdates();
+	} catch(...) { cancelTextureUpdates(); throw; }
+}
+void MetalContext::cancelTextureUpdates() noexcept
+{
+	if(impl->textureUpdateDepth)--impl->textureUpdateDepth;
+	metal_upload::cancelPending(impl->textureUpdateState,impl->textureUploadFailure);
+	// No submission from an unwinding scope. Images are already invalidated;
+	// the last command owner still controls retirement of the staging lease.
+	try { if(impl->textureBlit)[impl->textureBlit endEncoding]; } catch(...) {}
+	impl->textureBlit=nil;impl->textureUpdates=nil;impl->textureUpdateState.reset();
+	impl->textureUploadTiming={};
 }
 void MetalContext::flushTextureUpdates() { flushRenderCommands(); finishTextureUpdates(); }
-MetalContext::RenderCommands::RenderCommands(FCMetal4Commands * command, dispatch_group_t submissions,
-	dispatch_semaphore_t uploadAvailable, std::function<void()> canceledBatch) noexcept
-	: command(command), submissions(submissions), uploadAvailable(uploadAvailable), canceledBatch(std::move(canceledBatch)) {}
-MetalContext::RenderCommands::RenderCommands(RenderCommands&& other) noexcept
-	: command(other.command), submissions(other.submissions), rasterEncoder(other.rasterEncoder),
-	  rasterColor(other.rasterColor), rasterDepth(other.rasterDepth), deferredDepthStore(other.deferredDepthStore),
-	  uploadAvailable(other.uploadAvailable),
-	  canceledBatch(std::move(other.canceledBatch)), renderAvailable(std::move(other.renderAvailable)),
-	  renderCount(other.renderCount), timingSubmission(other.timingSubmission), submitted(other.submitted)
+std::shared_ptr<metal_upload::State> MetalContext::textureUploadState() const
 {
-	other.command = nil;
-	other.submissions = nil;
-	other.rasterEncoder = nil;
-	other.rasterColor = other.rasterDepth = nil;
-	other.deferredDepthStore = false;
-	other.uploadAvailable = nil;
+	if(!impl->textureUpdates || !impl->textureUpdateState)
+		throw RendererException("No Metal texture upload state available");
+	return impl->textureUpdateState;
 }
-MetalContext::RenderCommands::~RenderCommands()
+bool MetalContext::consumeTextureUploadFailure()
 {
-	endRasterEncoder();
-	if (!submitted && command) {
-		// No GPU work was submitted, so completion cannot release staging or
-		// render slots. Both uploaded and pending screen data need rebuilding.
-		command = nil;
-		if (uploadAvailable) dispatch_semaphore_signal(uploadAvailable);
-		for (size_t i = 0; i < renderCount; ++i) dispatch_semaphore_signal(renderAvailable[i]);
-		if (canceledBatch) canceledBatch();
-	}
-}
-void MetalContext::RenderCommands::retainRenderSlot(dispatch_semaphore_t available)
-{
-	if (renderCount == renderAvailable.size()) throw RendererException("Metal render batch slot limit exceeded");
-	renderAvailable[renderCount++] = available;
-}
-FCMetal4RenderEncoder * MetalContext::RenderCommands::continuingRasterEncoder(id<MTLTexture> color, id<MTLTexture> depth)
-{
-	if (rasterColor != color || rasterDepth != depth) endRasterEncoder();
-	return rasterEncoder;
-}
-void MetalContext::RenderCommands::retainRasterEncoder(FCMetal4RenderEncoder * encoder,
-	id<MTLTexture> color, id<MTLTexture> depth, bool deferredDepthStore)
-{
-	if (rasterEncoder) throw RendererException("Metal raster encoder already pending");
-	rasterEncoder = encoder; rasterColor = color; rasterDepth = depth;
-	this->deferredDepthStore = deferredDepthStore;
-}
-void MetalContext::RenderCommands::endRasterEncoder(bool preserveDepth)
-{
-	if (rasterEncoder) {
-		if (deferredDepthStore) {
-			const MTLStoreAction store = preserveDepth ? MTLStoreActionStore : MTLStoreActionDontCare;
-			[rasterEncoder setDepthStoreAction:store];
-			[rasterEncoder setStencilStoreAction:store];
-		}
-		[rasterEncoder endEncoding];
-	}
-	rasterEncoder = nil; rasterColor = rasterDepth = nil;
-	deferredDepthStore = false;
-}
-void MetalContext::RenderCommands::commit(bool discardRasterDepth)
-{
-	endRasterEncoder(!discardRasterDepth);
-	if (timingSubmission != 0) {
-		// GPU timestamps describe this whole submission, including any Process
-		// uploads and continued screen renders, rather than an individual render.
-		const u64 number = timingSubmission;
-		const size_t renders = renderCount;
-		[command addCompletedHandler:^(FCMetal4Commands * done) {
-			if (done.status == FCMetal4StatusCompleted && done.GPUStartTime > 0
-					&& done.GPUEndTime >= done.GPUStartTime)
-				NOTICE_LOG(RENDERER, "Metal timing submission %llu renders %zu GPU: %.3f ms",
-					(unsigned long long)number, renders, (done.GPUEndTime - done.GPUStartTime) * 1000);
-		}];
-	}
-	commitCommands(command, submissions);
-	submitted = true;
+	return impl->textureUploadFailure->exchange(false,std::memory_order_acq_rel);
 }
 void MetalContext::flushRenderCommands(bool discardRasterDepth)
 {
 	if (impl->deferredRender) {
-		impl->deferredRender->commit(discardRasterDepth);
+		RenderCommands commands(std::move(*impl->deferredRender));
 		impl->deferredRender.reset();
+		commands.commit(discardRasterDepth);
 	}
 }
 void MetalContext::deferRenderCommands(RenderCommands&& commands)
@@ -596,7 +613,7 @@ MetalContext::RenderCommands MetalContext::beginRenderCommands(std::function<voi
 {
 	if (impl->textureUpdateDepth != 0)
 		throw RendererException("Metal render started during texture updates");
-	sealTextureUpdates();
+	try { sealTextureUpdates(); } catch(...) { cancelTextureUpdates(); throw; }
 	if (impl->deferredRender) {
 		// Flush before the renderer can wrap to a slot held by this same
 		// unsubmitted batch. RTT/readback also starts after the screen work.
@@ -609,15 +626,16 @@ MetalContext::RenderCommands MetalContext::beginRenderCommands(std::function<voi
 		}
 	}
 	FCMetal4Commands * cb = impl->textureUpdates;
-	dispatch_semaphore_t available = cb ? impl->textureUploadSlots[impl->currentTextureUploadSlot].available : nil;
 	if (!cb) cb = [impl->queue commandBuffer];
 	if (!cb) throw RendererException("Metal command buffer allocation failed");
 	// Establish a movable scope owner before detaching the pending batch.
 	// No additional per-render heap allocation is needed for this owner.
-	RenderCommands commands(cb, impl->submissions, available, std::move(canceledBatch));
+	RenderCommands commands(cb, impl->submissions, std::move(canceledBatch),
+		impl->textureUpdateState,impl->textureUploadFailure);
 	if (impl->frameTimings && impl->profilingSubmission < impl->profilingLimit)
 		commands.timingSubmission = ++impl->profilingSubmission;
 	impl->textureUpdates = nil;
+	impl->textureUpdateState.reset();
 	return commands;
 }
 bool MetalContext::canReuseTextureUpload(id<MTLTexture> texture) const
@@ -667,9 +685,20 @@ void MetalContext::sealTextureUpdates()
 }
 void MetalContext::finishTextureUpdates()
 {
-	sealTextureUpdates();
-	if (impl->textureUpdates) submitCommandBuffer(impl->textureUpdates);
-	impl->textureUpdates = nil;
+	FCMetal4Commands *command=impl->textureUpdates;
+	auto state=impl->textureUpdateState;
+	try {
+		sealTextureUpdates();
+		// Detach before submission: a pre-commit failure must release the
+		// unsubmitted command and its observer instead of pinning a staging slot.
+		impl->textureUpdates=nil;impl->textureUpdateState.reset();
+		if(command)submitCommandBuffer(command);
+	} catch(...) {
+		if(!command || command.status==FCMetal4StatusEncoding)
+			metal_upload::cancelPending(state,impl->textureUploadFailure);
+		impl->textureBlit=nil;impl->textureUpdates=nil;impl->textureUpdateState.reset();
+		throw;
+	}
 }
 FCMetal4ComputeEncoder * MetalContext::textureBlitEncoder()
 {
@@ -690,45 +719,46 @@ FCMetal4ComputeEncoder * MetalContext::textureBlitEncoder()
 		timing = {};
 		timing.number = ++impl->profilingTextureUpload;
 	}
-	const auto waitStarted = timing.number != 0 ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 	// Only this upload batch owns its CPU-writable pages. GPU completion,
-	// rather than the next Process call, permits their reuse.
-	dispatch_semaphore_wait(available, DISPATCH_TIME_FOREVER);
-	if (timing.number != 0)
-		timing.slotWaitMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - waitStarted).count();
+	// or cancellation before submission, permits their reuse exactly once.
+	auto uploadState=metal_upload::watch(cb,available,impl->textureUploadFailure,
+		timing.number!=0?&timing.slotWaitMs:nullptr);
 	slot.pageCursor = 0; slot.pageOffset = 0;
 	[cb addCompletedHandler:^(FCMetal4Commands * done) {
-		dispatch_semaphore_signal(available);
 		if (done.status == FCMetal4StatusError) ERROR_LOG(RENDERER, "Metal texture upload: %s", done.error.localizedDescription.UTF8String);
 	}];
 	impl->currentTextureUploadSlot = index;
 	++impl->nextTextureUploadSlot;
 	impl->textureUpdates = cb;
+	impl->textureUpdateState=std::move(uploadState);
 	impl->textureBlit = blit;
 	return blit;
 }
 void MetalContext::uploadTextureLevel(id<MTLTexture> texture, NSUInteger level,
-	const void *data, NSUInteger bytesPerRow)
+	const void *data, NSUInteger bytesPerRow, NSUInteger blockRows)
 {
 	if (!texture || !data || level >= texture.mipmapLevelCount || bytesPerRow == 0)
 		throw RendererException("Invalid Metal texture upload");
+#ifdef METAL_RENDERER_TESTS
+	++validationTextureUploadCount;
+#endif
 	const NSUInteger width = std::max(NSUInteger(1), texture.width >> level);
 	const NSUInteger height = std::max(NSUInteger(1), texture.height >> level);
 	// Uncompressed buffer-to-texture blits require pixel-aligned rows, not
 	// linear-texture row padding. Keep the decoder's packed 1/2/4-byte pixels
 	// contiguous, including small mip levels, and align only each upload's offset.
 	const NSUInteger row = bytesPerRow;
+	// Compressed mips contain block rows, including one block row for a
+	// mip smaller than its block. The GPU copy still uses texel dimensions.
+	const NSUInteger rows = blockRows ? blockRows : height;
+	if (rows > height) throw RendererException("Invalid Metal texture block rows");
 	const NSUInteger maxBytes = impl->device.maxBufferLength;
-	if (row > maxBytes / height)
+	if (row > maxBytes / rows)
 		throw RendererException("Metal texture upload exceeds the device buffer limit");
-	const NSUInteger bytes = row * height;
+	const NSUInteger bytes = row * rows;
 	// Nest within Process, or submit this level on scope exit when called
 	// independently. Allocation failures also release the batch through it.
-	struct Updates {
-		MetalContext *context;
-		explicit Updates(MetalContext *context) : context(context) { context->beginTextureUpdates(); }
-		~Updates() { context->endTextureUpdates(); }
-	} updates(this);
+	metal_upload::Scope updates(this);
 	FCMetal4ComputeEncoder * blit = textureBlitEncoder();
 	auto& slot = impl->textureUploadSlots[impl->currentTextureUploadSlot];
 	size_t page = slot.pageCursor;
@@ -744,8 +774,8 @@ void MetalContext::uploadTextureLevel(id<MTLTexture> texture, NSUInteger level,
 	if (!buffer || buffer.length < bytes) {
 		NSUInteger capacity = std::min(maxBytes, NSUInteger(1024 * 1024));
 		while (capacity < bytes) capacity = capacity > maxBytes / 2 ? maxBytes : capacity * 2;
-		id<MTLBuffer> allocated = [impl->device newBufferWithLength:capacity
-			options:MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined];
+		id<MTLBuffer> allocated = FCMetal4CreateBuffer(impl->device,capacity,
+			MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined);
 		if (!allocated) throw RendererException("Metal texture staging allocation failed");
 		buffer = allocated;
 		if (impl->textureUploadTiming.number != 0) ++impl->textureUploadTiming.allocations;
@@ -758,7 +788,7 @@ void MetalContext::uploadTextureLevel(id<MTLTexture> texture, NSUInteger level,
 	auto& timing = impl->textureUploadTiming;
 	if (timing.number != 0) {
 		++timing.levels;
-		timing.sourceBytes += bytesPerRow * height;
+		timing.sourceBytes += bytes;
 		timing.stagingBytes += bytes + (page == slot.pageCursor ? offset - slot.pageOffset : 0);
 	}
 	slot.pageCursor = page;
@@ -807,7 +837,8 @@ id<MTLTexture> MetalContext::makeTexture(int width, int height, MTLPixelFormat f
 }
 API_AVAILABLE(macos(26.0))
 static MTL4RenderPipelineDescriptor *pipelineDescriptor(MTL4FunctionDescriptor *vertex, MTL4FunctionDescriptor *fragment,
-	MTLVertexDescriptor *layout, MTLPixelFormat color, MTL4RenderPipelineColorAttachmentDescriptor *blend)
+	MTLVertexDescriptor *layout, MTLPixelFormat color, MTL4RenderPipelineColorAttachmentDescriptor *blend,
+	MTL4RenderPipelineColorAttachmentDescriptor *secondaryBlend = nil)
 {
 	MTL4RenderPipelineDescriptor *desc = [[MTL4RenderPipelineDescriptor alloc] init];
 	desc.vertexFunctionDescriptor = vertex;
@@ -818,6 +849,10 @@ static MTL4RenderPipelineDescriptor *pipelineDescriptor(MTL4FunctionDescriptor *
 	if (blend) {
 		desc.colorAttachments[0] = blend;
 		desc.colorAttachments[0].pixelFormat = color;
+	}
+	if (secondaryBlend) {
+		desc.colorAttachments[1] = secondaryBlend;
+		desc.colorAttachments[1].pixelFormat = color;
 	}
 	// Metal 4 does not bake depth/stencil attachment formats into the PSO.
 	// The actual textures and depth/stencil state remain render-pass state.
@@ -833,12 +868,13 @@ MTL4FunctionDescriptor *MetalContext::shaderFunction(NSString *name)
 	}
 	return function;
 }
-id<MTLRenderPipelineState> MetalContext::makePipeline(NSString *vertex, NSString *fragment, MTLVertexDescriptor *layout, MTLPixelFormat color, bool /*depth*/, MTL4RenderPipelineColorAttachmentDescriptor *blend)
+id<MTLRenderPipelineState> MetalContext::makePipeline(NSString *vertex, NSString *fragment, MTLVertexDescriptor *layout, MTLPixelFormat color, bool /*depth*/, MTL4RenderPipelineColorAttachmentDescriptor *blend, MTL4RenderPipelineColorAttachmentDescriptor *secondaryBlend)
 {
 	MTL4RenderPipelineDescriptor *desc = pipelineDescriptor(shaderFunction(vertex),
-		shaderFunction(fragment), layout, color, blend);
+		shaderFunction(fragment), layout, color, blend, secondaryBlend);
 	NSError *error = nil;
-	id<MTLRenderPipelineState> pipeline = impl->pipelineCache ? impl->pipelineCache->makeRenderPipeline(desc, &error)
+	id<MTLRenderPipelineState> pipeline = impl->pipelineCache ? impl->pipelineCache->makeRenderPipeline(desc, &error, false,
+		metal_pipeline::renderIdentity(desc,metal_pipeline::functionIdentity(vertex),metal_pipeline::functionIdentity(fragment)))
 		: [impl->compiler newRenderPipelineStateWithDescriptor:desc compilerTaskOptions:nil error:&error];
 	checkMetal(error, "Metal render pipeline");
 	if (!pipeline) throw RendererException("Metal pipeline creation failed");
@@ -849,7 +885,8 @@ id<MTLComputePipelineState> MetalContext::makeComputePipeline(NSString *function
 	NSError *error = nil;
 	MTL4ComputePipelineDescriptor *desc = [[MTL4ComputePipelineDescriptor alloc] init];
 	desc.computeFunctionDescriptor = shaderFunction(function);
-	id<MTLComputePipelineState> pipeline = impl->pipelineCache ? impl->pipelineCache->makeComputePipeline(desc, &error)
+	id<MTLComputePipelineState> pipeline = impl->pipelineCache ? impl->pipelineCache->makeComputePipeline(desc, &error,
+		metal_pipeline::computeIdentity(desc,metal_pipeline::functionIdentity(function)))
 		: [impl->compiler newComputePipelineStateWithDescriptor:desc compilerTaskOptions:nil error:&error];
 	checkMetal(error, "Metal compute pipeline");
 	if (!pipeline) throw RendererException("Metal compute pipeline creation failed");
@@ -894,7 +931,10 @@ void MetalContext::makePipelineAsync(NSString *vertex, NSString *fragment, MTLVe
 				MTL4FunctionDescriptor *f = functions->get(library, fragmentName, fragmentConstants);
 				if (!wanted()) return;
 				MTL4RenderPipelineDescriptor *desc = pipelineDescriptor(v, f, vertexLayout, color, colorBlend);
-				id<MTLRenderPipelineState> state = pipelineCache ? pipelineCache->makeRenderPipeline(desc, &error, true)
+				const std::array<uint32_t,4> vertexKey{vertexConstants.flags,vertexConstants.tsp0,vertexConstants.tsp1,u32(vertexConstants.sequence)};
+				const std::array<uint32_t,4> fragmentKey{fragmentConstants.flags,fragmentConstants.tsp0,fragmentConstants.tsp1,u32(fragmentConstants.sequence)};
+				id<MTLRenderPipelineState> state = pipelineCache ? pipelineCache->makeRenderPipeline(desc, &error, true,
+					metal_pipeline::renderIdentity(desc,metal_pipeline::functionIdentity(vertexName,&vertexKey),metal_pipeline::functionIdentity(fragmentName,&fragmentKey)))
 					: [compiler newRenderPipelineStateWithDescriptor:desc compilerTaskOptions:nil error:&error];
 				completion(state, error);
 			} catch (const std::exception& failure) {
@@ -916,23 +956,17 @@ FCMetal4Commands * MetalContext::beginFrame()
 	if (!impl->frame) {
 		impl->currentSlot = impl->nextSlot++ % impl->slots.size();
 		dispatch_semaphore_t flight = impl->slots[impl->currentSlot].available;
-		dispatch_semaphore_wait(flight, DISPATCH_TIME_FOREVER);
-		impl->slots[impl->currentSlot].uiBufferCursor = 0;
+		FCMetal4Commands *frame=[impl->queue commandBuffer];
+		if(!frame)throw RendererException("Metal presentation command buffer allocation failed");
+		// This lease also retires when an unsubmitted frame is discarded.
+		// No UI buffer or VMU belonging to this slot is written before it.
+		metal_upload::reserveSlot(frame,flight);
+		impl->slots[impl->currentSlot].resources.uiBufferCursor = 0;
 		impl->drawableRequested = false;
-		try {
-			impl->frame = [impl->queue commandBuffer];
-		} catch (...) {
-			dispatch_semaphore_signal(flight);
-			throw;
-		}
-		if (!impl->frame) {
-			dispatch_semaphore_signal(flight);
-			throw RendererException("Metal presentation command buffer allocation failed");
-		}
-		[impl->frame addCompletedHandler:^(FCMetal4Commands * cb) {
+		[frame addCompletedHandler:^(FCMetal4Commands * cb) {
 			if (cb.status == FCMetal4StatusError) ERROR_LOG(RENDERER, "Metal presentation: %s", cb.error.localizedDescription.UTF8String);
-			dispatch_semaphore_signal(flight);
 		}];
+		impl->frame=frame;
 	}
 	return impl->frame;
 }
@@ -944,7 +978,8 @@ std::pair<id<MTLBuffer>, id<MTLBuffer>> MetalContext::uploadUIBuffers(const ImDr
 	const size_t indexBytes = size_t(data.TotalIdxCount) * sizeof(ImDrawIdx);
 	if (vertexBytes == 0 && indexBytes == 0) return {nil, nil};
 	beginFrame(); // Acquires the presentation slot before any CPU write.
-	auto& slot = impl->slots[impl->currentSlot];
+	auto& slot = impl->composition ? impl->compositions[impl->compositionSlot].resources
+		: impl->slots[impl->currentSlot].resources;
 	// A second UI draw in the same presentation must get distinct storage,
 	// so its CPU upload cannot change a draw already encoded in this frame.
 	const size_t draw = slot.uiBufferCursor++;
@@ -956,7 +991,7 @@ std::pair<id<MTLBuffer>, id<MTLBuffer>> MetalContext::uploadUIBuffers(const ImDr
 			if (size > maximum) throw RendererException("Metal UI geometry exceeds the device buffer limit");
 			NSUInteger capacity = std::min<NSUInteger>(4096, maximum);
 			while (capacity < size) capacity = capacity <= maximum / 2 ? capacity * 2 : maximum;
-			buffer = [impl->device newBufferWithLength:capacity options:MTLResourceStorageModeShared];
+			buffer = FCMetal4CreateBuffer(impl->device,capacity,MTLResourceStorageModeShared);
 			if (!buffer) throw RendererException("Metal UI buffer allocation failed");
 		}
 	};
@@ -987,17 +1022,49 @@ void MetalContext::setLastFrame(id<MTLTexture> texture, float aspectRatio, doubl
 id<MTLTexture> MetalContext::lastFrame() const { return impl->lastFrame; }
 float MetalContext::lastFrameAspectRatio() const { return impl->aspectRatio; }
 
+bool MetalContext::recordingPresentation() const
+{
+	return impl->composition && impl->composition->recording != nil;
+}
+void MetalContext::registerPresentationPipeline(id<MTLRenderPipelineState> pipeline, id<MTLRenderPipelineState> opaque)
+{
+	if (recordingPresentation())
+		[(FCMetal4RecordingEncoder *)impl->encoder registerPipeline:pipeline opaque:opaque];
+}
+void MetalContext::requirePresentationComposition()
+{
+	if (!recordingPresentation()) return;
+	auto& image = *impl->composition;
+	auto& slot = impl->compositions[impl->compositionSlot];
+	if (!slot.composed || slot.composed.width != image.width || slot.composed.height != image.height)
+		slot.composed = makeTexture(image.width, image.height, MTLPixelFormatBGRA8Unorm,
+			MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead);
+	MTL4RenderPassDescriptor *pass = [MTL4RenderPassDescriptor new];
+	pass.colorAttachments[0].texture = slot.composed;
+	pass.colorAttachments[0].loadAction = MTLLoadActionClear;
+	pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+	pass.colorAttachments[0].clearColor = image.clearColor;
+	FCMetal4RenderEncoder *encoder = [impl->frame renderCommandEncoderWithDescriptor:pass];
+	[(FCMetal4RecordingEncoder *)impl->encoder redirectTo:encoder];
+	image.recording = nil; image.texture = slot.composed;
+}
 id<MTLRenderPipelineState> MetalContext::quadPipeline(bool ignoreAlpha)
 {
-	const u64 key = ignoreAlpha;
-	auto& pipeline = impl->quads[key];
-	if (!pipeline) {
-		MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
-		blend.blendingState = ignoreAlpha ? MTL4BlendStateDisabled : MTL4BlendStateEnabled;
-		blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-		blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-		pipeline = makePipeline(@"quad_vertex", @"quad_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
-	}
+	const auto pipelineFor = [&](bool opaque) -> id<MTLRenderPipelineState> {
+		const u64 key = u64(ignoreAlpha) | (u64(opaque) << 1);
+		auto& pipeline = impl->quads[key];
+		if (!pipeline) {
+			MTL4RenderPipelineColorAttachmentDescriptor *blend = [MTL4RenderPipelineColorAttachmentDescriptor new];
+			blend.blendingState = ignoreAlpha ? MTL4BlendStateDisabled : MTL4BlendStateEnabled;
+			blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+			blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+			if (opaque) blend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
+			pipeline = makePipeline(@"quad_vertex", @"quad_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
+		}
+		return pipeline;
+	};
+	auto pipeline = pipelineFor(false);
+	if (recordingPresentation()) registerPresentationPipeline(pipeline, ignoreAlpha ? pipeline : pipelineFor(true));
 	return pipeline;
 }
 void MetalContext::drawQuad(FCMetal4RenderEncoder * encoder, id<MTLTexture> texture, MTLViewport viewport, bool rotate, bool ignoreAlpha, const float *color, bool linear)
@@ -1007,16 +1074,15 @@ void MetalContext::drawQuad(FCMetal4RenderEncoder * encoder, id<MTLTexture> text
 	[encoder setRenderPipelineState:quadPipeline(ignoreAlpha)];
 	[encoder setCullMode:MTLCullModeNone];
 	[encoder setViewport:viewport];
-	[encoder setVertexBytes:&u length:sizeof(u) atIndex:0];
-	[encoder setFragmentBytes:&u length:sizeof(u) atIndex:0];
+	[encoder setSharedBytes:&u length:sizeof(u) atIndex:0];
 	[encoder setFragmentTexture:texture atIndex:0];
 	[encoder setFragmentSamplerState:linear ? impl->linear : impl->nearest atIndex:0];
 	[encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
 }
 std::pair<int, int> MetalContext::presentationSize() const
 {
-	id<MTLTexture> target = impl->composition ? impl->composition->texture : impl->drawable.texture;
-	return {int(target.width), int(target.height)};
+	if (impl->composition) return {int(impl->composition->width), int(impl->composition->height)};
+	return {int(impl->drawable.texture.width), int(impl->drawable.texture.height)};
 }
 FCMetal4RenderEncoder * MetalContext::beginPresentation()
 {
@@ -1048,29 +1114,30 @@ FCMetal4RenderEncoder * MetalContext::beginPresentation()
 			}
 			if (!impl->displayLink) impl->displayLink = std::make_unique<MetalDisplayLink>((__bridge NSView *)impl->view, impl->layer, impl->queue,
 				quadPipeline(true), impl->nearest, impl->submissions, impl->presentationTimings, settings.display.refreshRate);
-			impl->displayLink->setActive(true, true);
+			impl->displayLink->setActive(true, config::DupeFrames);
 		} else impl->displayLink.reset();
 		impl->drawableRequested = true;
 		if (paced) {
 			// Never wait for a display copy on the emulation/render thread.
 			// Slots remain leased through composition and every subsequent GPU read.
 			for (size_t attempt = 0; attempt < impl->compositions.size(); ++attempt) {
-				auto& slot = impl->compositions[impl->nextComposition++ % impl->compositions.size()];
-				if (dispatch_semaphore_wait(slot.available, DISPATCH_TIME_NOW) != 0) continue;
-				dispatch_semaphore_t available = slot.available;
-				impl->composition = std::shared_ptr<MetalDisplayImage>(new MetalDisplayImage,
-					[available](MetalDisplayImage *image) { delete image; dispatch_semaphore_signal(available); });
-				const NSUInteger width = std::max<NSUInteger>(1, impl->layer.drawableSize.width);
-				const NSUInteger height = std::max<NSUInteger>(1, impl->layer.drawableSize.height);
-				if (!slot.texture || slot.texture.width != width || slot.texture.height != height)
-					slot.texture = makeTexture(width, height, MTLPixelFormatBGRA8Unorm,
-						MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead);
+				const size_t index = impl->nextComposition++ % impl->compositions.size();
+				auto& slot = impl->compositions[index];
+				impl->composition = metal_presentation::leaseImage(slot.available);
+				if (!impl->composition) continue;
+				impl->compositionSlot = index; slot.resources.uiBufferCursor = 0;
+				impl->composition->width = std::max<NSUInteger>(1, impl->layer.drawableSize.width);
+				impl->composition->height = std::max<NSUInteger>(1, impl->layer.drawableSize.height);
+				impl->composition->clearColor = MTLClearColorMake(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1);
 				if (!slot.readyEvent) slot.readyEvent = [impl->device newSharedEvent];
 				if (!slot.readyEvent) throw RendererException("Cannot create Metal display event");
 				impl->composition->readyEvent = slot.readyEvent;
 				impl->composition->readyValue = ++slot.readyValue;
-				impl->composition->texture = slot.texture;
 				impl->composition->content = impl->contentFrame;
+				// Cancellation/unpublished work must also hold CPU-writable UI
+				// resources until any producer GPU reads are finished.
+				const auto image = impl->composition;
+				[impl->frame addCompletedHandler:^(FCMetal4Commands *) { (void)image; }];
 				break;
 			}
 			if (!impl->composition) return nil;
@@ -1127,12 +1194,37 @@ FCMetal4RenderEncoder * MetalContext::beginPresentation()
 				if (scaled) { image = scaled; usingMetalFX = true; }
 			}
 		} else impl->metalFX->releaseSlot(impl->currentSlot);
-		MTL4RenderPassDescriptor *pass = [MTL4RenderPassDescriptor new];
-		pass.colorAttachments[0].texture = impl->composition ? impl->composition->texture : impl->drawable.texture;
-		pass.colorAttachments[0].loadAction = MTLLoadActionClear;
-		pass.colorAttachments[0].storeAction = MTLStoreActionStore;
-		pass.colorAttachments[0].clearColor = MTLClearColorMake(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1);
-		impl->encoder = [impl->frame renderCommandEncoderWithDescriptor:pass];
+		if (impl->composition) {
+			auto& slot = impl->compositions[impl->compositionSlot];
+			// Decide whether to snapshot after all callbacks/unknown pipelines
+			// have had a chance to require producer-side composition.
+			bool canRecord = true;
+#ifdef VIDEO_ROUTING
+			canRecord = !config::VideoRouting || !os_VideoRoutingMetalHasClients(impl->device);
+#endif
+			const bool smaller = canRecord && drawImage && metal_presentation::snapshotFits(image,width,height);
+			if (smaller) {
+				FCMetal4RecordingEncoder *recording = [[FCMetal4RecordingEncoder alloc] initWithOpaquePipelines:nil];
+				[recording deferSnapshotOf:image];
+				impl->encoder = recording; impl->composition->recording = recording.recordedPass;
+				impl->composition->texture = image;
+			} else {
+				// This slot has no display readers. Do not retain a superseded
+				// source snapshot alongside the full-size composition fallback.
+				slot.texture = nil;
+				if (!slot.composed || slot.composed.width != NSUInteger(width) || slot.composed.height != NSUInteger(height))
+					slot.composed = makeTexture(width,height,MTLPixelFormatBGRA8Unorm,MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+				impl->composition->texture = slot.composed;
+			}
+		}
+		if (!impl->encoder) {
+			MTL4RenderPassDescriptor *pass = [MTL4RenderPassDescriptor new];
+			pass.colorAttachments[0].texture = impl->composition ? impl->composition->texture : impl->drawable.texture;
+			pass.colorAttachments[0].loadAction = MTLLoadActionClear;
+			pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+			pass.colorAttachments[0].clearColor = MTLClearColorMake(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1);
+			impl->encoder = [impl->frame renderCommandEncoderWithDescriptor:pass];
+		}
 		if (!impl->encoder) throw RendererException("Metal presentation encoder allocation failed");
 		if (drawImage) {
 			// A video shift must not draw into the windowbox's cleared border.
@@ -1154,7 +1246,8 @@ void MetalContext::drawOverlays(FCMetal4RenderEncoder * encoder)
 {
 	const auto [width, height] = presentationSize();
 	if (width <= 0 || height <= 0) return;
-	auto& slot = impl->slots[impl->currentSlot];
+	auto& slot = impl->composition ? impl->compositions[impl->compositionSlot].resources
+		: impl->slots[impl->currentSlot].resources;
 	const float scaling = settings.display.uiScale;
 	if (settings.platform.isConsole() && config::FloatVMUs) {
 		float padding = 8 * scaling, w = 96 * scaling, h = 64 * scaling;
@@ -1202,6 +1295,17 @@ void MetalContext::drawOverlays(FCMetal4RenderEncoder * encoder)
 			blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 			impl->crosshairPipeline = makePipeline(@"overlay_vertex", @"overlay_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
 		}
+		if (recordingPresentation()) {
+			if (!impl->opaqueCrosshairPipeline) {
+				MTL4RenderPipelineColorAttachmentDescriptor *blend = [MTL4RenderPipelineColorAttachmentDescriptor new];
+				blend.blendingState = MTL4BlendStateEnabled;
+				blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+				blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+				blend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
+				impl->opaqueCrosshairPipeline = makePipeline(@"overlay_vertex", @"overlay_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
+			}
+			registerPresentationPipeline(impl->crosshairPipeline, impl->opaqueCrosshairPipeline);
+		}
 		const float screen[2] = {(float)width, (float)height};
 		[encoder setRenderPipelineState:impl->crosshairPipeline]; [encoder setCullMode:MTLCullModeNone];
 		[encoder setViewport:MTLViewport{0, 0, screen[0], screen[1], 0, 1}];
@@ -1239,17 +1343,34 @@ void MetalContext::publishVideoRouting(id<MTLTexture> texture, FCMetal4Commands 
 #endif
 void MetalContext::present()
 {
+	try {
 	@autoreleasepool {
 		if (impl->composition) {
-			if (impl->encoder) { [impl->encoder endEncoding]; impl->encoder = nil; }
+			if (impl->composition->recording.requiresComposition) requirePresentationComposition();
 #ifdef VIDEO_ROUTING
-			if (config::VideoRouting) publishVideoRouting(impl->composition->texture, impl->frame);
-			else os_VideoRoutingTermMetal();
+			const bool routingClients = config::VideoRouting && os_VideoRoutingMetalHasClients(impl->device);
+			if (routingClients) requirePresentationComposition();
 #endif
-			const double refresh = std::isfinite(settings.display.refreshRate) && settings.display.refreshRate > 0
-				? settings.display.refreshRate : 60;
+			// A slot is exclusively leased here. Drop an obsolete full-size
+			// fallback only after knowing this complete packet stays direct.
+			if (impl->composition->recording) {
+				auto& slot = impl->compositions[impl->compositionSlot];
+				FCMetal4RecordingEncoder *recording = (FCMetal4RecordingEncoder *)impl->encoder;
+				auto source = recording.snapshotSource;
+				slot.texture = metal_presentation::snapshotTexture(impl->device,source,slot.texture);
+				metal_presentation::encodeSnapshot(source,slot.texture,impl->frame);
+				[recording useSnapshot:slot.texture];
+				impl->composition->texture = slot.texture;
+				slot.composed = nil;
+			}
+			if (impl->encoder) { [impl->encoder endEncoding]; impl->encoder = nil; }
+			if (!impl->composition->recording) impl->compositions[impl->compositionSlot].texture = nil;
+#ifdef VIDEO_ROUTING
+			if (routingClients) publishVideoRouting(impl->composition->texture, impl->frame);
+			else if (!config::VideoRouting) os_VideoRoutingTermMetal();
+#endif
 			impl->composition->target = impl->presentationTimeline.videoFrame(CACurrentMediaTime(),
-				impl->sourceVideoTime, 2 * spg_GetFrameDuration() + 1 / refresh, impl->displayLink->schedulingLead());
+				impl->sourceVideoTime, metal::presentationBufferDuration(spg_GetFrameDuration()), impl->displayLink->schedulingLead());
 			if (impl->presentationTimings && impl->contentFrame <= 3600)
 				NOTICE_LOG(RENDERER, "Metal video %llu: source %.6f target %.6f submitted %.6f",
 					(unsigned long long)impl->contentFrame, impl->sourceVideoTime,
@@ -1347,27 +1468,42 @@ void MetalContext::present()
 		}
 #endif
 	}
+	} catch(...) {
+		// A failed presentation must not leave a canceled or already committed
+		// command as the next frame's encoding owner. Submitted work retains its
+		// resources through feedback; an unsubmitted frame retires its slot.
+		impl->encoder=nil;impl->frame=nil;impl->drawable=nil;
+		impl->drawableRequested=false;impl->composition.reset();
+		throw;
+	}
 }
 void MetalContext::waitIdle()
 {
 	// Stop producing display submissions before draining either native queue.
 	// This also retires retained compositions on renderer/backend changes.
-	impl->displayLink.reset();
-	impl->presentationTimeline.reset();
-	flushRenderCommands();
-	finishTextureUpdates();
-	if (impl->frame) {
-		if (impl->encoder) [impl->encoder endEncoding];
-		submitCommandBuffer(impl->frame);
-		impl->encoder = nil; impl->frame = nil; impl->drawable = nil;
-		impl->drawableRequested = false;
-	}
+	metal_shutdown::Drain errors;
+	errors.attempt([&]{impl->displayLink.reset();impl->presentationTimeline.reset();});
+	errors.attempt([&]{flushRenderCommands();});
+	errors.attempt([&]{finishTextureUpdates();});
+	errors.attempt([&]{
+		// Detach first: a close/submit failure must cancel the frame rather
+		// than leave it owning a presentation slot until context destruction.
+		FCMetal4Commands *frame=impl->frame;FCMetal4RenderEncoder *encoder=impl->encoder;
+		const bool unpublishedRecording = impl->composition && impl->composition->recording != nil;
+		impl->encoder=nil;impl->frame=nil;impl->drawable=nil;impl->drawableRequested=false;
+		// An unpublished CPU recording may still refer to the mutable source.
+		// Cancel it instead of sealing it for display; producer GPU work still drains.
+		if(encoder && !unpublishedRecording)[encoder endEncoding];
+		if(frame && frame.status==FCMetal4StatusEncoding)submitCommandBuffer(frame);
+	});
+	impl->composition.reset();
 	// Drain the actual submissions without allocating an extra empty buffer.
 	// This also waits when a new command-buffer allocation would have failed.
 	dispatch_group_wait(impl->submissions, DISPATCH_TIME_FOREVER);
 	for (auto& slot : impl->textureUploadSlots) {
 		slot.pages.clear(); slot.pageCursor = 0; slot.pageOffset = 0;
 	}
+	errors.rethrow();
 }
 std::unique_ptr<MetalContext::TextureReadback> MetalContext::encodeReadTexture(id<MTLTexture> texture, FCMetal4Commands * command)
 {
@@ -1388,7 +1524,7 @@ std::unique_ptr<MetalContext::TextureReadback> MetalContext::encodeReadTexture(i
 		// the geometry pool. The lock also covers completion and CPU consumption.
 		NSUInteger capacity = std::min<NSUInteger>(4096, maximum);
 		while (capacity < bytes) capacity = capacity <= maximum / 2 ? capacity * 2 : maximum;
-		id<MTLBuffer> allocated = [impl->device newBufferWithLength:capacity options:MTLResourceStorageModeShared];
+		id<MTLBuffer> allocated = FCMetal4CreateBuffer(impl->device,capacity,MTLResourceStorageModeShared);
 		if (!allocated) throw RendererException("Metal readback allocation failed");
 		impl->readbackBuffer = allocated;
 	}
@@ -1441,6 +1577,9 @@ void MetalContext::readTexture(id<MTLTexture> texture, std::vector<u8>& pixels)
 }
 
 #ifdef METAL_RENDERER_TESTS
+#ifdef FLYCAST_METAL_STANDALONE
+#include "../../../tests/metal/metal_context_presentation_validation.inc"
+#endif
 #include "../../../tests/metal/metal_vsync_validation.inc"
 #include "../../../tests/metal/metal_overlay_validation.inc"
 #ifdef VIDEO_ROUTING

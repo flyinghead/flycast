@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifdef USE_METAL
 #include "metal4_texture.h"
+#include "metal4_custom_texture.h"
+#include "metal4_preload.h"
+#include "metal4_upload_scope.h"
 #include <algorithm>
 
 namespace {
+struct API_AVAILABLE(macos(26.0)) MetalPreloadedTexture final : GpuPreloadedTexture {
+	id<MTLTexture> image;
+	explicit MetalPreloadedTexture(id<MTLTexture> image)
+		: GpuPreloadedTexture(static_cast<u8>(image.mipmapLevelCount)), image(image) {}
+};
 struct TextureFormat {
 	MTLPixelFormat pixelFormat;
 	NSUInteger bytesPerPixel;
@@ -23,6 +31,19 @@ TextureFormat textureFormat(TextureType type)
 		}
 	}
 	throw RendererException("Unsupported Metal texture format");
+}
+API_AVAILABLE(macos(26.0))
+void uploadPrepared(MetalContext *context,id<MTLTexture> uploaded,
+	const PreparedCustomTexture& texture,bool mipmapped,bool trackPreload=false)
+{
+	metal_upload::Scope updates(context);
+	for (NSUInteger i=0;i<texture.levels.size();++i) {
+		const auto& level=texture.levels[i];
+		context->uploadTextureLevel(uploaded,i,texture.bytes.data()+level.byteOffset,
+			level.rowPitchBytes,level.blocksY);
+	}
+	if (mipmapped && texture.generateMipmaps) context->generateMipmaps(uploaded);
+	if(trackPreload)metal_preload::trackUpload(uploaded,context->textureUploadState());
 }
 }
 
@@ -53,16 +74,12 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *data, bool mipma
 	// Match Vulkan's update of a compatible sampled image. GPU-only writes
 	// are ordered after earlier reads; CPU staging remains completion-owned.
 	id<MTLTexture> uploaded = image;
-	if (!context->canReuseTextureUpload(uploaded) || uploaded.width != NSUInteger(width)
+	if (sharedPreloadImage || !context->canReuseTextureUpload(uploaded) || uploaded.width != NSUInteger(width)
 			|| uploaded.height != NSUInteger(height) || uploaded.pixelFormat != format.pixelFormat
 			|| uploaded.mipmapLevelCount != mipLevels)
 		uploaded = context->makeTexture(width, height, format.pixelFormat,
 			MTLTextureUsageShaderRead, mipmapped);
-	struct Updates {
-		MetalContext *context;
-		explicit Updates(MetalContext *context) : context(context) { context->beginTextureUpdates(); }
-		~Updates() { context->endTextureUpdates(); }
-	} updates(context);
+	metal_upload::Scope updates(context);
 	if (mipmapped && mipmapsIncluded)
 	{
 		const int levels = uploaded.mipmapLevelCount;
@@ -81,6 +98,51 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *data, bool mipma
 		if (mipmapped) context->generateMipmaps(uploaded);
 	}
 	image = uploaded;
+	sharedPreloadImage = false;
+}
+
+CustomTextureCapabilities MetalTexture::customCapabilities()
+{
+	return metal_custom::capabilities(MetalContext::Instance()->device());
+}
+
+bool MetalTexture::uploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped)
+{
+	MetalContext *context = MetalContext::Instance();
+	id<MTLTexture> uploaded = metal_custom::newTexture(context->device(), texture, mipmapped);
+	if (!uploaded) return false;
+	// Always replace the image. Prepared resources may be shared and previous
+	// commands retain the old image until their GPU feedback has completed.
+	uploadPrepared(context,uploaded,texture,mipmapped);
+	image = uploaded;
+	sharedPreloadImage = false;
+	renderTargetSerial = aliasSerial = 0;
+	return true;
+}
+
+GpuPreloadedTexture::Ptr MetalTexture::preload(const PreparedCustomTexture& texture, bool& deferred)
+{
+	MetalContext *context=MetalContext::Instance();
+	auto prepared=metal_preload::allocate(context->device(),texture,metal_preload::deviceBudget(context->device()));
+	deferred=prepared.deferred;
+	if (!prepared.image) return nullptr;
+	uploadPrepared(context,prepared.image,texture,true,true);
+	return std::make_shared<MetalPreloadedTexture>(prepared.image);
+}
+
+bool MetalTexture::preloadUsable(const GpuPreloadedTexture::Ptr& texture)
+{
+	const auto prepared = std::dynamic_pointer_cast<MetalPreloadedTexture>(texture);
+	return prepared && metal_preload::usable(prepared->image,MetalContext::Instance()->queue());
+}
+bool MetalTexture::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
+{
+	if(!preloadUsable(texture))return false;
+	const auto prepared=std::static_pointer_cast<MetalPreloadedTexture>(texture);
+	image = prepared->image;
+	sharedPreloadImage = true;
+	renderTargetSerial = aliasSerial = 0;
+	return true;
 }
 
 bool MetalTexture::Delete()
@@ -88,12 +150,14 @@ bool MetalTexture::Delete()
 	if (!BaseTextureCacheData::Delete())
 		return false;
 	image = nil;
+	sharedPreloadImage = false;
 	renderTargetSerial = aliasSerial = 0;
 	return true;
 }
 
 void MetalTextureCache::publishRenderTarget(MetalTexture& texture, FB_W_CTRL_type control, u32 stride, const Rect& clip)
 {
+	texture.sharedPreloadImage = false;
 	texture.renderTargetSerial = texture.aliasSerial = 0;
 	renderTargets.erase(texture.startAddress);
 	// Reinterpretation is exact for a complete linear 16-bit image. Partial

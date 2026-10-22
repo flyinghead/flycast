@@ -70,7 +70,7 @@ void MetalContext::validateSyntheticOverlays()
 		lcd.fill(i & 1);
 		push_vmu_screen(0, 0, lcd.data());
 		pending.push_back(render());
-		auto texture = impl->slots[impl->currentSlot].vmu[0];
+		auto texture = (impl->composition ? impl->compositions[impl->compositionSlot].resources : impl->slots[impl->currentSlot].resources).vmu[0];
 		if (i < 3) cached[impl->currentSlot] = texture;
 		else if (cached[impl->currentSlot] != texture) throw RendererException("Metal VMU texture was reallocated");
 	}
@@ -88,7 +88,7 @@ void MetalContext::validateSyntheticOverlays()
 	resetVmuScreens();
 	for (int i = 0; i < 3; ++i) {
 		pixel(render(), 16, 16, {0, 0, 0});
-		for (auto texture : impl->slots[impl->currentSlot].vmu)
+		for (auto texture : (impl->composition ? impl->compositions[impl->compositionSlot].resources : impl->slots[impl->currentSlot].resources).vmu)
 			if (texture) throw RendererException("Inactive VMU texture was retained");
 	}
 	pass("VMU disconnect releases completed slot textures");
@@ -154,7 +154,8 @@ void MetalContext::validateSyntheticOverlays()
 		vmu_lcd_status[i] = status[i]; vmuLastChanged[i] = generations[i];
 		memcpy(vmu_lcd_data[i], screens[i].data(), sizeof(vmu_lcd_data[i]));
 	}
-	for (auto& slot : impl->slots) { slot.vmu.fill(nil); slot.vmuChanged.fill(~0ull); }
+	for (auto& slot : impl->slots) { slot.resources.vmu.fill(nil); slot.resources.vmuChanged.fill(~0ull); }
+	for (auto& slot : impl->compositions) { slot.resources.vmu.fill(nil); slot.resources.vmuChanged.fill(~0ull); }
 	config::FloatVMUs = oldFloat; config::Rotate90 = oldRotate; config::CrosshairSize = oldSize; config::ScreenStretching = oldStretch;
 	settings.display = oldDisplay; settings.platform = oldPlatform; settings.input = oldInput;
 }

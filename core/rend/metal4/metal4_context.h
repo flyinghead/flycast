@@ -6,6 +6,7 @@
 #include "wsi/context.h"
 #include <memory>
 #include <utility>
+namespace metal_upload { class State; }
 #include <os/availability.h>
 
 #ifdef __OBJC__
@@ -19,6 +20,10 @@
 #define RGBColor MacOSRGBColor
 #import <Metal/Metal.h>
 #include "metal4_commands.h"
+#include "metal4_upload_state.h"
+#ifdef FLYCAST_METAL_STANDALONE
+#include "metal4_pipeline_cache.h"
+#endif
 #import <QuartzCore/CAMetalLayer.h>
 #include <dispatch/dispatch.h>
 struct ImDrawData;
@@ -48,16 +53,34 @@ public:
 	void drawOverlays();
 #ifdef METAL_RENDERER_TESTS
 	void requestVSyncValidation();
+	u64 testTextureUploadCount() const { return validationTextureUploadCount; }
 #endif
 
 #ifdef __OBJC__
 	id<MTLDevice> device() const;
+#ifdef FLYCAST_METAL_STANDALONE
+	// Headless native validation supplies only its CA surface/queue adapter.
+	// All GPU initialization and renderer-facing methods are shared below.
+	static MetalContext *CreateOffscreenForTesting(FCMetal4Queue *queue,CAMetalLayer *layer);
+	void setOffscreenQueueForTesting(FCMetal4Queue *queue);
+	void setOffscreenSizeForTesting(int width,int height);
+	MetalPipelineCache::Statistics pipelineStatisticsForTesting(bool finish=false);
+	void drainMaterialCompilerForTesting();
+	void validateDeferredPresentationForTesting();
+#endif
 	FCMetal4Queue * queue() const;
+#ifdef METAL_RENDERER_TESTS
+	dispatch_semaphore_t testTextureUploadSlot(size_t index) const;
+	dispatch_semaphore_t testPresentationSlot(size_t index) const;
+#endif
 	// Include independently encoded work in waitIdle's completion tracking.
 	void submitCommandBuffer(FCMetal4Commands * command);
 	id<MTLLibrary> library() const;
 	void beginTextureUpdates();
 	void endTextureUpdates(bool deferForRender = false);
+	void cancelTextureUpdates() noexcept;
+	std::shared_ptr<metal_upload::State> textureUploadState() const;
+	bool consumeTextureUploadFailure();
 	void flushTextureUpdates();
 	static constexpr size_t RenderBatchSlots = 3;
 	static constexpr size_t PresentationSlots = 3;
@@ -80,15 +103,20 @@ public:
 		void commit(bool discardRasterDepth = false);
 	private:
 		friend class MetalContext;
-		RenderCommands(FCMetal4Commands * command, dispatch_group_t submissions, dispatch_semaphore_t uploadAvailable,
-			std::function<void()> canceledBatch) noexcept;
+#ifdef FLYCAST_METAL_STANDALONE
+		friend struct MetalRenderCommandsTest;
+#endif
+		RenderCommands(FCMetal4Commands * command, dispatch_group_t submissions,
+			std::function<void()> canceledBatch,std::shared_ptr<metal_upload::State> uploadState,
+			metal_upload::FailureFlag uploadFailure) noexcept;
 		FCMetal4Commands * command;
 		dispatch_group_t submissions;
 		FCMetal4RenderEncoder * rasterEncoder = nil;
 		id<MTLTexture> rasterColor = nil, rasterDepth = nil;
 		bool deferredDepthStore = false;
-		dispatch_semaphore_t uploadAvailable;
 		std::function<void()> canceledBatch;
+		std::shared_ptr<metal_upload::State> uploadState;
+		metal_upload::FailureFlag uploadFailure;
 		std::array<dispatch_semaphore_t, RenderBatchSlots> renderAvailable{};
 		size_t renderCount = 0;
 		u64 timingSubmission = 0;
@@ -100,12 +128,15 @@ public:
 	// Caller must also exclude its current encoder's texture readers.
 	bool canReuseTextureWrites(id<MTLTexture> texture) const;
 	void uploadTextureLevel(id<MTLTexture> texture, NSUInteger level,
-		const void *data, NSUInteger bytesPerRow);
+		const void *data, NSUInteger bytesPerRow, NSUInteger blockRows = 0);
 	void generateMipmaps(id<MTLTexture> texture);
 	FCMetal4Commands * beginFrame();
 	std::pair<id<MTLBuffer>, id<MTLBuffer>> uploadUIBuffers(const ImDrawData& data);
 	FCMetal4RenderEncoder * beginPresentation();
-	// Pixel dimensions of the acquired drawable; zero when none is acquired.
+	bool recordingPresentation() const;
+	void registerPresentationPipeline(id<MTLRenderPipelineState> pipeline, id<MTLRenderPipelineState> opaque);
+	void requirePresentationComposition();
+	// Pixel dimensions of the leased presentation surface or acquired drawable.
 	std::pair<int, int> presentationSize() const;
 	void setLastFrame(id<MTLTexture> texture, float aspectRatio, double videoTime = 0);
 	id<MTLTexture> lastFrame() const;
@@ -115,7 +146,8 @@ public:
 		bool mipmapped = false, bool cpuVisible = false);
 	id<MTLRenderPipelineState> makePipeline(NSString *vertex, NSString *fragment,
 		MTLVertexDescriptor *layout, MTLPixelFormat color, bool depth,
-		MTL4RenderPipelineColorAttachmentDescriptor *blend = nil);
+		MTL4RenderPipelineColorAttachmentDescriptor *blend = nil,
+		MTL4RenderPipelineColorAttachmentDescriptor *secondaryBlend = nil);
 	id<MTLComputePipelineState> makeComputePipeline(NSString *function);
 	struct MaterialConstants {
 		u32 flags, tsp0, tsp1;
@@ -174,7 +206,14 @@ private:
 #endif
 #endif
 #endif
-	MetalContext(void *window, void *display);
+	MetalContext(void *window, void *display
+#if defined(FLYCAST_METAL_STANDALONE) && defined(__OBJC__)
+		,FCMetal4Queue *testQueue=nullptr,CAMetalLayer *testLayer=nullptr
+#endif
+	);
 	struct Impl;
 	std::unique_ptr<Impl> impl;
+#ifdef METAL_RENDERER_TESTS
+	u64 validationTextureUploadCount = 0;
+#endif
 };

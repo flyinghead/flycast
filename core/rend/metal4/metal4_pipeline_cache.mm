@@ -6,9 +6,13 @@
 #include <CommonCrypto/CommonDigest.h>
 #include <algorithm>
 #include <atomic>
+#include <array>
 #include <chrono>
 #include <cerrno>
 #include <cstring>
+#include <unordered_map>
+#include <mutex>
+#include <vector>
 #include <fcntl.h>
 #include <sys/stdio.h>
 #include <sys/file.h>
@@ -20,6 +24,10 @@ constexpr off_t MaxArchiveBytes = 64 * 1024 * 1024;
 constexpr off_t MaxCacheBytes = 256 * 1024 * 1024;
 constexpr size_t MaxCacheFiles = 16, MaxPendingRecords = 64, MaxNewEntries = 4096;
 constexpr const char *CachePrefix = "metal4_pipeline_";
+#ifdef FLYCAST_METAL_STANDALONE
+std::atomic<bool> identityOptimizationsForTesting{true};
+std::atomic<bool> cacheTimingForTesting{false};
+#endif
 
 struct PipelineTiming
 {
@@ -66,6 +74,33 @@ bool archiveFile(NSURL *url)
 		&& info.st_size > 0 && info.st_size <= MaxArchiveBytes;
 }
 
+// Verify bytes before handing an optional disk cache to the driver. A malformed
+// MTL4 archive can cause a native fault rather than an Objective-C exception.
+// Digest-bearing filenames avoid a second sidecar transaction or payload copy.
+NSString *fileDigest(NSURL *url)
+{
+	const int fd=open(url.fileSystemRepresentation,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+	if(fd<0)return nil;
+	struct Close {int fd;~Close(){close(fd);}} guard{fd};
+	struct stat before{},after{};
+	if(fstat(fd,&before)!=0 || !S_ISREG(before.st_mode) || before.st_size<=0 || before.st_size>MaxArchiveBytes)return nil;
+	CC_SHA256_CTX hash;CC_SHA256_Init(&hash);
+	std::array<unsigned char,64*1024> bytes;off_t total=0;
+	for(;;) {
+		const ssize_t count=read(fd,bytes.data(),bytes.size());
+		if(count<0) {if(errno==EINTR)continue;return nil;}
+		if(count==0)break;
+		if(count>before.st_size-total)return nil;
+		CC_SHA256_Update(&hash,bytes.data(),CC_LONG(count));total+=count;
+	}
+	if(total!=before.st_size || fstat(fd,&after)!=0 || before.st_size!=after.st_size
+		|| before.st_mtimespec.tv_sec!=after.st_mtimespec.tv_sec || before.st_mtimespec.tv_nsec!=after.st_mtimespec.tv_nsec
+		|| before.st_ctimespec.tv_sec!=after.st_ctimespec.tv_sec || before.st_ctimespec.tv_nsec!=after.st_ctimespec.tv_nsec)return nil;
+	unsigned char digest[CC_SHA256_DIGEST_LENGTH];CC_SHA256_Final(digest,&hash);
+	char hex[65];for(size_t i=0;i<sizeof(digest);++i){hex[i*2]="0123456789abcdef"[digest[i]>>4];hex[i*2+1]="0123456789abcdef"[digest[i]&15];}hex[64]=0;
+	return [NSString stringWithUTF8String:hex];
+}
+
 const char *errorText(NSError *error)
 {
 	return error ? error.localizedDescription.UTF8String : "operation failed";
@@ -76,12 +111,23 @@ const char *errorText(NSError *error)
 NSString *archiveIdentity(NSString *name)
 {
 	const NSUInteger prefix = strlen(CachePrefix);
-	if (![name hasPrefix:@"metal4_pipeline_"] || name.length != prefix + 64 + 1 + 36 + 6
+	const NSUInteger oldLength=prefix+64+1+36+6;
+	const bool checked=name.length==oldLength+65;
+	if (![name hasPrefix:@"metal4_pipeline_"] || (name.length!=oldLength && !checked)
 			|| ![name hasSuffix:@".cache"] || [name characterAtIndex:prefix + 64] != '-') return nil;
 	NSCharacterSet *invalid = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdef"] invertedSet];
 	if ([[name substringWithRange:NSMakeRange(prefix, 64)] rangeOfCharacterFromSet:invalid].location != NSNotFound
 			|| ![[NSUUID alloc] initWithUUIDString:[name substringWithRange:NSMakeRange(prefix + 65, 36)]]) return nil;
+	if(checked && ([name characterAtIndex:prefix+101]!='-'
+		|| [[name substringWithRange:NSMakeRange(prefix+102,64)] rangeOfCharacterFromSet:invalid].location!=NSNotFound))return nil;
 	return [name substringToIndex:prefix + 64];
+}
+
+NSString *archiveDigest(NSString *name)
+{
+	const NSUInteger prefix=strlen(CachePrefix);
+	return archiveIdentity(name) && name.length==prefix+64+1+36+1+64+6
+		? [name substringWithRange:NSMakeRange(prefix+102,64)] : nil;
 }
 
 NSArray<NSURL *> *cacheFiles(NSURL *directory)
@@ -125,8 +171,17 @@ struct MetalPipelineCache::Impl
 	NSURL *url;
 	int lock = -1;
 	std::atomic<bool> writable{false};
+	bool accepting = true; // Protected by recordsMutex through queue admission.
+	std::mutex recordsMutex,hintsMutex;
+	// Empty segment name means queued/captured but not serialized yet.
+	std::unordered_map<std::string,std::string> records;
+	std::vector<std::string> unsavedRecords; // Writer queue only.
+	std::array<std::unordered_map<std::string,NSUInteger>,3> hints;
 	std::atomic<size_t> pending{0};
 	std::atomic<u64> hits{0}, misses{0};
+	std::atomic<u64> probes{0},hintedHits{0},queued{0},recordings{0},duplicates{0},savedSegments{0};
+	std::atomic<u64> descriptorCopies{0};
+	std::atomic<bool> reported{false};
 	std::atomic<size_t> newEntries{0};
 	bool timing = false;
 	// Lookup/creation categories: foreground render, background material,
@@ -134,12 +189,48 @@ struct MetalPipelineCache::Impl
 	std::array<PipelineTiming, 3> lookupTimings, creationTimings;
 	std::array<PipelineTiming, 2> recordTimings;
 	PipelineTiming serializeTiming;
+	PipelineTiming publicationTiming;
+#ifdef FLYCAST_METAL_STANDALONE
+	bool optimizeIdentitiesForTesting=true;
+#endif
+	bool identitiesEnabled() const {
+#ifdef FLYCAST_METAL_STANDALONE
+		return optimizeIdentitiesForTesting;
+#else
+		return true;
+#endif
+	}
 	bool dirty = false, saveScheduled = false;
+	std::array<NSUInteger,MaxCacheFiles> lookupOrder(size_t category,const std::string& identity,NSUInteger count,NSUInteger& hint)
+	{
+		hint=NSNotFound;
+		try { if(identitiesEnabled() && !identity.empty()) {
+			std::lock_guard<std::mutex> lock(hintsMutex);
+			auto found=hints[category].find(identity);
+			if(found!=hints[category].end() && found->second<count)hint=found->second;
+		} } catch(...) { hint=NSNotFound; }
+		std::array<NSUInteger,MaxCacheFiles> order{};size_t used=0;
+		if(hint!=NSNotFound)order[used++]=hint;
+		for(NSUInteger i=0;i<count;++i)if(i!=hint)order[used++]=i;
+		return order;
+	}
+	void remember(size_t category,const std::string& identity,NSUInteger index) noexcept
+	{
+		if(!identitiesEnabled() || identity.empty())return;
+		try {
+		std::lock_guard<std::mutex> lock(hintsMutex);
+		auto& map=hints[category];
+		if(map.size()<MaxNewEntries || map.find(identity)!=map.end())map[identity]=index;
+		} catch(...) { /* A lookup hint is optional, including under memory pressure. */ }
+	}
 	~Impl() { if (lock >= 0) close(lock); }
 };
 
 MetalPipelineCache::MetalPipelineCache() : impl(std::make_unique<Impl>()) {}
 MetalPipelineCache::~MetalPipelineCache() = default;
+#ifdef FLYCAST_METAL_STANDALONE
+void MetalPipelineCache::setIdentityOptimizationsForTesting(bool enabled,bool timing){identityOptimizationsForTesting=enabled;cacheTimingForTesting=timing;}
+#endif
 
 std::shared_ptr<MetalPipelineCache> MetalPipelineCache::create(id<MTL4Compiler> foreground, id<MTL4Compiler> material,
 	const char *source, size_t sourceSize, MTLCompileOptions *options)
@@ -156,7 +247,7 @@ std::shared_ptr<MetalPipelineCache> MetalPipelineCache::create(id<MTL4Compiler> 
 					INFO_LOG(RENDERER, "Metal pipeline archive disabled for shader validation");
 					return nullptr;
 				}
-			NSString *identity = [NSString stringWithFormat:@"Flycast Metal4 archive v1; arm64; MSL %lu; math %ld functions %ld; invariant %d optimization %ld; GPU %llu %@; %@;",
+			NSString *identity = [NSString stringWithFormat:@"Flycast Metal4 archive v2; checked segments; arm64; MSL %lu; math %ld functions %ld; invariant %d optimization %ld; GPU %llu %@; %@;",
 				(unsigned long)options.languageVersion, (long)options.mathMode, (long)options.mathFloatingPointFunctions,
 				options.preserveInvariance, (long)options.optimizationLevel,
 				(unsigned long long)device.registryID, device.name, NSProcessInfo.processInfo.operatingSystemVersionString];
@@ -189,11 +280,17 @@ std::shared_ptr<MetalPipelineCache> MetalPipelineCache::create(id<MTL4Compiler> 
 			}
 			auto cache = std::shared_ptr<MetalPipelineCache>(new MetalPipelineCache());
 			auto& state = *cache->impl;
+#ifdef FLYCAST_METAL_STANDALONE
+			state.optimizeIdentitiesForTesting=identityOptimizationsForTesting.load();
+#endif
 			state.device = device;
 			state.foregroundCompiler = foreground;
 			state.materialCompiler = material;
 			state.url = url;
 			state.timing = config::loadBool("log", "MetalFrameTiming", false);
+#ifdef FLYCAST_METAL_STANDALONE
+			state.timing |= cacheTimingForTesting.load();
+#endif
 			state.writerQueue = dispatch_queue_create("org.flycast.metal.archive",
 				dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
 			if (!state.writerQueue) return nullptr;
@@ -217,6 +314,17 @@ std::shared_ptr<MetalPipelineCache> MetalPipelineCache::create(id<MTL4Compiler> 
 						|| info.st_size <= 0 || info.st_size > MaxArchiveBytes
 						|| info.st_size > MaxCacheBytes - loadedBytes) continue;
 				if (foregroundArchives.count >= MaxCacheFiles) break;
+				NSString *expected=archiveDigest(file.lastPathComponent);
+				NSString *actual=expected ? fileDigest(file) : nil;
+				if(!expected || ![expected isEqualToString:actual]) {
+					WARN_LOG(RENDERER,"Metal pipeline cache ignored: missing or mismatched archive digest");
+					// Only remove a known-invalid segment while owning its identity
+					// lock. A transient read failure (nil digest) merely skips it.
+					if(state.writable.load() && (!expected || actual))unlink(file.fileSystemRepresentation);
+					continue;
+				}
+				// Immutable segment: verify once, then open separate driver lookup
+				// instances without reading/hash-checking the same payload twice.
 				id<MTL4Archive> archive = openArchive(device, file);
 				if (!archive) continue;
 				[foregroundArchives addObject:archive];
@@ -255,16 +363,25 @@ std::shared_ptr<MetalPipelineCache> MetalPipelineCache::create(id<MTL4Compiler> 
 }
 
 id<MTLRenderPipelineState> MetalPipelineCache::makeRenderPipeline(MTL4RenderPipelineDescriptor *descriptor,
-	NSError **error, bool material)
+	NSError **error, bool material, const std::string& identity)
 {
-	for (id<MTL4Archive> archive in (material ? impl->material : impl->foreground)) {
+	const auto archives=material ? impl->material : impl->foreground;
+	const size_t category=material ? 1 : 0;NSUInteger hint;
+	const auto order=impl->lookupOrder(category,identity,archives.count,hint);
+	for (NSUInteger slot=0;slot<archives.count;++slot) {
+		const NSUInteger index=order[slot];id<MTL4Archive> archive=archives[index];
+		++impl->probes;
 		PipelineTimer timer(impl->timing ? &impl->lookupTimings[material ? 1 : 0] : nullptr);
 		id<MTLRenderPipelineState> pipeline = nil;
 		NSError *lookupError = nil;
 		@try {
 			pipeline = [archive newRenderPipelineStateWithDescriptor:descriptor error:&lookupError];
 		} @catch (NSException *) { /* Optional archive lookup; compile normally below. */ }
-		if (pipeline) { ++impl->hits; if (error) *error = nil; return pipeline; }
+		if (pipeline) {
+			++impl->hits;if(index==hint)++impl->hintedHits;
+			impl->remember(category,identity,index);
+			if (error) *error = nil; return pipeline;
+		}
 	}
 	++impl->misses;
 	// A damaged or missing optional archive never changes shader correctness.
@@ -274,21 +391,28 @@ id<MTLRenderPipelineState> MetalPipelineCache::makeRenderPipeline(MTL4RenderPipe
 		id<MTL4Compiler> compiler = material ? impl->materialCompiler : impl->foregroundCompiler;
 		pipeline = [compiler newRenderPipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:error];
 	}
-	if (pipeline) record(descriptor, false);
+	if (pipeline) record(descriptor, false, identity);
 	return pipeline;
 }
 
 id<MTLComputePipelineState> MetalPipelineCache::makeComputePipeline(MTL4ComputePipelineDescriptor *descriptor,
-	NSError **error)
+	NSError **error, const std::string& identity)
 {
-	for (id<MTL4Archive> archive in impl->foreground) {
+	NSUInteger hint;const auto order=impl->lookupOrder(2,identity,impl->foreground.count,hint);
+	for (NSUInteger slot=0;slot<impl->foreground.count;++slot) {
+		const NSUInteger index=order[slot];id<MTL4Archive> archive=impl->foreground[index];
+		++impl->probes;
 		PipelineTimer timer(impl->timing ? &impl->lookupTimings[2] : nullptr);
 		id<MTLComputePipelineState> pipeline = nil;
 		NSError *lookupError = nil;
 		@try {
 			pipeline = [archive newComputePipelineStateWithDescriptor:descriptor error:&lookupError];
 		} @catch (NSException *) { /* Optional archive lookup; compile normally below. */ }
-		if (pipeline) { ++impl->hits; if (error) *error = nil; return pipeline; }
+		if (pipeline) {
+			++impl->hits;if(index==hint)++impl->hintedHits;
+			impl->remember(2,identity,index);
+			if (error) *error = nil; return pipeline;
+		}
 	}
 	++impl->misses;
 	id<MTLComputePipelineState> pipeline = nil;
@@ -296,33 +420,53 @@ id<MTLComputePipelineState> MetalPipelineCache::makeComputePipeline(MTL4ComputeP
 		PipelineTimer timer(impl->timing ? &impl->creationTimings[2] : nullptr);
 		pipeline = [impl->foregroundCompiler newComputePipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:error];
 	}
-	if (pipeline) record(descriptor, true);
+	if (pipeline) record(descriptor, true, identity);
 	return pipeline;
 }
 
-void MetalPipelineCache::record(id descriptor, bool compute) noexcept
+void MetalPipelineCache::record(id descriptor, bool compute, const std::string& identity) noexcept
 {
 	if (!impl->writable.load() || impl->newEntries.load() >= MaxNewEntries) return;
-	if (impl->pending.fetch_add(1) >= MaxPendingRecords) { --impl->pending; return; }
+	bool admitted=false,counted=false;
 	try {
 		@try {
-			id copy = [descriptor copy];
-			if (!copy) { --impl->pending; return; }
 			auto cache = shared_from_this();
+			const std::string key=impl->identitiesEnabled()?identity:std::string{};
+			std::lock_guard<std::mutex> lock(impl->recordsMutex);
+			if(!impl->accepting || !impl->writable.load()) return;
+			if(!key.empty()) {
+				if(impl->records.find(key)!=impl->records.end()) {++impl->duplicates;return;}
+				if(impl->records.size()>=MaxNewEntries) return;
+			}
+			if(impl->pending.fetch_add(1)>=MaxPendingRecords) {--impl->pending;return;}
+			counted=true;
+			// Reject duplicates before copying the entire descriptor tree.
+			// Keep copying and dispatch under the admission lock, so finish
+			// cannot flush between reservation and publication to the queue.
+			++impl->descriptorCopies;
+			id copy = [descriptor copy];
+			if(!copy) {--impl->pending;return;}
+			if(!key.empty()) {
+				impl->records.emplace(key,std::string{});admitted=true;
+			}
+			// Queue admission and finish's barrier are ordered by recordsMutex.
 			dispatch_async(impl->writerQueue, ^{
-				@autoreleasepool { cache->recordOnWriter(copy, compute); }
+				@autoreleasepool { cache->recordOnWriter(copy, compute, key); }
 			});
+			++impl->queued;
 		} @catch (NSException *exception) {
-			--impl->pending;
+			if(counted)--impl->pending;
+			if(admitted) {std::lock_guard<std::mutex> lock(impl->recordsMutex);impl->records.erase(identity);}
 			WARN_LOG(RENDERER, "Metal pipeline cache record skipped: %s", exception.reason.UTF8String);
 		}
 	} catch (const std::exception& error) {
-		--impl->pending;
+		if(counted)--impl->pending;
+		if(admitted) {std::lock_guard<std::mutex> lock(impl->recordsMutex);impl->records.erase(identity);}
 		WARN_LOG(RENDERER, "Metal pipeline cache record skipped: %s", error.what());
 	}
 }
 
-void MetalPipelineCache::recordOnWriter(id descriptor, bool compute) noexcept
+void MetalPipelineCache::recordOnWriter(id descriptor, bool compute, const std::string& identity) noexcept
 {
 	--impl->pending;
 	if (!impl->writable.load() || impl->newEntries.load() >= MaxNewEntries) return;
@@ -333,6 +477,7 @@ void MetalPipelineCache::recordOnWriter(id descriptor, bool compute) noexcept
 			id pipeline = nil;
 			{
 				PipelineTimer timer(state.timing ? &state.recordTimings[compute ? 1 : 0] : nullptr);
+				++state.recordings;
 				if (compute) pipeline = [state.writer newComputePipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:&error];
 				else pipeline = [state.writer newRenderPipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:&error];
 			}
@@ -341,6 +486,7 @@ void MetalPipelineCache::recordOnWriter(id descriptor, bool compute) noexcept
 				state.writable.store(false); return;
 			}
 			++state.newEntries;
+			if(!identity.empty())state.unsavedRecords.push_back(identity);
 			state.dirty = true;
 			if (!state.saveScheduled) {
 				state.saveScheduled = true;
@@ -368,11 +514,12 @@ void MetalPipelineCache::recordOnWriter(id descriptor, bool compute) noexcept
 void MetalPipelineCache::save() noexcept
 {
 	if (!impl->dirty || !impl->writable.load()) return;
+	PipelineTimer publication(impl->timing?&impl->publicationTiming:nullptr);
 	NSURL *temporary = nil;
 	try {
 		@try {
-			NSURL *segment = [NSURL fileURLWithPath:[impl->url.path stringByAppendingFormat:@"-%@.cache", NSUUID.UUID.UUIDString]];
-			temporary = [NSURL fileURLWithPath:[segment.path stringByAppendingFormat:@".tmp-%@", NSUUID.UUID.UUIDString]];
+			NSString *base=[impl->url.path stringByAppendingFormat:@"-%@",NSUUID.UUID.UUIDString];
+			temporary = [NSURL fileURLWithPath:[base stringByAppendingFormat:@".cache.tmp-%@", NSUUID.UUID.UUIDString]];
 			NSError *error = nil;
 			BOOL serialized = NO;
 			{
@@ -382,11 +529,23 @@ void MetalPipelineCache::save() noexcept
 			const char *reason = errorText(error);
 			bool saved = serialized && archiveFile(temporary);
 			if (serialized && !saved) reason = "archive empty, invalid or larger than 64 MiB";
+			NSString *digest=saved ? fileDigest(temporary) : nil;
+			if(saved && !digest){saved=false;reason="cannot hash serialized archive";}
+			NSURL *segment=digest ? [NSURL fileURLWithPath:[base stringByAppendingFormat:@"-%@.cache",digest]] : nil;
 			if (saved && renamex_np(temporary.fileSystemRepresentation, segment.fileSystemRepresentation, RENAME_EXCL) != 0) {
 				reason = strerror(errno); saved = false;
 			}
 			if (saved) {
 				impl->dirty = false;
+				++impl->savedSegments;
+				{
+					std::lock_guard<std::mutex> lock(impl->recordsMutex);
+					for(const auto& key:impl->unsavedRecords) {
+						auto found=impl->records.find(key);
+						if(found!=impl->records.end())found->second=segment.lastPathComponent.UTF8String;
+					}
+					impl->unsavedRecords.clear();
+				}
 				NOTICE_LOG(RENDERER, "Metal 4 pipeline cache segment saved: %s", segment.fileSystemRepresentation);
 			} else {
 				// The serializer may have flushed; stop recording rather than
@@ -436,6 +595,13 @@ void MetalPipelineCache::prune() noexcept
 				if ([identity isEqualToString:impl->url.lastPathComponent]) {
 					// writable implies we already own this identity's lock.
 					removed = unlink(file.fileSystemRepresentation) == 0;
+					if(removed) {
+						std::lock_guard<std::mutex> lock(impl->recordsMutex);
+						const std::string segment=name.UTF8String;
+						for(auto i=impl->records.begin();i!=impl->records.end();) {
+							if(i->second==segment)i=impl->records.erase(i);else ++i;
+						}
+					}
 				} else {
 					NSURL *lockURL = [impl->url.URLByDeletingLastPathComponent URLByAppendingPathComponent:[identity stringByAppendingString:@".lock"]];
 					int lock = open(lockURL.fileSystemRepresentation, O_CREAT | O_RDWR | O_CLOEXEC | O_NOFOLLOW, 0600);
@@ -462,6 +628,10 @@ void MetalPipelineCache::prune() noexcept
 void MetalPipelineCache::finish() noexcept
 {
 	@autoreleasepool {
+		{
+			std::lock_guard<std::mutex> lock(impl->recordsMutex);
+			impl->accepting=false;
+		}
 		dispatch_sync(impl->writerQueue, ^{
 			@autoreleasepool {
 				save();
@@ -472,6 +642,7 @@ void MetalPipelineCache::finish() noexcept
 				if (impl->lock >= 0) { close(impl->lock); impl->lock = -1; }
 			}
 		});
+		if(impl->reported.exchange(true))return;
 		if (impl->timing)
 			NOTICE_LOG(RENDERER, "Metal pipeline cache: %llu archive hits, %llu archive misses",
 				(unsigned long long)impl->hits.load(), (unsigned long long)impl->misses.load());
@@ -479,6 +650,9 @@ void MetalPipelineCache::finish() noexcept
 			INFO_LOG(RENDERER, "Metal pipeline cache: %llu archive hits, %llu archive misses",
 				(unsigned long long)impl->hits.load(), (unsigned long long)impl->misses.load());
 		if (impl->timing) {
+			NOTICE_LOG(RENDERER,"Metal pipeline cache work: %llu archive probes, %llu hinted hits, %llu queued, %llu writer calls, %llu duplicates suppressed, %llu descriptor copies",
+				(unsigned long long)impl->probes.load(),(unsigned long long)impl->hintedHits.load(),(unsigned long long)impl->queued.load(),
+				(unsigned long long)impl->recordings.load(),(unsigned long long)impl->duplicates.load(),(unsigned long long)impl->descriptorCopies.load());
 			// CPU elapsed intervals can overlap on different queues; their sum
 			// is not frame time or GPU time. Creation may hit Metal's system cache.
 			logTiming("foreground render lookup", impl->lookupTimings[0]);
@@ -490,7 +664,20 @@ void MetalPipelineCache::finish() noexcept
 			logTiming("writer render addition", impl->recordTimings[0]);
 			logTiming("writer compute addition", impl->recordTimings[1]);
 			logTiming("archive serialization", impl->serializeTiming);
+			logTiming("archive publication", impl->publicationTiming);
 		}
 	}
+}
+MetalPipelineCache::Statistics MetalPipelineCache::statistics() const
+{
+	std::lock_guard<std::mutex> lock(impl->recordsMutex);
+	Statistics result{impl->hits.load(),impl->misses.load(),impl->probes.load(),impl->hintedHits.load(),impl->queued.load(),
+		impl->recordings.load(),impl->duplicates.load(),impl->savedSegments.load(),impl->pending.load(),impl->writable.load(),impl->accepting};
+	const auto snapshot=[](const PipelineTiming& t){return Statistics::Timing{t.calls.load(),t.nanoseconds.load(),t.maximum.load()};};
+	for(size_t i=0;i<3;++i){result.lookup[i]=snapshot(impl->lookupTimings[i]);result.creation[i]=snapshot(impl->creationTimings[i]);}
+	for(size_t i=0;i<2;++i)result.writer[i]=snapshot(impl->recordTimings[i]);
+	result.serialization=snapshot(impl->serializeTiming);result.publication=snapshot(impl->publicationTiming);result.timing=impl->timing;
+	result.descriptorCopies=impl->descriptorCopies.load();
+	return result;
 }
 #endif // Apple Silicon Metal 4 slice

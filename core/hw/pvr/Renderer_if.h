@@ -87,7 +87,7 @@ struct Renderer
 	virtual bool supportsGpuTexturePreload() const { return false; }
 
 	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area = 0) { return nullptr; }
-	std::shared_ptr<GpuPreloadedTexture> findGpuPreloadedTexture(
+	virtual std::shared_ptr<GpuPreloadedTexture> findGpuPreloadedTexture(
 			u32 currentHash, u32 oldVqHash, u32 oldHash) const;
 	void processGpuCleanupOperations();
 

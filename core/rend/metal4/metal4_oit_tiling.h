@@ -46,12 +46,20 @@ inline void partition(Tile tile, const std::vector<Tile>& triangles, uint64_t ca
 // Bound per-pixel sorting storage by spatial overlap, not the total number
 // of primitives in a pass. Half-open rectangles include every raster sample
 // of their source triangle, so this can only overestimate the required layers.
-inline uint32_t peakCoverage(const std::vector<Tile>& triangles, uint32_t limit)
-{
-	if (limit == 0) return 0;
+struct CoverageWorkspace {
 	struct Event { uint64_t x, top, bottom; int delta; };
+	struct Node { int64_t maximum = 0, added = 0; };
 	std::vector<Event> events;
 	std::vector<uint64_t> ys;
+	std::vector<Node> tree;
+};
+inline uint32_t peakCoverage(const std::vector<Tile>& triangles, uint32_t limit, CoverageWorkspace *workspace = nullptr)
+{
+	if (limit == 0) return 0;
+	CoverageWorkspace local;
+	auto& work = workspace ? *workspace : local;
+	auto& events = work.events; auto& ys = work.ys; auto& tree = work.tree;
+	events.clear(); ys.clear();
 	events.reserve(triangles.size() * 2); ys.reserve(triangles.size() * 2);
 	for (Tile r : triangles) {
 		if (!r.width || !r.height) continue;
@@ -62,9 +70,8 @@ inline uint32_t peakCoverage(const std::vector<Tile>& triangles, uint32_t limit)
 	}
 	if (events.empty()) return 0;
 	std::sort(ys.begin(),ys.end()); ys.erase(std::unique(ys.begin(),ys.end()),ys.end());
-	std::sort(events.begin(),events.end(),[](const Event& a,const Event& b) { return a.x < b.x; });
-	struct Node { int64_t maximum = 0, added = 0; };
-	std::vector<Node> tree((ys.size()-1)*4);
+	std::sort(events.begin(),events.end(),[](const auto& a,const auto& b) { return a.x < b.x; });
+	tree.assign((ys.size()-1)*4,{});
 	const auto add = [&](auto&& self,size_t node,size_t lo,size_t hi,size_t first,size_t last,int delta) -> void {
 		if (first <= lo && hi <= last) { tree[node].added += delta; tree[node].maximum += delta; return; }
 		const size_t mid = lo + (hi-lo)/2;

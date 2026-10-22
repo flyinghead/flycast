@@ -5,6 +5,15 @@
 #include <limits>
 
 namespace metal {
+// Keep one video field of producer buffering and headroom in the three-image
+// queue for arrival/callback jitter. The display's advance request is added
+// separately by PresentationTimeline. Two fields plus another refresh can fill
+// all slots before the first 60-Hz image is due. Even two fields alone can race
+// the callback when 59.94-Hz contents meet a 60-Hz display.
+inline double presentationBufferDuration(double videoFieldDuration)
+{
+	return videoFieldDuration;
+}
 // Keep a common host-time deadline across submissions. GPU/CPU delays must
 // not be added to every subsequent frame or duplicate presentation.
 class PresentationTimeline {

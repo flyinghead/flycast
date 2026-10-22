@@ -13,11 +13,19 @@ public:
 	bool Force32BitTexture(TextureType type) const override;
 	void UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;
+	bool uploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
+	bool useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture) override;
+	static CustomTextureCapabilities customCapabilities();
+	static GpuPreloadedTexture::Ptr preload(const PreparedCustomTexture& texture, bool& deferred);
+	static bool preloadUsable(const GpuPreloadedTexture::Ptr& texture);
 #ifdef __OBJC__
 	id<MTLTexture> image = nil;
 	// Native RTT contents and format aliases share a generation, not stale VRAM.
 	u64 renderTargetSerial = 0, aliasSerial = 0;
 	FB_W_CTRL_type renderTargetControl{};
+	// A preloaded image is shared by arbitrary cache entries. Never upload
+	// ordinary texture data into it, even after dropping the base-class owner.
+	bool sharedPreloadImage = false;
 #endif
 };
 

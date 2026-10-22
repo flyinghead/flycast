@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <vector>
 
 namespace metal_modifier {
@@ -88,5 +90,45 @@ inline bool appendClipped(const Triangle& triangle, const float *ndc,
 		output.push_back(clipped);
 	}
 	return true;
+}
+
+// Build a remap for the original volume ranges. Materialize triangle storage
+// only when clipping actually changes a triangle; otherwise the caller uploads
+// the original packed float data. A clipped-away triangle still changes the
+// remap even when appendClipped emits no vertices.
+inline bool prepare(const void *source, size_t count, const float *ndc,
+	bool clip, bool nativeDepth, std::vector<Triangle>& output,
+	std::vector<uint32_t>& offsets)
+{
+	output.clear(); offsets.clear(); offsets.reserve(count + 1);
+	const auto *bytes = static_cast<const unsigned char *>(source);
+	if (!clip) {
+		for (size_t i = 0; i <= count; ++i) offsets.push_back(i);
+		return false;
+	}
+	for (size_t i = 0; i < count; ++i) {
+		offsets.push_back(i);
+		Triangle triangle;
+		std::memcpy(triangle.data(), bytes + i * sizeof(Triangle), sizeof(Triangle));
+		if (!appendClipped(triangle, ndc, output, nativeDepth)) continue;
+		// output contains only this first changed triangle's expansion.
+		// Move it after the untouched prefix, including after a reallocation.
+		const size_t added = output.size();
+		output.reserve(std::max(count, i + added));
+		output.resize(i + added);
+		if (added && i) std::memmove(output.data() + i, output.data(), added * sizeof(Triangle));
+		if (i) std::memcpy(output.data(), source, i * sizeof(Triangle));
+		// Once clipping changes the geometry, use the original eager loop for
+		// the remainder. Do not charge every later triangle another mode branch.
+		for (++i; i < count; ++i) {
+			offsets.push_back(output.size());
+			std::memcpy(triangle.data(), bytes + i * sizeof(Triangle), sizeof(Triangle));
+			if (!appendClipped(triangle, ndc, output, nativeDepth)) output.push_back(triangle);
+		}
+		offsets.push_back(output.size());
+		return true;
+	}
+	offsets.push_back(count);
+	return false;
 }
 } // namespace metal_modifier

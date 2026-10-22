@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		custom_texture/CustomTextureTypes.h
 		custom_texture/TextureTranscoder.cpp
 		custom_texture/TextureTranscoder.h
+		custom_texture/GpuTexturePreload.cpp
         osd.cpp
         osd.h
         sorter.cpp

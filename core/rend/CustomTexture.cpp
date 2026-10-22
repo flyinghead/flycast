@@ -708,6 +708,13 @@ CustomTextureCapabilities CustomTexture::getCapabilities() const
 	return capabilities;
 }
 
+bool CustomTexture::hasReplacement(u32 hash) const
+{
+	for (const auto& source : sources)
+		if (source->shouldReplace() && source->isTextureReplaced(hash)) return true;
+	return false;
+}
+
 bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture) const
 {
 	if (findPreloaded(texture->texture_hash, texture->old_vqtexture_hash,
@@ -945,6 +952,13 @@ void CustomTexture::submitGpuPreload(u32 hash, PreparedCustomTexture::Ptr textur
 
 void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
 {
+	processGpuPreloadsWithAdmission([&uploader](u32 hash,const PreparedCustomTexture& texture) {
+		return uploader && uploader(hash,texture) ? GpuPreloadResult::Uploaded : GpuPreloadResult::Failed;
+	});
+}
+
+void CustomTexture::processGpuPreloadsWithAdmission(const GpuTextureAdmission& uploader)
+{
 	constexpr int MaxUploadsPerFrame = 8;
 	for (int i = 0; i < MaxUploadsPerFrame; ++i)
 	{
@@ -957,11 +971,10 @@ void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
 			pendingGpuPreloads.pop_front();
 		}
 		gpuPreloadCondition.notify_one();
-		bool uploaded = false;
+		auto result = GpuPreloadResult::Failed;
 		try
 		{
-			uploaded = pending.second && uploader
-					&& uploader(pending.first, *pending.second);
+			if (pending.second && uploader) result = uploader(pending.first, *pending.second);
 		}
 		catch (const FlycastException& exception)
 		{
@@ -973,10 +986,12 @@ void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
 			WARN_LOG(RENDERER, "GPU custom texture preload %08x allocation failed: %s",
 					pending.first, exception.what());
 		}
-		if (uploaded)
+		if (result == GpuPreloadResult::Uploaded)
 			preloadLoadedSize += pending.second->bytes.size();
-		else
+		else if (result == GpuPreloadResult::Failed)
 			reportError(CustomTextureException::Error::Upload);
+		// OnDemand deliberately keeps no GPU entry or CPU payload cache. A
+		// later texture-cache miss requests the existing source loader normally.
 		preloadLoaded++;
 	}
 }

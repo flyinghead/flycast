@@ -15,6 +15,10 @@
 #import <dispatch/dispatch.h>
 
 @class FCMetal4Queue, FCMetal4RenderEncoder, FCMetal4ComputeEncoder;
+// Allocate new, independent device-owned storage. Import/no-copy/heap resources
+// cannot acquire this proof and always retain conservative queue ordering.
+id<MTLBuffer> FCMetal4CreateBuffer(id<MTLDevice> device,NSUInteger length,MTLResourceOptions options) NS_RETURNS_RETAINED API_AVAILABLE(macos(26.0));
+id<MTLBuffer> FCMetal4CreateBufferWithBytes(id<MTLDevice> device,const void *bytes,NSUInteger length,MTLResourceOptions options) NS_RETURNS_RETAINED API_AVAILABLE(macos(26.0));
 // CPU submission state. This is not the state of a legacy MTLCommandBuffer.
 typedef NS_ENUM(NSUInteger, FCMetal4Status) {
     FCMetal4StatusEncoding, FCMetal4StatusCommitted, FCMetal4StatusCompleted, FCMetal4StatusError
@@ -47,6 +51,23 @@ API_AVAILABLE(macos(26.0))
 - (void)presentDrawable:(id<MTLDrawable>)drawable afterMinimumDuration:(CFTimeInterval)duration;
 - (void)signalEvent:(id<MTLEvent>)event value:(uint64_t)value;
 - (void)waitForEvent:(id<MTLEvent>)event value:(uint64_t)value;
+#ifdef FLYCAST_METAL_STANDALONE
+- (void)setFullSynchronizationForTesting:(BOOL)enabled;
+// Isolate the old per-encoder producer barriers from intra-pass policy.
+- (void)setLegacyEncoderBoundariesForTesting:(BOOL)enabled;
+- (void)setPassDependenciesForTesting:(BOOL)enabled;
+// Benchmark control only: uniquely device-owned resources, no imported aliases.
+- (void)setOwnedResourceBenchmarkForTesting:(BOOL)enabled;
+- (NSDictionary<NSString *, NSNumber *> *)synchronizationStatistics;
+- (NSDictionary<NSString *, NSNumber *> *)submissionEncodingStatistics;
+// Synthetic retirement failures for offscreen lifecycle tests. These do not
+// issue malformed GPU work or deliberately fault the physical device.
+- (void)setFeedbackErrorForTesting:(NSError *)error;
+- (void)setCommitFailureForTesting:(BOOL)enabled;
+- (void)setQueueCommitFailureForTesting:(BOOL)enabled;
+- (void)setPostCommitFailureForTesting:(BOOL)enabled;
+- (void)setEarlyFeedbackForTesting:(BOOL)enabled;
+#endif
 @end
 
 API_AVAILABLE(macos(26.0))
@@ -55,11 +76,21 @@ API_AVAILABLE(macos(26.0))
 @property (readonly, strong) id<MTLDevice> device;
 - (instancetype)initWithDevice:(id<MTLDevice>)device;
 - (FCMetal4Commands *)commandBuffer;
+#ifdef FLYCAST_METAL_STANDALONE
+// Isolated command-pool tests can compare identical work without recycling.
+- (void)setSubmissionRecyclingForTesting:(BOOL)enabled;
+- (void)setResidencyReuseForTesting:(BOOL)enabled;
+- (NSDictionary<NSString *, NSNumber *> *)submissionPoolStatistics;
+#endif
 @end
 
 API_AVAILABLE(macos(26.0))
 @interface FCMetal4RenderEncoder : NSObject
 @property (copy) NSString *label;
+// Opt in only for audited shaders whose memory accesses are entirely through
+// these direct bindings (no GPU pointers/resource IDs inside buffer payloads).
+// Unspecified buffer/texture usages conservatively include writes.
+- (void)setDirectShaderBindings:(BOOL)enabled;
 - (void)endEncoding;
 - (void)setRenderPipelineState:(id<MTLRenderPipelineState>)state;
 - (void)setDepthStencilState:(id<MTLDepthStencilState>)state;
@@ -71,12 +102,16 @@ API_AVAILABLE(macos(26.0))
 - (void)setDepthStoreAction:(MTLStoreAction)action;
 - (void)setStencilStoreAction:(MTLStoreAction)action;
 - (void)setVertexBuffer:(id<MTLBuffer>)buffer offset:(NSUInteger)offset atIndex:(NSUInteger)index;
+- (void)setVertexBuffer:(id<MTLBuffer>)buffer offset:(NSUInteger)offset atIndex:(NSUInteger)index usage:(MTLResourceUsage)usage;
 - (void)setFragmentBuffer:(id<MTLBuffer>)buffer offset:(NSUInteger)offset atIndex:(NSUInteger)index;
+- (void)setFragmentBuffer:(id<MTLBuffer>)buffer offset:(NSUInteger)offset atIndex:(NSUInteger)index usage:(MTLResourceUsage)usage;
 - (void)setVertexBufferOffset:(NSUInteger)offset atIndex:(NSUInteger)index;
 - (void)setFragmentBufferOffset:(NSUInteger)offset atIndex:(NSUInteger)index;
 - (void)setVertexBytes:(const void *)bytes length:(NSUInteger)length atIndex:(NSUInteger)index;
 - (void)setFragmentBytes:(const void *)bytes length:(NSUInteger)length atIndex:(NSUInteger)index;
+- (void)setSharedBytes:(const void *)bytes length:(NSUInteger)length atIndex:(NSUInteger)index;
 - (void)setFragmentTexture:(id<MTLTexture>)texture atIndex:(NSUInteger)index;
+- (void)setFragmentTexture:(id<MTLTexture>)texture atIndex:(NSUInteger)index usage:(MTLResourceUsage)usage;
 - (void)setFragmentSamplerState:(id<MTLSamplerState>)sampler atIndex:(NSUInteger)index;
 - (void)drawPrimitives:(MTLPrimitiveType)type vertexStart:(NSUInteger)start vertexCount:(NSUInteger)count;
 - (void)drawPrimitives:(MTLPrimitiveType)type vertexStart:(NSUInteger)start vertexCount:(NSUInteger)count instanceCount:(NSUInteger)instances;
@@ -87,11 +122,14 @@ API_AVAILABLE(macos(26.0))
 API_AVAILABLE(macos(26.0))
 @interface FCMetal4ComputeEncoder : NSObject
 @property (copy) NSString *label;
+- (void)setDirectShaderBindings:(BOOL)enabled;
 - (void)endEncoding;
 - (void)setComputePipelineState:(id<MTLComputePipelineState>)state;
 - (void)setBuffer:(id<MTLBuffer>)buffer offset:(NSUInteger)offset atIndex:(NSUInteger)index;
+- (void)setBuffer:(id<MTLBuffer>)buffer offset:(NSUInteger)offset atIndex:(NSUInteger)index usage:(MTLResourceUsage)usage;
 - (void)setBytes:(const void *)bytes length:(NSUInteger)length atIndex:(NSUInteger)index;
 - (void)setTexture:(id<MTLTexture>)texture atIndex:(NSUInteger)index;
+- (void)setTexture:(id<MTLTexture>)texture atIndex:(NSUInteger)index usage:(MTLResourceUsage)usage;
 - (void)dispatchThreads:(MTLSize)threads threadsPerThreadgroup:(MTLSize)group;
 - (void)fillBuffer:(id<MTLBuffer>)buffer range:(NSRange)range value:(uint8_t)value;
 - (void)generateMipmapsForTexture:(id<MTLTexture>)texture;

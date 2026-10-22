@@ -337,7 +337,7 @@ template<bool Specialized, bool CanNaomi2 = true> Varying pvrVertex(Input in, ui
         // lighting nor environment coordinates (Vulkan LIGHT_ON semantics).
         if (!flag<Specialized>(p, 14)) {
             bool lighting = !flag<Specialized>(p, 3) || !textured;
-            // Source-select survives normalization only for OIT. Read the
+            // Source-select survives normalization for accumulator paths. Read the
             // dynamic TSP even in material variants: shading constants omit
             // accumulator controls. Only a consumed area's color/UV needs
             // lighting or environment mapping.
@@ -746,12 +746,13 @@ template<bool Specialized> Fragment pvrFragment(Varying in, constant Frame& f, c
                               texture2d<float> tex0, texture2d<float> tex1,
                               texture2d<float> fog, texture2d<float> palette,
                               texture2d<uint> stencil,
-                              sampler s0, sampler s1) {
+                              sampler s0, sampler s1, float4 secondary = 0) {
     clipFragment<Specialized>(in.position.xy, p);
     bool shadow = flag<Specialized>(p, 13) && stencil.read(uint2(in.position.xy)).r == 0x81;
     uint area = shadow && flag<Specialized>(p, 6);
-    float4 color = area ? shade<Specialized>(in, 1, f, p, false, tex1, s1, fog, palette) : shade<Specialized>(in, 0, f, p, shadow, tex0, s0, fog, palette);
-    if (flag<Specialized>(p, 7)) {
+    const bool accumulatorSource = ((area ? p.tsp1 : p.tsp0) & (1u << 25)) != 0;
+    float4 color = accumulatorSource ? secondary : area ? shade<Specialized>(in, 1, f, p, false, tex1, s1, fog, palette) : shade<Specialized>(in, 0, f, p, shadow, tex0, s0, fog, palette);
+    if (!accumulatorSource && flag<Specialized>(p, 7)) {
         color.a = round(color.a * 255) / 255;
         if (f.alphaRef > color.a) discard_fragment();
         color.a = 1;
@@ -766,6 +767,46 @@ fragment Fragment pvr_fragment(Varying in [[stage_in]], constant Frame& f [[buff
                               sampler s0 [[sampler(0)]], sampler s1 [[sampler(1)]]) {
     return pvrFragment<false>(in, f, p, tex0, tex1, fog, palette, stencil, s0, s1);
 }
+#if FLYCAST_METAL_RASTER_ORDERED_MODIFIERS
+struct AccumulatorFragment {
+    float4 color [[color(0), raster_order_group(0)]];
+    float4 secondary [[color(1), raster_order_group(0)]];
+    float depth [[depth(any)]];
+};
+// Both destinations receive the same source. The pipeline's write masks select
+// exactly one accumulator, preserving hardware blending and Unorm rounding.
+fragment AccumulatorFragment pvr_accumulator_fragment(Varying in [[stage_in]],
+                              float4 secondary [[color(1), raster_order_group(0)]],
+                              constant Frame& f [[buffer(1)]], constant Poly& p [[buffer(2)]],
+                              texture2d<float> tex0 [[texture(0)]], texture2d<float> tex1 [[texture(1)]],
+                              texture2d<float> fog [[texture(2)]], texture2d<float> palette [[texture(3)]],
+                              texture2d<uint> stencil [[texture(5)]],
+                              sampler s0 [[sampler(0)]], sampler s1 [[sampler(1)]]) {
+    Fragment out = pvrFragment<false>(in, f, p, tex0, tex1, fog, palette, stencil, s0, s1, secondary);
+    return {out.color, out.color, out.depth};
+}
+float4 blendCoefficient(uint mode, float4 other, float4 src, float4 dst);
+// Modifier stencil can select different blend controls/destinations for each
+// pixel of a two-volume polygon. Only that family needs programmable blending;
+// single-volume accumulation retains the fixed-function blend unit above.
+fragment AccumulatorFragment pvr_volume_accumulator_fragment(Varying in [[stage_in]],
+                              float4 primary [[color(0), raster_order_group(0)]],
+                              float4 secondary [[color(1), raster_order_group(0)]],
+                              constant Frame& f [[buffer(1)]], constant Poly& p [[buffer(2)]],
+                              texture2d<float> tex0 [[texture(0)]], texture2d<float> tex1 [[texture(1)]],
+                              texture2d<float> fog [[texture(2)]], texture2d<float> palette [[texture(3)]],
+                              texture2d<uint> stencil [[texture(5)]],
+                              sampler s0 [[sampler(0)]], sampler s1 [[sampler(1)]]) {
+    Fragment out = pvrFragment<false>(in, f, p, tex0, tex1, fog, palette, stencil, s0, s1, secondary);
+    bool area = flag(p, 13) && flag(p, 6) && stencil.read(uint2(in.position.xy)).r == 0x81;
+    uint tsp = area ? p.tsp1 : p.tsp0;
+    float4 dst = (tsp & (1u << 24)) ? secondary : primary;
+    float4 result = clamp(out.color * blendCoefficient(tsp >> 29, dst, out.color, dst)
+        + dst * blendCoefficient((tsp >> 26) & 7, out.color, out.color, dst), 0.0f, 1.0f);
+    if (tsp & (1u << 24)) secondary = result; else primary = result;
+    return {primary, secondary, out.depth};
+}
+#endif
 fragment Fragment pvr_material_fragment(MaterialVarying in [[stage_in]], constant Frame& f [[buffer(1)]], constant Poly& p [[buffer(2)]],
                               texture2d<float> tex0 [[texture(0)]], texture2d<float> tex1 [[texture(1)]],
                               texture2d<float> fog [[texture(2)]], texture2d<float> palette [[texture(3)]],
