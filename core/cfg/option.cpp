@@ -186,6 +186,8 @@ Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
 Option<bool> BattleCableEnable("BattleCable", false, "network");
 Option<bool> UseDCNet("DCNet", true, "network");
 OptionString ISPUsername("ISPUsername", "flycast1", "network");
+Option<bool> DCNow("DCNow", true, "network");
+OptionString DCNowMac("DCNowMAC", "auto", "network");
 
 #ifdef USE_OMX
 Option<int> OmxAudioLatency("audio_latency", 100, "omx");

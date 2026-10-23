@@ -116,7 +116,7 @@ Option<bool> RamMod32MB(CORE_OPTION_NAME "_dc_32mb_mod", false);
 Option<bool> NetworkEnable("", false);
 Option<bool> ActAsServer("", false);
 Option<bool> NaomiSatellite("", false);
-OptionString DNS("", "dns.flyca.st");
+OptionString DNS(CORE_OPTION_NAME "_dns_server", "dns.flyca.st");
 OptionString NetworkServer("", "");
 Option<int> LocalPort("", 0);
 Option<bool> EmulateBBA(CORE_OPTION_NAME "_emulate_bba", false);
@@ -130,6 +130,8 @@ Option<int> MultiboardSlaves("", 0);
 Option<bool> BattleCableEnable("", false);
 Option<bool> UseDCNet(CORE_OPTION_NAME "_dcnet", false);
 OptionString ISPUsername("", "flycast1");
+Option<bool> DCNow(CORE_OPTION_NAME "_dcnow", true);
+OptionString DCNowMac(CORE_OPTION_NAME "_dcnow_mac", "auto");
 
 // Maple
 

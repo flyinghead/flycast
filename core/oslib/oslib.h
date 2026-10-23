@@ -33,6 +33,9 @@ public:
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
 u32 static inline bitscanrev(u32 v)
 {
