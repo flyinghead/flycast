@@ -511,10 +511,16 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 			u32 addr, sz;
 			if (sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz) == 3)
 			{
+				u64 rangeEnd = (u64)addr + sz;
+				if (rangeEnd > 0xffffffffu)
+				{
+					delete fl;
+					throw FlycastException(Ts("Error: Invalid LST file range"));
+				}
 				files.emplace_back(filename);
 				fstart.push_back(addr);
 				fsize.push_back(sz);
-				romSize = std::max(romSize, (addr + sz));
+				romSize = std::max(romSize, (u32)rangeEnd);
 			}
 			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
 				WARN_LOG(NAOMI, "Warning: invalid line in .lst file: %s", line);
