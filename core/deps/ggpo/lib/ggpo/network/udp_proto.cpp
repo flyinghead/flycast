@@ -22,6 +22,41 @@ static bool IsValidAppData(const UdpMsg *msg, int len)
    return msg->u.app_data.size <= MAX_APPDATA_SIZE
       && msg->u.app_data.size <= len - header_size;
 }
+
+static bool IsValidInput(const UdpMsg *msg, int len)
+{
+   const int header_size = (const uint8 *)msg->u.input.bits - (const uint8 *)msg;
+   if (len < header_size || msg->u.input.num_bits > MAX_COMPRESSED_BITS)
+      return false;
+   if ((msg->u.input.num_bits + 7) / 8 > len - header_size)
+      return false;
+   if (msg->u.input.num_bits == 0)
+      return true;
+   if (msg->u.input.input_size == 0
+         || msg->u.input.input_size > GAMEINPUT_MAX_BYTES * GAMEINPUT_MAX_PLAYERS)
+      return false;
+
+   const uint8 *bits = msg->u.input.bits;
+   int offset = 0;
+   auto readBit = [&]() {
+      int bit = !!(bits[offset / 8] & (1 << (offset % 8)));
+      offset++;
+      return bit;
+   };
+   while (offset < msg->u.input.num_bits) {
+      while (readBit()) {
+         if (msg->u.input.num_bits - offset < 1 + BITVECTOR_NIBBLE_SIZE)
+            return false;
+         readBit();
+         int button = 0;
+         for (int i = 0; i < BITVECTOR_NIBBLE_SIZE; i++)
+            button |= readBit() << i;
+         if (button >= msg->u.input.input_size * 8)
+            return false;
+      }
+   }
+   return true;
+}
 static const int SYNC_FIRST_RETRY_INTERVAL = 500;
 static const int RUNNING_RETRY_INTERVAL = 200;
 static const int KEEP_ALIVE_INTERVAL    = 200;
@@ -333,6 +368,9 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
       return;
    }
    if (msg->hdr.type == UdpMsg::AppData && !IsValidAppData(msg, len)) {
+      return;
+   }
+   if (msg->hdr.type == UdpMsg::Input && !IsValidInput(msg, len)) {
       return;
    }
 
