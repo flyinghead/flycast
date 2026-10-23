@@ -238,6 +238,15 @@ static void loadSpecialSettings()
 		}
 		else
 			WARN_LOG(BOOT, "No region specified in IP.BIN");
+		// Broadcast and Language left on Default follow the region, the way
+		// Region's own Default follows IP.BIN above: PAL for Europe, Japanese
+		// for Japan, NTSC and English otherwise. fixUpDCFlash() skips the
+		// out-of-range Default values, which left the flash bytes at the factory
+		// setting (Japanese, NTSC) or at whatever the last explicit choice wrote.
+		if (config::Broadcast == 4)
+			config::Broadcast.override(config::Region == 2 ? 1 : 0);
+		if (config::Language == 6)
+			config::Language.override(config::Region == 0 ? 0 : 1);
 		if (config::Cable <= 1 && (!ip_meta.supportsVGA()
 				|| prod_id == "T-12504N"	// Caesar's Palace (NTSC)
 				|| prod_id == "12502D-50"))	// Caesar's Palace (PAL)
