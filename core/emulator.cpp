@@ -1088,7 +1088,7 @@ void Emulator::vblank()
 	EventManager::event(Event::VBlank);
 	runner.execTasks();
 	// Time out if a frame hasn't been rendered for 50 ms
-	if (sh4_sched_now64() - startTime <= 50_sh4ms)
+	if (!config::VblankPacing && sh4_sched_now64() - startTime <= 50_sh4ms)
 		return;
 	if (ggpo::active())
 		ggpo::endOfFrame();
