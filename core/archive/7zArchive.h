@@ -29,19 +29,25 @@
 class SzArchive : public Archive
 {
 public:
-	SzArchive() : out_buffer(NULL) {
-		memset(&archiveStream, 0, sizeof(archiveStream));
-		memset(&lookStream, 0, sizeof(lookStream));
+	SzArchive() {
+		SzArEx_Init(&szarchive);
 	}
 	~SzArchive() override;
 
+	// Takes ownership of file, including when opening fails.
+	bool Open(hostfs::File *file) override;
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile *OpenFileByCrc(u32 crc) override;
-
-protected:
-	bool Open(hostfs::File *file) override;
+	// Returned files share the extraction buffer and must be consumed before opening another file.
+	ArchiveFile *OpenFileByIndex(size_t index);
+	size_t GetFileCount() const { return szarchive.NumFiles; }
+	std::string GetFileName(size_t index) const;
+	bool IsDirectory(size_t index) const;
+	u64 GetFileSize(size_t index) const;
 
 private:
+	void Close();
+
 	struct ArchiveStream
 	{
 		static SRes Read(const ISeekInStream *p, void *buf, size_t *size);
@@ -52,23 +58,25 @@ private:
 	};
 
 	CSzArEx szarchive;
-	UInt32 block_idx;				/* it can have any value before first call (if outBuffer = 0) */
-	Byte *out_buffer;				/* it must be 0 before first call for each new archive. */
-	size_t out_buffer_size;			/* it can have any value before first call (if outBuffer = 0) */
-	ArchiveStream archiveStream;
-	CLookToRead2 lookStream;
+	UInt32 block_idx = 0;
+	Byte *out_buffer = nullptr;
+	size_t out_buffer_size = 0;
+	ArchiveStream archiveStream {};
+	CLookToRead2 lookStream {};
 
 };
 
 class SzArchiveFile : public ArchiveFile
 {
 public:
-	SzArchiveFile(u8 *data, u32 offset, u32 length)
+	SzArchiveFile(u8 *data, size_t offset, size_t length)
 		: data(data), offset(offset), _length(length) {}
 	u32 Read(void *buffer, u32 length) override
 	{
-		length = std::min(length, this->_length);
-		memcpy(buffer, data + offset, length);
+		length = std::min<size_t>(length, _length - position);
+		if (length != 0)
+			memcpy(buffer, data + offset + position, length);
+		position += length;
 		return length;
 	}
 
@@ -78,6 +86,7 @@ public:
 
 private:
 	u8 *data;
-	u32 offset;
-	u32 _length;
+	size_t offset;
+	size_t _length;
+	size_t position = 0;
 };
