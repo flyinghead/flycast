@@ -5,6 +5,14 @@ if(WIN32)
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main)
+
+# HttpTest drives libcurl directly. The core only links curl where it is the
+# HTTP client (not on Apple, which uses NSURLConnection), so the test binary
+# needs it explicitly there. The macOS SDK ships libcurl.
+if(APPLE)
+    find_package(CURL REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
+endif()
         
 target_include_directories(${PROJECT_NAME} PUBLIC inc)
 target_sources(${PROJECT_NAME} PRIVATE
