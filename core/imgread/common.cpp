@@ -406,9 +406,12 @@ void libGDR_init()
 }
 void libGDR_term()
 {
-	gdr::termDrive();
-	sh4_sched_unregister(schedId);
-	schedId = -1;
+	if (schedId != -1)
+	{
+		gdr::termDrive();
+		sh4_sched_unregister(schedId);
+		schedId = -1;
+	}
 }
 
 void libGDR_serialize(Serializer& ser)

@@ -17,7 +17,7 @@ static u64 tmu_mask[3];
 static u32 old_mode[3] = { 0xFFFF, 0xFFFF, 0xFFFF};
 
 static constexpr InterruptID tmu_intID[3] = { sh4_TMU0_TUNI0, sh4_TMU1_TUNI1, sh4_TMU2_TUNI2 };
-int tmu_sched[3];
+int tmu_sched[3] { -1, -1, -1 };
 static s64 tmu_ch_base[3];
 
 inline static u64 now() {

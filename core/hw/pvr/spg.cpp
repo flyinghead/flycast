@@ -28,8 +28,8 @@ static u64 last_fps;
 constexpr int PIXEL_CLOCK = 27 * 1000 * 1000;
 static u32 Line_Cycles;
 static u32 Frame_Cycles;
-int render_end_schid;
-int vblank_schid;
+int render_end_schid = -1;
+int vblank_schid = -1;
 
 static std::array<double, 4> real_times;
 static std::array<u64, 4> cpu_cycles;

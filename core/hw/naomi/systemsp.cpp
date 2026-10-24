@@ -675,7 +675,7 @@ private:
 	SerialPort *port;
 	std::deque<u8> toSend;
 	std::vector<u8> recvBuffer;
-	int schedId = 0;
+	int schedId;
 	u32 lastPosX = ~0;
 	u32 lastPosY = ~0;
 	bool lastButton = false;

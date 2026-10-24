@@ -138,8 +138,7 @@ void gdrom_hle_reset() {
 
 void reios_term()
 {
-	if (schedId != -1)
-		sh4_sched_unregister(schedId);
+	sh4_sched_unregister(schedId);
 	schedId = -1;
 }
 

@@ -106,11 +106,8 @@ void bba_Term()
 		rtl8139_destroy(rtl8139device);
 		rtl8139device = nullptr;
 	}
-	if (rxSchedId != -1)
-	{
-		sh4_sched_unregister(rxSchedId);
-		rxSchedId = -1;
-	}
+	sh4_sched_unregister(rxSchedId);
+	rxSchedId = -1;
 }
 
 void bba_Reset(bool hard)

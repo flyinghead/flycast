@@ -15,7 +15,7 @@
 #include "imgread/common.h"
 #include "serialize.h"
 
-int gdrom_schid;
+int gdrom_schid = -1;
 static int statusSchid = -1;
 static int nextStatus = -1;
 

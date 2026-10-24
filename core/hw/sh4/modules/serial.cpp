@@ -375,14 +375,10 @@ void SCIFSerialPort::init()
 
 void SCIFSerialPort::term()
 {
-	if (schedId != -1) {
-		sh4_sched_unregister(schedId);
-		schedId = -1;
-	}
-	if (brkSchedId != -1) {
-		sh4_sched_unregister(brkSchedId);
-		brkSchedId = -1;
-	}
+	sh4_sched_unregister(schedId);
+	schedId = -1;
+	sh4_sched_unregister(brkSchedId);
+	brkSchedId = -1;
 }
 
 void SCIFSerialPort::reset()

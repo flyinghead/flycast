@@ -1782,10 +1782,8 @@ void reset(bool hard)
 
 void term()
 {
-	if (schedId != -1) {
-		sh4_sched_unregister(schedId);
-		schedId = -1;
-	}
+	sh4_sched_unregister(schedId);
+	schedId = -1;
 }
 
 void vmem_init()

@@ -21,7 +21,7 @@ enum MaplePattern
 
 std::shared_ptr<maple_device> MapleDevices[MAPLE_PORTS][6];
 
-int maple_schid;
+int maple_schid = -1;
 
 /*
 	Maple host controller

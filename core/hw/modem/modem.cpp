@@ -59,7 +59,7 @@ static u8 dspram[0x1000];
 static_assert(sizeof(regs_write_mask) == sizeof(modem_regs));
 static_assert(sizeof(por_dspram) == sizeof(dspram));
 
-static int modem_sched;
+static int modem_sched = -1;
 
 enum ModemStates
 {

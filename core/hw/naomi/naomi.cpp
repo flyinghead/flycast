@@ -257,11 +257,11 @@ const u8 *getGameSerialId()
 
 void naomi_reg_Term()
 {
+	naomi_cart_Close();
 	multiboard.reset();
 	m3comm.reset();
 	networkOutput.term();
-	if (dmaSchedId != -1)
-		sh4_sched_unregister(dmaSchedId);
+	sh4_sched_unregister(dmaSchedId);
 	dmaSchedId = -1;
 	midiffb::term();
 }
