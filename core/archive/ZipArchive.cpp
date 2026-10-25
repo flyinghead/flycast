@@ -21,6 +21,7 @@
 #include "ZipArchive.h"
 
 #include <array>
+#include <cstring>
 
 ZipArchive::~ZipArchive()
 {
@@ -153,6 +154,22 @@ bool ZipArchive::Open(hostfs::File *file)
 	if (zip == nullptr)
 		zip_source_free(source);
 	return zip != nullptr;
+}
+
+std::vector<std::string> ZipArchive::listFiles()
+{
+	std::vector<std::string> names;
+	if (zip == nullptr)
+		return names;
+	zip_int64_t count = zip_get_num_entries(zip, 0);
+	for (zip_int64_t i = 0; i < count; i++)
+	{
+		const char *name = zip_get_name(zip, i, 0);
+		if (name == nullptr || *name == '\0' || name[strlen(name) - 1] == '/')
+			continue;
+		names.emplace_back(name);
+	}
+	return names;
 }
 
 ArchiveFile* ZipArchive::OpenFile(const char* name)

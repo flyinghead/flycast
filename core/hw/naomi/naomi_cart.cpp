@@ -454,16 +454,37 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 	}
 }
 
+// A .zip or .7z that isn't a MAME romset may hold a decrypted dump as its only
+// .bin or .dat file (archive.org and TOSEC rips ship like that). Returns that
+// file's name, or an empty string.
+static std::string decryptedRomInArchive(Archive& archive)
+{
+	std::string found;
+	for (const std::string& name : archive.listFiles())
+	{
+		std::string extension = get_file_extension(name);
+		if (extension != "bin" && extension != "dat")
+			continue;
+		if (!found.empty())
+			return "";
+		found = name;
+	}
+	return found;
+}
+
 static void loadDecryptedRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
-	// Try to load BIOS from naomi.zip
-	if (!loadBios("naomi", NULL, NULL, config::Region))
+	// Try to load BIOS from naomi.zip or naomi2.zip
+	const bool naomi2 = settings.platform.isNaomi2();
+	const char *biosName = naomi2 ? "naomi2" : "naomi";
+	if (!loadBios(biosName, NULL, NULL, config::Region))
 	{
-		WARN_LOG(NAOMI, "Warning: Region %d bios not found in naomi.zip", config::Region.get());
-		if (!loadBios("naomi", NULL, NULL, -1))
+		WARN_LOG(NAOMI, "Warning: Region %d bios not found in %s.zip", config::Region.get(), biosName);
+		if (!loadBios(biosName, NULL, NULL, -1))
 		{
 			if (!bios_loaded)
-				throw FlycastException(Ts("Error: cannot load BIOS from naomi.zip"));
+				throw FlycastException(naomi2 ? Ts("Error: cannot load BIOS from naomi2.zip")
+						: Ts("Error: cannot load BIOS from naomi.zip"));
 		}
 	}
 
@@ -472,6 +493,8 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 	std::vector<u32> fstart;
 	std::vector<u32> fsize;
 	u32 romSize = 0;
+	std::unique_ptr<Archive> archive;
+	std::unique_ptr<ArchiveFile> archiveFile;
 
 	std::string extension = get_file_extension(fileName);
 	if (extension == "lst")
@@ -524,6 +547,23 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 		}
 		delete fl;
 	}
+	else if (extension == "zip" || extension == "7z")
+	{
+		// Decrypted dump inside an archive that isn't a romset
+		archive.reset(OpenArchive(path));
+		if (archive == nullptr)
+			throw FlycastException(strprintf(T("Error: can't open %s"), path.c_str()));
+		std::string name = decryptedRomInArchive(*archive);
+		if (name.empty())
+			throw NaomiCartException(Ts("Unknown game"));
+		archiveFile.reset(archive->OpenFile(name.c_str()));
+		if (archiveFile == nullptr)
+			throw FlycastException(strprintf(T("Error: can't open %s"), name.c_str()));
+		files.emplace_back(name);
+		fstart.push_back(0);
+		fsize.push_back((u32)archiveFile->length());
+		romSize = fsize.back();
+	}
 	else
 	{
 		// BIN loading
@@ -557,6 +597,19 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 	{
 		hostfs::File *fp = nullptr;
 
+		if (archiveFile != nullptr)
+		{
+			u8 *romDest = romBase + fstart[i];
+			if (archiveFile->Read(romDest, fsize[i]) != fsize[i])
+			{
+				ERROR_LOG(NAOMI, "Unable to read %s from %s", files[i].c_str(), path.c_str());
+				load_error = true;
+				break;
+			}
+			if (config::GGPOEnable)
+				md5.add(romDest, fsize[i]);
+			continue;
+		}
 		if (files[i] != "null")
 		{
 			std::string filePath;
@@ -629,7 +682,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 	}
 	std::string extension = get_file_extension(fileName);
 
-	if (extension == "zip" || extension == "7z")
+	if ((extension == "zip" || extension == "7z") && FindGame(fileName.c_str()) != nullptr)
 		loadMameRom(path, fileName, progress);
 	else
 		loadDecryptedRom(path, fileName, progress);
@@ -846,6 +899,41 @@ void naomi_cart_deserialize(Deserializer& deser)
 	touchscreen::deserialize(deser);
 	printer::deserialize(deser);
 	hopper::deserialize(deser);
+}
+
+// Decrypted single-file roms aren't in the romset table. The board name in the
+// cartridge header tells Naomi 2 from Naomi.
+int naomi_cart_GetDecryptedRomPlatform(const std::string& path)
+{
+	char boardName[16] {};
+	std::string extension = get_file_extension(path);
+	if (extension == "zip" || extension == "7z")
+	{
+		if (FindGame(path.c_str()) != nullptr)
+			// A romset: naomi_cart_GetPlatform() already answered
+			return DC_PLATFORM_NAOMI;
+		std::unique_ptr<Archive> archive(OpenArchive(path));
+		if (archive != nullptr)
+		{
+			std::string name = decryptedRomInArchive(*archive);
+			if (!name.empty())
+			{
+				std::unique_ptr<ArchiveFile> file(archive->OpenFile(name.c_str()));
+				if (file != nullptr)
+					file->Read(boardName, sizeof(boardName));
+			}
+		}
+	}
+	else
+	{
+		hostfs::File *file = hostfs::storage().openFile(path, "rb");
+		if (file != nullptr)
+		{
+			file->read(boardName, sizeof(boardName), 1);
+			delete file;
+		}
+	}
+	return memcmp(boardName, "Naomi2", 6) == 0 ? DC_PLATFORM_NAOMI2 : DC_PLATFORM_NAOMI;
 }
 
 int naomi_cart_GetPlatform(const char *path)
