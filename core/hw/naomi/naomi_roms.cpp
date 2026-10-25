@@ -23,6 +23,7 @@
 #include "naomi_roms.h"
 #include "naomi_roms_eeprom.h"
 #include "naomi_roms_input.h"
+#include <cstring>
 
 const BIOS_t BIOS[] =
 {
@@ -8525,3 +8526,74 @@ const Game Games[] =
 		nullptr
 	}
 };
+
+// Decrypted dumps (.bin/.dat/.lst) have no Games[] entry and so no input
+// descriptor. Find one by the title in the cartridge header.
+// Titles must be exact (leading spaces included): a wrong descriptor hides
+// buttons the game needs.
+InputDescriptors *naomiInputsForBootTitle(const char *title)
+{
+	static const struct {
+		const char *title;
+		InputDescriptors *inputs;
+	} table[] = {
+		// Driving
+		{ "INITIAL D", &initd_inputs },
+		{ "INITIAL D Ver.2", &initd_inputs },
+		{ "INITIAL D Ver.3", &initd_inputs },
+		{ "INITIAL D CYCRAFT", &initd_inputs },
+		{ "CLUB KART IN JAPAN", &clubkart_inputs },
+		{ "THE KING OF ROUTE66", &kingrt66_inputs },
+		{ "WILD RIDERS IN JAPAN", &wldrider_inputs },
+		{ "  18WHEELER", &_18wheelr_inputs },
+#ifdef NAOMI_MULTIBOARD
+		{ "F355 CHALLENGE JAPAN", &f355_inputs },
+#endif
+		{ "WAVE RUNNER GP", &wrungp_inputs },
+		{ "TOKYO BUS GUIDE", &tokyobus_inputs },
+		{ "MAXIMUM SPEED", &maxspeed_inputs },
+		{ "FASTER THAN SPEED", &ftspeed_inputs },
+		// Other analog or special panels
+		{ "ALIEN FRONT", &alienfnt_inputs },
+		{ "SEGA MARINE FISHING JAPAN", &marine_fishing_inputs },
+		{ "BASS FISHING SIMULATOR VER.A", &basschal_inputs },
+		{ "RINGOUT 4X4 JAPAN", &ringout_inputs },
+		{ "SAMBA DE AMIGO", &samba_inputs },
+		{ "MAZAN", &mazan_inputs },
+		{ "NINJA ASSAULT", &ninjaslt_inputs },
+		{ "CRACKIN'DJ", &crackindj_inputs },
+		{ "OUTTRIGGER     JAPAN", &otrigger_inputs },
+		{ "SHOOTOUT POOL", &shootout_inputs },
+		{ "DYNAMIC GOLF", &dygolf_inputs },
+		{ "KICK '4' CASH", &kick4csh_inputs },
+		{ "WORLD KICKS", &wldkicks_inputs },
+		{ "WORLD KICKS PCB", &wldkickspcb_inputs },
+		{ "DINOSAUR KING", &dinok_inputs },
+		{ "VIRTUAL-ON ORATORIO TANGRAM", &vonot_inputs },
+		// Button panels
+		{ "BEACH SPIKERS JAPAN", &beachspi_inputs },
+		{ "VIRTUA FIGHTER 4 JAPAN", &vf4_inputs },
+		{ "VF4 EVOLUTION JAPAN", &vf4_inputs },
+		{ "VF4 FINAL TUNED JAPAN", &vf4_inputs },
+		{ "VIRTUA STRIKER 3", &vs2_2k_inputs },
+		{ "SLASHOUT JAPAN VERSION", &slashout_inputs },
+		{ "POWER STONE 2 JAPAN", &pstone2_inputs },
+		{ " BIOHAZARD  GUN SURVIVOR2", &gunsur2_inputs },
+		{ "HEAVY METAL JAPAN", &hmgeo_inputs },
+		{ "SEGA TETRIS", &sgtetris_inputs },
+		{ "ROYAL RUMBLE", &wwfroyal_inputs },
+		{ "SPIKERS BATTLE JAPAN VERSION", &spkrbtl_inputs },
+		{ "VIRTUA ATHLETE", &vathlete_inputs },
+		// Light guns
+		{ " CONFIDENTIAL MISSION ---------", &lightgun_inputs },
+		{ "LUPIN THE THIRD  -THE SHOOTING-", &lightgun_inputs },
+		{ "DEATH CRIMSON OX", &lightgun_inputs },
+		{ "THE MAZE OF THE KINGS", &lightgun_inputs },
+	};
+	if (title == nullptr)
+		return nullptr;
+	for (const auto& entry : table)
+		if (strcmp(entry.title, title) == 0)
+			return entry.inputs;
+	return nullptr;
+}
