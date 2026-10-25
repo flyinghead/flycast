@@ -90,7 +90,9 @@ struct maple_sega_controller: maple_base
 		u32 kcode = pjs.kcode;
 		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
 		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
-		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
+		// Pass C, D, Z and DPad2 through. A real pad has none of them, so they stay released unless the user
+		// maps a host button to one; Vigilante 8: Second Offense's controller set-up can give them actions.
+		return kcode;
 	}
 
 	virtual u32 getAnalogAxis(int index, const PlainJoystickState &pjs)
