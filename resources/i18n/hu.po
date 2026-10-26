@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-10-26 13:07\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -480,10 +480,6 @@ msgstr ""
 #, c-format
 msgid "Error: can't open %s"
 msgstr ""
-
-#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
-msgid "Error: Invalid LST file"
-msgstr "Hiba: Érvénytelen LST fájl"
 
 #: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
@@ -1199,8 +1195,8 @@ msgid "Hide Legacy Naomi Roms"
 msgstr "Legacy Naomi ROM-ok elrejtése"
 
 #: core/ui/settings_general.cpp:391
-msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "A .bin, .dat és .lst fájlok elrejtése a tartalom böngészőből"
+msgid "Hide .bin and .dat files from the content browser"
+msgstr ""
 
 #: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
