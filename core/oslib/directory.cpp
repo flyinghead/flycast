@@ -23,8 +23,8 @@
 #include <string>
 #include <cstring>
 
-#ifdef TARGET_UWP
 #include <windows.h>
+#ifdef TARGET_UWP
 // Define dirent type constants if not already defined
 #ifndef DT_DIR
 #define DT_DIR 4
@@ -283,7 +283,12 @@ int rename(const char *oldpath, const char *newpath)
     	errno = EINVAL;
     	return -1;
     }
-	return ::_wrename(woldpath.get(), wnewpath.get());
+	// _wrename() fails when newpath exists. Replace it, as POSIX rename() does.
+	if (!MoveFileExW(woldpath.get(), wnewpath.get(), MOVEFILE_REPLACE_EXISTING)) {
+		errno = GetLastError() == ERROR_FILE_NOT_FOUND ? ENOENT : EACCES;
+		return -1;
+	}
+	return 0;
 }
 
 int unlink(const char *path)
