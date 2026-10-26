@@ -258,7 +258,7 @@ void OfflineScraper::scrape(GameBoxart& item)
 			item.searchName = trim_trailing_ws(item.searchName.substr(0, pos));
 		}
 		std::string extension = get_file_extension(item.fileName);
-		if (extension != "zip" && extension != "7z" && extension != "lst")
+		if (extension != "zip" && extension != "7z")
 		{
 			hostfs::File *file = hostfs::storage().openFile(item.gamePath, "rb");
 			if (file != nullptr)

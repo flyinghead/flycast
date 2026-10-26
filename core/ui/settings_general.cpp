@@ -391,7 +391,7 @@ void gui_settings_general()
 	}
 
 	if (OptionCheckbox(T("Hide Legacy Naomi Roms"), config::HideLegacyNaomiRoms,
-			T("Hide .bin, .dat and .lst files from the content browser")))
+			T("Hide .bin and .dat files from the content browser")))
 		scanner.refresh();
 #ifdef __ANDROID__
 	OptionCheckbox(T("Use SAF File Picker"), config::UseSafFilePicker,

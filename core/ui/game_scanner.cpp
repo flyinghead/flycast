@@ -83,7 +83,7 @@ void GameScanner::add_game_directory(const std::string& path)
 			insert_game(GameMedia{ fileName, item.path, item.name, gameName, true });
 			continue;
 		}
-		else if (extension == "bin" || extension == "lst" || extension == "dat")
+		else if (extension == "bin" || extension == "dat")
 		{
 			if (!config::HideLegacyNaomiRoms)
 				insert_game(GameMedia{ fileName, item.path, item.name, gameName, true });

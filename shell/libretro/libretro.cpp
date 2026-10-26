@@ -2303,21 +2303,19 @@ bool retro_load_game(const struct retro_game_info *game)
 	char *ext = strrchr(g_base_name, '.');
 
 	{
-		/* Check for extension .lst, .bin, .dat or .zip. If found, we will set the system type
+		/* Check for extension .bin, .dat or .zip. If found, we will set the system type
 		 * automatically to Naomi or AtomisWave. */
 		if (ext)
 		{
 			log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
-			if (!strcmp(".lst", ext)
-					|| !strcmp(".bin", ext) || !strcmp(".BIN", ext)
+			if (!strcmp(".bin", ext) || !strcmp(".BIN", ext)
 					|| !strcmp(".dat", ext) || !strcmp(".DAT", ext)
 					|| !strcmp(".zip", ext) || !strcmp(".ZIP", ext)
 					|| !strcmp(".7z", ext) || !strcmp(".7Z", ext))
 			{
 				settings.platform.system = naomi_cart_GetPlatform(game->path);
 				// Users should use the superior format instead, let's warn them
-				if (!strcmp(".lst", ext)
-						|| !strcmp(".bin", ext) || !strcmp(".BIN", ext)
+				if (!strcmp(".bin", ext) || !strcmp(".BIN", ext)
 						|| !strcmp(".dat", ext) || !strcmp(".DAT", ext))
 				{
 					struct retro_message msg;
@@ -2594,7 +2592,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION "undefined"
 #endif
    info->library_version = GIT_VERSION;
-   info->valid_extensions = "chd|cdi|elf|cue|gdi|lst|bin|dat|zip|7z|m3u";
+   info->valid_extensions = "chd|cdi|elf|cue|gdi|bin|dat|zip|7z|m3u";
    info->need_fullpath = true;
    info->block_extract = true;
 }

@@ -869,7 +869,6 @@ void gui_load_game()
 	if (!config::HideLegacyNaomiRoms)
 	{
 		picker->FileTypeFilter->Append(".bin");
-		picker->FileTypeFilter->Append(".lst");
 		picker->FileTypeFilter->Append(".dat");
 	}
 	picker->SuggestedStartLocation = Pickers::PickerLocationId::DocumentsLibrary;

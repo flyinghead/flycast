@@ -467,143 +467,59 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 		}
 	}
 
-	std::string folder;
-	std::vector<std::string> files;
-	std::vector<u32> fstart;
-	std::vector<u32> fsize;
-	u32 romSize = 0;
+	// BIN/DAT loading
+	hostfs::File* fp = hostfs::storage().openFile(path, "rb");
+	if (fp == nullptr)
+		throw FlycastException(strprintf(T("Error: can't open %s"), path.c_str()));
 
-	std::string extension = get_file_extension(fileName);
-	if (extension == "lst")
-	{
-		// LST file
-		hostfs::File *fl = hostfs::storage().openFile(path, "r");
-		if (!fl)
-			throw FlycastException(strprintf(T("Error: can't open %s"), path.c_str()));
-		folder = hostfs::storage().getParentPath(path);
+	fp->seek(0, SEEK_END);
+	const u32 romSize = (u32)fp->tell();
+	fp->seek(0, SEEK_SET);
 
-		char t[512];
-		char* line = fl->gets(t, sizeof(t));
-		if (!line)
-		{
-			delete fl;
-			throw FlycastException(Ts("Error: Invalid LST file"));
-		}
-
-		char* eon = strstr(line, "\n");
-		if (!eon)
-			DEBUG_LOG(NAOMI, "+Loading naomi rom that has no name");
-		else
-		{
-			*eon = 0;
-			DEBUG_LOG(NAOMI, "+Loading naomi rom : %s", line);
-		}
-
-		line = fl->gets(t, sizeof(t));
-		if (!line)
-		{
-			delete fl;
-			throw FlycastException(Ts("Error: Invalid LST file"));
-		}
-
-		while (line)
-		{
-			char filename[512];
-			u32 addr, sz;
-			if (sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz) == 3)
-			{
-				files.emplace_back(filename);
-				fstart.push_back(addr);
-				fsize.push_back(sz);
-				romSize = std::max(romSize, (addr + sz));
-			}
-			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
-				WARN_LOG(NAOMI, "Warning: invalid line in .lst file: %s", line);
-
-			line = fl->gets(t, sizeof(t));
-		}
-		delete fl;
-	}
-	else
-	{
-		// BIN loading
-		hostfs::File* fp = hostfs::storage().openFile(path, "rb");
-		if (fp == nullptr)
-			throw FlycastException(strprintf(T("Error: can't open %s"), path.c_str()));
-
-		fp->seek(0, SEEK_END);
-		u32 file_size = (u32)fp->tell();
+	INFO_LOG(NAOMI, "raw: %.2f MB set address space", romSize / 1024.f / 1024.f);
+	if (romSize == 0) {
 		delete fp;
-		files.emplace_back(path);
-		fstart.push_back(0);
-		fsize.push_back(file_size);
-		romSize = file_size;
-	}
-
-	INFO_LOG(NAOMI, "+%zd romfiles, %.2f MB set address space", files.size(), romSize / 1024.f / 1024.f);
-	if (romSize == 0)
 		throw FlycastException(Ts("Invalid empty ROM"));
-
-	MD5Sum md5;
+	}
 
 	// Allocate space for the rom
 	u8 *romBase = (u8 *)malloc(romSize);
-	if (romBase == nullptr)
+	if (romBase == nullptr) {
+		delete fp;
 		throw FlycastException(Ts("Out of memory"));
-
-	bool load_error = false;
-
-	for (size_t i = 0; i<files.size(); i++)
-	{
-		hostfs::File *fp = nullptr;
-
-		if (files[i] != "null")
-		{
-			std::string filePath;
-			if (folder.empty())
-				filePath = files[i];
-			else
-				filePath = hostfs::storage().getSubPath(folder, files[i]);
-
-			fp = hostfs::storage().openFile(filePath, "rb");
-			if (fp == nullptr)
-			{
-				ERROR_LOG(NAOMI, "Unable to open file %s: error %d", filePath.c_str(), errno);
-				load_error = true;
-				break;
-			}
-		}
-		u8* romDest = romBase + fstart[i];
-
-		if (fp == nullptr)
-		{
-			//printf("-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
-			memset(romDest, -1, fsize[i]);
-		}
-		else
-		{
-			//printf("-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-			bool mapped = fp->read(romDest, 1, fsize[i]) == fsize[i];
-			if (config::GGPOEnable)
-				md5.add(fp);
-			delete fp;
-			if (!mapped)
-			{
-				ERROR_LOG(NAOMI, "Unable to read file %s @ %08x size %x", files[i].c_str(),
-						fstart[i], fsize[i]);
-				load_error = true;
-				break;
-			}
-		}
 	}
 
-	if (load_error)
+	u32 offset = 0;
+	bool error = false;
+	while (offset < romSize && !error)
 	{
+		const u32 len = std::min(8192u, romSize - offset);
+		error = fp->read(romBase + offset, len, 1) != 1;
+		offset += len;
+		if (progress != nullptr)
+		{
+			if (progress->cancelled)
+				break;
+			progress->progress = (float)offset / romSize;
+		}
+	}
+	delete fp;
+	if (progress->cancelled) {
+		free(romBase);
+		throw LoadCancelledException();
+	}
+	if (error)
+	{
+		ERROR_LOG(NAOMI, "Unable to read file %s size %d", path.c_str(), romSize);
 		free(romBase);
 		throw FlycastException(Ts("Error: Failed to load BIN/DAT file"));
 	}
 	if (config::GGPOEnable)
+	{
+		MD5Sum md5;
+		md5.add(romBase, romSize);
 		md5.getDigest(settings.network.md5.game);
+	}
 
 	DEBUG_LOG(NAOMI, "Legacy ROM loaded successfully");
 

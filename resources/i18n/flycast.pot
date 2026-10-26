@@ -480,10 +480,6 @@ msgstr ""
 msgid "Error: can't open %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
-msgid "Error: Invalid LST file"
-msgstr ""
-
 #: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
 msgstr ""
@@ -1246,7 +1242,7 @@ msgid "Hide Legacy Naomi Roms"
 msgstr ""
 
 #: core/ui/settings_general.cpp:391
-msgid "Hide .bin, .dat and .lst files from the content browser"
+msgid "Hide .bin and .dat files from the content browser"
 msgstr ""
 
 #: core/ui/settings_general.cpp:394
