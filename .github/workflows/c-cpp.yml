@@ -88,7 +88,7 @@ jobs:
 
       - name: Compile universal dependencies (macOS)
         run: |
-          for formula in ./shell/apple/libomp.rb ./shell/apple/libpng-flycast.rb; do
+          for formula in ./shell/apple/libpng-flycast.rb; do
             libname=$(basename "$formula" .rb)
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" || \
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula"
