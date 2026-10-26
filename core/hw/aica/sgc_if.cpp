@@ -1096,13 +1096,8 @@ void ChannelEx::StepDecodeSample(u32 CA)
 	case ADPCM_STREAM:
 		{
 			u8 ad1 = readAicaRam<u8>(SA + (CA >> 1));
-			u8 ad2 = readAicaRam<u8>(SA + (next_addr >> 1));
-
 			ad1 >>= (CA & 1) * 4;
-			ad2 >>= (next_addr & 1) * 4;
-
 			ad1 &= 0xF;
-			ad2 &= 0xF;
 
 			s32 q = adpcm.last_quant;
 			if (CA == loop.LSA)
@@ -1123,6 +1118,9 @@ void ChannelEx::StepDecodeSample(u32 CA)
 			adpcm.last_quant = q;
 			if constexpr (Last)
 			{
+				u8 ad2 = readAicaRam<u8>(SA + (next_addr >> 1));
+				ad2 >>= (next_addr & 1) * 4;
+				ad2 &= 0xF;
 				SampleType prev = s0;
 				if (PCMS == ADPCM && next_addr == loop.LSA && adpcm.in_loop)
 				{
