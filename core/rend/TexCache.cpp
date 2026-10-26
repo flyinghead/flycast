@@ -1574,18 +1574,22 @@ static inline uint16x8_t packFramebuffer16Pixels(uint8x8_t red, uint8x8_t green,
 	}
 }
 
+// 8 words to 8 interleaved 32-bit VRAM locations
+static inline void storeFramebufferWords(u8 *mapped, uint32x4_t words0, uint32x4_t words1)
+{
+	vst1q_lane_u32((u32 *)(mapped + 0), words0, 0);
+	vst1q_lane_u32((u32 *)(mapped + 8), words0, 1);
+	vst1q_lane_u32((u32 *)(mapped + 16), words0, 2);
+	vst1q_lane_u32((u32 *)(mapped + 24), words0, 3);
+	vst1q_lane_u32((u32 *)(mapped + 32), words1, 0);
+	vst1q_lane_u32((u32 *)(mapped + 40), words1, 1);
+	vst1q_lane_u32((u32 *)(mapped + 48), words1, 2);
+	vst1q_lane_u32((u32 *)(mapped + 56), words1, 3);
+}
+
 static inline void storeFramebuffer16Pixels(u8 *mapped, uint16x8_t pixels0, uint16x8_t pixels1)
 {
-	const uint32x4_t pairs0 = vreinterpretq_u32_u16(pixels0);
-	const uint32x4_t pairs1 = vreinterpretq_u32_u16(pixels1);
-	vst1q_lane_u32((u32 *)(mapped + 0), pairs0, 0);
-	vst1q_lane_u32((u32 *)(mapped + 8), pairs0, 1);
-	vst1q_lane_u32((u32 *)(mapped + 16), pairs0, 2);
-	vst1q_lane_u32((u32 *)(mapped + 24), pairs0, 3);
-	vst1q_lane_u32((u32 *)(mapped + 32), pairs1, 0);
-	vst1q_lane_u32((u32 *)(mapped + 40), pairs1, 1);
-	vst1q_lane_u32((u32 *)(mapped + 48), pairs1, 2);
-	vst1q_lane_u32((u32 *)(mapped + 56), pairs1, 3);
+	storeFramebufferWords(mapped, vreinterpretq_u32_u16(pixels0), vreinterpretq_u32_u16(pixels1));
 }
 
 template<int PackMode, int Red, int Green, int Blue, int Alpha>
@@ -1629,6 +1633,74 @@ static void writeFramebuffer16Neon(u32 width, u32 height, const u8 *data, u32 ds
 			pvr_write32p<u16, true>(addr, packFramebuffer16Pixel<PackMode, Red, Green, Blue, Alpha>(pixel, fb_w_ctrl));
 	}
 }
+
+// 0888 KRGB and 8888 ARGB: one pixel is one VRAM word, so 8 pixels fill the
+// same 8 interleaved words as 16 16-bit pixels.
+// 888 (24-bit packed) stays scalar: its pixels straddle VRAM words.
+template<int PackMode, int Red, int Green, int Blue, int Alpha>
+static inline u32 packFramebuffer32Pixel(const u8 *pixel, u32 kval)
+{
+	const u32 high = PackMode == 5 ? kval : ((u32)pixel[Alpha] << 24);
+	return ((u32)pixel[Red] << 16) | ((u32)pixel[Green] << 8) | pixel[Blue] | high;
+}
+
+template<int PackMode>
+static inline void packFramebuffer32Pixels(uint8x8_t red, uint8x8_t green, uint8x8_t blue,
+		uint8x8_t alpha, u32 kval, uint32x4_t& words0, uint32x4_t& words1)
+{
+	// word = B | G << 8 | R << 16 | (K or A) << 24, built as two 16-bit halves
+	const uint16x8_t low = vorrq_u16(vmovl_u8(blue), vshlq_n_u16(vmovl_u8(green), 8));
+	uint16x8_t high;
+	if constexpr (PackMode == 5)
+		high = vorrq_u16(vmovl_u8(red), vdupq_n_u16((u16)(kval >> 16)));
+	else
+		high = vorrq_u16(vmovl_u8(red), vshlq_n_u16(vmovl_u8(alpha), 8));
+	words0 = vorrq_u32(vmovl_u16(vget_low_u16(low)), vshlq_n_u32(vmovl_u16(vget_low_u16(high)), 16));
+	words1 = vorrq_u32(vmovl_u16(vget_high_u16(low)), vshlq_n_u32(vmovl_u16(vget_high_u16(high)), 16));
+}
+
+// Same address walk as writeFramebufferLW(), so the output is identical to the
+// scalar path, including when padding isn't a multiple of 4.
+template<int PackMode, int Red, int Green, int Blue, int Alpha>
+static void writeFramebuffer32Neon(u32 width, u32 height, const u8 *data, u32 dstAddr,
+		FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip)
+{
+	constexpr u32 bpp = 4;
+	u32 padding = linestride;
+	if (padding > width * bpp)
+		padding -= width * bpp;
+	else
+		padding = 0;
+
+	const u32 kval = fb_w_ctrl.fb_kval << 24;
+	const u8 *p = data + 4 * clip.origin.y * width;
+	u32 addr = dstAddr + bpp * clip.origin.y * (width + padding / bpp);
+
+	const u32 clipWidth = std::min<u32>(width, clip.origin.x + clip.size.x);
+	height = std::min<u32>(height, clip.origin.y + clip.size.y);
+	const int count = clipWidth > (u32)clip.origin.x ? clipWidth - clip.origin.x : 0;
+
+	for (u32 l = clip.origin.y; l < height; l++)
+	{
+		p += 4 * clip.origin.x;
+		addr += bpp * clip.origin.x;
+
+		int x = 0;
+		for (; x + 8 <= count && pvr32SpanIsContiguous(addr, 32); x += 8, addr += 32, p += 32)
+		{
+			const uint8x8x4_t rgba = vld4_u8(p);
+			uint32x4_t words0, words1;
+			packFramebuffer32Pixels<PackMode>(rgba.val[Red], rgba.val[Green], rgba.val[Blue],
+					rgba.val[Alpha], kval, words0, words1);
+			storeFramebufferWords(&vram[pvr_map32(addr)], words0, words1);
+		}
+		for (; x < count; x++, addr += bpp, p += 4)
+			pvr_write32p<u32, true>(addr, packFramebuffer32Pixel<PackMode, Red, Green, Blue, Alpha>(p, kval));
+
+		addr += padding + (width - clipWidth) * bpp;
+		p += (width - clipWidth) * 4;
+	}
+}
 #endif
 
 template<int Red, int Green, int Blue, int Alpha>
@@ -1668,10 +1740,18 @@ void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_C
 		writeFramebufferLW<FBLineWriter888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 5: // 0888 KRGB 32 bit
+#if HOST_CPU == CPU_ARM64
+		writeFramebuffer32Neon<5, Red, Green, Blue, Alpha>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
+#else
 		writeFramebufferLW<FBLineWriter0888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
+#endif
 		break;
 	case 6: // 8888 ARGB 32 bit
+#if HOST_CPU == CPU_ARM64
+		writeFramebuffer32Neon<6, Red, Green, Blue, Alpha>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
+#else
 		writeFramebufferLW<FBLineWriter8888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
+#endif
 		break;
 	default:
 		ERROR_LOG(PVR, "Invalid framebuffer format: %d", fb_w_ctrl.fb_packmode);
