@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 20:00\n"
+"PO-Revision-Date: 2026-10-26 13:07\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -480,10 +480,6 @@ msgstr "Erreur : impossible de charger le BIOS de 'naomi.zip'"
 #, c-format
 msgid "Error: can't open %s"
 msgstr "Erreur : impossible d'ouvrir %s"
-
-#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
-msgid "Error: Invalid LST file"
-msgstr "Erreur : fichier LST invalide"
 
 #: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
@@ -1200,8 +1196,8 @@ msgid "Hide Legacy Naomi Roms"
 msgstr "Masquer les anciennes Roms Naomi"
 
 #: core/ui/settings_general.cpp:391
-msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "Cache les fichiers .bin, .dat et .lst de la liste de jeu"
+msgid "Hide .bin and .dat files from the content browser"
+msgstr ""
 
 #: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
