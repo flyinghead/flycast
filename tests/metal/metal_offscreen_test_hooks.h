@@ -6,7 +6,14 @@
 struct TA_context;
 extern std::function<void(TA_context *)> metalOffscreenParsedTa;
 extern bool metalOffscreenRecoveryOnly;
+extern bool metalOffscreenMaterialAdmissionOnly;
+extern bool metalOffscreenFixedPipelinesOnly;
+extern double metalOffscreenVideoFieldDuration;
+extern bool metalOffscreenResolveAdmissionOnly;
+extern bool metalOffscreenStorageAdmissionOnly;
+extern bool metalOffscreenResolveBenchmark;
 extern bool metalOffscreenStorageOnly, metalOffscreenStorageBenchmark;
+extern bool metalOffscreenPackedModifiers;
 extern bool metalOffscreenStorageLifetimeOnly;
 extern bool metalOffscreenIntermediates,metalOffscreenIntermediatesBenchmark;
 extern bool metalOffscreenBoundaryProfile;

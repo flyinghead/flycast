@@ -21,7 +21,13 @@
 void metalValidateRenderer();
 std::string metalOffscreenCacheRoot;
 bool metalOffscreenRecoveryOnly=false;
+bool metalOffscreenMaterialAdmissionOnly=false;
+bool metalOffscreenFixedPipelinesOnly=false;
+bool metalOffscreenResolveAdmissionOnly=false;
+bool metalOffscreenStorageAdmissionOnly=false;
+bool metalOffscreenResolveBenchmark=false;
 bool metalOffscreenStorageOnly=false,metalOffscreenStorageBenchmark=false;
+bool metalOffscreenPackedModifiers=false;
 bool metalOffscreenStorageLifetimeOnly=false;
 bool metalOffscreenIntermediates=false,metalOffscreenIntermediatesBenchmark=false;
 bool metalOffscreenBoundaryProfile=false;
@@ -215,8 +221,25 @@ int main(int argc,char **argv){@autoreleasepool{try {
  auto device=MTLCreateSystemDefaultDevice();auto queue=[[FCOffscreenQueue alloc] initWithDevice:device];
  const auto contextStart=std::chrono::steady_clock::now();
  MetalContext::CreateOffscreenForTesting(queue,layer);
+ if(argc==2 && std::strcmp(argv[1],"--material-functions-only")==0){
+  MetalContext::Instance()->validateMaterialFunctionsForTesting();
+  GraphicsContext::Term();ImGui::DestroyContext();return 0;
+ }
+ if(argc==2 && std::strcmp(argv[1],"--material-failures-only")==0){
+  MetalContext::Instance()->validateMaterialFailuresForTesting();
+  GraphicsContext::Term();ImGui::DestroyContext();return 0;
+ }
+ if(argc==2 && std::strcmp(argv[1],"--material-queue-only")==0){
+  MetalContext::Instance()->validateMaterialQueueForTesting();
+  GraphicsContext::Term();ImGui::DestroyContext();return 0;
+ }
  if(metalOffscreenCacheProfile)std::fprintf(stderr,"Metal cache context phase=%s optimized=%d cpu_us=%.3f\n",metalOffscreenCachePhase.c_str(),metalOffscreenCacheOptimized,std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-contextStart).count());
  metalOffscreenRecoveryOnly=argc>1 && std::strcmp(argv[1],"--recovery-only")==0;
+ metalOffscreenFixedPipelinesOnly=argc>1 && std::strcmp(argv[1],"--fixed-pipelines-only")==0;
+ metalOffscreenMaterialAdmissionOnly=argc>1 && std::strcmp(argv[1],"--material-admission-only")==0;
+ metalOffscreenResolveBenchmark=argc>1 && std::strcmp(argv[1],"--resolve-profile")==0;
+ metalOffscreenStorageAdmissionOnly=argc>1 && std::strcmp(argv[1],"--storage-admission-only")==0;
+ metalOffscreenResolveAdmissionOnly=metalOffscreenResolveBenchmark || (argc>1 && std::strcmp(argv[1],"--resolve-admission-only")==0);
 
  metalOffscreenContextLifecycle=argc>1 && std::strcmp(argv[1],"--context-lifecycle")==0;
  const bool pvrOnly=metalOffscreenContextLifecycle || (argc>1 && std::strcmp(argv[1],"--pvr-only")==0);
@@ -231,23 +254,30 @@ int main(int argc,char **argv){@autoreleasepool{try {
  metalOffscreenPassProfile=argc>1 && (std::strcmp(argv[1],"--passes-profile")==0 || std::strcmp(argv[1],"--passes-validation")==0);
  metalOffscreenStorageBenchmark=argc>1 && (std::strcmp(argv[1],"--storage-benchmark")==0 || std::strcmp(argv[1],"--boundaries-profile")==0);
  metalOffscreenStorageBenchmark|=argc>1 && std::strcmp(argv[1],"--passes-profile")==0;
+ metalOffscreenPackedModifiers=argc>1 && (std::strcmp(argv[1],"--packed-modifier-validation")==0 || std::strcmp(argv[1],"--packed-modifier-profile")==0);
+ metalOffscreenStorageBenchmark|=argc>1 && std::strcmp(argv[1],"--packed-modifier-profile")==0;
  metalOffscreenBoundaryProfile|=metalOffscreenPassProfile;
  metalOffscreenStorageOnly=metalOffscreenStorageBenchmark || (argc>1 && std::strcmp(argv[1],"--storage-only")==0);
  metalOffscreenStorageLifetimeOnly=argc>1 && std::strcmp(argv[1],"--storage-lifetime")==0;
  metalOffscreenStorageOnly|=metalOffscreenStorageLifetimeOnly;
  metalOffscreenStorageOnly|=metalOffscreenBoundaryProfile;
+ metalOffscreenStorageOnly|=metalOffscreenPackedModifiers;
  metalOffscreenIntermediatesBenchmark=argc>1 && std::strcmp(argv[1],"--intermediates-profile")==0;
  metalOffscreenIntermediates=metalOffscreenIntermediatesBenchmark || (argc>1 && std::strcmp(argv[1],"--intermediates-validation")==0);
  metalOffscreenStorageOnly|=metalOffscreenIntermediates;
  const bool presentationOnly=argc>1 && std::strcmp(argv[1],"--presentation-routing")==0;
+ const bool duplicatesOnly=argc>1 && std::strcmp(argv[1],"--duplicate-cadence-only")==0;
+ const bool lazyOnly=argc>1 && std::strcmp(argv[1],"--lazy-presentation-only")==0;
  if(presentationOnly)MetalContext::Instance()->validateDeferredPresentationForTesting();
- if(!pvrOnly && !presentationOnly && (argc==1 || std::strcmp(argv[1],"--init-only")!=0))metalValidateRenderer();
+ if(duplicatesOnly)MetalContext::Instance()->validateDuplicateCadenceForTesting();
+ if(lazyOnly)MetalContext::Instance()->validateLazyPresentationForTesting();
+ if(!pvrOnly && !presentationOnly && !duplicatesOnly && !lazyOnly && (argc==1 || std::strcmp(argv[1],"--init-only")!=0))metalValidateRenderer();
  if(argc==1 || pvrOnly)metalOffscreenValidatePvrLifecycle();
  if(metalOffscreenCacheProfile){
   auto s=MetalContext::Instance()->pipelineStatisticsForTesting(true);
   const auto timing=[](MetalPipelineCache::Statistics::Timing t){return @{@"calls":@(t.calls),@"ns":@(t.nanoseconds),@"max_ns":@(t.maximum)};};
   NSMutableDictionary *times=[NSMutableDictionary new];
-  for(unsigned i=0;i<3;++i){times[[NSString stringWithFormat:@"lookup_%u",i]]=timing(s.lookup[i]);times[[NSString stringWithFormat:@"creation_%u",i]]=timing(s.creation[i]);}
+  for(unsigned i=0;i<s.lookup.size();++i){times[[NSString stringWithFormat:@"lookup_%u",i]]=timing(s.lookup[i]);times[[NSString stringWithFormat:@"creation_%u",i]]=timing(s.creation[i]);}
   for(unsigned i=0;i<2;++i)times[[NSString stringWithFormat:@"writer_%u",i]]=timing(s.writer[i]);
   times[@"serialization"]=timing(s.serialization);times[@"publication"]=timing(s.publication);
   auto data=[NSJSONSerialization dataWithJSONObject:@{@"hits":@(s.hits),@"misses":@(s.misses),@"probes":@(s.probes),@"hinted":@(s.hintedHits),@"queued":@(s.queued),@"recordings":@(s.recordings),@"duplicates":@(s.duplicates),@"copies":@(s.descriptorCopies),@"segments":@(s.savedSegments),@"pending":@(s.pending),@"accepting":@(s.accepting),@"timing":@(s.timing),@"times":times} options:NSJSONWritingSortedKeys error:nil];

@@ -269,11 +269,40 @@ static void earlyFeedback(GPU& gpu)
     }
     std::puts("PASS early feedback: post-submit event survives wrapper retirement, both recycling modes");
 }
-int main()
+static void callbackReentry(GPU& gpu,bool acquire=true,bool recycle=true)
+{
+    for(bool recycling:{false,true}) for(bool returning:{false,true}) {
+        if((returning && !recycle) || (!returning && !acquire))continue;
+        auto queue=[[FCMetal4Queue alloc] initWithDevice:gpu.device];
+        [queue setSubmissionRecyclingForTesting:recycling];
+        auto command=[queue commandBuffer];
+        __block FCMetal4Commands *next=nil;
+        __block FCMetal4Commands *canceled=nil;
+        @autoreleasepool { if(returning)canceled=[queue commandBuffer]; }
+        __weak FCMetal4Commands *weakCanceled=canceled;
+        [command addCompletedHandler:^(FCMetal4Commands *) {
+            // Feedback must be able to acquire/return a CPU lease while the
+            // producer is still inside the native queue's commit sequence.
+            if(returning)canceled=nil;
+            else next=[queue commandBuffer];
+        }];
+        [command setEarlyFeedbackForTesting:YES];
+        [command commit];[command waitUntilCompleted];error(command.error);
+        if(returning){require(!weakCanceled,"Feedback did not retire its canceled command lease");next=[queue commandBuffer];}
+        require(next && next.status==FCMetal4StatusEncoding,"Feedback could not acquire the next command lease");
+        [next commit];[next waitUntilCompleted];error(next.error);next=nil;
+    }
+    std::puts("PASS callback reentry: feedback acquires/retires CPU leases before commit returns, both recycling modes");
+}
+int main(int argc,char **argv)
 {
     @autoreleasepool {
     try {
-        GPU gpu;zeroBindings(gpu);cancellation(gpu);inFlight(gpu);pageAndTableLimits(gpu);callbackLease(gpu);completedOwnership(gpu);earlyFeedback(gpu);residencyLifetime(gpu);
+        GPU gpu;
+        if(argc==2 && std::strcmp(argv[1],"--blocking-only")==0){callbackReentry(gpu);return 0;}
+        if(argc==2 && std::strcmp(argv[1],"--blocking-acquire-only")==0){callbackReentry(gpu,true,false);return 0;}
+        if(argc==2 && std::strcmp(argv[1],"--blocking-recycle-only")==0){callbackReentry(gpu,false,true);return 0;}
+        zeroBindings(gpu);cancellation(gpu);inFlight(gpu);pageAndTableLimits(gpu);callbackLease(gpu);completedOwnership(gpu);earlyFeedback(gpu);callbackReentry(gpu);residencyLifetime(gpu);
         auto base=[[FCMetal4Queue alloc] initWithDevice:gpu.device];[base setSubmissionRecyclingForTesting:NO];
         auto pooled=[[FCMetal4Queue alloc] initWithDevice:gpu.device];
         for(unsigned i=0;i<16;++i){batch(gpu,base,8,10+i);batch(gpu,pooled,8,10+i);}

@@ -17,13 +17,14 @@ public:
 	id<MTLRenderPipelineState> makeRenderPipeline(MTL4RenderPipelineDescriptor *descriptor,
 		NSError **error, bool material = false, const std::string& identity = {});
 	id<MTLComputePipelineState> makeComputePipeline(MTL4ComputePipelineDescriptor *descriptor,
-		NSError **error, const std::string& identity = {});
+		NSError **error, const std::string& identity = {}, bool background = false);
 	struct Statistics {
 		struct Timing { uint64_t calls=0,nanoseconds=0,maximum=0; };
 		uint64_t hits,misses,probes,hintedHits,queued,recordings,duplicates,savedSegments;
 		size_t pending;
 		bool writable,accepting;
-		std::array<Timing,3> lookup{},creation{};
+		// Foreground render, material render, foreground compute, background compute.
+		std::array<Timing,4> lookup{},creation{};
 		std::array<Timing,2> writer{};
 		Timing serialization{},publication{};
 		bool timing=false;

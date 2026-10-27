@@ -17,16 +17,121 @@ static bool conflict(const Op& a,const Op& b) {
         && a.access.begin<b.access.end && b.access.begin<a.access.end;
 }
 static volatile uint64_t profileSink;
+static int duplicateValidation()
+{
+    for(unsigned distinct : {1u,2u,4u,5u}) {
+        metal_sync::PassHazards h;h.begin();h.end(true);
+        std::array<Access,60> old{};for(size_t i=0;i<old.size();++i)old[i]={1+i,0,16,true};
+        h.begin();h.before(1,old.data(),old.size());h.end(false);
+        std::array<Access,64> duplicate{};
+        for(size_t i=0;i<duplicate.size();++i)duplicate[i]={61+i%distinct,0,16,bool(i&1),false};
+        h.begin();const auto barrier=h.before(2,duplicate.data(),duplicate.size());
+        require(h.requiresRelease()==(distinct>4),"Duplicate batch inputs incorrectly consume independent history capacity");
+        require(barrier.needed==(distinct>4),"Duplicate batch inserted an unnecessary global barrier or lost real overflow");
+        h.end(h.requiresRelease());
+        require(h.pendingCount()==(distinct>4?0u:60u+distinct),"Duplicate batch merge has an incorrect distinct range count");
+    }
+    std::puts("PASS duplicate batch identities count once; actual 65-record union still releases globally");
+    return 0;
+}
+static int overlapValidation()
+{
+    for(size_t width : {4u,8u,16u,32u,40u,48u,64u}) {
+        metal_sync::PassHazards h;
+        std::array<Access,64> accesses{};
+        for(size_t i=0;i<width;++i)accesses[i]={1+i,0,256,true};
+        h.begin();h.end(true);
+        h.begin();h.before(1,accesses.data(),width);h.end(false);
+        h.begin();
+        for(auto& access:accesses)access.write=false;
+        for(unsigned draw=0;draw<32;++draw) {
+            const auto acquired=h.before(2,accesses.data(),width);
+            require(acquired.after==(draw==0?1u:0u),"Overlapping histories inserted an unnecessary global consumer barrier");
+            require(!h.requiresRelease(),"Overlapping histories count one allocation twice toward the capacity limit");
+        }
+        h.end(false);
+        require(h.pendingCount()==width,"Overlapping history changed its distinct allocation count");
+    }
+    // The cached proof must contain both prior reader and writer stages; a
+    // binding may change access mode, stage or alias visibility within a pass.
+    metal_sync::PassHazards h;h.begin();h.end(true);
+    Access write{1,0,32,true},read{1,8,24,false},alias=read;alias.alias=true;
+    h.begin();h.before(1,&write,1);h.end(false);
+    h.begin();h.before(2,&read,1);h.end(false);
+    h.begin();
+    require(h.before(4,&read,1).after==1,"Cached read lost its prior writer");
+    read.write=true;
+    require(h.before(4,&read,1).after==2,"Read-to-write rebind lost its cached prior readers");
+    require(h.before(4,&alias,1).after==1,"Alias rebind reused Device-only visibility");
+    require(h.before(8,&read,1).after==3,"Consumer-stage change reused another stage's acquisition");
+    h.end(false);
+    h.begin();read.write=false;
+    require(h.before(16,&read,1).after==13,"New encoder reused a stale dependency proof");
+    h.end(false);
+    h.reset();h.begin();h.end(true);
+    std::array<Access,40> old{},current{};
+    for(size_t i=0;i<40;++i){old[i]={1+i,0,16,true};current[i]={21+i,0,16,false};}
+    h.begin();h.before(1,old.data(),old.size());h.end(false);
+    h.begin();h.before(2,current.data(),current.size());
+    require(!h.requiresRelease(),"Partially shared histories counted 80 records instead of their 60-record union");
+    std::array<Access,5> extra{};for(size_t i=0;i<5;++i)extra[i]={61+i,0,16,true};
+    require(h.before(2,extra.data(),extra.size()).needed && h.requiresRelease(),"Real union overflow lost its conservative boundary");
+    h.end(true);require(h.pendingCount()==0,"Overflow release retained incomplete history");
+    std::puts("PASS repeated overlapping histories through 64 allocations retain scoped barriers without false capacity releases");
+    return 0;
+}
+// Independent per-byte stage-clock oracle for the batch corpus. It does not
+// model the planner's records, capacity accounting or dependency-mask cache.
+class BatchClockOracle {
+    using Clock=std::array<uint32_t,3>;
+    struct Cell {Clock reads{},writes{};};
+    std::array<Cell,73*32> prior{},current{};
+    Clock priorClock{},currentClock{},global{},priorUnknown{},currentUnknown{};
+    std::array<Clock,3> acquired{};
+public:
+    void begin(){current=prior;currentClock=priorClock;currentUnknown=priorUnknown;acquired={};}
+    void operation(uint64_t stages,const Access *inputs,size_t count,bool opaque,metal_sync::Barrier barrier) {
+        if(!stages)return;
+        bool unknown=opaque || count>64 || (count && !inputs),active=unknown;
+        if(inputs && count<=64)for(size_t i=0;i<count;++i) {
+            const auto a=metal_sync::passAccess(inputs[i]);if(a.begin==a.end)continue;
+            active=true;unknown|=!a.allocation || a.begin>a.end;
+        }
+        for(unsigned c=0;c<3;++c)if(stages&(uint64_t(1)<<c)) {
+            if(barrier.needed)for(unsigned p=0;p<3;++p)if(barrier.after&(uint64_t(1)<<p))acquired[c][p]=priorClock[p];
+            if(!active)continue;
+            for(unsigned p=0;p<3;++p) {
+                const auto covered=std::max(global[p],acquired[c][p]);
+                require((unknown?priorClock[p]:priorUnknown[p])<=covered,"Batch lacks a happens-before path for opaque memory");
+            }
+            ++currentClock[c];
+            if(unknown){currentUnknown[c]=currentClock[c];continue;}
+            for(size_t i=0;i<count;++i) {
+                const auto a=metal_sync::passAccess(inputs[i]);if(a.begin==a.end)continue;
+                require(a.allocation<73 && a.end<=32,"Batch oracle input left its byte-address universe");
+                for(size_t byte=a.begin;byte<a.end;++byte) {
+                    const auto index=a.allocation*32+byte;const auto& old=prior[index];
+                    for(unsigned p=0;p<3;++p) {
+                        const auto needed=std::max(old.writes[p],a.write?old.reads[p]:0u);
+                        require(needed<=std::max(global[p],acquired[c][p]),"Batch RAW/WAR/WAW lacks a per-byte stage-clock path");
+                    }
+                    if(a.write)current[index].writes[c]=currentClock[c];else current[index].reads[c]=currentClock[c];
+                }
+            }
+        }
+    }
+    void end(bool published){prior=current;priorClock=currentClock;priorUnknown=currentUnknown;if(published)global=currentClock;}
+};
 static int batchValidation()
 {
     uint32_t random=0x48415a44;
     auto next=[&]{random^=random<<13;random^=random>>17;random^=random<<5;return random;};
     uint64_t total=1469598103934665603ULL;
     for(unsigned trial=0;trial<2000;++trial) {
-        metal_sync::PassHazards h;uint64_t digest=1469598103934665603ULL;
+        metal_sync::PassHazards h;BatchClockOracle oracle;uint64_t digest=1469598103934665603ULL;
         auto mix=[&](uint64_t value){digest=(digest^value)*1099511628211ULL;};
         for(unsigned pass=0;pass<32;++pass) {
-            h.begin();
+            h.begin();oracle.begin();
             for(unsigned step=0;step<3;++step) {
                 std::array<Access,66> accesses{};const size_t count=next()%67;
                 for(size_t i=0;i<count;++i) {
@@ -42,18 +147,16 @@ static int batchValidation()
                 const Access *supplied=next()%43==0?nullptr:accesses.data();
                 const bool opaque=next()%37==0;
                 const auto barrier=h.before(stage,supplied,count,opaque);
+                oracle.operation(stage,supplied,count,opaque,barrier);
                 mix(barrier.after);mix(barrier.needed);mix(barrier.alias);mix(h.requiresRelease());
             }
-            const bool release=h.requiresRelease();h.end(release);mix(h.pendingCount());
+            const bool release=h.requiresRelease();h.end(release);oracle.end(release);mix(h.pendingCount());
             require(h.pendingCount()<=64,"Batch exceeded pass-history capacity");
         }
         std::printf("BATCH %u %016llx\n",trial,(unsigned long long)digest);
         total=(total^digest)*1099511628211ULL;
     }
-    // Captured from the original double-search implementation. Covers every
-    // returned stage mask, alias flag, release decision and pending-count value.
-    require(total==0xbe307884e2d3cd23ULL,"Batch barrier decisions differ from the original planner");
-    std::puts("PASS 192000 batch operations match original barrier decisions");
+    std::printf("PASS 192000 batch operations satisfy independent per-byte stage clocks; digest=%016llx (not an equivalence claim to historical conservative decisions)\n",(unsigned long long)total);
     return 0;
 }
 static int profile()
@@ -94,6 +197,8 @@ static int profile()
     return 0;
 }
 int main(int argc,char **argv){try {
+    if(argc==2 && std::strcmp(argv[1],"--duplicate-validation")==0)return duplicateValidation();
+    if(argc==2 && std::strcmp(argv[1],"--overlap-validation")==0)return overlapValidation();
     if(argc==2 && std::strcmp(argv[1],"--profile")==0)return profile();
     if(argc==2 && std::strcmp(argv[1],"--batch-validation")==0)return batchValidation();
     static_assert(sizeof(metal_sync::PassBindings)<=1100,"Binding cache is no longer compact");

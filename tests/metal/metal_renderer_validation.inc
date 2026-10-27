@@ -173,16 +173,14 @@ void MetalRenderer::validateSynthetic()
 			const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
 			for (;;) {
 				collectMaterialPipelines();
-				bool pending = false;
-				for (const auto& entry : materialPipelines)
-					if ((entry.first & (1ull << 47)) && !entry.second) pending = true;
-				if (!pending) break;
+				if(!Render())throw RendererException("Metal bounded specialization retry failed");
+				auto selected=materialPipelines.find(pipelineSelection.key);
+				if((pipelineSelection.key & (1ull<<47)) && selected!=materialPipelines.end()
+					&& selected->second && selected->second==pipelineSelection.state)break;
 				if (std::chrono::steady_clock::now() >= deadline)
 					throw RendererException("Metal bounded specialization did not complete");
 				[NSThread sleepForTimeInterval:.001];
 			}
-			if (!Render() || !(pipelineSelection.key & (1ull << 47)))
-				throw RendererException("Metal bounded specialization was not selected");
 			std::vector<u8> candidate; context()->readTexture(screen, candidate);
 			if (reference != candidate) throw RendererException("Metal bounded production pixels differ");
 		}
@@ -786,6 +784,7 @@ void MetalRenderer::validateSynthetic()
 		fixture.idx.insert(fixture.idx.end(),{8,9,10,11});
 		PolyParam second = fixture.global_param_tr.front(); second.first = 8;
 		fixture.global_param_tr.push_back(second); fixture.render_passes[0].tr_count=2;
+		unsigned storageWarmupPairs=0;
 		for (u32 combination=0;combination<260;++combination) {
 			// The last four layouts also exercise dense storage split across
 			// many tiles, odd output edges and both depth interpolation modes.
@@ -807,22 +806,38 @@ void MetalRenderer::validateSynthetic()
 			disableOITDepthSharing=disableOITHeadReuse=true;
 			if(!Render())throw RendererException("Metal linked OIT blend reference failed");
 			std::vector<u8> reference;context()->readTexture(screen,reference);
+			const bool sourceOver = std::all_of(fixture.global_param_tr.begin(),fixture.global_param_tr.end(),[](const PolyParam& p){return sourceOverBlend(p.tsp);});
+			const auto renderReadyStorage=[&](u32 mask) {
+				const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(10);
+				for(;;){
+					if(!Render())throw RendererException("Metal optional storage render failed");
+					if((drawState.uniforms.flags&mask)==mask)return;
+					std::vector<u8> pending;context()->readTexture(screen,pending);
+					if(pending!=reference)throw RendererException("Metal pending storage fallback changed full blend pixels");
+					++storageWarmupPairs;
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+					context()->drainMaterialCompilerForTesting();collectMaterialPipelines();
+#else
+					[NSThread sleepForTimeInterval:.001];
+#endif
+					if(std::chrono::steady_clock::now()>=deadline)throw RendererException("Metal optional storage family did not become ready");
+				}
+			};
 			disablePackedOIT=false;
 			disableOITDepthSharing=disableOITHeadReuse=false;
-			if(!Render())throw RendererException("Metal packed linked OIT render failed");
+			renderReadyStorage(MetalOITPackedList);
 			if(!(drawState.uniforms.flags & MetalOITPackedList))throw RendererException("Metal fixture did not use packed linked storage");
 			std::vector<u8> linked;context()->readTexture(screen,linked);
 			if(reference!=linked)throw RendererException("Metal packed linked OIT changed blend/accumulator pixels");
 			if (combination >= 256) config::PixelBufferSize = 4096;
 			disableDenseOIT=false;
 			disablePackedOIT=true;
-			if(!Render())throw RendererException("Metal unpacked dense OIT reference failed");
+			renderReadyStorage(MetalOITDense);
 			std::vector<u8> unpacked;context()->readTexture(screen,unpacked);
 			if(reference!=unpacked)throw RendererException("Metal unpacked dense OIT changed blend pixels");
 			disablePackedOIT=false;
-			if(!Render())throw RendererException("Metal dense OIT blend render failed");
+			renderReadyStorage(MetalOITDense|(sourceOver?0:MetalOITDensePacked));
 			if(!(drawState.uniforms.flags & MetalOITDense))throw RendererException("Metal dense fixture did not use dense storage");
-			const bool sourceOver = std::all_of(fixture.global_param_tr.begin(),fixture.global_param_tr.end(),[](const PolyParam& p){return sourceOverBlend(p.tsp);});
 			if(!sourceOver && !(drawState.uniforms.flags & MetalOITDensePacked))throw RendererException("Metal dense fixture did not pack its polygon sequence");
 			std::vector<u8> candidate;context()->readTexture(screen,candidate);
 			if(reference!=candidate)throw RendererException("Metal dense OIT changed blend/accumulator pixels: "+std::to_string(combination));
@@ -832,6 +847,7 @@ void MetalRenderer::validateSynthetic()
 		fixture.framebufferWidth=64;fixture.framebufferHeight=48;
 		fixture.verts=savedVertices;fixture.idx=savedIndices;
 		fixture.global_param_tr=savedTranslucent;fixture.render_passes=savedPasses;
+		NOTICE_LOG(RENDERER,"Metal validation PASS: %u pending-storage full-frame blend comparisons before optimized families became ready",storageWarmupPairs);
 		NOTICE_LOG(RENDERER,"Metal validation PASS: 780 dense/linked full-frame comparisons, packed/unpacked linked and dense metadata, all blend/accumulator modes and source-over/additive layouts");
 	}
 	if (perPixel) {
@@ -1182,6 +1198,10 @@ void MetalRenderer::validateSynthetic()
 		memcpy(saved.data(), &vram[address], saved.size());
 		const bool savedEmulate = config::EmulateFramebuffer;
 		const u32 savedFrameCount = FrameCount; FrameCount = std::max(1u, FrameCount);
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+		// Keep optional compiler work out of the foreground lookup counter.
+		context()->drainMaterialCompilerForTesting();
+#endif
 		const auto sample = [&](id<MTLTexture> image, bool ignoreAlpha) {
 			auto output = context()->makeTexture(dimension, dimension, MTLPixelFormatBGRA8Unorm);
 			FCMetal4Commands *command = [context()->queue() commandBuffer];
@@ -1213,7 +1233,15 @@ void MetalRenderer::validateSynthetic()
 				textureCache.publishRenderTarget(*source, control, dimension * 2, Rect({0,0},{dimension,dimension}));
 				TSP tsp{}; tsp.TexU = tsp.TexV = 1;
 				TCW tcw{}; tcw.TexAddr = address >> 3; tcw.ScanOrder = 1; tcw.PixelFmt = format;
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+				const auto priorLookup=context()->testComputePipelineRequestCount();
+#endif
 				auto alias = static_cast<MetalTexture *>(GetTexture(tsp, tcw, 0));
+#ifdef FLYCAST_METAL_TEST_FIXTURE_ROOT
+				const auto afterLookup=context()->testComputePipelineRequestCount();
+				if(afterLookup!=priorLookup)
+					throw RendererException("RTT alias lookup compiled or searched for its pipeline during texture access");
+#endif
 				if (!alias || alias->aliasSerial != source->renderTargetSerial || !alias->aliasSerial)
 					throw RendererException("Metal RTT alias generation was not updated");
 				auto aliasImage = alias->image;
@@ -1273,7 +1301,7 @@ void MetalRenderer::validateSynthetic()
 		}
 		VramLockedWriteOffset(address); memcpy(&vram[address], saved.data(), saved.size());
 		config::EmulateFramebuffer = savedEmulate; FrameCount = savedFrameCount;
-		NOTICE_LOG(RENDERER, "Metal validation PASS: %u RTT format-alias pairs against VRAM packing/decoding, RGB/alpha, cache hits, generation updates, CPU invalidation and incompatible-layout/collection guards (%s)", pairs, perPixel ? "OIT" : "standard");
+		NOTICE_LOG(RENDERER, "Metal validation PASS: %u RTT format-alias pairs against VRAM packing/decoding, RGB/alpha, cache hits, generation updates, CPU invalidation and incompatible-layout/collection guards; no alias-time pipeline lookups (%s)", pairs, perPixel ? "OIT" : "standard");
 	}
 	fixture.globClip = {64, 48}; fixture.tileClip = fixture.fbClip = Rect({0, 0}, {64, 48});
 	for (auto& v : fixture.verts) { v.x /= 10; v.y /= 10; }

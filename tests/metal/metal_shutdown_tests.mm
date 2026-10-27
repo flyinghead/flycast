@@ -260,8 +260,46 @@ static void mergedOwners(id<MTLDevice> device,Fault fault) {
 	if(!enqueued)require(!failed->load(),"Retiring merged command reissued an already consumed cancellation");
 	exactlyOne(staging);for(auto slot:slots)exactlyOne(slot);
 }
-int main(){@autoreleasepool{try {
+static void retrySubmission(id<MTLDevice> device)
+{
+	for(unsigned attempts:{1u,3u})for(bool trackedRetry:{false,true}) {
+		auto queue=[[FCMetal4Queue alloc] initWithDevice:device];
+		auto command=[queue commandBuffer];auto submissions=dispatch_group_create();
+		auto event=[device newSharedEvent];EventRelease release{event};
+		std::array<unsigned char,1024> expected{};
+		for(unsigned i=0;i<expected.size();++i)expected[i]=i*17+attempts;
+		auto source=[device newBufferWithBytes:expected.data() length:expected.size() options:MTLResourceStorageModeShared];
+		auto output=[device newBufferWithLength:expected.size() options:MTLResourceStorageModeShared];
+		copy(command,source,output);[command waitForEvent:event value:1];
+		[command setCommitFailureForTesting:YES];
+		for(unsigned i=0;i<attempts;++i) {
+			bool threw=false;try {commitCommands(command,submissions);}catch(const std::exception&){threw=true;}
+			require(threw && command.status==FCMetal4StatusEncoding,"Pre-submit failure did not preserve the unsubmitted owner");
+			require(dispatch_group_wait(submissions,DISPATCH_TIME_NOW)==0,"Failed attempt retained a submission-group entry");
+		}
+		// Independent held entries absorb stale callbacks in the old helper,
+		// so the regression reports early drain instead of crashing libdispatch.
+		for(unsigned i=0;i<attempts;++i)dispatch_group_enter(submissions);
+		[command setCommitFailureForTesting:NO];
+		if(trackedRetry)commitCommands(command,submissions);else [command commit];
+		require(dispatch_group_wait(submissions,DISPATCH_TIME_NOW)!=0,"Unfinished retry lost the held group entries");
+		event.signaledValue=1;[command waitUntilCompleted];
+		require(command.status==FCMetal4StatusCompleted && !command.error,"Retried GPU submission failed");
+		require(std::memcmp(output.contents,expected.data(),expected.size())==0,"Retry changed the transferred payload");
+		require(dispatch_group_wait(submissions,DISPATCH_TIME_NOW)!=0,"A stale callback from a failed attempt drained unrelated work");
+		for(unsigned i=0;i<attempts;++i) {
+			dispatch_group_leave(submissions);
+			require((dispatch_group_wait(submissions,DISPATCH_TIME_NOW)==0)==(i+1==attempts),"Retry consumed another owner's group entry");
+		}
+		auto next=[queue commandBuffer];commitCommands(next,submissions);[next waitUntilCompleted];
+		require(!next.error && dispatch_group_wait(submissions,DISPATCH_TIME_NOW)==0,"Retry poisoned a later submission");
+	}
+	std::puts("PASS submission retry: one/three pre-submit failures, tracked/raw retry, held foreign group entries, exact gated transfers and later queue reuse");
+}
+int main(int argc,char **argv){@autoreleasepool{try {
 	auto device=MTLCreateSystemDefaultDevice();require(device && [device supportsFamily:MTLGPUFamilyMetal4],"Metal 4 device required");
+	if(argc==2 && std::strcmp(argv[1],"--retry-only")==0){retrySubmission(device);return 0;}
+	retrySubmission(device);
 	for(bool moved:{false,true})for(auto fault:{Fault::Cancel,Fault::BeforeCommit,Fault::BeforeEnqueue,Fault::AfterEnqueue,Fault::Feedback,Fault::None})
 		@autoreleasepool {renderOwner(device,fault,moved);}
 	std::puts("PASS actual RenderCommands: 12 retained-command/owner-move fault paths; actual preload image immediately unadoptable on cancel/pre-submit failure, one failure notification through delayed retirement, raster continuation and deferred depth close, no cancellation/double slot release after enqueue, gated exact transfers, completion groups and budget release");

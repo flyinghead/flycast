@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <future>
+#include <chrono>
 #include <stdexcept>
 #include <vector>
 #include <spawn.h>
@@ -22,6 +23,21 @@
 	if(self.failure==1)@throw [NSException exceptionWithName:@"ArchiveCopyTest" reason:@"Injected copy failure" userInfo:nil];
 	if(self.failure==2)throw std::bad_alloc();
 	return nil;
+}
+@end
+
+@interface BlockingArchiveDescriptor : NSObject <NSCopying>
+@property (strong) id<NSCopying> snapshot;
+@property (strong) dispatch_semaphore_t entered,gate;
+@property unsigned failure;
+@end
+@implementation BlockingArchiveDescriptor
+- (id)copyWithZone:(NSZone *)zone {
+	dispatch_semaphore_signal(self.entered);dispatch_semaphore_wait(self.gate,DISPATCH_TIME_FOREVER);
+	if(self.failure==1)return nil;
+	if(self.failure==2)@throw [NSException exceptionWithName:@"ArchiveBlockedCopy" reason:@"Injected blocked copy failure" userInfo:nil];
+	if(self.failure==3)throw std::bad_alloc();
+	return [self.snapshot copyWithZone:zone];
 }
 @end
 
@@ -114,6 +130,89 @@ static std::string computeKey(MTL4ComputePipelineDescriptor *d,NSString *name) {
 }
 static std::string renderKey(MTL4RenderPipelineDescriptor *d,const std::array<uint32_t,4> *constants=nullptr) {
 	return metal_pipeline::renderIdentity(d,metal_pipeline::functionIdentity(@"v"),metal_pipeline::functionIdentity(constants?@"f_special":@"f",constants));
+}
+static void archiveAdmission(GPU& gpu)
+{
+	const auto originalRoot=cacheRoot;
+	struct Restore {std::string root;~Restore(){cacheRoot=root;}} restore{originalRoot};
+	cacheRoot=originalRoot+"/admission";
+	Session session(gpu);auto cache=session.cache;
+	auto blocked=[BlockingArchiveDescriptor new];blocked.snapshot=gpu.compute(@"c2");
+	blocked.entered=dispatch_semaphore_create(0);blocked.gate=dispatch_semaphore_create(0);
+	auto key=computeKey((MTL4ComputePipelineDescriptor *)blocked.snapshot,@"c2");
+	auto first=std::async(std::launch::async,[cache,blocked,key]{@autoreleasepool{cache->recordForTesting(blocked,true,key);}});
+	struct Release {dispatch_semaphore_t gate;void open(){if(gate){dispatch_semaphore_signal(gate);gate=nil;}}~Release(){open();}} release{blocked.gate};
+	require(dispatch_semaphore_wait(blocked.entered,dispatch_time(DISPATCH_TIME_NOW,5*NSEC_PER_SEC))==0,"Blocked descriptor copy did not start");
+	auto descriptor=gpu.compute(@"c3");const auto otherKey=computeKey(descriptor,@"c3");
+	auto entered=dispatch_semaphore_create(0);
+	auto foreground=std::async(std::launch::async,[cache,descriptor,otherKey,entered]{@autoreleasepool{
+		dispatch_semaphore_signal(entered);cache->recordForTesting(descriptor,true,otherKey);
+	}});
+	const bool started=dispatch_semaphore_wait(entered,dispatch_time(DISPATCH_TIME_NOW,5*NSEC_PER_SEC))==0;
+	const bool independent=started && foreground.wait_for(std::chrono::milliseconds(200))==std::future_status::ready;
+	release.open();first.get();foreground.get();
+	require(independent,"Foreground archive admission waited for another descriptor copy");
+	cache->finish();const auto stats=cache->statistics();
+	require(stats.queued==2 && stats.recordings==2 && !stats.pending && stats.savedSegments==1,"Parallel descriptor publication lost an accepted pipeline");
+	std::puts("PASS archive admission: blocked descriptor copy does not stall another request; both accepted pipelines serialized");
+	for(unsigned failure=0;failure<4;++failure) {
+		cacheRoot=originalRoot+"/finish-copy-"+std::to_string(failure);
+		Session closing(gpu);auto target=closing.cache;
+		auto delayed=[BlockingArchiveDescriptor new];delayed.snapshot=gpu.compute(@"c2");delayed.failure=failure;
+		delayed.entered=dispatch_semaphore_create(0);delayed.gate=dispatch_semaphore_create(0);
+		auto producer=std::async(std::launch::async,[target,delayed,key]{@autoreleasepool{target->recordForTesting(delayed,true,key);}});
+		Release cancel{delayed.gate};
+		const bool copying=dispatch_semaphore_wait(delayed.entered,dispatch_time(DISPATCH_TIME_NOW,5*NSEC_PER_SEC))==0;
+		auto finishA=std::async(std::launch::async,[target]{target->finish();});
+		const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
+		while(target->statistics().accepting && std::chrono::steady_clock::now()<deadline)std::this_thread::yield();
+		const bool closed=!target->statistics().accepting;
+		auto finishB=std::async(std::launch::async,[target]{target->finish();});
+		const bool held=finishA.wait_for(std::chrono::milliseconds(20))==std::future_status::timeout
+			&& finishB.wait_for(std::chrono::milliseconds(20))==std::future_status::timeout;
+		target->recordForTesting(descriptor,true,otherKey); // Already closed: no new copy or queue entry.
+		cancel.open();producer.get();finishA.get();finishB.get();
+		const auto done=target->statistics();const unsigned expected=failure?0:1;
+		require(copying && closed && held,"Finish failed to hold its barrier behind an accepted descriptor copy");
+		require(!done.accepting && !done.pending && done.queued==expected && done.recordings==expected
+			&& done.descriptorCopies==1 && done.savedSegments==expected,"Copy completion/cancellation crossed the finish barrier or leaked admission");
+	}
+	std::puts("PASS archive finish barrier: two concurrent finishers wait for accepted copies; valid/nil/Objective-C/C++ copy outcomes, late admission rejected and reservations drained");
+}
+static void backgroundCompute(GPU& gpu)
+{
+	const auto originalRoot=cacheRoot;
+	struct Restore{std::string root;~Restore(){cacheRoot=root;}} restore{originalRoot};
+	cacheRoot=originalRoot+"/background-compute";
+	{
+		Session session(gpu);const auto cache=session.cache;
+		auto descriptor=gpu.compute(@"c0");const auto key=computeKey(descriptor,@"c0");
+		auto background=std::async(std::launch::async,[cache,descriptor,key]() -> id<MTLComputePipelineState> {
+			@autoreleasepool{ id<MTLComputePipelineState> pipeline=nil;
+				for(unsigned i=0;i<16;++i){NSError *e=nil;pipeline=cache->makeComputePipeline(descriptor,&e,key,true);error(e);require(pipeline!=nil,"Background compute unavailable");}
+				return pipeline;
+			}
+		});
+		auto foreground=gpu.compute(@"c1");const auto foregroundKey=computeKey(foreground,@"c1");
+		id<MTLComputePipelineState> pipeline=nil;
+		for(unsigned i=0;i<16;++i){NSError *e=nil;pipeline=cache->makeComputePipeline(foreground,&e,foregroundKey);error(e);require(pipeline!=nil,"Foreground compute unavailable");}
+		require(gpu.dispatch(background.get())==0x12345678 && gpu.dispatch(pipeline)==0x23456789,"Concurrent compute compilers changed GPU output");
+		cache->finish();const auto stats=cache->statistics();
+		require(stats.creation[2].calls==16 && stats.creation[3].calls==16 && stats.recordings==2 && stats.duplicates==30,
+			"Background compute mixed foreground timing or duplicated writer work");
+	}
+	{
+		Session session(gpu);NSError *failure=nil;
+		for(bool background:{false,true}) {
+			auto name=background?@"c1":@"c0";auto d=gpu.compute(name);
+			auto pipeline=session.cache->makeComputePipeline(d,&failure,computeKey(d,name),background);error(failure);
+			require(gpu.dispatch(pipeline)==(background?0x23456789u:0x12345678u),"Warm compute archive changed output");
+		}
+		session.cache->finish();const auto stats=session.cache->statistics();
+		require(stats.hits==2 && stats.misses==0 && stats.queued==0 && stats.lookup[2].calls==1 && stats.lookup[3].calls==1,
+			"Foreground/background compute did not share persistent identities with separate reader timing");
+	}
+	std::puts("PASS background compute archive: concurrent separate compilers/readers, 32 requests / 2 writer entries, exact GPU results, warm cross-category hits and separate foreground/background timings");
 }
 static NSArray<NSString *> *segments() {
 	NSMutableArray<NSString *> *files=[NSMutableArray new];
@@ -210,7 +309,9 @@ int main(int argc,char **argv)
 		if(argc==3 && std::strcmp(argv[1],"--abort")==0)return abortWriter(argv[2]);
 		char path[]="/private/tmp/flycast-metal-cache-tests-XXXXXX";require(mkdtemp(path)!=nullptr,"Cannot create isolated test cache");
 		cacheRoot=path;temporary=[NSString stringWithUTF8String:path];
-		GPU gpu;const auto identityChecks=verifyIdentities(gpu);NSError *failure=nil;
+		GPU gpu;
+		if(argc==2 && std::strcmp(argv[1],"--admission-only")==0){archiveAdmission(gpu);[NSFileManager.defaultManager removeItemAtPath:temporary error:nil];temporary=nil;return 0;}
+		backgroundCompute(gpu);archiveAdmission(gpu);const auto identityChecks=verifyIdentities(gpu);NSError *failure=nil;
 		std::vector<NSString *> files;
 		for(unsigned i=0;i<2;++i) {
 			Session session(gpu);auto name=i==0?@"c0":@"c1";auto d=gpu.compute(name);

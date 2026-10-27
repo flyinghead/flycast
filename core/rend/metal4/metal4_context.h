@@ -54,6 +54,8 @@ public:
 #ifdef METAL_RENDERER_TESTS
 	void requestVSyncValidation();
 	u64 testTextureUploadCount() const { return validationTextureUploadCount; }
+	u64 testRenderPipelineRequestCount() const { return validationRenderPipelineRequests; }
+	u64 testComputePipelineRequestCount() const { return validationComputePipelineRequests; }
 #endif
 
 #ifdef __OBJC__
@@ -66,7 +68,14 @@ public:
 	void setOffscreenSizeForTesting(int width,int height);
 	MetalPipelineCache::Statistics pipelineStatisticsForTesting(bool finish=false);
 	void drainMaterialCompilerForTesting();
+	void withBlockedMaterialCompilerForTesting(const std::function<void()>& producer);
+	void validateMaterialQueueForTesting();
+	void validateMaterialFailuresForTesting();
+	void validateMaterialFunctionsForTesting();
 	void validateDeferredPresentationForTesting();
+	void validateFixedUIOverlaysForTesting();
+	void validateDuplicateCadenceForTesting();
+	void validateLazyPresentationForTesting();
 #endif
 	FCMetal4Queue * queue() const;
 #ifdef METAL_RENDERER_TESTS
@@ -149,6 +158,9 @@ public:
 		MTL4RenderPipelineColorAttachmentDescriptor *blend = nil,
 		MTL4RenderPipelineColorAttachmentDescriptor *secondaryBlend = nil);
 	id<MTLComputePipelineState> makeComputePipeline(NSString *function);
+	bool makeComputePipelineAsync(NSString *function,
+		std::function<void(id<MTLComputePipelineState>, NSError *)> completion,
+		std::function<bool()> wanted);
 	struct MaterialConstants {
 		u32 flags, tsp0, tsp1;
 		bool sequence;
@@ -157,7 +169,8 @@ public:
 				&& tsp1 == other.tsp1 && sequence == other.sequence;
 		}
 	};
-	void makePipelineAsync(NSString *vertex, NSString *fragment,
+	// False keeps the generic pipeline active; retry admission on a later frame.
+	bool makePipelineAsync(NSString *vertex, NSString *fragment,
 		MTLVertexDescriptor *layout, MTLPixelFormat color, bool depth,
 		MTL4RenderPipelineColorAttachmentDescriptor *blend, MaterialConstants constants,
 		std::function<void(id<MTLRenderPipelineState>, NSError *)> completion,
@@ -193,7 +206,9 @@ private:
 	void sealTextureUpdates();
 	void finishTextureUpdates();
 	MTL4FunctionDescriptor *shaderFunction(NSString *name);
+	id<MTLRenderPipelineState> quadPipelineState(bool ignoreAlpha, bool opaque);
 	id<MTLRenderPipelineState> quadPipeline(bool ignoreAlpha);
+	void prepareCrosshair();
 	void drawOverlays(FCMetal4RenderEncoder * encoder);
 #ifdef VIDEO_ROUTING
 	void publishVideoRouting(id<MTLTexture> texture, FCMetal4Commands * command);
@@ -215,5 +230,7 @@ private:
 	std::unique_ptr<Impl> impl;
 #ifdef METAL_RENDERER_TESTS
 	u64 validationTextureUploadCount = 0;
+	u64 validationRenderPipelineRequests = 0;
+	u64 validationComputePipelineRequests = 0;
 #endif
 };

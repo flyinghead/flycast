@@ -11,6 +11,7 @@
 #include "metal_offscreen_test_hooks.h"
 #include <array>
 #include <cstring>
+#include <cstdlib>
 #include <filesystem>
 #include <stb_image_write.h>
 
@@ -23,30 +24,32 @@ void metalOffscreenValidatePvrLifecycle()
 	const auto previous=config::RendererType.get();const bool threaded=config::ThreadedRendering;
 	const bool oldEmulate=config::EmulateFramebuffer,oldWide=config::Widescreen,oldDelay=config::DelayFrameSwapping;
 	const int oldResolution=config::RenderResolution,oldSkip=config::SkipFrame;
+	const int oldFilter=config::TextureFiltering,oldAnisotropy=config::AnisotropicFiltering;
 	const bool oldCustom=config::CustomTextures;const int oldPreload=config::PreloadCustomTextures;
 	const auto oldGame=settings.content.gameId;
 	const u32 oldRegion=REGION_BASE,oldFpu=FPU_PARAM_CFG,oldRead=FB_R_CTRL.full,oldSpg=SPG_CONTROL.full;
 	const auto oldVram=vram;
 	std::vector<u8> memory(8_MB);vram.setRegion(memory.data(),memory.size());
 	struct Restore {
-		RenderType type;bool threaded,emulate,wide,delay;int resolution,skip;u32 region,fpu,read,spg;RamRegion vram;bool custom;int preload;std::string game;
+		RenderType type;bool threaded,emulate,wide,delay;int resolution,skip,filter,anisotropy;u32 region,fpu,read,spg;RamRegion vram;bool custom;int preload;std::string game;
 		~Restore(){
 			metalOffscreenParsedTa={};if(auto pending=DequeueRender())FinishRender(pending);
 			try{rend_term_renderer();while(metalOffscreenPumpPvr()){}}catch(...){}custom_texture.terminate();tactx_Term();
 			config::RendererType=type;config::ThreadedRendering=threaded;config::EmulateFramebuffer=emulate;
 			config::Widescreen=wide;config::DelayFrameSwapping=delay;config::RenderResolution=resolution;config::SkipFrame=skip;
+			config::TextureFiltering=filter;config::AnisotropicFiltering=anisotropy;
 			REGION_BASE=region;FPU_PARAM_CFG=fpu;FB_R_CTRL.full=read;SPG_CONTROL.full=spg;::vram=vram;
 			config::CustomTextures=custom;config::PreloadCustomTextures=preload;settings.content.gameId=game;
 		}
-	} restore{previous,threaded,oldEmulate,oldWide,oldDelay,oldResolution,oldSkip,oldRegion,oldFpu,oldRead,oldSpg,oldVram,oldCustom,oldPreload,oldGame};
+	} restore{previous,threaded,oldEmulate,oldWide,oldDelay,oldResolution,oldSkip,oldFilter,oldAnisotropy,oldRegion,oldFpu,oldRead,oldSpg,oldVram,oldCustom,oldPreload,oldGame};
 	require(!renderer,"PVR lifecycle fixture requires an idle renderer owner");
 	config::ThreadedRendering=true;config::EmulateFramebuffer=false;config::Widescreen=false;
 	config::DelayFrameSwapping=false;config::RenderResolution=48;config::SkipFrame=0;
-	config::CustomTextures=false;
+	config::CustomTextures=false;config::TextureFiltering=1;config::AnisotropicFiltering=1;
 	FB_R_CTRL.vclk_div=1;FB_R_CTRL.fb_line_double=0;SPG_CONTROL.interlace=0;
 	REGION_BASE=0x200000;FPU_PARAM_CFG=0;
 	RegionArrayTile tile{};tile.X=19;tile.Y=14;tile.LastRegion=1;pvr_write32p<u32, true>(REGION_BASE+20,tile.full);
-	using Color=std::array<u8,4>;unsigned parsed=0,images=0,switches=0,adoptions=0,contexts=0;
+	using Color=std::array<u8,4>;unsigned parsed=0,images=0,switches=0,adoptions=0,contexts=0,pngPackages=0,jpegPackages=0;
 	TSP tsp{};tsp.FogCtrl=2;tsp.UseAlpha=1;tsp.SrcInstr=1;tsp.ClampU=tsp.ClampV=1;
 	TCW tcw{};tcw.ScanOrder=1;tcw.PixelFmt=Pixel4444;tcw.TexAddr=0x710000/8;
 	for(unsigned i=0;i<64;++i){const u16 value=0xf123;std::memcpy(&memory[tcw.TexAddr*8+i*2],&value,2);}
@@ -59,11 +62,11 @@ void metalOffscreenValidatePvrLifecycle()
 			context->rend.global_param_op[0].texture=texture;++adoptions;
 		}
 	};
-	const auto frame=[&](Color color,bool textured=false) {
+	const auto frame=[&](Color color,bool textured=false,unsigned mirror=0) {
 		auto context=tactx_Alloc();auto& data=context->rend;
 		data.clearFramebuffer=true;data.globClip={640,480};data.fbClip=Rect({0,0},{640,480});
 		data.scaler_ctl.vscalefactor=1024;data.fog_clamp_max.full=~0u;data.idx={0,1,2,3};data.verts.resize(4);
-		for(unsigned i=0;i<4;++i){auto& v=data.verts[i];v={};v.x=i&1?640:0;v.y=i&2?480:0;v.z=1;v.u=i&1?1:0;v.v=i&2?1:0;std::copy(color.begin(),color.end(),v.col);}
+		for(unsigned i=0;i<4;++i){auto& v=data.verts[i];v={};v.x=i&1?640:0;v.y=i&2?480:0;v.z=1;v.u=((i&1)!=0)^((mirror&1)!=0)?1:0;v.v=((i&2)!=0)^((mirror&2)!=0)?1:0;std::copy(color.begin(),color.end(),v.col);}
 		PolyParam poly;poly.init();poly.count=4;poly.pcw.Gouraud=1;poly.isp.DepthMode=7;poly.tsp.SrcInstr=1;poly.tsp.FogCtrl=2;
 		if(textured){poly.pcw.Texture=1;poly.tsp=tsp;poly.tcw=tcw;}
 		data.global_param_op={poly};RenderPass pass{};pass.op_count=1;data.render_passes={pass};
@@ -74,7 +77,21 @@ void metalOffscreenValidatePvrLifecycle()
 		context->readTexture(context->lastFrame(),pixels);require(pixels.size()==64*48*4,"PVR image size differs from scaled framebuffer");
 		for(size_t i=0;i<pixels.size();++i)require(pixels[i]==expected[i%4],"PVR-dispatched renderer produced different pixels");++images;
 	};
-	for(RenderType type:{RenderType::Metal,RenderType::Metal_OIT,RenderType::Metal}) {
+	const auto patternImage=[&](const std::vector<u8>& decoded,unsigned mirror) {
+		require(decoded.size()==8*8*4,"PVR pattern oracle has incomplete decoded texels");
+		auto context=MetalContext::Instance();std::vector<u8> pixels;
+		require(bool(context->lastFrame()),"PVR pattern frame was not published");
+		context->readTexture(context->lastFrame(),pixels);
+		require(pixels.size()==64*48*4,"PVR pattern image dimensions differ");
+		for(unsigned y=0;y<48;++y)for(unsigned x=0;x<64;++x) {
+			const unsigned tx=mirror&1?7-x/8:x/8,ty=mirror&2?7-y/6:y/6;
+			for(unsigned c=0;c<4;++c)
+				require(pixels[(y*64+x)*4+c]==decoded[(ty*8+tx)*4+c],
+					"PVR nonuniform replacement changed texels, row order, mirroring or RGBA channels");
+		}
+		++images;
+	};
+	for(RenderType type:{RenderType::Metal,RenderType::Metal_OIT,RenderType::Metal,RenderType::Metal_OIT}) {
 		config::RendererType=type;require(rend_init_renderer(),"PVR Metal initialization failed");
 		require(!metalOffscreenPumpPvr() && !MetalContext::Instance()->lastFrame(),"Old PVR work reached a new renderer instance");
 		const Color color{u8(23+switches*31),u8(71+switches*17),u8(113+switches*7),255};
@@ -84,15 +101,51 @@ void metalOffscreenValidatePvrLifecycle()
 		const std::string game=switches&1?"METAL_TEST_PVR_B":"METAL_TEST_PVR_A";
 		u32 hash;
 		{MetalTexture original(tsp,tcw,0);require(original.Update(),"Cannot hash the original PVR fixture texture");original.ComputeHash();hash=original.texture_hash;original.Delete();}
-		const Color replacement{u8(191-switches*23),u8(43+switches*31),u8(157-switches*17),255};
 		const auto directory=std::filesystem::path(metalOffscreenCacheRoot)/"textures"/game;std::filesystem::create_directories(directory);
-		char name[24];std::snprintf(name,sizeof(name),"%08x.png",hash);std::vector<u8> png(256);for(size_t i=0;i<png.size();++i)png[i]=replacement[i%4];
-		require(stbi_write_png((directory/name).c_str(),8,8,4,png.data(),32),"Cannot write PVR PNG package");
+		const bool jpeg=switches==1 || switches==2;
+		const char *extension=switches==1?"jpg":switches==2?"jpeg":"png";
+		char name[24];
+		// All files belong to this isolated fixture. Retire the previous test
+		// package rather than depending on duplicate-hash directory ordering.
+		for(const char *oldExtension:{"png","jpg","jpeg"}) {
+			std::snprintf(name,sizeof(name),"%08x.%s",hash,oldExtension);std::filesystem::remove(directory/name);
+		}
+		std::snprintf(name,sizeof(name),"%08x.%s",hash,extension);
+		std::vector<u8> source(256);
+		for(unsigned y=0;y<8;++y)for(unsigned x=0;x<8;++x) {
+			const Color pixel{u8(11+switches*7+x*19+y*3),u8(23+switches*5+x*5+y*17),
+				u8(37+switches*3+x*9+y*11),u8(61+x*13+y*9)};
+			std::copy(pixel.begin(),pixel.end(),source.begin()+(y*8+x)*4);
+		}
+		stbi_flip_vertically_on_write(0);
+		require(jpeg ? stbi_write_jpg((directory/name).c_str(),8,8,4,source.data(),100)
+			: stbi_write_png((directory/name).c_str(),8,8,4,source.data(),32),"Cannot write PVR replacement package");
 		settings.content.gameId=game;config::CustomTextures=true;config::PreloadCustomTextures=true;
 		custom_texture.init();
 		const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(20);
 		while(custom_texture.isPreloading()) {require(std::chrono::steady_clock::now()<until,"PVR master catalog preload timed out");std::this_thread::yield();}
-		frame({255,255,255,255},true);require(metalOffscreenPumpPvr() && metalOffscreenPumpPvr(),"PVR textured render/present not dispatched");image(replacement);
+		std::vector<u8> decoded;bool found=false;
+		custom_texture.visitPreloadedTextures(0,true,[&](u32 identity,const TextureData& data) {
+			if(identity!=hash)return true;
+			require(data.w==8 && data.h==8 && data.data.size()==256,"PVR master package did not decode to complete RGBA8");
+			decoded=data.data;
+			// master intentionally flips replacement-file rows when decoding.
+			// Check that contract against the independent generated file bytes,
+			// rather than accepting the decoder's orientation as the oracle.
+			for(unsigned y=0;y<8;++y)for(unsigned x=0;x<8;++x)for(unsigned c=0;c<4;++c) {
+				const u8 expected=jpeg && c==3?255:source[((7-y)*8+x)*4+c];
+				require(std::abs(int(decoded[(y*8+x)*4+c])-int(expected))<=(jpeg && c<3?3:0),
+					"Decoded package lost its independent row/channel/source-color contract");
+			}
+			found=true;return false;
+		});
+		require(found,"PVR master catalog did not contain its actual file replacement");
+		for(unsigned mirror=0;mirror<4;++mirror) {
+			frame({255,255,255,255},true,mirror);
+			require(metalOffscreenPumpPvr() && metalOffscreenPumpPvr(),"PVR textured render/present not dispatched");
+			patternImage(decoded,mirror);
+		}
+		if(jpeg)++jpegPackages;else ++pngPackages;
 		frame({255,255,255,255},true);rend_term_renderer();
 		require(!renderer && !DequeueRender(),"PVR termination left an old TA frame for the next renderer");
 		require(metal_preload::deviceBudget(MetalContext::Instance()->device())->usage().bytes==0,"PVR termination retained an old preload budget charge");
@@ -101,7 +154,7 @@ void metalOffscreenValidatePvrLifecycle()
 		if(metalOffscreenContextLifecycle){metalOffscreenRecreateContext();++contexts;}
 		++switches;
 	}
-	if(metalOffscreenContextLifecycle){require(contexts==3,"Missing complete context handoff");custom_texture.terminate();config::CustomTextures=false;}
+	if(metalOffscreenContextLifecycle){require(contexts==4,"Missing complete context handoff");custom_texture.terminate();config::CustomTextures=false;}
 	for(RenderType type:{RenderType::Metal,RenderType::Metal_OIT}) {
 		config::RendererType=type;require(rend_init_renderer(),"PVR failure fixture initialization failed");frame({3,5,7,255});
 		const auto parse=metalOffscreenParsedTa;metalOffscreenParsedTa=[](TA_context *){throw RendererException("Injected PVR Process boundary");};
@@ -130,5 +183,6 @@ void metalOffscreenValidatePvrLifecycle()
 		require(threw && terms==1 && destroyed==1 && !renderer && !DequeueRender() && !metalOffscreenPumpPvr(),"PVR Term exception lost cleanup or replaced the first Process error");
 	}
 	NOTICE_LOG(RENDERER,"Metal validation PASS: actual PVR lifecycle, %u package/backend sessions, %u exact dispatched images, %u zero-reupload adoptions; pending frames drained before handoff; six Process/Term exception cases preserve cleanup and first error",switches,images,adoptions);
-	if(metalOffscreenContextLifecycle)NOTICE_LOG(RENDERER,"Metal validation PASS: %u full Metal GraphicsContext/queue replacements between actual PVR package sessions; old master PNG source sessions retired before context recreation",contexts);
+	NOTICE_LOG(RENDERER,"Metal validation PASS: actual master replacement files, %u PNG and %u JPEG (.jpg/.jpeg) packages across standard/OIT; asymmetric8x8 gradients, independent source-row/color bounds, PNG alpha/JPEG opaque conversion, four UV mirror modes, exact full CPU-decoded RGBA GPU images and zero-reupload adoption",pngPackages,jpegPackages);
+	if(metalOffscreenContextLifecycle)NOTICE_LOG(RENDERER,"Metal validation PASS: %u full Metal GraphicsContext/queue replacements between actual PVR package sessions; old master PNG/JPEG source sessions retired before context recreation",contexts);
 }

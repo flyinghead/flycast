@@ -21,6 +21,12 @@ struct MetalFXUpscaler::Impl
 	// instead of encoding the same upscale again. Explicit Metal 4 queue
 	// barriers order later slot writes after these reads.
 	id<MTLTexture> cachedInput, cachedOutput;
+	// Encoding is not publication: an abandoned presentation has no GPU result.
+	// Weak owners never keep that unsubmitted command or its queue alive. The
+	// completion proof survives a successfully retired command wrapper instead.
+	__weak FCMetal4Commands *cachedProducer = nil;
+	__weak FCMetal4Queue *cachedQueue = nil;
+	std::shared_ptr<std::atomic<bool>> cachedReady;
 	u64 cachedFrame = 0;
 	NSUInteger cachedWidth = 0, cachedHeight = 0;
 };
@@ -43,12 +49,14 @@ void MetalFXUpscaler::releaseSlot(size_t slot)
 {
 	if (slot < impl->slots.size()) impl->slots[slot] = {};
 	impl->cachedInput = impl->cachedOutput = nil;
+	impl->cachedProducer = nil; impl->cachedQueue = nil; impl->cachedReady.reset();
 }
 
 id<MTLTexture> MetalFXUpscaler::upscale(id<MTLTexture> input, FCMetal4Commands * command,
 	NSUInteger width, NSUInteger height, size_t index, u64 contentFrame)
 {
 	if (!impl->supported || impl->failed->load() || !input || !command || index >= impl->slots.size()
+			|| command.status != FCMetal4StatusEncoding
 			|| command.device != impl->device || input.device != impl->device
 			|| input.textureType != MTLTextureType2D || input.sampleCount != 1
 			|| (input.pixelFormat != MTLPixelFormatRGBA8Unorm && input.pixelFormat != MTLPixelFormatBGRA8Unorm)
@@ -58,8 +66,16 @@ id<MTLTexture> MetalFXUpscaler::upscale(id<MTLTexture> input, FCMetal4Commands *
 		return nil;
 	}
 	if (impl->cachedInput == input && impl->cachedFrame == contentFrame
-			&& impl->cachedWidth == width && impl->cachedHeight == height)
-		return impl->cachedOutput;
+			&& impl->cachedWidth == width && impl->cachedHeight == height
+			&& impl->cachedQueue == command.commandQueue) {
+		FCMetal4Commands *producer = impl->cachedProducer;
+		const bool completed = impl->cachedReady && impl->cachedReady->load(std::memory_order_acquire);
+		// The same recording already contains the scaler. Other recordings
+		// can consume only queued work on this queue, or a completed result.
+		if (completed || producer == command || (producer &&
+				(producer.status == FCMetal4StatusCommitted || producer.status == FCMetal4StatusCompleted)))
+			return impl->cachedOutput;
+	}
 
 	auto& slot = impl->slots[index];
 	// Cache a rejected descriptor as well: a driver allocation/creation
@@ -134,6 +150,7 @@ id<MTLTexture> MetalFXUpscaler::upscale(id<MTLTexture> input, FCMetal4Commands *
 		[blit endEncoding];
 		color = slot.inputCopy;
 	}
+	const auto ready = std::make_shared<std::atomic<bool>>(false);
 	slot.scaler.colorTexture = color;
 	slot.scaler.inputContentWidth = input.width;
 	slot.scaler.inputContentHeight = input.height;
@@ -146,10 +163,13 @@ id<MTLTexture> MetalFXUpscaler::upscale(id<MTLTexture> input, FCMetal4Commands *
 	[command queueBarrier];
 	const auto failed = impl->failed;
 	[command addCompletedHandler:^(FCMetal4Commands * done) {
-		if (done.status == FCMetal4StatusError && !failed->exchange(true))
-			WARN_LOG(RENDERER, "MetalFX disabled after a GPU command error; subsequent frames use normal scaling");
+		if (done.status == FCMetal4StatusError) {
+			if (!failed->exchange(true))
+				WARN_LOG(RENDERER, "MetalFX disabled after a GPU command error; subsequent frames use normal scaling");
+		} else if (done.status == FCMetal4StatusCompleted) ready->store(true, std::memory_order_release);
 	}];
 	impl->cachedInput = input; impl->cachedOutput = slot.output;
+	impl->cachedProducer = command; impl->cachedQueue = command.commandQueue; impl->cachedReady = ready;
 	impl->cachedFrame = contentFrame;
 	impl->cachedWidth = width; impl->cachedHeight = height;
 	return slot.output;

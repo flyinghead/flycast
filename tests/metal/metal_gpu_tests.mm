@@ -11,7 +11,10 @@
 #include <utility>
 #include <chrono>
 using u32 = uint32_t;
+// Compile the real offline list-analysis kernel into this ROM-free fixture.
+#define FLYCAST_FRAME_CAPTURE_TESTS
 #include "rend/metal4/metal4_shaders.h"
+#undef FLYCAST_FRAME_CAPTURE_TESTS
 #include "rend/metal4/metal4_shader_options.h"
 #include "rend/metal4/metal4_oit_tiling.h"
 #include "rend/metal4/metal4_oit_storage.h"
@@ -168,7 +171,7 @@ public:
 	id<MTLLibrary> library;
 	id<MTL4Compiler> compiler;
 	id<MTLRenderPipelineState> direct, capture, mod;
-	id<MTLComputePipelineState> resolve;
+	id<MTLComputePipelineState> resolve, packedModifierResolve;
 	id<MTLSamplerState> nearest;
 	id<MTLTexture> tex0, tex1, fog, palette, stencil, depth;
 	id<MTLBuffer> nodes, heads, counter, polygons, colors1;
@@ -629,12 +632,19 @@ public:
 		[e setDepthStencilState:[device newDepthStencilStateWithDescriptor:d]];
 		[e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3]; [e endEncoding]; return read(output,cb);
 	}
-	std::array<uint8_t,4> oit(MetalPolyUniforms back, MetalPolyUniforms front, bool shadow = false, u32 expectedStatus = 0, bool equalDepth = false)
+	std::array<uint8_t,4> oit(MetalPolyUniforms back, MetalPolyUniforms front, bool shadow = false, u32 expectedStatus = 0, bool equalDepth = false,
+		bool compactModifiers = false, const std::vector<u32>& modes = {1u,2u}, u32 shadowMask = 3)
 	{
 		back.polyIndex = 0; front.polyIndex = 1;
+		if(compactModifiers) {
+			require(frame.capacity<=MetalOITModifierNextMask && frame.maxLayers==32
+				&& (back.sequence>>17)==0 && (front.sequence>>17)==1,"Packed modifier fixture lacks its required link/polygon proof");
+			back.flags|=MetalOITPackedList|MetalOITPackedModifiers;front.flags|=MetalOITPackedList|MetalOITPackedModifiers;
+			if(!packedModifierResolve)packedModifierResolve=compute(@"oit_resolve_32_mod_packed");
+		}
 		auto table = static_cast<MetalOITPoly *>(polygons.contents);
-		table[0] = {back.tsp0 | u32(shadow) | (u32((back.flags & (1 << 6)) != 0) << 1), back.tsp1};
-		table[1] = {front.tsp0 | u32(shadow) | (u32((front.flags & (1 << 6)) != 0) << 1), front.tsp1};
+		table[0] = {back.tsp0 | u32(shadow && (shadowMask&1)) | (u32((back.flags & (1 << 6)) != 0) << 1), back.tsp1};
+		table[1] = {front.tsp0 | u32(shadow && (shadowMask&2)) | (u32((front.flags & (1 << 6)) != 0) << 1), front.tsp1};
 		memset(counter.contents,0,8); *(u32 *)heads.contents = ~0u;
 		auto output = texture(MTLPixelFormatRGBA8Unorm), final = texture(MTLPixelFormatRGBA8Unorm); auto cb = [queue commandBuffer];
 		// Establish the opaque depth buffer independently of the capture pass.
@@ -643,17 +653,102 @@ public:
 		e = [cb renderCommandEncoderWithDescriptor:p]; [e setRenderPipelineState:capture];
 		bind(e,front,triangle({0,0,255,128},2)); [e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
 		bind(e,back,triangle({255,0,0,128},equalDepth ? 2 : 1)); [e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3]; [e endEncoding];
-		if (shadow) for (u32 mode : {1u,2u}) {
+		if (shadow) for (u32 mode : modes) {
 			e = [cb renderCommandEncoderWithDescriptor:p]; [e setRenderPipelineState:mod];
-			MetalPolyUniforms mv{}; mv.modMode = mode;
+			MetalPolyUniforms mv{}; mv.modMode = mode;mv.flags=back.flags&(1u<<4);
+			if(compactModifiers)mv.flags|=MetalOITPackedModifiers;
 			bind(e,mv,triangle({0,0,0,0},3)); [e drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3]; [e endEncoding];
 		}
-		auto c = [cb computeCommandEncoder]; [c setComputePipelineState:resolve];
+		auto c = [cb computeCommandEncoder]; [c setComputePipelineState:compactModifiers?packedModifierResolve:resolve];
 		[c setBytes:&frame length:sizeof(frame) atIndex:1]; [c setBuffer:nodes offset:0 atIndex:4]; [c setBuffer:heads offset:0 atIndex:5]; [c setBuffer:counter offset:0 atIndex:6];
 		[c setBuffer:polygons offset:0 atIndex:7]; [c setBuffer:colors1 offset:colors1Offset atIndex:8];
 		[c setTexture:output atIndex:0]; [c setTexture:final atIndex:1];
 		[c dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)]; [c endEncoding];
 		auto result = read(final,cb); require(((u32 *)counter.contents)[1] == expectedStatus,"Unexpected OIT limit status"); return result;
+	}
+	void validatePackedModifiers()
+	{
+		const std::vector<std::vector<u32>> modes{{},{0},{1,2},{1,2,1},{0,0,2},{1,2,1,3},{1,2,3},{0,2,0,2}};
+		auto analysis=compute(@"oit_analysis");
+		auto lengths=[device newBufferWithLength:4 options:MTLResourceStorageModeShared];
+		u32 pairs=0;
+		for(bool native:{false,true})for(bool volume:{false,true})for(u32 mask=0;mask<4;++mask)
+		for(const auto& operations:modes)for(u32 blend=0;blend<16;++blend) {
+			MetalPolyUniforms back{},front{};
+			back.flags=front.flags=(native?1u<<4:0)|(volume?1u<<6:0);
+			back.sequence=0;front.sequence=1u<<17;
+			const u32 source=blend&7,destination=blend<8?source:7-source;
+			back.tsp0=front.tsp0=(1u<<20)|(2u<<22)|(source<<29)|(destination<<26)
+				| ((blend&1)?1u<<24:0)|((blend&2)?1u<<25:0);
+			back.tsp1=front.tsp1=(1u<<20)|(2u<<22)|(destination<<29)|(source<<26);
+			const auto reference=oit(back,front,true,0,false,false,operations,mask);
+			require(static_cast<const u32 *>(counter.contents)[0]==2,"General modifier fixture did not publish two fragments");
+			std::map<u32,std::pair<u32,u32>> states;
+			for(u32 i=0;i<2;++i){const auto& n=static_cast<const MetalOITNode *>(nodes.contents)[i];states[n.sequence]={n.metadata&3,n.metadata>>2};}
+			const auto actual=oit(back,front,true,0,false,true,operations,mask);
+			require(actual==reference,"Packed modifier image differs from full-precision general nodes");
+			require(static_cast<const u32 *>(counter.contents)[0]==2,"Packed modifier fixture changed fragment coverage");
+			for(u32 i=0;i<2;++i) {
+				const auto& n=static_cast<const MetalOITPackedNode *>(nodes.contents)[i];
+				auto state=states.find(n.sequence);
+				require(state!=states.end() && state->second.first==(n.next>>30) && state->second.second==(n.sequence>>17),"Packed modifier lost flags, full sequence or polygon identity");
+				const u32 next=n.next&MetalOITModifierNextMask;
+				require(next<2 || next==MetalOITModifierNextMask,"Modifier atomic state changed the immutable list link");
+			}
+			if(blend==0 && mask==3) {
+				u32 layout=3;auto analyzedFrame=frame;analyzedFrame.oitTile={0,0,1,1};
+				*static_cast<u32 *>(lengths.contents)=~0u;
+				auto command=[queue commandBuffer];auto encoder=[command computeCommandEncoder];
+				[encoder setComputePipelineState:analysis];[encoder setBytes:&analyzedFrame length:sizeof(analyzedFrame) atIndex:1];
+				[encoder setBuffer:nodes offset:0 atIndex:4];[encoder setBuffer:heads offset:0 atIndex:5];[encoder setBuffer:lengths offset:0 atIndex:6];
+				[encoder setBytes:&layout length:sizeof(layout) atIndex:7];
+				[encoder dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)];[encoder endEncoding];
+				[command commit];[command waitUntilCompleted];error(command.error);
+				require(*static_cast<const u32 *>(lengths.contents)==2,"Offline analysis did not decode modifier flag/link bits");
+			}
+			++pairs;
+		}
+		const auto oldCapture=capture;
+		auto positionLayout=[MTLVertexDescriptor vertexDescriptor];
+		positionLayout.attributes[0].format=MTLVertexFormatFloat3;
+		positionLayout.layouts[0].stride=sizeof(Vertex);
+		capture=pipeline(@"oit_position_vertex",@"oit_position_fragment",positionLayout,false,false);
+		for(bool native:{false,true})for(bool volume:{false,true})for(const auto& operations:modes) {
+			MetalPolyUniforms back{},front{};back.flags=front.flags=(native?1u<<4:0)|(volume?1u<<6:0);
+			back.sequence=0;front.sequence=1u<<17;
+			back.tsp0=front.tsp0=back.tsp1=front.tsp1=(1u<<25)|(1u<<29)|(2u<<22);
+			const auto reference=oit(back,front,true,0,false,false,operations);
+			require(oit(back,front,true,0,false,true,operations)==reference,"Position-only packed modifier differs for accumulator sources");
+			require(static_cast<const u32 *>(counter.contents)[0]==2,"Position-only packed modifier changed fragment coverage");
+			++pairs;
+		}
+		capture=oldCapture;
+		const auto oldColors=colors1,oldPolygons=polygons;
+		colors1=[device newBufferWithLength:256*4 options:MTLResourceStorageModeShared];
+		polygons=[device newBufferWithLength:(1u<<15)*sizeof(MetalOITPoly) options:MTLResourceStorageModeShared];
+		std::memset(polygons.contents,0,polygons.length);
+		auto table=static_cast<MetalOITPoly *>(polygons.contents);
+		table[0]={(4u<<29)|(5u<<26)|3u,1u<<29};
+		table[(1u<<15)-1]={(1u<<29)|3u,(4u<<29)|(5u<<26)};
+		for(u32 i=0;i<256;++i)static_cast<u32 *>(colors1.contents)[i]=0xc0000000u|(i*0x15273u&0xffffffu);
+		for(u32 layers:{1u,2u,4u,8u,16u,32u,64u,128u,256u})for(bool reset:{false,true})for(bool cutoff:{false,true}) {
+			if(cutoff && layers==1)continue;
+			std::vector<MetalOITNode> list(layers);
+			for(u32 i=0;i<layers;++i) {
+				const u32 polygon=(i&1)?(1u<<15)-1:0;
+				auto& n=list[i];n.color0=0x90000000u|(i*0x63571u&0xffffffu);
+				n.depth=i%11==7?std::numeric_limits<float>::quiet_NaN():float((layers-i)%7);
+				n.next=i+1<layers?i+1:~0u;n.metadata=(polygon<<2)|(i&3);
+				n.sequence=(polygon<<17)|(i+1==layers?0x1ffffu:i*31);
+			}
+			const u32 limit=cutoff?layers-1:layers,status=cutoff?2u:0u;
+			const auto reference=resolveList(list,layers,limit,status,false,false,false,reset,false,true);
+			require(resolveList(list,layers,limit,status,false,false,false,reset,true,true,true)==reference,
+				"Packed modifier resolver changed reset/cutoff/NaN/full-unsigned sequence semantics");
+			++pairs;
+		}
+		colors1=oldColors;polygons=oldPolygons;setResolveLayers(32);
+		printf("PASS packed modifier shaders: %u exact general/compact pixel and metadata pairs; all four mutable flag states, XOR/OR/inclusion/exclusion, per-polygon eligibility, two volumes, accumulator routing, both depth modes; isolated shader comparison\n",pairs);
 	}
 	std::array<uint8_t,4> resolveFullList(u32 layers, u32 limit, u32 expectedStatus)
 	{
@@ -891,7 +986,7 @@ public:
 		list.back().next = ~0u;
 		return resolveList(list, 32, list.size(), 0);
 	}
-	std::array<uint8_t,4> resolveList(const std::vector<MetalOITNode>& list, u32 layers, u32 limit, u32 expectedStatus, bool sourceOver = false, bool alphaReference = false, bool dense = false, bool reset = false, bool packed = false, bool keepPolygonTable = false)
+	std::array<uint8_t,4> resolveList(const std::vector<MetalOITNode>& list, u32 layers, u32 limit, u32 expectedStatus, bool sourceOver = false, bool alphaReference = false, bool dense = false, bool reset = false, bool packed = false, bool keepPolygonTable = false, bool packedModifiers = false)
 	{
 		if (!keepPolygonTable) static_cast<MetalOITPoly *>(polygons.contents)[0] = {(sourceOver || alphaReference) ? (4u << 29) | (5u << 26) : 1u << 29, 0};
 		id<MTLBuffer> source;
@@ -905,13 +1000,15 @@ public:
 			source = [device newBufferWithBytes:packed.data() length:packed.size() * sizeof(packed[0]) options:MTLResourceStorageModeShared];
 		} else if (packed) {
 			std::vector<MetalOITPackedNode> compact;
-			for (const auto& n : list) compact.push_back({n.color0,n.depth,n.next,n.sequence});
+			for (const auto& n : list) compact.push_back({n.color0,n.depth,
+				packedModifiers?((n.next&MetalOITModifierNextMask)|((n.metadata&3)<<30)):n.next,n.sequence});
 			source = [device newBufferWithBytes:compact.data() length:compact.size() * sizeof(compact[0]) options:MTLResourceStorageModeShared];
 		} else source = [device newBufferWithBytes:list.data() length:list.size() * sizeof(MetalOITNode) options:MTLResourceStorageModeShared];
 		setResolveLayers(layers);
 		if (sourceOver) resolve = compute([NSString stringWithFormat:@"oit_resolve_%u_source_over", layers]);
-		if (dense || packed) resolve = compute([NSString stringWithFormat:@"oit_resolve_%u%@%@%@%@", layers, reset ? @"_reset" : @"", dense ? @"_dense" : @"", sourceOver ? @"_source_over" : @"", packed ? @"_packed" : @""]);
+		if (reset || dense || packed) resolve = compute([NSString stringWithFormat:@"oit_resolve_%u%@%@%@%@", layers, reset ? @"_reset" : @"", dense ? @"_dense" : @"", sourceOver ? @"_source_over" : @"", packedModifiers?@"_mod_packed":packed ? @"_packed" : @""]);
 		const u32 oldLimit = frame.maxLayers;
+		const u32 oldCapacity=frame.capacity;frame.capacity=u32(list.size());
 		const auto oldTile = frame.oitTile;
 		if (dense) frame.oitTile = {0, 0, 1, 1};
 		frame.maxLayers = limit;
@@ -927,6 +1024,7 @@ public:
 		[c dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)]; [c endEncoding];
 		auto result = read(output, cb);
 		frame.maxLayers = oldLimit;
+		frame.capacity=oldCapacity;
 		frame.oitTile = oldTile;
 		if (reset) require(*(u32 *)heads.contents == ~0u, "Dense resolve did not reset the pixel count");
 		require(((u32 *)counter.contents)[1] == expectedStatus, "Unexpected full-list OIT status");
@@ -1090,6 +1188,9 @@ void validateAlphaConsumers(GPU& g, bool optimized,
 int main(int argc, char **argv)
 {
 	@autoreleasepool { try {
+		if(argc>1 && strcmp(argv[1],"--packed-modifiers-only")==0) {
+			for(bool relaxed:{false,true}){GPU g(relaxed);g.validatePackedModifiers();}return 0;
+		}
 		if (argc > 1 && strcmp(argv[1], "--bindings-benchmark") == 0) {
 			GPU g(false); g.benchmarkSharedBindings(); return 0;
 		}

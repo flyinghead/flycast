@@ -42,9 +42,14 @@ public:
 class PassHazards {
     static constexpr size_t Capacity=64;
     struct Record {Access access;uint64_t reads=0,writes=0;};
+    struct Dependency {uint64_t reads,writes;bool alias,shared;};
     std::array<Record,Capacity> prior{},current{};
+    // Prior history is immutable until end(). Repeated bindings in this
+    // encoder may reuse both read/write dependency proofs, even if the access
+    // mode or consumer stage changes between draws.
+    std::array<Dependency,Capacity> currentDependencies;
     std::array<uint64_t,64> acquired{},acquiredAlias{};
-    size_t priorCount=0,currentCount=0;
+    size_t priorCount=0,currentCount=0,currentNewCount=0;
     bool prefix=true,release=false;
     uint64_t acquiredAll=0,acquiredAliasAll=0;
     static bool same(const Access& a,const Access& b) noexcept {
@@ -55,8 +60,8 @@ class PassHazards {
         return count;
     }
 public:
-    void reset() noexcept {priorCount=currentCount=0;prefix=true;release=false;acquired.fill(0);acquiredAlias.fill(0);acquiredAll=acquiredAliasAll=0;}
-    void begin() noexcept {currentCount=0;release=false;acquired.fill(0);acquiredAlias.fill(0);acquiredAll=acquiredAliasAll=0;}
+    void reset() noexcept {priorCount=currentCount=currentNewCount=0;prefix=true;release=false;acquired.fill(0);acquiredAlias.fill(0);acquiredAll=acquiredAliasAll=0;}
+    void begin() noexcept {currentCount=currentNewCount=0;release=false;acquired.fill(0);acquiredAlias.fill(0);acquiredAll=acquiredAliasAll=0;}
     Barrier before(uint64_t stage,const Access *accesses,size_t size,bool opaque=false) noexcept {
         if(!stage)return {};
         bool unknown=opaque || size>Capacity || (size && !accesses),alias=false;
@@ -66,22 +71,45 @@ public:
         // A miss still searches again there: an earlier input in this same
         // batch may have inserted a duplicate allocation/range in the meantime.
         std::array<uint8_t,Capacity> currentIndices;
+        std::array<Dependency,Capacity> newDependencies;
         if(accesses && size<=Capacity)for(size_t i=0;i<size;++i) {
             const auto access=passAccess(accesses[i]);
             if(access.begin==access.end)continue;
             unknown|=!access.allocation || access.begin>access.end;alias|=access.alias;
             const size_t currentIndex=find(current,currentCount,access);
             currentIndices[i]=currentIndex==currentCount?Capacity:currentIndex;
-            if(currentIndex==currentCount && find(prior,priorCount,access)==priorCount)++additions;
-            for(size_t j=0;j<priorCount;++j) {
-                const auto& old=prior[j];
-                if(old.access.allocation==access.allocation && old.access.begin<access.end && access.begin<old.access.end) {
-                    after|=old.writes | (access.write?old.reads:0);alias|=old.access.alias;
+            Dependency dependency;
+            if(currentIndex!=currentCount)dependency=currentDependencies[currentIndex];
+            else {
+                dependency={0,0,false,false};
+                for(size_t j=0;j<priorCount;++j) {
+                    const auto& old=prior[j];
+                    dependency.shared|=same(old.access,access);
+                    if(old.access.allocation==access.allocation && old.access.begin<access.end && access.begin<old.access.end) {
+                        dependency.reads|=old.reads;dependency.writes|=old.writes;dependency.alias|=old.access.alias;
+                    }
                 }
+                newDependencies[i]=dependency;
+            }
+            after|=dependency.writes | (access.write?dependency.reads:0);alias|=dependency.alias;
+            if(currentIndex==currentCount && !dependency.shared)++additions;
+        }
+        // Count the union: an existing allocation/range in both pass histories
+        // still occupies only one record when end() merges them.
+        if(!unknown && priorCount+currentNewCount+additions>Capacity) {
+            // Several shader slots can share one new allocation/range. Only
+            // resolve those duplicates when the cheap upper bound would force
+            // a global release; normal draws need no extra batch search.
+            const size_t available=Capacity-priorCount-currentNewCount;
+            size_t unique=0;
+            for(size_t i=0;i<size;++i) {
+                const auto access=passAccess(accesses[i]);
+                if(access.begin==access.end || currentIndices[i]!=Capacity || newDependencies[i].shared)continue;
+                bool repeated=false;
+                for(size_t j=0;j<i;++j)if(same(access,passAccess(accesses[j]))){repeated=true;break;}
+                if(!repeated && ++unique>available){unknown=true;break;}
             }
         }
-        // Duplicate inputs can overestimate additions, only causing fallback.
-        unknown|=priorCount+currentCount+additions>Capacity;
         if(unknown){release=true;alias=true;}
         if(prefix || unknown){after=~uint64_t(0);alias=true;}
         uint64_t needed=0;
@@ -97,7 +125,10 @@ public:
             const auto access=passAccess(accesses[i]);if(access.begin==access.end)continue;
             size_t index=currentIndices[i];
             if(index==Capacity)index=find(current,currentCount,access);
-            if(index==currentCount){current[currentCount++]={access,0,0};}
+            if(index==currentCount){
+                currentDependencies[index]=newDependencies[i];
+                current[currentCount++]={access,0,0};currentNewCount+=!newDependencies[i].shared;
+            }
             auto& record=current[index];record.access.alias|=access.alias;
             if(access.write)record.writes|=stage;else record.reads|=stage;
         }

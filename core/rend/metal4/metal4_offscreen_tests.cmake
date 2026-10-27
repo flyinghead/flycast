@@ -27,8 +27,8 @@ function(add_flycast_metal_offscreen_test target root freetype_target xxhash_tar
         ${root}/core/rend/metal4/metal4_render_commands.mm ${root}/core/rend/metal4/metal4_presentation.mm
         ${root}/core/rend/metal4/metal4_fx.mm ${root}/core/rend/metal4/metal4_pipeline_cache.mm
         ${root}/core/rend/metal4/metal4_support.mm
-        ${root}/core/rend/TexCache.cpp ${root}/core/rend/texconv.cpp
-        ${root}/core/rend/transform_matrix.cpp ${root}/core/rend/sorter.cpp
+        ${root}/core/rend/TexCache.cpp ${root}/core/rend/CustomTexture.cpp ${root}/core/rend/texconv.cpp
+        ${root}/core/rend/transform_matrix.cpp ${root}/core/rend/sorter.cpp ${root}/core/rend/osd.cpp
         ${root}/core/oslib/storage.cpp
         ${root}/core/stdclass.cpp
         ${root}/core/cfg/option.cpp ${root}/core/wsi/context.cpp

@@ -22,6 +22,7 @@
 #include <SDL.h>
 #include <SDL_metal.h>
 #include <unordered_map>
+#include <list>
 #include <array>
 #include <mutex>
 #include <algorithm>
@@ -61,14 +62,32 @@ struct API_AVAILABLE(macos(26.0)) MetalMaterialFunctions
 			return hash;
 		}
 	};
+	// Pending jobs are bounded separately. Completed specializations must not
+	// accumulate for every game/material ever seen by this Context as well.
+	static constexpr size_t Limit = 1024;
+	struct Identity { std::string name; MetalContext::MaterialConstants constants; };
+	std::list<Identity> recent;
+	struct Entry {
+		MTL4SpecializedFunctionDescriptor *descriptor;
+		std::list<Identity>::iterator position;
+	};
 	std::unordered_map<std::string,
-		std::unordered_map<MetalContext::MaterialConstants, MTL4SpecializedFunctionDescriptor *, Hash>> functions;
+		std::unordered_map<MetalContext::MaterialConstants, Entry, Hash>> functions;
+	MetalMaterialFunctions() = default;
+	MetalMaterialFunctions(const MetalMaterialFunctions&) = delete;
+	MetalMaterialFunctions& operator=(const MetalMaterialFunctions&) = delete;
 	MTL4FunctionDescriptor *get(id<MTLLibrary> library, NSString *name,
 		const MetalContext::MaterialConstants& key)
 	{
-		auto& variants = functions[name.UTF8String];
-		auto existing = variants.find(key);
-		if (existing != variants.end()) return existing->second;
+		const std::string nameKey = name.UTF8String;
+		auto group = functions.find(nameKey);
+		if (group != functions.end()) {
+			auto existing = group->second.find(key);
+			if (existing != group->second.end()) {
+				recent.splice(recent.begin(), recent, existing->second.position);
+				return existing->second.descriptor;
+			}
+		}
 		MTLFunctionConstantValues *values = [[MTLFunctionConstantValues alloc] init];
 		[values setConstantValue:&key.flags type:MTLDataTypeUInt atIndex:0];
 		[values setConstantValue:&key.tsp0 type:MTLDataTypeUInt atIndex:1];
@@ -80,8 +99,55 @@ struct API_AVAILABLE(macos(26.0)) MetalMaterialFunctions
 		MTL4SpecializedFunctionDescriptor *function = [[MTL4SpecializedFunctionDescriptor alloc] init];
 		function.functionDescriptor = base;
 		function.constantValues = values;
-		variants.emplace(key, function);
+		if (!values || !base || !function) throw std::bad_alloc();
+		recent.push_front({nameKey, key});
+		try {
+			auto inserted = functions.try_emplace(nameKey);
+			try { inserted.first->second.emplace(key, Entry{function, recent.begin()}); }
+			catch (...) {
+				if (inserted.first->second.empty()) functions.erase(inserted.first);
+				throw;
+			}
+		} catch (...) { recent.pop_front(); throw; }
+		if (recent.size() > Limit) {
+			const auto& oldest = recent.back();
+			auto expired = functions.find(oldest.name);
+			expired->second.erase(oldest.constants);
+			if (expired->second.empty()) functions.erase(expired);
+			recent.pop_back();
+		}
+		// Returned locals and pipeline descriptor copy-properties own their
+		// inputs independently of later cache eviction on this serial queue.
 		return function;
+	}
+};
+
+// Bound speculative compilation before copying descriptors or queueing jobs.
+// Tickets own their counter independently of Context across canceled backends.
+class MetalMaterialJobs : public std::enable_shared_from_this<MetalMaterialJobs>
+{
+	static constexpr unsigned Limit=16;
+	std::atomic<unsigned> pending{0};
+public:
+	class Ticket {
+		friend class MetalMaterialJobs;
+		std::shared_ptr<MetalMaterialJobs> owner;
+		explicit Ticket(std::shared_ptr<MetalMaterialJobs> owner):owner(std::move(owner)){}
+	public:
+		Ticket(const Ticket&)=delete;
+		Ticket& operator=(const Ticket&)=delete;
+		~Ticket(){owner->pending.fetch_sub(1,std::memory_order_release);}
+	};
+	std::shared_ptr<Ticket> admit() {
+		auto owner=shared_from_this();
+		unsigned count=pending.load(std::memory_order_relaxed);
+		do {if(count>=Limit)return {};}
+		while(!pending.compare_exchange_weak(count,count+1,std::memory_order_acquire,std::memory_order_relaxed));
+		Ticket *ticket;
+		try {ticket=new Ticket(std::move(owner));}
+		catch(...){pending.fetch_sub(1,std::memory_order_release);throw;}
+		// If the control block allocation fails, shared_ptr deletes the ticket.
+		return std::shared_ptr<Ticket>(ticket);
 	}
 };
 
@@ -96,6 +162,7 @@ struct MetalContext::Impl
 	dispatch_queue_t shaderQueue;
 	std::unordered_map<std::string, MTL4LibraryFunctionDescriptor *> functions;
 	std::shared_ptr<MetalMaterialFunctions> materialFunctions = std::make_shared<MetalMaterialFunctions>();
+	std::shared_ptr<MetalMaterialJobs> materialJobs = std::make_shared<MetalMaterialJobs>();
 	std::shared_ptr<MetalPipelineCache> pipelineCache;
 	std::unique_ptr<MetalFXUpscaler> metalFX;
 	bool packedTextures = false;
@@ -132,6 +199,7 @@ struct MetalContext::Impl
 	int swapInterval = 1;
 	double sourceVideoTime = 0, displayRefresh = 0;
 	metal::PresentationTimeline presentationTimeline;
+	metal::DuplicateCadence duplicateCadence;
 	std::unique_ptr<MetalDisplayLink> displayLink;
 	std::shared_ptr<MetalDisplayImage> composition;
 	struct PresentationResources {
@@ -159,6 +227,7 @@ struct MetalContext::Impl
 	u64 profilingFrame = 0;
 	u64 profilingSubmission = 0;
 	u64 contentFrame = 0;
+	u64 queuedContent = 0;
 	u64 presentationPhase = 0;
 	bool presentationGui = true, presentationSync = true, presentationFast = false;
 #ifdef METAL_RENDERER_TESTS
@@ -219,6 +288,9 @@ public:
 		blend.sourceAlphaBlendFactor = MTLBlendFactorOne;
 		blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 		pipeline = context->makePipeline(@"ui_vertex", @"ui_fragment", layout, MTLPixelFormatBGRA8Unorm, false, blend);
+		MTL4RenderPipelineColorAttachmentDescriptor *opaqueBlend = [blend copy];
+		opaqueBlend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
+		opaquePipeline = context->makePipeline(@"ui_vertex", @"ui_fragment", layout, MTLPixelFormatBGRA8Unorm, false, opaqueBlend);
 		MTLDepthStencilDescriptor *depth = [[MTLDepthStencilDescriptor alloc] init];
 		depth.depthCompareFunction = MTLCompareFunctionAlways;
 		disabledDepth = [context->device() newDepthStencilStateWithDescriptor:depth];
@@ -272,6 +344,9 @@ public:
 		textureSamplers.erase((uintptr_t)(__bridge void *)texture->second.texture);
 		textures.erase(texture);
 	}
+#ifdef FLYCAST_METAL_STANDALONE
+	bool fixedPipelinesReadyForTesting() const { return pipeline && opaquePipeline; }
+#endif
 	void setFrameRendered() override { frameRendered = true; }
 	void renderDrawData(ImDrawData *data, bool guiOpen) override
 	{
@@ -309,11 +384,6 @@ public:
 		const int clipWidth = std::min(width, surfaceWidth), clipHeight = std::min(height, surfaceHeight);
 		if (clipWidth <= 0 || clipHeight <= 0) return;
 		if (context->recordingPresentation()) {
-			if (!opaquePipeline) {
-				MTL4RenderPipelineColorAttachmentDescriptor *opaqueBlend = [blend copy];
-				opaqueBlend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
-				opaquePipeline = context->makePipeline(@"ui_vertex", @"ui_fragment", layout, MTLPixelFormatBGRA8Unorm, false, opaqueBlend);
-			}
 			context->registerPresentationPipeline(pipeline, opaquePipeline);
 		}
 		const auto buffers = context->uploadUIBuffers(*data);
@@ -474,9 +544,10 @@ MetalContext::MetalContext(void *window, void *display
 		sd.minFilter = sd.magFilter = MTLSamplerMinMagFilterLinear;
 		impl->linear = [impl->device newSamplerStateWithDescriptor:sd];
 		if (!impl->nearest || !impl->linear) throw FlycastException("Cannot create the Metal presentation samplers");
-		// These two fixed presentation pipelines must be ready before
+		// All fixed quad variants, including RGB-only recorded overlays, must be ready before
 		// acquiring a drawable for the first image or a VMU overlay.
-		quadPipeline(true); quadPipeline(false);
+		quadPipeline(true); quadPipeline(false); quadPipelineState(false, true);
+		prepareCrosshair();
 #ifndef FLYCAST_METAL_STANDALONE
 		resize();
 #endif
@@ -870,6 +941,9 @@ MTL4FunctionDescriptor *MetalContext::shaderFunction(NSString *name)
 }
 id<MTLRenderPipelineState> MetalContext::makePipeline(NSString *vertex, NSString *fragment, MTLVertexDescriptor *layout, MTLPixelFormat color, bool /*depth*/, MTL4RenderPipelineColorAttachmentDescriptor *blend, MTL4RenderPipelineColorAttachmentDescriptor *secondaryBlend)
 {
+#ifdef METAL_RENDERER_TESTS
+	++validationRenderPipelineRequests;
+#endif
 	MTL4RenderPipelineDescriptor *desc = pipelineDescriptor(shaderFunction(vertex),
 		shaderFunction(fragment), layout, color, blend, secondaryBlend);
 	NSError *error = nil;
@@ -882,6 +956,9 @@ id<MTLRenderPipelineState> MetalContext::makePipeline(NSString *vertex, NSString
 }
 id<MTLComputePipelineState> MetalContext::makeComputePipeline(NSString *function)
 {
+#ifdef METAL_RENDERER_TESTS
+	++validationComputePipelineRequests;
+#endif
 	NSError *error = nil;
 	MTL4ComputePipelineDescriptor *desc = [[MTL4ComputePipelineDescriptor alloc] init];
 	desc.computeFunctionDescriptor = shaderFunction(function);
@@ -892,62 +969,121 @@ id<MTLComputePipelineState> MetalContext::makeComputePipeline(NSString *function
 	if (!pipeline) throw RendererException("Metal compute pipeline creation failed");
 	return pipeline;
 }
-void MetalContext::makePipelineAsync(NSString *vertex, NSString *fragment, MTLVertexDescriptor *layout,
+bool MetalContext::makeComputePipelineAsync(NSString *function,
+	std::function<void(id<MTLComputePipelineState>, NSError *)> completion, std::function<bool()> wanted)
+{
+	try { @try {
+		const auto admission=impl->materialJobs->admit();
+		if(!admission)return false;
+		NSString *name=[function copy];
+		id<MTL4Compiler> compiler=impl->materialCompiler;
+		id<MTLLibrary> library=impl->library;
+		const auto cache=impl->pipelineCache;
+		dispatch_async(impl->shaderQueue, ^{
+			@autoreleasepool {
+				(void)admission;
+				if(!wanted())return;
+				NSError *error=nil;id<MTLComputePipelineState> state=nil;
+				try { @try {
+					auto base=[MTL4LibraryFunctionDescriptor new];base.library=library;base.name=name;
+					auto descriptor=[MTL4ComputePipelineDescriptor new];descriptor.computeFunctionDescriptor=base;
+					state=cache ? cache->makeComputePipeline(descriptor,&error,
+						metal_pipeline::computeIdentity(descriptor,metal_pipeline::functionIdentity(name)),true)
+						: [compiler newComputePipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:&error];
+				} @catch(NSException *failure) {
+					error=[NSError errorWithDomain:@"org.flycast.metal" code:1
+						userInfo:@{NSLocalizedDescriptionKey:failure.reason ?: @"Metal resolve creation failed"}];
+				}} catch(const std::exception& failure) {
+					error=[NSError errorWithDomain:@"org.flycast.metal" code:1
+						userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithUTF8String:failure.what()] ?: @"Metal resolve creation failed"}];
+				}
+				if(!wanted())return;
+				try { @try {completion(state,error);}
+				@catch(NSException *failure){WARN_LOG(RENDERER,"Metal resolve result skipped: %s",failure.reason.UTF8String);}}
+				catch(const std::exception& failure){WARN_LOG(RENDERER,"Metal resolve result skipped: %s",failure.what());}
+			}
+		});
+		return true;
+	} @catch(NSException *failure){WARN_LOG(RENDERER,"Metal resolve request skipped: %s",failure.reason.UTF8String);}}
+	catch(const std::exception& failure){WARN_LOG(RENDERER,"Metal resolve request skipped: %s",failure.what());}
+	return false;
+}
+bool MetalContext::makePipelineAsync(NSString *vertex, NSString *fragment, MTLVertexDescriptor *layout,
 	MTLPixelFormat color, bool /*depth*/, MTL4RenderPipelineColorAttachmentDescriptor *blend, MaterialConstants constants,
 	std::function<void(id<MTLRenderPipelineState>, NSError *)> completion, std::function<bool()> wanted)
 {
-	// Capture owned inputs, never the context or renderer. A backend switch
-	// may destroy them while Metal's compiler is still completing a variant.
-	id<MTL4Compiler> compiler = impl->materialCompiler;
-	id<MTLLibrary> library = impl->library;
-	const auto functions = impl->materialFunctions;
-	const auto pipelineCache = impl->pipelineCache;
-	NSString *vertexName = [vertex copy], *fragmentName = [fragment copy];
-	MTLVertexDescriptor *vertexLayout = [layout copy];
-	MTL4RenderPipelineColorAttachmentDescriptor *colorBlend = [blend copy];
-	dispatch_async(impl->shaderQueue, ^{
-		@autoreleasepool {
-			try {
-				if (!wanted()) return;
+	try { @try {
+		const auto admission=impl->materialJobs->admit();
+		if(!admission)return false;
+		// Capture owned inputs, never the context or renderer. A backend switch
+		// may destroy them while Metal's compiler is still completing a variant.
+		id<MTL4Compiler> compiler = impl->materialCompiler;
+		id<MTLLibrary> library = impl->library;
+		const auto functions = impl->materialFunctions;
+		const auto pipelineCache = impl->pipelineCache;
+		NSString *vertexName = [vertex copy], *fragmentName = [fragment copy];
+		MTLVertexDescriptor *vertexLayout = [layout copy];
+		MTL4RenderPipelineColorAttachmentDescriptor *colorBlend = [blend copy];
+		dispatch_async(impl->shaderQueue, ^{
+			@autoreleasepool {
+				(void)admission;
 				NSError *error = nil;
-				MaterialConstants vertexConstants = constants;
-				// Canonicalize vertex controls and the selected interpolation
-				// layout without retaining unrelated fragment shading keys.
-				if ([vertexName isEqualToString:@"pvr_material_vertex"]
-						|| [vertexName isEqualToString:@"pvr_dc_material_vertex"]
-						|| [vertexName isEqualToString:@"pvr_dc_bounded_vertex"]) {
-					vertexConstants.flags = metalVertexFunctionFlags(constants.flags, constants.tsp0, constants.tsp1);
-					vertexConstants.tsp0 = vertexConstants.tsp1 = 0;
+				id<MTLRenderPipelineState> state = nil;
+				try { @try {
+					if (!wanted()) return;
+					MaterialConstants vertexConstants = constants;
+					// Canonicalize vertex controls and the selected interpolation
+					// layout without retaining unrelated fragment shading keys.
+					if ([vertexName isEqualToString:@"pvr_material_vertex"]
+							|| [vertexName isEqualToString:@"pvr_dc_material_vertex"]
+							|| [vertexName isEqualToString:@"pvr_dc_bounded_vertex"]) {
+						vertexConstants.flags = metalVertexFunctionFlags(constants.flags, constants.tsp0, constants.tsp1);
+						vertexConstants.tsp0 = vertexConstants.tsp1 = 0;
+					}
+					MTL4FunctionDescriptor *v = functions->get(library, vertexName, vertexConstants);
+					if (!wanted()) return;
+					MaterialConstants fragmentConstants = constants;
+					if ([fragmentName isEqualToString:@"pvr_material_fragment"]
+							|| [fragmentName isEqualToString:@"pvr_material_depth_fragment"]
+							|| [fragmentName isEqualToString:@"pvr_bounded_fragment"]
+							|| [fragmentName isEqualToString:@"pvr_bounded_depth_fragment"]
+							|| [fragmentName isEqualToString:@"oit_material_fragment"])
+						fragmentConstants.flags &= MetalFragmentMaterialFlags;
+					MTL4FunctionDescriptor *f = functions->get(library, fragmentName, fragmentConstants);
+					if (!wanted()) return;
+					MTL4RenderPipelineDescriptor *desc = pipelineDescriptor(v, f, vertexLayout, color, colorBlend);
+					const std::array<uint32_t,4> vertexKey{vertexConstants.flags,vertexConstants.tsp0,vertexConstants.tsp1,u32(vertexConstants.sequence)};
+					const std::array<uint32_t,4> fragmentKey{fragmentConstants.flags,fragmentConstants.tsp0,fragmentConstants.tsp1,u32(fragmentConstants.sequence)};
+					state = pipelineCache ? pipelineCache->makeRenderPipeline(desc, &error, true,
+						metal_pipeline::renderIdentity(desc,metal_pipeline::functionIdentity(vertexName,&vertexKey),metal_pipeline::functionIdentity(fragmentName,&fragmentKey)))
+						: [compiler newRenderPipelineStateWithDescriptor:desc compilerTaskOptions:nil error:&error];
+				} @catch (NSException *failure) {
+					error = [NSError errorWithDomain:@"org.flycast.metal" code:1
+						userInfo:@{NSLocalizedDescriptionKey: failure.reason ?: @"Metal material creation failed"}];
+				}} catch (const std::exception& failure) {
+					// Optional creation failures preserve the generic shader.
+					NSString *message = [NSString stringWithUTF8String:failure.what()];
+					error = [NSError errorWithDomain:@"org.flycast.metal" code:1
+						userInfo:@{NSLocalizedDescriptionKey: message ?: @"Metal material creation failed"}];
 				}
-				MTL4FunctionDescriptor *v = functions->get(library, vertexName, vertexConstants);
-				if (!wanted()) return;
-				MaterialConstants fragmentConstants = constants;
-				if ([fragmentName isEqualToString:@"pvr_material_fragment"]
-						|| [fragmentName isEqualToString:@"pvr_material_depth_fragment"]
-						|| [fragmentName isEqualToString:@"pvr_bounded_fragment"]
-						|| [fragmentName isEqualToString:@"pvr_bounded_depth_fragment"]
-						|| [fragmentName isEqualToString:@"oit_material_fragment"])
-					fragmentConstants.flags &= MetalFragmentMaterialFlags;
-				MTL4FunctionDescriptor *f = functions->get(library, fragmentName, fragmentConstants);
-				if (!wanted()) return;
-				MTL4RenderPipelineDescriptor *desc = pipelineDescriptor(v, f, vertexLayout, color, colorBlend);
-				const std::array<uint32_t,4> vertexKey{vertexConstants.flags,vertexConstants.tsp0,vertexConstants.tsp1,u32(vertexConstants.sequence)};
-				const std::array<uint32_t,4> fragmentKey{fragmentConstants.flags,fragmentConstants.tsp0,fragmentConstants.tsp1,u32(fragmentConstants.sequence)};
-				id<MTLRenderPipelineState> state = pipelineCache ? pipelineCache->makeRenderPipeline(desc, &error, true,
-					metal_pipeline::renderIdentity(desc,metal_pipeline::functionIdentity(vertexName,&vertexKey),metal_pipeline::functionIdentity(fragmentName,&fragmentKey)))
-					: [compiler newRenderPipelineStateWithDescriptor:desc compilerTaskOptions:nil error:&error];
-				completion(state, error);
-			} catch (const std::exception& failure) {
-				// A cache allocation failure must preserve the generic shader,
-				// rather than escape a GCD block and terminate the app.
-				if (!wanted()) return;
-				NSString *message = [NSString stringWithUTF8String:failure.what()];
-				NSError *error = [NSError errorWithDomain:@"org.flycast.metal" code:1
-					userInfo:@{NSLocalizedDescriptionKey: message ?: @"Metal material creation failed"}];
-				completion(nil, error);
+				// A consumer may fail independently (for example, allocating its
+				// result vector). Never interpret that as another compiler result.
+				try { @try {
+					if (wanted()) completion(state, error);
+				} @catch (NSException *failure) {
+					WARN_LOG(RENDERER,"Metal material result skipped: %s",failure.reason.UTF8String);
+				}} catch (const std::exception& failure) {
+					WARN_LOG(RENDERER,"Metal material result skipped: %s",failure.what());
+				}
 			}
-		}
-	});
+		});
+		return true;
+	} @catch(NSException *error) {
+		WARN_LOG(RENDERER,"Metal material request skipped: %s",error.reason.UTF8String);
+	}} catch(const std::exception& error) {
+		WARN_LOG(RENDERER,"Metal material request skipped: %s",error.what());
+	}
+	return false;
 }
 FCMetal4Commands * MetalContext::beginFrame()
 {
@@ -1048,23 +1184,24 @@ void MetalContext::requirePresentationComposition()
 	[(FCMetal4RecordingEncoder *)impl->encoder redirectTo:encoder];
 	image.recording = nil; image.texture = slot.composed;
 }
+id<MTLRenderPipelineState> MetalContext::quadPipelineState(bool ignoreAlpha, bool opaque)
+{
+	const u64 key = u64(ignoreAlpha) | (u64(opaque) << 1);
+	auto& pipeline = impl->quads[key];
+	if (!pipeline) {
+		MTL4RenderPipelineColorAttachmentDescriptor *blend = [MTL4RenderPipelineColorAttachmentDescriptor new];
+		blend.blendingState = ignoreAlpha ? MTL4BlendStateDisabled : MTL4BlendStateEnabled;
+		blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+		blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+		if (opaque) blend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
+		pipeline = makePipeline(@"quad_vertex", @"quad_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
+	}
+	return pipeline;
+}
 id<MTLRenderPipelineState> MetalContext::quadPipeline(bool ignoreAlpha)
 {
-	const auto pipelineFor = [&](bool opaque) -> id<MTLRenderPipelineState> {
-		const u64 key = u64(ignoreAlpha) | (u64(opaque) << 1);
-		auto& pipeline = impl->quads[key];
-		if (!pipeline) {
-			MTL4RenderPipelineColorAttachmentDescriptor *blend = [MTL4RenderPipelineColorAttachmentDescriptor new];
-			blend.blendingState = ignoreAlpha ? MTL4BlendStateDisabled : MTL4BlendStateEnabled;
-			blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-			blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-			if (opaque) blend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
-			pipeline = makePipeline(@"quad_vertex", @"quad_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
-		}
-		return pipeline;
-	};
-	auto pipeline = pipelineFor(false);
-	if (recordingPresentation()) registerPresentationPipeline(pipeline, ignoreAlpha ? pipeline : pipelineFor(true));
+	auto pipeline = quadPipelineState(ignoreAlpha, false);
+	if (recordingPresentation()) registerPresentationPipeline(pipeline, ignoreAlpha ? pipeline : quadPipelineState(false, true));
 	return pipeline;
 }
 void MetalContext::drawQuad(FCMetal4RenderEncoder * encoder, id<MTLTexture> texture, MTLViewport viewport, bool rotate, bool ignoreAlpha, const float *color, bool linear)
@@ -1195,6 +1332,7 @@ FCMetal4RenderEncoder * MetalContext::beginPresentation()
 			}
 		} else impl->metalFX->releaseSlot(impl->currentSlot);
 		if (impl->composition) {
+			impl->duplicateCadence.reset();
 			auto& slot = impl->compositions[impl->compositionSlot];
 			// Decide whether to snapshot after all callbacks/unknown pipelines
 			// have had a chance to require producer-side composition.
@@ -1234,6 +1372,28 @@ FCMetal4RenderEncoder * MetalContext::beginPresentation()
 			[impl->encoder setScissorRect:MTLScissorRect{0, 0, (NSUInteger)width, (NSUInteger)height}];
 		}
 		return impl->encoder;
+	}
+}
+void MetalContext::prepareCrosshair()
+{
+	if (!impl->crosshair) {
+		impl->crosshair = makeTexture(16, 16, MTLPixelFormatRGBA8Unorm, MTLTextureUsageShaderRead, false, true);
+		[impl->crosshair replaceRegion:MTLRegionMake2D(0, 0, 16, 16) mipmapLevel:0 withBytes:getCrosshairTextureData() bytesPerRow:16 * 4];
+	}
+	if (!impl->crosshairPipeline) {
+		MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
+		blend.blendingState = MTL4BlendStateEnabled;
+		blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+		blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+		impl->crosshairPipeline = makePipeline(@"overlay_vertex", @"overlay_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
+	}
+	if (!impl->opaqueCrosshairPipeline) {
+		MTL4RenderPipelineColorAttachmentDescriptor *blend = [MTL4RenderPipelineColorAttachmentDescriptor new];
+		blend.blendingState = MTL4BlendStateEnabled;
+		blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+		blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+		blend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
+		impl->opaqueCrosshairPipeline = makePipeline(@"overlay_vertex", @"overlay_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
 	}
 }
 void MetalContext::drawOverlays()
@@ -1284,28 +1444,8 @@ void MetalContext::drawOverlays(FCMetal4RenderEncoder * encoder)
 			{(c & 255) / 255.f, ((c >> 8) & 255) / 255.f, ((c >> 16) & 255) / 255.f, (c >> 24) / 255.f}};
 	}
 	if (gunCount) {
-		if (!impl->crosshair) {
-			impl->crosshair = makeTexture(16, 16, MTLPixelFormatRGBA8Unorm, MTLTextureUsageShaderRead, false, true);
-			[impl->crosshair replaceRegion:MTLRegionMake2D(0, 0, 16, 16) mipmapLevel:0 withBytes:getCrosshairTextureData() bytesPerRow:16 * 4];
-		}
-		if (!impl->crosshairPipeline) {
-			MTL4RenderPipelineColorAttachmentDescriptor *blend = [[MTL4RenderPipelineColorAttachmentDescriptor alloc] init];
-			blend.blendingState = MTL4BlendStateEnabled;
-			blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-			blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-			impl->crosshairPipeline = makePipeline(@"overlay_vertex", @"overlay_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
-		}
-		if (recordingPresentation()) {
-			if (!impl->opaqueCrosshairPipeline) {
-				MTL4RenderPipelineColorAttachmentDescriptor *blend = [MTL4RenderPipelineColorAttachmentDescriptor new];
-				blend.blendingState = MTL4BlendStateEnabled;
-				blend.sourceRGBBlendFactor = blend.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-				blend.destinationRGBBlendFactor = blend.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-				blend.writeMask = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
-				impl->opaqueCrosshairPipeline = makePipeline(@"overlay_vertex", @"overlay_fragment", nil, MTLPixelFormatBGRA8Unorm, false, blend);
-			}
-			registerPresentationPipeline(impl->crosshairPipeline, impl->opaqueCrosshairPipeline);
-		}
+		prepareCrosshair();
+		if (recordingPresentation()) registerPresentationPipeline(impl->crosshairPipeline, impl->opaqueCrosshairPipeline);
 		const float screen[2] = {(float)width, (float)height};
 		[encoder setRenderPipelineState:impl->crosshairPipeline]; [encoder setCullMode:MTLCullModeNone];
 		[encoder setViewport:MTLViewport{0, 0, screen[0], screen[1], 0, 1}];
@@ -1345,6 +1485,15 @@ void MetalContext::present()
 {
 	try {
 	@autoreleasepool {
+		// Lazy callers must select the paced/recorded path before we publish
+		// it. An already active clock needs no new packet on an idle call.
+		if(!impl->drawableRequested) {
+			const bool paced=impl->lastFrame && !gui_is_open() && config::VSync
+				&& !settings.input.fastForwardMode && config::FramePacing;
+			const bool active=impl->displayLink && impl->displayLink->active();
+			if(!active || !paced || impl->contentFrame!=impl->queuedContent
+					|| impl->displayRefresh!=settings.display.refreshRate)beginPresentation();
+		}
 		if (impl->composition) {
 			if (impl->composition->recording.requiresComposition) requirePresentationComposition();
 #ifdef VIDEO_ROUTING
@@ -1378,16 +1527,20 @@ void MetalContext::present()
 			impl->displayLink->prepare(impl->composition, impl->frame);
 			submitCommandBuffer(impl->frame);
 			impl->displayLink->enqueue(impl->composition);
+			impl->queuedContent=impl->composition->content;
 			impl->composition.reset(); impl->frame = nil; impl->drawableRequested = false;
 			return;
 		}
 		if (impl->displayLink && impl->displayLink->active()) {
+			impl->duplicateCadence.reset();
+			impl->displayLink->setActive(true,config::DupeFrames);
 			if (impl->frame) submitCommandBuffer(impl->frame);
 			impl->frame = nil; impl->drawableRequested = false;
 			return;
 		}
-		const int copies = impl->lastFrame ? metal::presentationCount(settings.display.refreshRate, impl->swapInterval,
-			gui_is_open(), config::VSync, settings.input.fastForwardMode, config::DupeFrames) : 1;
+		const int copies = impl->lastFrame ? impl->duplicateCadence.count(settings.display.refreshRate,
+			spg_GetFrameDuration(),impl->swapInterval,gui_is_open(),config::VSync,settings.input.fastForwardMode,config::DupeFrames) : 1;
+		if(!impl->lastFrame)impl->duplicateCadence.reset();
 		for (int copy = 0; copy < copies; ++copy) {
 			@autoreleasepool {
 				if (copy != 0) {
@@ -1579,6 +1732,7 @@ void MetalContext::readTexture(id<MTLTexture> texture, std::vector<u8>& pixels)
 #ifdef METAL_RENDERER_TESTS
 #ifdef FLYCAST_METAL_STANDALONE
 #include "../../../tests/metal/metal_context_presentation_validation.inc"
+#include "../../../tests/metal/metal_material_queue_validation.inc"
 #endif
 #include "../../../tests/metal/metal_vsync_validation.inc"
 #include "../../../tests/metal/metal_overlay_validation.inc"

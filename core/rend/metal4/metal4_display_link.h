@@ -250,6 +250,15 @@ public:
 	}
 	bool active() const { return state->active; }
 	double schedulingLead() const { return state->schedulingLead.load(); }
+#ifdef FLYCAST_METAL_STANDALONE
+	std::shared_ptr<MetalDisplayImage> pendingForTesting() const {
+		std::lock_guard<std::mutex> lock(state->mutex);
+		return state->pending.empty()?nullptr:state->pending.back();
+	}
+	bool repeatsForTesting() const {
+		std::lock_guard<std::mutex> lock(state->mutex);return state->repeats;
+	}
+#endif
 	void prepare(std::shared_ptr<MetalDisplayImage> image, FCMetal4Commands *command) {
 		[command signalEvent:image->readyEvent value:image->readyValue];
 		[command addCompletedHandler:^(FCMetal4Commands *) { (void)image; }];

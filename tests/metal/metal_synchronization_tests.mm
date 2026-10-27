@@ -18,14 +18,16 @@ static constexpr uint8_t Color[4]={37,101,179,255};
 struct GPU {
     id<MTLDevice> device=MTLCreateSystemDefaultDevice();
     FCMetal4Queue *queue;
-    id<MTLComputePipelineState> read;
+    id<MTLComputePipelineState> read,write;
     GPU() {
         require(device!=nil,"No GPU");queue=[[FCMetal4Queue alloc] initWithDevice:device];NSError *e=nil;
         auto compiler=[device newCompilerWithDescriptor:[MTL4CompilerDescriptor new] error:&e];error(e);
-        auto descriptor=[MTL4LibraryDescriptor new];descriptor.source=@"#include <metal_stdlib>\nusing namespace metal;kernel void read_pixel(texture2d<float,access::read> image [[texture(0)]],device uint *out [[buffer(0)]]) {float4 c=image.read(uint2(0));out[0]=uint(round(c.r*255)) | (uint(round(c.g*255))<<8) | (uint(round(c.b*255))<<16) | (uint(round(c.a*255))<<24);}";
+        auto descriptor=[MTL4LibraryDescriptor new];descriptor.source=@"#include <metal_stdlib>\nusing namespace metal;kernel void read_pixel(texture2d<float,access::read> image [[texture(0)]],device uint *out [[buffer(0)]]) {float4 c=image.read(uint2(0));out[0]=uint(round(c.r*255)) | (uint(round(c.g*255))<<8) | (uint(round(c.b*255))<<16) | (uint(round(c.a*255))<<24);}\nkernel void write_pixel(texture2d<float,access::write> image [[texture(0)]],uint2 p [[thread_position_in_grid]]) {image.write(float4(37.0f/255.0f),p);}";
         descriptor.options=[MTLCompileOptions new];descriptor.options.languageVersion=MTLLanguageVersion4_0;
         auto library=[compiler newLibraryWithDescriptor:descriptor error:&e];error(e);auto f=[MTL4LibraryFunctionDescriptor new];f.library=library;f.name=@"read_pixel";
         auto d=[MTL4ComputePipelineDescriptor new];d.computeFunctionDescriptor=f;read=[compiler newComputePipelineStateWithDescriptor:d compilerTaskOptions:nil error:&e];error(e);
+        auto writer=[MTL4LibraryFunctionDescriptor new];writer.library=library;writer.name=@"write_pixel";
+        d.computeFunctionDescriptor=writer;write=[compiler newComputePipelineStateWithDescriptor:d compilerTaskOptions:nil error:&e];error(e);
     }
     id<MTLBuffer> buffer(NSUInteger bytes,bool privateStorage=false) {return [device newBufferWithLength:bytes options:privateStorage?MTLResourceStorageModePrivate:MTLResourceStorageModeShared];}
     id<MTLTexture> texture(NSUInteger size=16,bool mip=false) {
@@ -215,6 +217,55 @@ static void checkBoundaryWords(id<MTLBuffer> out,unsigned count) {
     const auto *words=static_cast<const uint32_t *>(out.contents);
     for(unsigned i=0;i<count;++i)require(words[i]==boundaryColor(i),"Render/dispatch RAW or read/next-render WAR dependency failed");
 }
+static void overlappingPassHistory(GPU& g,bool duplicateBuffers=false) {
+    unsigned outputs=0;
+    for(unsigned count : {8u,31u,40u,63u})for(bool planned : {false,true}) {
+        auto shared=FCMetal4CreateBuffer(g.device,1024,MTLResourceStorageModeShared);
+        NSMutableArray<id<MTLTexture>> *images=[NSMutableArray new];
+        for(unsigned i=0;i<count;++i)[images addObject:g.texture(4)];
+        auto cb=[g.queue commandBuffer];[cb setPassDependenciesForTesting:planned];
+        auto initialize=[cb transferEncoder];
+        [initialize fillBuffer:shared range:NSMakeRange(0,shared.length) value:37];[initialize endEncoding];
+        // Use identical whole-allocation declarations in both histories.
+        // A subresource upload and a whole-texture binding are distinct range
+        // records and may legitimately exceed the planner's history capacity.
+        auto writes=[cb computeCommandEncoder];[writes setDirectShaderBindings:YES];[writes setComputePipelineState:g.write];
+        for(id<MTLTexture> image in images) {
+            [writes setTexture:image atIndex:0 usage:MTLResourceUsageWrite];
+            [writes dispatchThreads:MTLSizeMake(4,4,1) threadsPerThreadgroup:MTLSizeMake(4,4,1)];
+        }
+        [writes endEncoding];
+        auto reads=[cb computeCommandEncoder];[reads setDirectShaderBindings:YES];[reads setComputePipelineState:g.read];
+        if(duplicateBuffers)for(unsigned slot=1;slot<31;++slot)
+            [reads setBuffer:shared offset:0 atIndex:slot usage:MTLResourceUsageWrite];
+        for(unsigned i=0;i<count;++i) {
+            [reads setTexture:images[i] atIndex:0 usage:MTLResourceUsageRead];
+            [reads setBuffer:shared offset:i*4 atIndex:0 usage:MTLResourceUsageWrite];
+            [reads dispatchThreads:MTLSizeMake(1,1,1) threadsPerThreadgroup:MTLSizeMake(1,1,1)];
+        }
+        [reads endEncoding];finish(cb);
+        const auto *words=static_cast<const uint32_t *>(shared.contents);
+        for(unsigned i=0;i<count;++i){require(words[i]==0x25252525u,"Overlapping pass histories lost GPU write/read order");++outputs;}
+        auto stats=[cb synchronizationStatistics];
+        std::printf("HISTORY roots=%u duplicate_bindings=%d planned=%d consumers=%lu narrow=%lu producers=%lu global_sources=%lu\n",count+1,duplicateBuffers,planned,
+            (unsigned long)stats[@"queueConsumers"].unsignedIntegerValue,
+            (unsigned long)stats[@"queueNarrowConsumers"].unsignedIntegerValue,
+            (unsigned long)stats[@"queueProducers"].unsignedIntegerValue,
+            (unsigned long)stats[@"queueGlobalSources"].unsignedIntegerValue);
+        // The unplanned path also acquires alias visibility when the shared
+        // buffer is first bound after its initial encoder boundary.
+        require(stats[@"queueConsumers"].unsignedIntegerValue==(planned?2u:4u),"Overlapping histories retained a false global capacity acquire");
+        // Both consumers have a known stage: the initial queue prefix is
+        // acquired by the fill's blit stage; writes are acquired by dispatch.
+        if(planned)require(stats[@"queueNarrowConsumers"].unsignedIntegerValue==2,"Overlapping history omitted its required scoped GPU dependency");
+        if(planned)require(stats[@"queueGlobalSources"].unsignedIntegerValue==1,"Duplicate bindings widened the required source stages to the whole queue");
+        auto pixels=g.buffer(count*1024);auto copy=[g.queue commandBuffer];auto blit=[copy transferEncoder];
+        for(unsigned i=0;i<count;++i)download(blit,images[i],pixels,i*1024);
+        [blit endEncoding];finish(copy);const uint8_t color[]={37,37,37,37};
+        for(unsigned i=0;i<count;++i)checkImage(pixels,4,4,color,i*1024);
+    }
+    std::printf("PASS actual overlapping pass histories: %u exact GPU values and complete 4x4 images, up to 64 history allocation/range records, duplicate_bindings=%d, required scoped write/read dependency, no false capacity acquire\n",outputs,duplicateBuffers);
+}
 static void deferredBoundaries(GPU& g) {
     constexpr unsigned Count=64;auto image=g.texture(4);auto out=g.buffer(Count*4);
     for(bool legacy:{true,false})for(bool opaque:{false,true}) {
@@ -361,6 +412,8 @@ int main(int argc,char **argv) {
     @autoreleasepool {try {
         std::setvbuf(stdout,nullptr,_IOLBF,0);
         GPU g;
+        if(argc==2 && std::strcmp(argv[1],"--duplicate-history")==0){overlappingPassHistory(g,true);return 0;}
+        if(argc==2 && std::strcmp(argv[1],"--overlapping-history")==0){overlappingPassHistory(g);return 0;}
         if(argc==2 && std::strcmp(argv[1],"--heap-reuse")==0){placementAliases(g);passDependencies(g);return 0;}
         if(argc==2 && std::strcmp(argv[1],"--heap-aliases")==0){placementAliases(g);return 0;}
         if(argc==2 && std::strcmp(argv[1],"--passes-only")==0){passDependencies(g);return 0;}
@@ -372,6 +425,8 @@ int main(int argc,char **argv) {
         deferredBoundaries(g);
         placementAliases(g);
         passDependencies(g);
+        overlappingPassHistory(g);
+        overlappingPassHistory(g,true);
         std::puts("PASS native synchronization: exact full transfer payloads, independent uploads/mips/slices, nested views, RAW/WAR/WAW, private ranges, dispatch/empty-blit transitions, buffer/no-copy/IOSurface aliases, render clears, opaque queue barrier and two-queue events; conservative and planned modes");return 0;
     }catch(const std::exception& e){std::fprintf(stderr,"FAIL: %s\n",e.what());return 1;}}
 }

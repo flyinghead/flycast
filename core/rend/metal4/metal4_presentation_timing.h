@@ -40,20 +40,43 @@ public:
 private:
 	double source = 0, host = 0, previous = -1;
 };
-// Match Vulkan's explicit duplicate presents. Ordinary frames follow the
-// emulator's render cadence and the layer's VSync without an extra rate cap.
-inline int presentationCount(double refreshRate, int gameInterval, bool guiOpen, bool vsync, bool fastForward, bool duplicateFrames)
+// Explicit repeats follow the emulated video field, including PAL/NTSC and
+// interval-2 games. Carry fractional refreshes across source frames instead of
+// rounding each field before applying the game's interval.
+class DuplicateCadence {
+public:
+	void reset(){fraction=0;refresh=field=0;}
+	int count(double refreshRate,double videoFieldDuration,int gameInterval,
+		bool guiOpen,bool vsync,bool fastForward,bool duplicateFrames)
+	{
+		if(!duplicateFrames || guiOpen || !vsync || fastForward){reset();return 1;}
+		if(!std::isfinite(refreshRate) || refreshRate<=0)refreshRate=60;
+		if(!std::isfinite(videoFieldDuration) || videoFieldDuration<=0)videoFieldDuration=1./60;
+		if(refresh!=refreshRate || field!=videoFieldDuration){reset();refresh=refreshRate;field=videoFieldDuration;}
+		const double maximum=double(std::numeric_limits<int>::max());
+		double duration=refreshRate*videoFieldDuration*std::clamp(gameInterval,1,2);
+		if(!std::isfinite(duration))duration=maximum;
+		// Duplication never discards a source frame on a slower display.
+		const double total=fraction+std::clamp(duration,1.0,maximum);
+		const int copies=int(std::min(maximum,std::floor(total+1e-9)));
+		fraction=std::max(0.0,total-copies);
+		if(fraction>=1)fraction=0; // Saturated integer range, not a valid display ratio.
+		return copies;
+	}
+private:
+	double fraction=0,refresh=0,field=0;
+};
+// First-frame query for callers which do not own a continuing source stream.
+inline int presentationCount(double refreshRate, int gameInterval, bool guiOpen, bool vsync, bool fastForward,
+	bool duplicateFrames,double videoFieldDuration=1./60)
 {
-	if (!duplicateFrames || guiOpen || !vsync || fastForward) return 1;
-	if (!std::isfinite(refreshRate) || refreshRate <= 0) refreshRate = 60;
-	// Vulkan rounds the display multiple before applying the game's interval.
-	const double count = std::floor(std::max(1.0, refreshRate / 60)) * std::clamp(gameInterval, 1, 2);
-	return int(std::min(count, double(std::numeric_limits<int>::max())));
+	DuplicateCadence cadence;
+	return cadence.count(refreshRate,videoFieldDuration,gameInterval,guiOpen,vsync,fastForward,duplicateFrames);
 }
 inline double minimumFrameDuration(double refreshRate, int /*gameInterval*/, bool guiOpen, bool vsync, bool fastForward, bool duplicateFrames = false)
 {
-	// Vulkan does not impose a second duration limit on ordinary presents or
-	// GUI frames. Reserve timed presentation for explicitly requested copies.
+	// Ordinary presents and GUI frames have no second duration limit.
+	// Reserve timed presentation for explicitly requested copies.
 	if (!duplicateFrames || guiOpen || !vsync || fastForward) return 0;
 	if (!std::isfinite(refreshRate) || refreshRate <= 0) refreshRate = 60;
 	return 1 / refreshRate;

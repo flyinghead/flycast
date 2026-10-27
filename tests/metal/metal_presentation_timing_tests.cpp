@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "rend/metal4/metal4_presentation_timing.h"
 #include <cstdio>
+#include <cstdint>
 #include <limits>
 #include <deque>
 #include <vector>
@@ -68,7 +69,7 @@ int main()
 	struct DuplicateCase { double hz; int game; bool gui, vsync, fast, duplicate; int copies; double seconds; };
 	const DuplicateCase duplicateCases[] = {
 		{120,1,false,true,false,true,2,1.0/120}, {120,2,false,true,false,true,4,1.0/120},
-		{60,2,false,true,false,true,2,1.0/60}, {90,2,false,true,false,true,2,1.0/90},
+		{60,2,false,true,false,true,2,1.0/60}, {90,2,false,true,false,true,3,1.0/90},
 		{144,2,false,true,false,true,4,1.0/144}, {240,2,false,true,false,true,8,1.0/240},
 		{120,2,true,true,false,true,1,0}, {120,2,false,false,false,true,1,0},
 		{120,2,false,true,true,true,1,0}, {120,2,false,true,false,false,1,0},
@@ -80,6 +81,39 @@ int main()
 				|| std::abs(metal::minimumFrameDuration(c.hz, c.game, c.gui, c.vsync, c.fast, c.duplicate) - c.seconds) > 1e-12) {
 			std::fprintf(stderr, "FAIL: duplicate policy %.3f Hz, interval %d\n", c.hz, c.game); return 1;
 		}
+	}
+	// Independent integer-rational oracle: cumulative outputs must match the
+	// display refreshes covered by the source fields, with less than one extra
+	// refresh carried to the next source frame, even when intervals alternate.
+	unsigned cadenceFrames=0;
+	for(unsigned numerator:{50u,60u,60000u})for(unsigned display:{50u,60u,90u,100u,120u,144u,240u})
+	for(unsigned mode:{1u,2u,3u}) {
+		const unsigned denominator=numerator==60000?1001:1;
+		metal::DuplicateCadence cadence;uint64_t accumulated=0,observed=0;
+		for(unsigned n=0;n<10000;++n) {
+			const unsigned interval=mode==3?1+n%2:mode;
+			accumulated+=std::max(uint64_t(numerator),uint64_t(display)*interval*denominator);
+			observed+=cadence.count(display,double(denominator)/numerator,interval,false,true,false,true);
+			if(observed!=accumulated/numerator){std::fprintf(stderr,"FAIL: duplicate cadence field %u/%u display %u interval %u frame %u\n",numerator,denominator,display,interval,n);return 1;}
+			++cadenceFrames;
+		}
+		for(unsigned disabled=0;disabled<4;++disabled){
+			if(cadence.count(display,double(denominator)/numerator,2,disabled==0,disabled!=1,disabled==2,disabled!=3)!=1){std::fputs("FAIL: duplicate bypass mode\n",stderr);return 1;}
+			metal::DuplicateCadence fresh;
+			if(cadence.count(display,double(denominator)/numerator,2,false,true,false,true)!=fresh.count(display,double(denominator)/numerator,2,false,true,false,true)){std::fputs("FAIL: duplicate mode retained old phase\n",stderr);return 1;}
+		}
+	}
+	{
+		metal::DuplicateCadence cadence;
+		for(const auto input:std::vector<std::pair<double,double>>{{120,1./50},{144,1./60},{120,1001./60000},{100,1./50}}){
+			metal::DuplicateCadence fresh;
+			for(unsigned n=0;n<19;++n)
+				if(cadence.count(input.first,input.second,1,false,true,false,true)!=fresh.count(input.first,input.second,1,false,true,false,true)){
+					std::fputs("FAIL: duplicate phase survived refresh/video-mode change\n",stderr);return 1;
+				}
+		}
+		for(double field:{0.0,-1.0,std::numeric_limits<double>::infinity(),std::numeric_limits<double>::quiet_NaN()})
+			if(metal::presentationCount(120,2,false,true,false,true,field)!=4){std::fputs("FAIL: invalid video field fallback\n",stderr);return 1;}
 	}
 	// Rendering arrival jitter must not enter the source video timeline.
 	for (double hz : {50.0, 59.94, 60.0}) {
@@ -122,6 +156,6 @@ int main()
 					previousEvictions += queueEvictions(fieldHz,interval,displayHz,phase / displayHz / 16,true);
 				}
 	if (!previousEvictions) { std::fprintf(stderr,"FAIL: queue regression did not detect the previous overlong horizon\n"); return 1; }
-	std::printf("PASS: 34 presentation policies, 60000 PAL/NTSC deadlines and 192 producer/display queue schedules; previous horizon evicted %u valid contents\n",previousEvictions);
+	std::printf("PASS: 34 presentation policies, %u integer-oracle duplicate frames, 60000 PAL/NTSC deadlines and 192 producer/display queue schedules; previous horizon evicted %u valid contents\n",cadenceFrames,previousEvictions);
 	return 0;
 }

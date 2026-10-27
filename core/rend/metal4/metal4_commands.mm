@@ -217,6 +217,9 @@ metal_sync::Access textureAccess(id<MTLTexture> texture,NSUInteger level,NSUInte
 }
 
 @interface FCMetal4Queue ()
+// Native wait/commit/signal sequences must not hold the CPU lease-pool lock:
+// feedback can allocate or recycle a lease before native commit returns.
+@property (readonly, nonatomic, strong) NSObject *submissionLock;
 - (id<MTL4CommandAllocator>)acquireAllocator;
 - (void)recycleAllocator:(id<MTL4CommandAllocator>)allocator;
 // Transfer the private lease directly. A discarded failed lease must not keep
@@ -283,6 +286,8 @@ metal_sync::Access textureAccess(id<MTLTexture> texture,NSUInteger level,NSUInte
         requireCommand(_native != nil, "Cannot create Metal 4 command queue");
         _available = [NSMutableArray new];
         _submissions = [NSMutableArray new];
+        _submissionLock = [NSObject new];
+        requireCommand(_submissionLock != nil, "Cannot allocate Metal 4 submission lock");
         _recycling = YES;
     }
     return self;
@@ -443,7 +448,7 @@ metal_sync::Access textureAccess(id<MTLTexture> texture,NSUInteger level,NSUInte
     NSUInteger _transferOperations, _transferBarriers, _aliasBarriers;
     MTLStages _barrierAfterStages;
     NSUInteger _queueConsumers, _queueProducers, _deferredEnds, _commitFlushes, _fallbackCommitFlushes;
-    NSUInteger _queueDependencyBarriers,_queueNarrowConsumers,_queueIndependentUses;
+    NSUInteger _queueDependencyBarriers,_queueNarrowConsumers,_queueIndependentUses,_queueGlobalSources;
     NSUInteger _inlinePagesForTesting;
     uint64_t _inlineBytesForTesting, _encodedAllocatorBytes, _encodedResidencyCount;
     uintptr_t _encodedAllocatorIdentity;
@@ -550,6 +555,7 @@ metal_sync::Access textureAccess(id<MTLTexture> texture,NSUInteger level,NSUInte
         @"deferredEnds":@(_deferredEnds),@"commitFlushes":@(_commitFlushes),
         @"fallbackCommitFlushes":@(_fallbackCommitFlushes),
         @"queueDependencyBarriers":@(_queueDependencyBarriers),@"queueNarrowConsumers":@(_queueNarrowConsumers),@"queueIndependentUses":@(_queueIndependentUses),
+        @"queueGlobalSources":@(_queueGlobalSources),
         @"allocatorBytes":@(_submission.allocator.allocatedSize),@"cachedTables":@(tables),
         @"cachedUniformPages":@(_submission.pages.count),@"retainedObjects":@(_objects.count)};
 }
@@ -635,6 +641,7 @@ metal_sync::Access textureAccess(id<MTLTexture> texture,NSUInteger level,NSUInte
 #ifdef FLYCAST_METAL_STANDALONE
     ++_queueConsumers;
     ++_queueDependencyBarriers;
+    if((MTLStages(barrier.after)&MTLStageAll)==MTLStageAll)++_queueGlobalSources;
     if((MTLStages(barrier.after)&MTLStageAll)!=MTLStageAll || stages!=MTLStageAll)++_queueNarrowConsumers;
 #endif
 }
@@ -836,7 +843,7 @@ metal_sync::Access textureAccess(id<MTLTexture> texture,NSUInteger level,NSUInte
     // DisplayLink and emulation encode independently. Keep each native
     // wait/commit/signal sequence indivisible on their shared Metal 4 queue.
     BOOL enqueued=NO;
-    try { @synchronized (_commandQueue) {
+    try { @synchronized (_commandQueue.submissionLock) {
 #ifdef FLYCAST_METAL_STANDALONE
     requireCommand(!_queueCommitFailureForTesting,"Injected Metal queue pre-submit failure");
 #endif

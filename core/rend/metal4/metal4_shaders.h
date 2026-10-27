@@ -81,6 +81,10 @@ static constexpr u32 MetalOITDense = 1u << 20;
 static constexpr u32 MetalOITDenseColor = 1u << 21;
 static constexpr u32 MetalOITDensePacked = 1u << 22;
 static constexpr u32 MetalOITPackedList = 1u << 23;
+static constexpr u32 MetalOITPackedModifiers = 1u << 24;
+// Two mutable modifier bits share the otherwise unused high link bits. The
+// host must prove capacity <= this reserved end marker before using the layout.
+static constexpr u32 MetalOITModifierNextMask = (1u << 30) - 1;
 static constexpr u32 MetalFragmentMaterialFlags = ((1u << 19) - 1)
 	& ~((1u << 5) | (1u << 14));
 
@@ -895,6 +899,13 @@ struct Node {
 struct DenseNode { uint color0; float depth; uint sequence, polygon; };
 struct DenseColorNode { uint color0; float depth; uint sequence; };
 struct PackedNode { uint color0; float depth; uint next, sequence; };
+struct PackedModifierNode { uint color0; float depth; atomic_uint link; uint sequence; };
+static_assert(sizeof(PackedModifierNode) == 16, "Metal packed modifier node ABI");
+constant uint ModifierNextMask = 0x3fffffffu;
+uint modifierNextIndex(uint link) {
+    uint next = link & ModifierNextMask;
+    return next == ModifierNextMask ? 0xffffffffu : next;
+}
 static_assert(sizeof(PackedNode) == 16, "Metal packed linked OIT node ABI");
 static_assert(sizeof(DenseNode) == 16 && sizeof(DenseColorNode) == 12, "Metal dense OIT node ABI");
 struct OITPoly { uint tsp0, tsp1; };
@@ -929,13 +940,18 @@ void publishDenseOIT(uint2 xy, float z, uint sequence, uint color, constant Fram
     if (p.flags & ((1u << 21) | (1u << 22))) reinterpret_cast<device DenseColorNode *>(nodes)[index] = {color, z, sequence};
     else reinterpret_cast<device DenseNode *>(nodes)[index] = {color, z, sequence, p.polyIndex};
 }
-// With no modifiers, the host either proves that sequence retains the full
-// polygon identity or selects a source-over resolver which never needs it.
+// The host proves that sequence retains the polygon identity, or selects a
+// no-modifier source-over resolver which never needs it. Modifier lists also
+// reserve the high link bits only after the host has bounded their capacity.
 void publishPackedOIT(uint index, uint2 xy, float z, uint sequence, uint color, constant Frame& f,
-                      device Node *nodes, device atomic_uint *heads) {
+                      device Node *nodes, device atomic_uint *heads, bool modifiers = false) {
     device PackedNode& node = reinterpret_cast<device PackedNode *>(nodes)[index];
     node.color0 = color; node.depth = z; node.sequence = sequence;
-    node.next = atomic_exchange_explicit(heads + xy.y * f.width + xy.x, index, memory_order_relaxed);
+    uint next = atomic_exchange_explicit(heads + xy.y * f.width + xy.x, index, memory_order_relaxed);
+    if (modifiers) {
+        device PackedModifierNode& modified = reinterpret_cast<device PackedModifierNode *>(nodes)[index];
+        atomic_store_explicit(&modified.link, next & ModifierNextMask, memory_order_relaxed);
+    } else node.next = next;
 }
 template<bool Specialized> void oitFragment(Varying in, constant Frame& f, constant Poly& p,
                              device Node *nodes, device atomic_uint *heads, device atomic_uint *counter, device uint *colors1,
@@ -973,7 +989,8 @@ template<bool Specialized> void oitFragment(Varying in, constant Frame& f, const
     uint index = allocateOITNode(f, counter);
     if (index == 0xffffffffu) return;
     if (p.flags & (1u << 23)) {
-        publishPackedOIT(index, xy, z, in.sequence, color0Needed ? packColor(c0) : 0u, f, nodes, heads);
+        if (color1Needed && (p.flags & (1u << 24))) colors1[index] = packColor(c1);
+        publishPackedOIT(index, xy, z, in.sequence, color0Needed ? packColor(c0) : 0u, f, nodes, heads, (p.flags & (1u << 24)) != 0);
         return;
     }
     device Node& n = nodes[index];
@@ -998,7 +1015,7 @@ fragment void oit_position_fragment(OITPositionVarying in [[stage_in]], constant
     uint index = allocateOITNode(f, counter);
     if (index == 0xffffffffu) return;
     if (p.flags & (1u << 23)) {
-        publishPackedOIT(index, xy, z, in.sequence, 0u, f, nodes, heads);
+        publishPackedOIT(index, xy, z, in.sequence, 0u, f, nodes, heads, (p.flags & (1u << 24)) != 0);
         return;
     }
     publishOITNode(nodes[index], index, xy, z, in.sequence, f, p, heads);
@@ -1026,9 +1043,9 @@ fragment void oit_material_fragment(MaterialVarying in [[stage_in]], constant Fr
 #else
 #define FLYCAST_MODIFIER_ORDER
 #endif
-fragment void tr_mod_fragment(ModVarying in [[stage_in]], constant Frame& f [[buffer(1)]], constant Poly& p [[buffer(2)]],
-                                device Node *nodes [[buffer(4) FLYCAST_MODIFIER_ORDER]], device atomic_uint *heads [[buffer(5)]],
-                                const device OITPoly *polygons [[buffer(7)]]) {
+template<bool PackedModifiers>
+void applyTranslucentModifier(ModVarying in, constant Frame& f, constant Poly& p,
+                              device Node *nodes, device atomic_uint *heads, const device OITPoly *polygons) {
     clipFragment(in.position.xy, p);
     uint2 xy = uint2(in.position.xy);
     uint index = atomic_load_explicit(heads + xy.y * f.width + xy.x, memory_order_relaxed);
@@ -1038,21 +1055,40 @@ fragment void tr_mod_fragment(ModVarying in [[stage_in]], constant Frame& f [[bu
     float z = 0;
     if (p.modMode < 2) z = pvrDepth(in.reciprocal, p);
     for (uint count = 0; index != 0xffffffffu && count < f.maxLayers; count++) {
-        device Node& n = nodes[index];
-        uint metadata = atomic_load_explicit(&n.metadata, memory_order_relaxed);
-        if (polygons[metadata >> 2].tsp0 & 1u) {
-            if (p.modMode == 0 && z >= n.depth) atomic_fetch_xor_explicit(&n.metadata, 1u, memory_order_relaxed);
-            else if (p.modMode == 1 && z >= n.depth) atomic_fetch_or_explicit(&n.metadata, 1u, memory_order_relaxed);
+        device atomic_uint *state;
+        uint polygon, next;
+        float nodeDepth;
+        if (PackedModifiers) {
+            device PackedModifierNode& n = reinterpret_cast<device PackedModifierNode *>(nodes)[index];
+            state = &n.link;
+            uint link = atomic_load_explicit(state, memory_order_relaxed);
+            polygon = n.sequence >> 17; next = modifierNextIndex(link); nodeDepth = n.depth;
+        } else {
+            device Node& n = nodes[index];state = &n.metadata;
+            polygon = atomic_load_explicit(state, memory_order_relaxed) >> 2;
+            next = n.next;nodeDepth = n.depth;
+        }
+        constexpr uint Shift = PackedModifiers ? 30 : 0;
+        constexpr uint Toggle = 1u << Shift, Shadow = 2u << Shift, Flags = 3u << Shift;
+        if (polygons[polygon].tsp0 & 1u) {
+            if (p.modMode == 0 && z >= nodeDepth) atomic_fetch_xor_explicit(state, Toggle, memory_order_relaxed);
+            else if (p.modMode == 1 && z >= nodeDepth) atomic_fetch_or_explicit(state, Toggle, memory_order_relaxed);
             else if (p.modMode == 2) {
-                uint previous = atomic_fetch_and_explicit(&n.metadata, ~1u, memory_order_relaxed);
-                if ((previous & 3) == 1) atomic_fetch_or_explicit(&n.metadata, 2u, memory_order_relaxed);
+                uint previous = atomic_fetch_and_explicit(state, ~Toggle, memory_order_relaxed);
+                if (((previous >> Shift) & 3u) == 1) atomic_fetch_or_explicit(state, Shadow, memory_order_relaxed);
             } else if (p.modMode == 3) {
-                uint previous = atomic_fetch_and_explicit(&n.metadata, ~3u, memory_order_relaxed);
-                if ((previous & 3) == 2) atomic_fetch_or_explicit(&n.metadata, 2u, memory_order_relaxed);
+                uint previous = atomic_fetch_and_explicit(state, ~Flags, memory_order_relaxed);
+                if (((previous >> Shift) & 3u) == 2) atomic_fetch_or_explicit(state, Shadow, memory_order_relaxed);
             }
         }
-        index = n.next;
+        index = next;
     }
+}
+fragment void tr_mod_fragment(ModVarying in [[stage_in]], constant Frame& f [[buffer(1)]], constant Poly& p [[buffer(2)]],
+                                device Node *nodes [[buffer(4) FLYCAST_MODIFIER_ORDER]], device atomic_uint *heads [[buffer(5)]],
+                                const device OITPoly *polygons [[buffer(7)]]) {
+    if (p.flags & (1u << 24)) applyTranslucentModifier<true>(in, f, p, nodes, heads, polygons);
+    else applyTranslucentModifier<false>(in, f, p, nodes, heads, polygons);
 }
 #undef FLYCAST_MODIFIER_ORDER
 float4 blendCoefficient(uint mode, float4 other, float4 src, float4 dst) {
@@ -1065,10 +1101,11 @@ bool oitSortsAfter(const device Node& previous, float depth, uint sequence) {
     float previousDepth = previous.depth;
     return previousDepth > depth || (previousDepth == depth && previous.sequence > sequence);
 }
-template<uint Layers, bool ResetHeads = false, bool SourceOver = false, bool Dense = false, bool Packed = false>
+template<uint Layers, bool ResetHeads = false, bool SourceOver = false, bool Dense = false, bool Packed = false, bool PackedModifiers = false>
 void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *heads,
                      device atomic_uint *counter, const device OITPoly *polygons, const device uint *colors1, texture2d<float, access::read> input,
                      texture2d<float, access::write> output, uint2 xy) {
+    static_assert(!PackedModifiers || (Packed && !Dense && !SourceOver), "Invalid packed modifier resolve family");
     if (f.oitTile.z != 0) {
         if (xy.x >= f.oitTile.z || xy.y >= f.oitTile.w) return;
         xy += f.oitTile.xy;
@@ -1078,6 +1115,7 @@ void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *
     const device DenseNode *denseNodes = reinterpret_cast<const device DenseNode *>(nodes);
     const device DenseColorNode *denseColors = reinterpret_cast<const device DenseColorNode *>(nodes);
     const device PackedNode *packedNodes = reinterpret_cast<const device PackedNode *>(nodes);
+    device PackedModifierNode *modifierNodes = reinterpret_cast<device PackedModifierNode *>(nodes);
     const uint area = f.oitTile.z * f.oitTile.w;
     const uint local = (xy.y-f.oitTile.y)*f.oitTile.z + xy.x-f.oitTile.x;
     uint list[Layers], count = 0, sortedBegin = 0;
@@ -1135,7 +1173,9 @@ void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *
         }
         if (CacheKeys) keys[position] = key;
         list[position] = index; ++count;
-        index = Dense ? (count < denseCount ? (denseCount - 1u - count) * area + local : 0xffffffffu) : Packed ? packedNodes[index].next : nodes[index].next;
+        index = Dense ? (count < denseCount ? (denseCount - 1u - count) * area + local : 0xffffffffu)
+            : PackedModifiers ? modifierNextIndex(atomic_load_explicit(&modifierNodes[index].link, memory_order_relaxed))
+            : Packed ? packedNodes[index].next : nodes[index].next;
     }
     if (index != 0xffffffffu) atomic_fetch_or_explicit(counter + 1, 2u, memory_order_relaxed);
     float4 color = input.read(xy), secondary = 0;
@@ -1147,6 +1187,7 @@ void resolveOITPixel(constant Frame& f, device Node *nodes, device atomic_uint *
         }
         uint metadata = Packed ? ((Dense ? denseColors[list[i]].sequence : packedNodes[list[i]].sequence) >> 17) << 2
             : Dense ? denseNodes[list[i]].polygon << 2 : atomic_load_explicit(&nodes[list[i]].metadata, memory_order_relaxed);
+        if (PackedModifiers) metadata |= atomic_load_explicit(&modifierNodes[list[i]].link, memory_order_relaxed) >> 30;
         uint polygonIndex = metadata >> 2;
         uint tsp0 = polygons[polygonIndex].tsp0;
         bool shadow = (metadata & 2) != 0;
@@ -1264,6 +1305,28 @@ OIT_RESOLVE_KERNEL(128)
 OIT_RESOLVE_KERNEL(256)
 #undef OIT_RESOLVE_KERNEL
 
+#define OIT_MODIFIER_RESOLVE_KERNEL(layers) \
+kernel void oit_resolve_##layers##_mod_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, false, false, false, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); } \
+kernel void oit_resolve_##layers##_reset_mod_packed(constant Frame& f [[buffer(1)]], device Node *nodes [[buffer(4)]], \
+    device atomic_uint *heads [[buffer(5)]], device atomic_uint *counter [[buffer(6)]], \
+    const device OITPoly *polygons [[buffer(7)]], const device uint *colors1 [[buffer(8)]], \
+    texture2d<float, access::read> input [[texture(0)]], texture2d<float, access::write> output [[texture(1)]], \
+    uint2 xy [[thread_position_in_grid]]) { resolveOITPixel<layers, true, false, false, true, true>(f, nodes, heads, counter, polygons, colors1, input, output, xy); }
+OIT_MODIFIER_RESOLVE_KERNEL(1)
+OIT_MODIFIER_RESOLVE_KERNEL(2)
+OIT_MODIFIER_RESOLVE_KERNEL(4)
+OIT_MODIFIER_RESOLVE_KERNEL(8)
+OIT_MODIFIER_RESOLVE_KERNEL(16)
+OIT_MODIFIER_RESOLVE_KERNEL(32)
+OIT_MODIFIER_RESOLVE_KERNEL(64)
+OIT_MODIFIER_RESOLVE_KERNEL(128)
+OIT_MODIFIER_RESOLVE_KERNEL(256)
+#undef OIT_MODIFIER_RESOLVE_KERNEL
+
 // A pass with no sorted fragments needs only the final framebuffer operation.
 // Keep it independent of layer arrays, nodes, heads and polygon metadata.
 kernel void framebuffer_finish(constant Frame& f [[buffer(1)]],
@@ -1290,7 +1353,8 @@ kernel void oit_analysis(constant Frame& f [[buffer(1)]], device const Node *nod
     else {
         while (head != 0xffffffffu && count < 4096u && head < f.capacity) {
             ++count;
-            head = layout == 1 ? reinterpret_cast<device const PackedNode *>(nodes)[head].next : nodes[head].next;
+            head = layout == 3 ? modifierNextIndex(reinterpret_cast<device const PackedNode *>(nodes)[head].next)
+                : layout == 1 ? reinterpret_cast<device const PackedNode *>(nodes)[head].next : nodes[head].next;
         }
     }
     lengths[local.y * f.oitTile.z + local.x] = count;

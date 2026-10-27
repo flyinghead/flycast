@@ -101,6 +101,8 @@ void MetalRenderer::validateSyntheticRecovery()
 				require(context()->testTextureUploadCount()==before+3,"Process recovery did not upload original texture, fog and palette exactly once");tables();
 				wait([&]{return fresh->is_custom_replaced || fresh->IsCustomTextureAvailable();},"Recovery demand loader did not complete");
 				Process(&input);fresh=static_cast<MetalTexture *>(fixture.global_param_op[0].texture);
+				if(!(fresh->is_custom_replaced && !fresh->sharedPreloadImage && gpuPreloadedTextures.empty() && gpuPreloadOnDemand))
+					NOTICE_LOG(RENDERER,"Metal recovery state: replaced=%d shared=%d resident=%zu demand=%d generation=%llu catalog=%llu",fresh->is_custom_replaced,fresh->sharedPreloadImage,gpuPreloadedTextures.size(),gpuPreloadOnDemand,(unsigned long long)gpuPreloadGeneration,(unsigned long long)custom_texture.preloadGeneration());
 				require(fresh->is_custom_replaced && !fresh->sharedPreloadImage && gpuPreloadedTextures.empty() && gpuPreloadOnDemand,"Recovery did not rebuild through ordinary custom demand upload");
 				require(context()->testTextureUploadCount()==before+4,"Recovery did not upload the PNG replacement exactly once after table rebuild");
 				require(Render(),"Fresh render failed after Context upload recovery");pixels(screen,demandColor);

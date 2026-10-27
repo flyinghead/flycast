@@ -10,6 +10,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/CustomTexture.h"
 #include "rend/osd.h"
+#include "input/mouse.h"
 #include "ui/imgui_driver.h"
 #include "oslib/oslib.h"
 #include "sdl/sdl.h"
@@ -90,12 +91,9 @@ namespace addrspace {
 void protectVram(u32,u32){}
 void unprotectVram(u32,u32){}
 }
-double spg_GetFrameDuration(){return 1./60;}
+double metalOffscreenVideoFieldDuration=1./60;
+double spg_GetFrameDuration(){return metalOffscreenVideoFieldDuration;}
 double spg_GetVideoTime(){return metalOffscreenVideoTime;}
-u32 vmu_lcd_data[8][48*32]{};bool vmu_lcd_status[8]{};u64 vmuLastChanged[8]{};
-void push_vmu_screen(int,int,u8*){unavailable("VMU upload");}
-bool getVmuScreenSnapshot(int,u64&,u32*){return false;}
-void resetVmuScreens(){}
-void blankVmus(){}
-const u32 *getCrosshairTextureData(){unavailable("crosshair texture");return nullptr;}
-std::pair<float,float> getCrosshairPosition(int){unavailable("crosshair position");return {};}
+// Native input coordinates only; immutable bitmap, VMU snapshots and mapping
+// use the unchanged production osd.cpp. No mouse/device event loop is started.
+s32 mo_x_abs[4]{},mo_y_abs[4]{};

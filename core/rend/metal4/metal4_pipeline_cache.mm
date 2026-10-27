@@ -12,6 +12,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <mutex>
+#include <condition_variable>
 #include <vector>
 #include <fcntl.h>
 #include <sys/stdio.h>
@@ -173,10 +174,12 @@ struct MetalPipelineCache::Impl
 	std::atomic<bool> writable{false};
 	bool accepting = true; // Protected by recordsMutex through queue admission.
 	std::mutex recordsMutex,hintsMutex;
+	std::condition_variable recordsPublished;
+	size_t preparingRecords = 0; // Accepted copies not yet published to writerQueue.
 	// Empty segment name means queued/captured but not serialized yet.
 	std::unordered_map<std::string,std::string> records;
 	std::vector<std::string> unsavedRecords; // Writer queue only.
-	std::array<std::unordered_map<std::string,NSUInteger>,3> hints;
+	std::array<std::unordered_map<std::string,NSUInteger>,4> hints;
 	std::atomic<size_t> pending{0};
 	std::atomic<u64> hits{0}, misses{0};
 	std::atomic<u64> probes{0},hintedHits{0},queued{0},recordings{0},duplicates{0},savedSegments{0};
@@ -186,7 +189,7 @@ struct MetalPipelineCache::Impl
 	bool timing = false;
 	// Lookup/creation categories: foreground render, background material,
 	// foreground compute. Writer timings are separate and can overlap them.
-	std::array<PipelineTiming, 3> lookupTimings, creationTimings;
+	std::array<PipelineTiming, 4> lookupTimings, creationTimings;
 	std::array<PipelineTiming, 2> recordTimings;
 	PipelineTiming serializeTiming;
 	PipelineTiming publicationTiming;
@@ -396,13 +399,15 @@ id<MTLRenderPipelineState> MetalPipelineCache::makeRenderPipeline(MTL4RenderPipe
 }
 
 id<MTLComputePipelineState> MetalPipelineCache::makeComputePipeline(MTL4ComputePipelineDescriptor *descriptor,
-	NSError **error, const std::string& identity)
+	NSError **error, const std::string& identity, bool background)
 {
-	NSUInteger hint;const auto order=impl->lookupOrder(2,identity,impl->foreground.count,hint);
-	for (NSUInteger slot=0;slot<impl->foreground.count;++slot) {
-		const NSUInteger index=order[slot];id<MTL4Archive> archive=impl->foreground[index];
+	const auto archives=background ? impl->material : impl->foreground;
+	const size_t category=background ? 3 : 2;
+	NSUInteger hint;const auto order=impl->lookupOrder(category,identity,archives.count,hint);
+	for (NSUInteger slot=0;slot<archives.count;++slot) {
+		const NSUInteger index=order[slot];id<MTL4Archive> archive=archives[index];
 		++impl->probes;
-		PipelineTimer timer(impl->timing ? &impl->lookupTimings[2] : nullptr);
+		PipelineTimer timer(impl->timing ? &impl->lookupTimings[category] : nullptr);
 		id<MTLComputePipelineState> pipeline = nil;
 		NSError *lookupError = nil;
 		@try {
@@ -410,15 +415,16 @@ id<MTLComputePipelineState> MetalPipelineCache::makeComputePipeline(MTL4ComputeP
 		} @catch (NSException *) { /* Optional archive lookup; compile normally below. */ }
 		if (pipeline) {
 			++impl->hits;if(index==hint)++impl->hintedHits;
-			impl->remember(2,identity,index);
+			impl->remember(category,identity,index);
 			if (error) *error = nil; return pipeline;
 		}
 	}
 	++impl->misses;
 	id<MTLComputePipelineState> pipeline = nil;
 	{
-		PipelineTimer timer(impl->timing ? &impl->creationTimings[2] : nullptr);
-		pipeline = [impl->foregroundCompiler newComputePipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:error];
+		PipelineTimer timer(impl->timing ? &impl->creationTimings[category] : nullptr);
+		id<MTL4Compiler> compiler=background ? impl->materialCompiler : impl->foregroundCompiler;
+		pipeline = [compiler newComputePipelineStateWithDescriptor:descriptor compilerTaskOptions:nil error:error];
 	}
 	if (pipeline) record(descriptor, true, identity);
 	return pipeline;
@@ -427,41 +433,51 @@ id<MTLComputePipelineState> MetalPipelineCache::makeComputePipeline(MTL4ComputeP
 void MetalPipelineCache::record(id descriptor, bool compute, const std::string& identity) noexcept
 {
 	if (!impl->writable.load() || impl->newEntries.load() >= MaxNewEntries) return;
-	bool admitted=false,counted=false;
+	bool admitted=false,counted=false,preparing=false;
+	const auto abandon=[&] {
+		std::lock_guard<std::mutex> lock(impl->recordsMutex);
+		if(admitted){impl->records.erase(identity);admitted=false;}
+		if(counted){--impl->pending;counted=false;}
+		if(preparing){--impl->preparingRecords;preparing=false;}
+		if(!impl->preparingRecords)impl->recordsPublished.notify_all();
+	};
 	try {
 		@try {
 			auto cache = shared_from_this();
 			const std::string key=impl->identitiesEnabled()?identity:std::string{};
-			std::lock_guard<std::mutex> lock(impl->recordsMutex);
-			if(!impl->accepting || !impl->writable.load()) return;
-			if(!key.empty()) {
-				if(impl->records.find(key)!=impl->records.end()) {++impl->duplicates;return;}
-				if(impl->records.size()>=MaxNewEntries) return;
+			{
+				std::lock_guard<std::mutex> lock(impl->recordsMutex);
+				if(!impl->accepting || !impl->writable.load()) return;
+				if(!key.empty()) {
+					if(impl->records.find(key)!=impl->records.end()) {++impl->duplicates;return;}
+					if(impl->records.size()>=MaxNewEntries) return;
+				}
+				if(impl->pending.fetch_add(1)>=MaxPendingRecords) {--impl->pending;return;}
+				counted=true;
+				if(!key.empty()){impl->records.emplace(key,std::string{});admitted=true;}
+				++impl->preparingRecords;preparing=true;
 			}
-			if(impl->pending.fetch_add(1)>=MaxPendingRecords) {--impl->pending;return;}
-			counted=true;
-			// Reject duplicates before copying the entire descriptor tree.
-			// Keep copying and dispatch under the admission lock, so finish
-			// cannot flush between reservation and publication to the queue.
+			// Copying is independent CPU work. Never hold another producer's
+			// admission or renderer behind a material descriptor's snapshot.
 			++impl->descriptorCopies;
 			id copy = [descriptor copy];
-			if(!copy) {--impl->pending;return;}
-			if(!key.empty()) {
-				impl->records.emplace(key,std::string{});admitted=true;
-			}
-			// Queue admission and finish's barrier are ordered by recordsMutex.
+			if(!copy) {abandon();return;}
+			std::lock_guard<std::mutex> lock(impl->recordsMutex);
+			// Already accepted work must publish even if finish closed admission.
+			// finish waits for all such copies before placing its writer barrier.
 			dispatch_async(impl->writerQueue, ^{
 				@autoreleasepool { cache->recordOnWriter(copy, compute, key); }
 			});
 			++impl->queued;
+			counted=admitted=false;
+			--impl->preparingRecords;preparing=false;
+			if(!impl->preparingRecords)impl->recordsPublished.notify_all();
 		} @catch (NSException *exception) {
-			if(counted)--impl->pending;
-			if(admitted) {std::lock_guard<std::mutex> lock(impl->recordsMutex);impl->records.erase(identity);}
+			abandon();
 			WARN_LOG(RENDERER, "Metal pipeline cache record skipped: %s", exception.reason.UTF8String);
 		}
 	} catch (const std::exception& error) {
-		if(counted)--impl->pending;
-		if(admitted) {std::lock_guard<std::mutex> lock(impl->recordsMutex);impl->records.erase(identity);}
+		abandon();
 		WARN_LOG(RENDERER, "Metal pipeline cache record skipped: %s", error.what());
 	}
 }
@@ -629,8 +645,9 @@ void MetalPipelineCache::finish() noexcept
 {
 	@autoreleasepool {
 		{
-			std::lock_guard<std::mutex> lock(impl->recordsMutex);
+			std::unique_lock<std::mutex> lock(impl->recordsMutex);
 			impl->accepting=false;
+			impl->recordsPublished.wait(lock,[&]{return impl->preparingRecords==0;});
 		}
 		dispatch_sync(impl->writerQueue, ^{
 			@autoreleasepool {
@@ -658,9 +675,11 @@ void MetalPipelineCache::finish() noexcept
 			logTiming("foreground render lookup", impl->lookupTimings[0]);
 			logTiming("material lookup", impl->lookupTimings[1]);
 			logTiming("compute lookup", impl->lookupTimings[2]);
+			logTiming("background compute lookup", impl->lookupTimings[3]);
 			logTiming("foreground render creation", impl->creationTimings[0]);
 			logTiming("material creation", impl->creationTimings[1]);
 			logTiming("compute creation", impl->creationTimings[2]);
+			logTiming("background compute creation", impl->creationTimings[3]);
 			logTiming("writer render addition", impl->recordTimings[0]);
 			logTiming("writer compute addition", impl->recordTimings[1]);
 			logTiming("archive serialization", impl->serializeTiming);
@@ -674,7 +693,7 @@ MetalPipelineCache::Statistics MetalPipelineCache::statistics() const
 	Statistics result{impl->hits.load(),impl->misses.load(),impl->probes.load(),impl->hintedHits.load(),impl->queued.load(),
 		impl->recordings.load(),impl->duplicates.load(),impl->savedSegments.load(),impl->pending.load(),impl->writable.load(),impl->accepting};
 	const auto snapshot=[](const PipelineTiming& t){return Statistics::Timing{t.calls.load(),t.nanoseconds.load(),t.maximum.load()};};
-	for(size_t i=0;i<3;++i){result.lookup[i]=snapshot(impl->lookupTimings[i]);result.creation[i]=snapshot(impl->creationTimings[i]);}
+	for(size_t i=0;i<result.lookup.size();++i){result.lookup[i]=snapshot(impl->lookupTimings[i]);result.creation[i]=snapshot(impl->creationTimings[i]);}
 	for(size_t i=0;i<2;++i)result.writer[i]=snapshot(impl->recordTimings[i]);
 	result.serialization=snapshot(impl->serializeTiming);result.publication=snapshot(impl->publicationTiming);result.timing=impl->timing;
 	result.descriptorCopies=impl->descriptorCopies.load();
