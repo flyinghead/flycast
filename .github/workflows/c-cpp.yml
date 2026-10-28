@@ -22,7 +22,7 @@ jobs:
       matrix:
         config:
           - { name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release }
-#          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB, destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
+          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB, destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
           - { name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
           - { name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release }
           - { name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo, packagePath: artifact/flycast-x86_64-w64-mingw32.zip }
@@ -36,7 +36,6 @@ jobs:
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
           brew update || :
           brew install libao ldid pulseaudio
-          brew uninstall --ignore-dependencies zstd
 
           moltenvk_tag="v1.4.2"
           moltenvk_root="$RUNNER_TEMP/MoltenVK-$moltenvk_tag"
@@ -106,6 +105,8 @@ jobs:
             fi
           done
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          # After the last brew download: brew's own curl links brew's zstd
+          brew uninstall --ignore-dependencies zstd
         if: matrix.config.name == 'apple-darwin'
 
       - uses: actions/cache@v6
