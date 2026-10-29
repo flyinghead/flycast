@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-10-26 13:08\n"
+"PO-Revision-Date: 2026-10-29 10:17\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -1196,7 +1196,7 @@ msgstr "Esconder Roms Legadas da Naomi"
 
 #: core/ui/settings_general.cpp:391
 msgid "Hide .bin and .dat files from the content browser"
-msgstr ""
+msgstr "Ocultar arquivos .bin e .dat do navegador de conteúdo"
 
 #: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
