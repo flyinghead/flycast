@@ -29,6 +29,9 @@
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 #endif
+#ifdef USE_METAL
+#include "rend/metal/metal_context.h"
+#endif
 
 void initRenderApi(void *window, void *display)
 {
@@ -68,6 +71,19 @@ void initRenderApi(void *window, void *display)
 		} catch (const std::exception& e) {
 			// Fall back to OpenGL
 			WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to OpenGL (%s)", e.what());
+			config::RendererType = RenderType::OpenGL;
+		}
+	}
+#endif
+#ifdef USE_METAL
+	if (isMetal(config::RendererType))
+	{
+		try {
+			MetalContext::Create(window, display);
+			return;
+		} catch (const std::exception& e) {
+			// Fall back to OpenGL
+			WARN_LOG(RENDERER, "Metal init failed. Falling back to OpenGL (%s)", e.what());
 			config::RendererType = RenderType::OpenGL;
 		}
 	}

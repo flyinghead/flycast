@@ -417,6 +417,8 @@ Renderer* rend_OITVulkan();
 Renderer* rend_DirectX9();
 Renderer* rend_DirectX11();
 Renderer* rend_OITDirectX11();
+Renderer* rend_Metal();
+Renderer* rend_OITMetal();
 
 static void rend_create_renderer()
 {
@@ -455,6 +457,14 @@ static void rend_create_renderer()
 		break;
 	case RenderType::DirectX11_OIT:
 		renderer = rend_OITDirectX11();
+		break;
+#endif
+#ifdef USE_METAL
+	case RenderType::Metal:
+		renderer = rend_Metal();
+		break;
+	case RenderType::Metal_OIT:
+		renderer = rend_OITMetal();
 		break;
 #endif
 	}
