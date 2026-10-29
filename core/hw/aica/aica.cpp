@@ -159,6 +159,17 @@ static void AicaInternalDMA()
 	update_arm_interrupts();
 }
 
+template<typename T>
+static void writeTimer(u32 timer, u32 reg, T data)
+{
+	const u16 before = *(u16 *)&aica_reg[reg];
+	WriteMemArr(aica_reg, reg, data);
+	if (timers[timer].isRepeatedReload(*(u16 *)&aica_reg[reg]))
+		*(u16 *)&aica_reg[reg] = before;
+	else
+		timers[timer].RegisterWrite();
+}
+
 //Memory i/o
 template<typename T>
 void writeTimerAndIntReg(u32 reg, T data)
@@ -206,18 +217,15 @@ void writeTimerAndIntReg(u32 reg, T data)
 		break;
 
 	case TIMER_A:
-		WriteMemArr(aica_reg, reg, data);
-		timers[0].RegisterWrite();
+		writeTimer(0, reg, data);
 		break;
 
 	case TIMER_B:
-		WriteMemArr(aica_reg, reg, data);
-		timers[1].RegisterWrite();
+		writeTimer(1, reg, data);
 		break;
 
 	case TIMER_C:
-		WriteMemArr(aica_reg, reg, data);
-		timers[2].RegisterWrite();
+		writeTimer(2, reg, data);
 		break;
 
 	// DEXE, DDIR, DLG
