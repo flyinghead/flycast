@@ -462,10 +462,12 @@ private:
 					INFO_LOG(NETWORK, "TcpSocket[%s] pico read error: %s", name.c_str(), strerror(pico_err));
 					if (socket.is_open())
 					{
+						// The host peer may already be gone: don't throw (and terminate) over it
+						asio::error_code ec;
 						if (asio.state == Closed)
-							socket.close();
+							socket.close(ec);
 						else
-							socket.shutdown(asio::socket_base::shutdown_send);
+							socket.shutdown(asio::socket_base::shutdown_send, ec);
 					}
 					pico_socket_close(pico_sock);
 					pico.state = Closed;
@@ -527,7 +529,8 @@ private:
 				pico.state = Closed;
 				if (socket.is_open()) {
 					pico_socket_shutdown(pico_sock, PICO_SHUT_RD);
-					socket.shutdown(asio::socket_base::shutdown_send);
+					asio::error_code ec;
+					socket.shutdown(asio::socket_base::shutdown_send, ec);
 				}
 				else {
 					pico_socket_close(pico_sock);
