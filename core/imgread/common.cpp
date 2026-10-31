@@ -6,25 +6,23 @@
 #include "serialize.h"
 #include "oslib/i18n.h"
 
-Disc* chd_parse(const char* file, std::vector<u8> *digest);
-Disc* gdi_parse(const char* file, std::vector<u8> *digest);
-Disc* cdi_parse(const char* file, std::vector<u8> *digest);
-Disc* cue_parse(const char* file, std::vector<u8> *digest);
+Disc* chd_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage);
+Disc* gdi_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage);
+Disc* cdi_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage);
+Disc* cue_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage);
 Disc *cdio_parse(const char *file, std::vector<u8> *digest);
+Disc *sz_parse(const std::string& path, std::vector<u8> *digest);
 
 static u32 NullDriveDiscType;
 Disc* disc;
 static int schedId = -1;
 
-constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
+constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest, hostfs::Storage& storage)
 {
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
 	cue_parse,
-#ifdef USE_LIBCDIO
-	cdio_parse,
-#endif
 };
 
 static u8 q_subchannel[96];
@@ -84,17 +82,34 @@ static bool convertSector(u8* in_buff , u8* out_buff , int from , int to,int sec
 	return true;
 }
 
-Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
+Disc* OpenDisc(const std::string& path, std::vector<u8> *digest, hostfs::Storage& storage)
 {
 	for (auto driver : drivers)
 	{
-		Disc *disc = driver(path.c_str(), digest);
+		Disc *disc = driver(path.c_str(), digest, storage);
 
 		if (disc != nullptr)
 			return disc;
 	}
 
 	throw FlycastException(i18n::Ts("Unknown disk format"));
+}
+
+Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
+{
+	if (get_file_extension(path) == "7z")
+		return sz_parse(path, digest);
+#ifdef USE_LIBCDIO
+	// Physical drives are only available through host storage.
+	if (get_file_extension(path) != "chd" && get_file_extension(path) != "gdi"
+			&& get_file_extension(path) != "cdi" && get_file_extension(path) != "cue")
+	{
+		Disc *disc = cdio_parse(path.c_str(), digest);
+		if (disc != nullptr)
+			return disc;
+	}
+#endif
+	return OpenDisc(path, digest, hostfs::storage());
 }
 
 namespace gdr {
