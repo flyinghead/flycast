@@ -4,7 +4,7 @@
 
  *********************************************************************/
 #define MAX_BLOCK_SIZE 1600
-#define MAX_BLOCK_COUNT 16
+#define MAX_BLOCK_COUNT 1024 /* 16 blocks (~1,000 timers) ran out with a few dozen connections a second */
 
 #define DECLARE_HEAP(type, orderby) \
     struct heap_ ## type {   \
