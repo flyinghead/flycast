@@ -1710,7 +1710,12 @@ int pico_socket_connect(struct pico_socket *s, const void *remote_addr, uint16_t
         return -1;
     }
 
-    pico_socket_alter_state(s, PICO_SOCKET_STATE_BOUND, 0, 0);
+    /* A socket with the same quad is already in the tree: carrying on would leave this one
+     * untracked, and deleting it later would unlink (and free) the other one. */
+    if (pico_socket_alter_state(s, PICO_SOCKET_STATE_BOUND, 0, 0) != 0) {
+        pico_err = PICO_ERR_EADDRINUSE;
+        return -1;
+    }
 
 #ifdef PICO_SUPPORT_UDP
     if (PROTO(s) == PICO_PROTO_UDP) {
