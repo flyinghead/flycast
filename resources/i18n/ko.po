@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-10-26 13:08\n"
 "Last-Translator: \n"
 "Language: ko_KR\n"
 "MIME-Version: 1.0\n"
@@ -479,10 +479,6 @@ msgstr ""
 #: core/hw/naomi/naomi_cart.cpp:481 core/hw/naomi/naomi_cart.cpp:531
 #, c-format
 msgid "Error: can't open %s"
-msgstr ""
-
-#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
-msgid "Error: Invalid LST file"
 msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:544
@@ -1198,7 +1194,7 @@ msgid "Hide Legacy Naomi Roms"
 msgstr ""
 
 #: core/ui/settings_general.cpp:391
-msgid "Hide .bin, .dat and .lst files from the content browser"
+msgid "Hide .bin and .dat files from the content browser"
 msgstr ""
 
 #: core/ui/settings_general.cpp:394
