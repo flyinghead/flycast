@@ -269,7 +269,15 @@ public:
 		setName(endpoint);
 		memcpy(&pico_sock->local_addr.ip4.addr, endpoint.address().to_v4().to_bytes().data(), 4);
 		pico_sock->local_port = htons(endpoint.port());
-		if (pico_socket_connect(pico_sock, &dcaddr.addr, htons(socket.local_endpoint().port())) != 0)
+		int rc = pico_socket_connect(pico_sock, &dcaddr.addr, htons(socket.local_endpoint().port()));
+		if (rc != 0 && pico_err == PICO_ERR_EADDRINUSE)
+		{
+			// The client reused a source port while picotcp still holds its previous
+			// connection: let picotcp pick a free port instead.
+			pico_sock->local_port = 0;
+			rc = pico_socket_connect(pico_sock, &dcaddr.addr, htons(socket.local_endpoint().port()));
+		}
+		if (rc != 0)
 		{
 			INFO_LOG(NETWORK, "pico_socket_connect failed: error %d", pico_err);
 			pico_socket_close(pico_sock);
