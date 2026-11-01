@@ -30,6 +30,7 @@
 #include "hw/holly/sb.h"
 #include "oslib/storage.h"
 #include "oslib/oslib.h"
+#include "oslib/directory.h"
 #include "cfg/option.h"
 #include "card_reader.h"
 #include "naomi_roms.h"

@@ -22,6 +22,7 @@
 #include <xxhash.h>
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
+#include "oslib/directory.h"
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"

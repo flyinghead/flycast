@@ -17,10 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "directory.h"
-#ifdef NOWIDE_WINDOWS
 #include "types.h"
-#include "nowide/stackstring.hpp"
 #include <string>
+#ifdef NOWIDE_WINDOWS
+#include "nowide/stackstring.hpp"
 #include <cstring>
 
 #include <windows.h>
@@ -304,3 +304,33 @@ int unlink(const char *path)
 }	// namespace flycast
 #endif	// NOWIDE_WINDOWS
 
+
+bool safeFullSave(const std::string& path, const void *data, size_t len)
+{
+	// Write to a temp file next to the real one, then rename it over the real
+	// path, so the file on disk is always either the previous image or the new
+	// one: a crash or kill during the write leaves the previous save intact.
+	const std::string tmpFile = path + ".tmp";
+	FILE *f = nowide::fopen(tmpFile.c_str(), "wb");
+	if (f == nullptr)
+	{
+		ERROR_LOG(COMMON, "Cannot open temp save file '%s'", tmpFile.c_str());
+		return false;
+	}
+	bool ok = std::fwrite(data, 1, len, f) == len;
+	std::fclose(f);
+	if (!ok)
+	{
+		ERROR_LOG(COMMON, "Failed or truncated write to file '%s'", tmpFile.c_str());
+		flycast::unlink(tmpFile.c_str());
+		return false;
+	}
+	// Commit. On failure the previous file is still there.
+	if (flycast::rename(tmpFile.c_str(), path.c_str()) != 0)
+	{
+		ERROR_LOG(COMMON, "Failed to commit file (rename '%s' -> '%s')", tmpFile.c_str(), path.c_str());
+		flycast::unlink(tmpFile.c_str());
+		return false;
+	}
+	return true;
+}

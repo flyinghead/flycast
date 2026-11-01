@@ -23,6 +23,7 @@
 #include "dinokich_card.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
+#include "oslib/directory.h"
 #include <algorithm>
 
 namespace systemsp

@@ -20,6 +20,7 @@
 #include "gamesdb.h"
 #include "../game_scanner.h"
 #include "oslib/oslib.h"
+#include "oslib/directory.h"
 #include "cfg/option.h"
 #include "arcade_scraper.h"
 #include <chrono>

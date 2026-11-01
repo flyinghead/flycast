@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <string>
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -52,3 +53,5 @@ namespace flycast {
     int unlink(const char *filename);
 #endif
 }
+
+bool safeFullSave(const std::string& path, const void *data, size_t len);

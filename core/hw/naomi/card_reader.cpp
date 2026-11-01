@@ -18,6 +18,7 @@
  */
 #include "card_reader.h"
 #include "oslib/oslib.h"
+#include "oslib/directory.h"
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
