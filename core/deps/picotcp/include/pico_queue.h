@@ -69,6 +69,8 @@ static void debug_q(struct pico_queue *q)
 
 static inline int32_t pico_enqueue(struct pico_queue *q, struct pico_frame *p)
 {
+    uint32_t size;
+
     if ((q->max_frames) && (q->max_frames <= q->frames))
         return -1;
 
@@ -98,11 +100,14 @@ static inline int32_t pico_enqueue(struct pico_queue *q, struct pico_frame *p)
     q->size += p->buffer_len + q->overhead;
     q->frames++;
     debug_q(q);
+    /* Read under the lock: once unlocked, another thread may dequeue (and free) the frame,
+     * and a size of 0 would make the caller free it again. */
+    size = q->size;
 
     if (q->shared)
         PICOTCP_MUTEX_UNLOCK(q->mutex);
 
-    return (int32_t)q->size;
+    return (int32_t)size;
 }
 
 static inline struct pico_frame *pico_dequeue(struct pico_queue *q)
@@ -162,6 +167,11 @@ static inline void pico_queue_empty(struct pico_queue *q)
 
 static inline void pico_queue_protect(struct pico_queue *q)
 {
+#ifdef PICO_SUPPORT_MUTEX
+    /* Create the mutex now: creating it lazily on first use races between threads */
+    if (q->mutex == NULL)
+        q->mutex = pico_mutex_init();
+#endif
     q->shared = 1;
 }
 
