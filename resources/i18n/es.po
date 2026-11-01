@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 21:44\n"
+"PO-Revision-Date: 2026-10-29 10:17\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -24,7 +24,7 @@ msgstr "Usuario %s autenticado"
 
 #: core/achievements/achievements.cpp:395
 msgid "RetroAchievements authentication failed"
-msgstr "RetroArchievements fallo a autenticar"
+msgstr "RetroAchievements fallo a autenticar"
 
 #: core/achievements/achievements.cpp:430
 msgid "No user token returned"
@@ -77,7 +77,7 @@ msgstr "%d Logros, %d Puntos"
 #: core/achievements/achievements.cpp:946
 #, c-format
 msgid "You have %d of %d achievements unlocked."
-msgstr "Has desbloqueado %d de %d logros"
+msgstr "Has desbloqueado %d de %d logros."
 
 #: core/achievements/achievements.cpp:948
 msgid "This game has no achievements."
@@ -103,7 +103,7 @@ msgstr "Error al cambiar medio"
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr "Advertencia: Dreamconn desconectado del puerto"
+msgstr "Advertencia: Dreamconn desconectado del puerto %c"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
@@ -156,7 +156,7 @@ msgstr "Desconectado"
 #: core/sdl/sdl_gamepad.cpp:549
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:95
 msgid "Back"
-msgstr "Atras"
+msgstr "Atrás"
 
 #: core/sdl/sdl_gamepad.cpp:550
 msgid "Guide"
@@ -481,10 +481,6 @@ msgstr "Error: no se puede cargar BIOS desde naomi.zip"
 #, c-format
 msgid "Error: can't open %s"
 msgstr "Error: no se puedo abrir %s"
-
-#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
-msgid "Error: Invalid LST file"
-msgstr "Error: Archivo LST inválido"
 
 #: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
@@ -1201,8 +1197,8 @@ msgid "Hide Legacy Naomi Roms"
 msgstr "Ocultar roms legacy de naomi"
 
 #: core/ui/settings_general.cpp:391
-msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "Oculta los .bin .dat y .lst del buscador de contenido"
+msgid "Hide .bin and .dat files from the content browser"
+msgstr "Oculta los .bin y .dat del buscador de contenido"
 
 #: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"

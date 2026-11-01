@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-03 17:16\n"
+"PO-Revision-Date: 2026-10-26 13:08\n"
 "Last-Translator: \n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -480,10 +480,6 @@ msgstr "錯誤：無法從 naomi.zip 載入 BIOS"
 #, c-format
 msgid "Error: can't open %s"
 msgstr "錯誤：無法打開 %s"
-
-#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
-msgid "Error: Invalid LST file"
-msgstr "錯誤：無效的 LST 檔案"
 
 #: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
@@ -1200,8 +1196,8 @@ msgid "Hide Legacy Naomi Roms"
 msgstr "隱藏舊版 Naomi ROM"
 
 #: core/ui/settings_general.cpp:391
-msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "從內容瀏覽器中隱藏 .bin、.dat 和 .lst 檔案"
+msgid "Hide .bin and .dat files from the content browser"
+msgstr ""
 
 #: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
