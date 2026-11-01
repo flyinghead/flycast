@@ -5,6 +5,8 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
+ARCH=$(uname -m)
+
 SHLIBS=(
 	libcurl.so.4
 	libcurl-gnutls.so.4
@@ -20,9 +22,7 @@ SHLIBS=(
 	librtmp.so.1
 	libssh.so.4
 	libpsl.so.5
-	libssl.so.1.1
 	libssl.so.3
-	libcrypto.so.1.1
 	libcrypto.so.3
 	libgssapi_krb5.so.2
 	libldap-2.5.so.0
@@ -75,9 +75,9 @@ SHLIBS=(
 	libmd.so.0
 )
 
-if [ ! -f appimagetool-x86_64.AppImage ]; then
-	wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-	chmod +x appimagetool-x86_64.AppImage
+if [ ! -f appimagetool-${ARCH}.AppImage ]; then
+	wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage
+	chmod +x appimagetool-${ARCH}.AppImage
 fi
 
 SRCDIR=$1
@@ -111,10 +111,10 @@ patchelf --set-rpath '$ORIGIN/../lib' "$OUTDIR/usr/bin/flycast"
 echo "Copying system shared libraries"
 for lib in "${SHLIBS[@]}"; do
 	blib=$(basename "$lib")
-	if [ -f "/lib/x86_64-linux-gnu/$lib" ]; then
-		cp "/lib/x86_64-linux-gnu/$lib" "$OUTDIR/usr/lib/$blib"
-	elif [ -f "$CHROOT/usr/lib/x86_64-linux-gnu/$lib" ]; then
-		cp "$CHROOT/usr/lib/x86_64-linux-gnu/$lib" "$OUTDIR/usr/lib/$blib"
+	if [ -f "/lib/${ARCH}-linux-gnu/$lib" ]; then
+		cp "/lib/${ARCH}-linux-gnu/$lib" "$OUTDIR/usr/lib/$blib"
+	elif [ -f "$CHROOT/usr/lib/${ARCH}-linux-gnu/$lib" ]; then
+		cp "$CHROOT/usr/lib/${ARCH}-linux-gnu/$lib" "$OUTDIR/usr/lib/$blib"
 	elif [ -f "$CHROOT/lib/$lib" ]; then
 		cp "$CHROOT/lib/$lib" "$OUTDIR/usr/lib/$blib"
 	elif [ -f "$CHROOT/usr/lib/$lib" ]; then
@@ -155,5 +155,5 @@ EOF
 chmod +x "$OUTDIR/AppRun"
 
 echo "Generate AppImage"
-ARCH=x86_64 ./appimagetool-x86_64.AppImage -v "$OUTDIR" "flycast-x86_64.AppImage"
+ARCH=${ARCH} ./appimagetool-${ARCH}.AppImage -v "$OUTDIR" "flycast-${ARCH}.AppImage"
 

@@ -24,6 +24,7 @@ jobs:
           - { name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release }
           - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB, destDir: osx, buildType: RelWithDebInfo, packagePath: artifact/flycast-apple-darwin.zip }
           - { name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
+          - { name: arm64-pc-linux-gnu, os: ubuntu-22.04-arm, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
           - { name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release }
           - { name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo, packagePath: artifact/flycast-x86_64-w64-mingw32.zip }
           - { name: libretro-x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release }
@@ -91,12 +92,12 @@ jobs:
             libname=$(basename "$formula" .rb)
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" || \
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula"
-          
+
             prefix=$(brew --prefix $libname)
             # Find and verify the static library
             libfile=$(find "$prefix/lib" -name "*.a" | head -n1)
             lipo -info "$libfile"
-          
+
             # Export prefix for subsequent CMake steps
             if [ -z "$CMAKE_PREFIX_PATH" ]; then
               CMAKE_PREFIX_PATH="$prefix"
@@ -128,7 +129,7 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
           cmake --build build --config ${{ matrix.config.buildType }}
           ./build/flycast
-        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+        if: matrix.config.name == 'x86_64-pc-linux-gnu' || matrix.config.name == 'arm64-pc-linux-gnu'
 
       - name: Dump symbols
         run: |
@@ -143,7 +144,7 @@ jobs:
           ./configure
           make
           sudo make install
-        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+        if: matrix.config.name == 'x86_64-pc-linux-gnu' || matrix.config.name == 'arm64-pc-linux-gnu'
 
       - name: Dump symbols and make AppImage (linux)
         run: |
@@ -151,9 +152,10 @@ jobs:
           dump_syms artifact/bin/flycast > symbols/flycast.sym 2>/dev/null
           strip artifact/bin/flycast
           shell/linux/make-appimage.sh . artifact/bin appimage
-          mv flycast-x86_64.AppImage artifact/bin
+          ARCH=$(uname -m)
+          mv flycast-${ARCH}.AppImage artifact/bin
           rm artifact/bin/flycast
-        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+        if: matrix.config.name == 'x86_64-pc-linux-gnu' || matrix.config.name == 'arm64-pc-linux-gnu'
 
       - name: Package app (macos)
         run: |
@@ -165,7 +167,7 @@ jobs:
 
       - name: Package app (windows)
         run: |
-          powershell Compress-Archive artifact/bin/flycast.exe artifact/bin/flycast.zip 
+          powershell Compress-Archive artifact/bin/flycast.exe artifact/bin/flycast.zip
           rm artifact/bin/flycast.exe
           cp artifact/bin/flycast.zip "${{ matrix.config.packagePath }}"
         if: matrix.config.name == 'x86_64-w64-mingw32'
