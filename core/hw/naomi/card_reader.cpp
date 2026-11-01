@@ -65,16 +65,8 @@ protected:
 	void saveCard(const u8 *cardData, u32 len)
 	{
 		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "wb");
-		if (fp == nullptr)
-		{
-			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
-			return;
-		}
 		INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
-		if (fwrite(cardData, 1, len, fp) != len)
-			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-		fclose(fp);
+		safeFullSave(path, cardData, len);
 	}
 
 	template<typename T>

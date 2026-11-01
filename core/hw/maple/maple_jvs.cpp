@@ -1960,18 +1960,7 @@ void MIEImpl::handle_86_subcommand()
 
 			std::string eeprom_file = getEepromPath();
 			if (!eeprom_file.empty())
-			{
-				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
-				if (f)
-				{
-					std::fwrite(eeprom, 1, sizeof(eeprom), f);
-					std::fclose(f);
-					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
-				}
-				else {
-					WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
-				}
-			}
+				safeFullSave(eeprom_file, eeprom, sizeof(eeprom));
 
 			reply(MDRS_JVSReply, 1);
 			memcpy(dma_buffer_out, eeprom, 4);
@@ -2863,17 +2852,9 @@ void RFIDReaderWriterImpl::saveCard() const
 {
 	if (transientData)
 		return;
-	std::string path = getCardPath();
-	FILE *fp = nowide::fopen(path.c_str(), "wb");
-	if (fp == nullptr)
-	{
-		WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
-		return;
-	}
+	const std::string path = getCardPath();
 	INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
-	if (fwrite(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
-		WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-	fclose(fp);
+	safeFullSave(path, cardData, sizeof(cardData));
 }
 
 void RFIDReaderWriterImpl::serialize(Serializer& ser) const

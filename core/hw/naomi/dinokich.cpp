@@ -385,16 +385,7 @@ DinokichCardReader::Reply DinokichCardReader::on_63(const std::vector<u8>& f) {
 void DinokichCardReader::saveCard(int slotId)
 {
     Slot& slot = slots_[slotId];
-	FILE *f = nowide::fopen(getCardDataPath(index + slotId).c_str(), "wb");
-	if (f != nullptr)
-	{
-		if (fwrite(slot.eeprom.data(), 1, slot.eeprom.size(), f) != slot.eeprom.size())
-			WARN_LOG(NAOMI, "Rfid card %d: truncated write", index);
-		fclose(f);
-	}
-	else {
-		WARN_LOG(NAOMI, "Card saved failed to %s", getCardDataPath(index).c_str());
-	}
+	safeFullSave(getCardDataPath(index + slotId), slot.eeprom.data(), slot.eeprom.size());
 }
 
 void DinokichCardReader::serialize(Serializer& ser) const

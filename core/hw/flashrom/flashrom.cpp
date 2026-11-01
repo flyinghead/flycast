@@ -41,35 +41,8 @@ void MemChip::Load(const u8 *data, size_t size)
 	memcpy(this->data + write_protect_size, data, this->size - write_protect_size);
 }
 
-void WritableChip::Save(const std::string& file)
-{
-	// Write to a temp file next to the real one, then rename it over the real
-	// path, so the file on disk is always either the previous image or the new
-	// one: a crash or kill during the write leaves the previous save intact.
-	const std::string tmpFile = file + ".tmp";
-	FILE *f = nowide::fopen(tmpFile.c_str(), "wb");
-	if (f == nullptr)
-	{
-		ERROR_LOG(FLASHROM, "Cannot open temp save file '%s'", tmpFile.c_str());
-		return;
-	}
-	bool ok = std::fwrite(data + write_protect_size, 1, size - write_protect_size, f)
-	          == size - write_protect_size;
-	if (ok)
-		std::fflush(f);
-	std::fclose(f);
-	if (!ok)
-	{
-		ERROR_LOG(FLASHROM, "Failed or truncated write to flash temp file '%s'", tmpFile.c_str());
-		flycast::unlink(tmpFile.c_str());
-		return;
-	}
-	// Commit. On failure the previous file is still there.
-	if (flycast::rename(tmpFile.c_str(), file.c_str()) != 0)
-	{
-		ERROR_LOG(FLASHROM, "Failed to commit flash/nvmem save (rename '%s' -> '%s')", tmpFile.c_str(), file.c_str());
-		flycast::unlink(tmpFile.c_str());
-	}
+void WritableChip::Save(const std::string& file) {
+	safeFullSave(file, data + write_protect_size, size - write_protect_size);
 }
 
 bool MemChip::Load(const std::string &prefix, const std::string &names_ro, const std::string &title)

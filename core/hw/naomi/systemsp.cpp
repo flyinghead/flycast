@@ -424,13 +424,7 @@ private:
 
 	void saveData()
 	{
-		FILE *f = nowide::fopen(getCardDataPath().c_str(), "wb");
-		if (f == nullptr) {
-			WARN_LOG(NAOMI, "Can't save RFID card: error %x", errno);
-			return;
-		}
-		fwrite(cardData.data(), 1, cardData.size(), f);
-		fclose(f);
+		safeFullSave(getCardDataPath(), cardData.data(), cardData.size());
 	}
 
 	u32 dinoShuffle(u32 v) {

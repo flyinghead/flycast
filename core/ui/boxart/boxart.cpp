@@ -201,14 +201,8 @@ void Boxart::saveDatabase()
 	}
 	std::string serialized = array.dump(4, ' ', false, json::error_handler_t::replace);
 
-	FILE *file = nowide::fopen(db_name.c_str(), "wt");
-	if (file == nullptr) {
-		WARN_LOG(COMMON, "Can't save boxart database to %s: error %d", db_name.c_str(), errno);
-		return;
-	}
-	fwrite(serialized.c_str(), 1, serialized.size(), file);
-	fclose(file);
-	databaseDirty = false;
+	if (safeFullSave(db_name, serialized.c_str(), serialized.size()))
+		databaseDirty = false;
 }
 
 void Boxart::loadDatabase()

@@ -96,3 +96,4 @@ static inline void freeAligned(void *p)
 
 void registerCrash(const char *directory, const char *path);
 void uploadCrashes(const std::string& directory);
+bool safeFullSave(const std::string& path, const void *data, size_t len);

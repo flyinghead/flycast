@@ -839,11 +839,6 @@ void WccfCameraImpl::checkTeamFile()
 void WccfCameraImpl::saveTeamFile()
 {
 	makeTeamFilePath();
-	FILE *tf = nowide::fopen(teamFilePath.c_str(), "wt");
-	if (tf == nullptr) {
-		WARN_LOG(MAPLE, "Can't open %s for saving", teamFilePath.c_str());
-		return;
-	}
 	using namespace nlohmann;
 	json array = json();
 	{
@@ -860,11 +855,12 @@ void WccfCameraImpl::saveTeamFile()
 		}
 	}
 	std::string data = array.dump(-1, ' ', false, json::error_handler_t::replace);
-	fwrite(data.c_str(), 1, data.size(), tf);
-	fclose(tf);
-	struct stat st;
-	if (flycast::stat(teamFilePath.c_str(), &st) == 0)
-		teamFileTime = st.st_mtime;
+	if (safeFullSave(teamFilePath, data.c_str(), data.size()))
+	{
+		struct stat st;
+		if (flycast::stat(teamFilePath.c_str(), &st) == 0)
+			teamFileTime = st.st_mtime;
+	}
 }
 
 void WccfCameraImpl::OnSetup()
