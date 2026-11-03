@@ -13,6 +13,8 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/holly/holly_intc.h"
 
+#include <algorithm>
+
 DMACRegisters dmac;
 
 void DMAC_Ch2St()
@@ -46,17 +48,17 @@ void DMAC_Ch2St()
 	// 12000000 - 12FFFFE0
 	if ((dst & 0x01000000) == 0)
 	{
-		if ((src & RAM_MASK) + len > RAM_SIZE)
+		// System RAM is mirrored, so a transfer running past the end of one
+		// mirror continues at the start of the next. Split there instead of
+		// handing TAWrite a pointer past the end of the RAM buffer.
+		while (len > 0)
 		{
-			u32 newLen = RAM_SIZE - (src & RAM_MASK);
-			SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, newLen);
-			TAWrite(dst, psrc, newLen / sizeof(SQBuffer));
-			len -= newLen;
-			src += newLen;
+			const u32 chunk = std::min(len, RAM_SIZE - (src & RAM_MASK));
+			SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, chunk);
+			TAWrite(dst, psrc, chunk / sizeof(SQBuffer));
+			len -= chunk;
+			src += chunk;
 		}
-		SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, len);
-		TAWrite(dst, psrc, len / sizeof(SQBuffer));
-		src += len;
 	}
 	// Direct Texture path and mirror
 	// 11000000 - 11FFFFE0
@@ -69,17 +71,17 @@ void DMAC_Ch2St()
 		{
 			// 64-bit path
 			dst = (dst & 0x00FFFFFF) | 0xa4000000;
-			if ((src & RAM_MASK) + len > RAM_SIZE)
+			// Both system RAM and VRAM are mirrored: past the end of one mirror
+			// the transfer continues at the start of the next. Split at either
+			// boundary so no block write runs past the RAM or VRAM buffers.
+			while (len > 0)
 			{
-				u32 newLen = RAM_SIZE - (src & RAM_MASK);
-				WriteMemBlock_nommu_dma(dst, src, newLen);
-				len -= newLen;
-				src += newLen;
-				dst += newLen;
+				const u32 chunk = std::min(len, std::min(RAM_SIZE - (src & RAM_MASK), VRAM_SIZE - (dst & VRAM_MASK)));
+				WriteMemBlock_nommu_dma(dst, src, chunk);
+				len -= chunk;
+				src += chunk;
+				dst = 0xa4000000 | ((dst + chunk) & 0x00FFFFFF);
 			}
-			WriteMemBlock_nommu_dma(dst, src, len);
-			src += len;
-			dst += len;
 		}
 		else
 		{
