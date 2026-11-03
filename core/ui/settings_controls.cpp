@@ -1214,7 +1214,14 @@ void gui_settings_controls(std::array<bool, 4>& mapleDevicesChanges, std::array<
 			}
 			ImGui::EndTable();
 		}
-		OptionCheckbox(T("Per Game VMU A1"), config::PerGameVmu, T("When enabled, each game has its own VMU on port 1 of controller A."));
+		ImGui::Text("%s", T("Per-Game VMUs:"));
+		ImGui::Columns(3, "pergamevmu", false);
+		OptionRadioButton(T("Disabled"), config::PerGameVmu, 0, T("All games share global VMUs"));
+		ImGui::NextColumn();
+		OptionRadioButton(T("VMU A1"), config::PerGameVmu, 1, T("Each game has its own VMU on port 1 of controller A"));
+		ImGui::NextColumn();
+		OptionRadioButton(T("All VMUs"), config::PerGameVmu, 2, T("Each game has its own VMUs on all ports"));
+		ImGui::Columns(1, nullptr, false);
 		{
 			DisabledScope scope(game_started);
 			OptionCheckbox(T("Use Physical VMU Storage"), config::UsePhysicalVmuMemory,
