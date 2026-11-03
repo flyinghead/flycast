@@ -55,6 +55,8 @@
 #include "ta_ctx.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
+#include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/naomi_roms.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_sched.h"
@@ -1774,6 +1776,10 @@ int schedCallback(int tag, int cycles, int lag, void *arg)
 {
 	// DMA done
 	reg74 |= 1;
+	// Initial D (Japan, original) needs an IRQ to drain its texture DMA queue.
+	if (CurrentCartridge != nullptr && CurrentCartridge->game != nullptr
+			&& strcmp(CurrentCartridge->game->name, "initdo") == 0)
+		asic_RaiseInterruptBothCLX(holly_YUV_DMA);
 	return 0;
 }
 
