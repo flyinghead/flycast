@@ -182,6 +182,8 @@ void Boxart::fetchBoxart()
 			// No progress so pause for 10 s
 			pauseUntil = getTimeMs() + 10 * 1000;
 		saveDatabase();
+		if (const auto callback = changeCallback.load())
+			callback();
 	});
 }
 
