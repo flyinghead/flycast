@@ -49,6 +49,7 @@
 
 /* For crc32 */
 #include <zlib.h>
+#include <cstdlib>
 #include "rtl8139c.h"
 #include "serialize.h"
 #include "hw/sh4/sh4_sched.h"

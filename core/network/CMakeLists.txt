@@ -19,6 +19,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         netservice.h
         dcnet.cpp
         dcnet.h
+        dcnow.cpp
+        dcnow.h
         ice.cpp
         ice.h
         ifaddrs.c)
