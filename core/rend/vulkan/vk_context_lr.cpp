@@ -190,6 +190,15 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 						&& tryAddDeviceExtension(vk::KHRDynamicRenderingExtensionName)
 						&& tryAddDeviceExtension(vk::KHRDynamicRenderingLocalReadExtensionName);
 
+	// Extensions required by the frontend
+	for (unsigned i = 0; i < num_required_device_extensions; i++)
+	{
+		const std::string_view name = required_device_extensions[i];
+		if (std::none_of(enabledExtensions.begin(), enabledExtensions.end(),
+				[name](const char *ext) { return name == ext; }))
+			tryAddDeviceExtension(name);
+	}
+
 	// Get device features
 
 	vk::StructureChain<
