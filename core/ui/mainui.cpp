@@ -36,6 +36,21 @@ static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
 
+// Graphics API used by a renderer type. Switching between renderers of the same API
+// doesn't require the graphics context to be recreated.
+static int getRenderApi(RenderType renderType)
+{
+	if (isOpenGL(renderType))
+		return 0;
+	if (isVulkan(renderType))
+		return 1;
+	if (renderType == RenderType::DirectX9)
+		return 2;
+	if (isMetal(renderType))
+		return 4;
+	return 3;
+}
+
 bool mainui_rend_frame()
 {
 	FC_PROFILE_SCOPE;
@@ -120,8 +135,8 @@ void mainui_loop(bool forceStart)
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
 			mainui_term();
-			int prevApi = isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : currentRenderer == RenderType::DirectX9 ? 2 : 3;
-			int newApi = isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : config::RendererType == RenderType::DirectX9 ? 2 : 3;
+			int prevApi = getRenderApi(currentRenderer);
+			int newApi = getRenderApi(config::RendererType);
 			if (newApi != prevApi || forceReinit)
 			{
 				try {
