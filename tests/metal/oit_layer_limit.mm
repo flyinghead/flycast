@@ -16,11 +16,9 @@ static void require(bool ok, const char *message)
 	}
 }
 
-int main()
+static void testDevice(id<MTLDevice> device)
 {
 	@autoreleasepool {
-		id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-		require(device != nil, "No Metal device");
 		printf("GPU: %s\n", device.name.UTF8String);
 		id<MTLCommandQueue> queue = [device newCommandQueue];
 		NSString *source = [NSString stringWithUTF8String:GetMetalOITShaderSource().c_str()];
@@ -91,5 +89,15 @@ int main()
 				require(rgba[0] == layers && rgba[1] == 0 && rgba[2] == 0, "Incorrect fragment limit");
 			}
 		}
+	}
+}
+
+int main()
+{
+	@autoreleasepool {
+		NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+		require(devices.count != 0, "No Metal device");
+		for (id<MTLDevice> device in devices)
+			testDevice(device);
 	}
 }

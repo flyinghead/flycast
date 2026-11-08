@@ -18,6 +18,7 @@
 */
 
 #include "metal_drawer.h"
+#include "metal_texture_utils.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 #include <cmath>
@@ -768,13 +769,8 @@ id<MTLRenderCommandEncoder> MetalTextureDrawer::BeginRenderPass() {
 			colorDescriptor.height = height;
 			colorDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
 			colorDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-			// Apple Silicon has unified memory — Shared storage lets the CPU
-			// read this RTT's pixels back to emulated VRAM via getBytes:
-			// directly, with zero copy. The legacy Private+blit-to-staging
-			// pattern (PC-GPU idiom) wastes an extra texture, a blit pass,
-			// and a CPU/GPU sync point. See `MetalTextureDrawer::EndRenderPass`
-			// for the matching readback simplification.
-			colorDescriptor.storageMode = MTLStorageModeShared;
+			// CPU-visible storage must be managed on Intel/AMD GPUs.
+			colorDescriptor.storageMode = metalCpuTextureStorageMode(MetalContext::Instance()->GetDevice());
 
 			id<MTLTexture> newTexture = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:colorDescriptor];
 			[newTexture setLabel:@"Rtt Color Attachment"];
@@ -794,11 +790,8 @@ id<MTLRenderCommandEncoder> MetalTextureDrawer::BeginRenderPass() {
 			colorDescriptor.height = height;
 			colorDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
 			colorDescriptor.usage = MTLTextureUsageRenderTarget;
-			// Readback target: EndRenderPass getBytes: requires CPU-visible
-			// storage. Private aborts in the simulator's MTLSimDriver and is
-			// invalid for getBytes on macOS too; Shared is free on Apple
-			// Silicon unified memory.
-			colorDescriptor.storageMode = MTLStorageModeShared;
+			// Readback requires CPU-visible storage on every GPU family.
+			colorDescriptor.storageMode = metalCpuTextureStorageMode(MetalContext::Instance()->GetDevice());
 			colorAttachment = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:colorDescriptor];
 			[colorAttachment setLabel:@"Rtt Color Attachment"];
 		} else {
@@ -868,22 +861,10 @@ void MetalTextureDrawer::EndRenderPass()
 
 	if (config::RenderToTextureBuffer)
 	{
-		// Ensure GPU work that rendered into the RTT texture has completed
+		// Managed textures need their GPU contents synchronized before CPU reads.
+		metalSynchronizeTextureForCpu(commandPool->Allocate(), colorAttachment);
 		commandPool->EndFrameAndWait();
 
-		// Source is the RTT color image we rendered into this pass. It's
-		// MTLStorageModeShared (see RTT texture creation above) so we can
-		// read it directly via getBytes — no intermediate staging buffer
-		// and no second blit + waitUntilCompleted sync point. The
-		// EndFrameAndWait above is the only CPU/GPU sync needed in this
-		// path; Apple Silicon's unified memory makes the readback itself
-		// zero-copy.
-		//
-		// Previously this allocated a Shared MTLBuffer every frame, queued
-		// a blit CB to copy texture → buffer, and waitUntilCompleted'd the
-		// blit. On RTT-heavy scenes (Sonic Adventure reflections, DOA2
-		// intro, etc.) that pattern cost an additional 1–5 ms per RTT
-		// (sometimes more under GPU saturation). Removed.
 		id<MTLTexture> srcTexture = colorAttachment;
 		if (!srcTexture) {
 			ERROR_LOG(RENDERER, "RTT readback failed: no source texture");

@@ -106,9 +106,6 @@ bool MetalContext::init()
 		term();
 		return false;
 	}
-	// The packed 16-bit formats need macOS 11 and an Apple GPU
-	if (@available(macOS 11.0, *))
-		packed16BitFormats = [device supportsFamily:MTLGPUFamilyApple1];
 
 	[layer setDevice:device];
 	queue = [device newCommandQueue];

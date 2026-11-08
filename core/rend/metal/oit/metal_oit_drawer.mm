@@ -23,6 +23,7 @@
 //   3. resolve render encoder: translucent modifier volumes, then the resolve pass
 //      sorts and blends each pixel's list over the opaque background
 #include "metal_oit_drawer.h"
+#include "../metal_texture_utils.h"
 #include "../metal_context.h"
 #include "hw/pvr/ta.h"
 
@@ -1521,7 +1522,7 @@ id<MTLCommandBuffer> MetalOITTextureDrawer::NewFrame()
 			colorDescriptor.height = height;
 			colorDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
 			colorDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-			colorDescriptor.storageMode = MTLStorageModeShared;
+			colorDescriptor.storageMode = metalCpuTextureStorageMode(MetalContext::Instance()->GetDevice());
 			id<MTLTexture> newTexture = [device newTextureWithDescriptor:colorDescriptor];
 			[newTexture setLabel:@"OIT RTT Color"];
 			texture->SetTexture(newTexture, width, height);
@@ -1554,7 +1555,7 @@ id<MTLCommandBuffer> MetalOITTextureDrawer::NewFrame()
 			colorDescriptor.height = height;
 			colorDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
 			colorDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-			colorDescriptor.storageMode = MTLStorageModeShared;
+			colorDescriptor.storageMode = metalCpuTextureStorageMode(MetalContext::Instance()->GetDevice());
 			id<MTLTexture> newTexture = [device newTextureWithDescriptor:colorDescriptor];
 			[newTexture setLabel:@"OIT RTT Color"];
 			texture->SetTexture(newTexture, width, height);
@@ -1588,6 +1589,7 @@ void MetalOITTextureDrawer::EndFrame()
 
 	if (config::RenderToTextureBuffer)
 	{
+		metalSynchronizeTextureForCpu(currentCommandBuffer, rttColorImage);
 		commandPool->EndFrameAndWait();
 
 		id<MTLTexture> srcTexture = texture ? texture->GetTexture() : rttColorImage;

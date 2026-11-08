@@ -18,6 +18,7 @@
 */
 
 #include "metal_texture.h"
+#include "metal_texture_utils.h"
 #include <vector>
 #include <algorithm>
 
@@ -157,7 +158,7 @@ void MetalTexture::Init(u32 width, u32 height, MTLPixelFormat format, u32 dataSi
 	[desc setHeight:height];
 	[desc setPixelFormat:format];
 	[desc setMipmapLevelCount:mipmapLevels];
-	[desc setStorageMode:MTLStorageModeShared];
+	[desc setStorageMode:metalCpuTextureStorageMode(MetalContext::Instance()->GetDevice())];
 	[desc setUsage:MTLTextureUsageShaderRead];
 
 	auto device = MetalContext::Instance()->GetDevice();

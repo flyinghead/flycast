@@ -19,6 +19,7 @@
 
 #pragma once
 #include "metal_apple.h"
+#include "metal_texture_utils.h"
 
 #include "types.h"
 #include "rend/transform_matrix.h"
@@ -72,7 +73,7 @@ public:
 
 	// True if the device supports the packed 16-bit pixel formats (A1BGR5, B5G6R5, ABGR4).
 	// Only Apple GPUs do.
-	bool SupportsPacked16BitFormats() const { return packed16BitFormats; }
+	bool SupportsPacked16BitFormats() const { return metalSupportsPacked16BitFormats(device); }
 
 	static MetalContext* Instance() { return contextInstance; }
 private:
@@ -123,7 +124,6 @@ private:
 	id<MTLCommandQueue> queue = nil;
 	CAMetalLayer* layer = nil;
 	void *metalView = nullptr;
-	bool packed16BitFormats = false;
 
 	static MetalContext* contextInstance;
 };
