@@ -93,7 +93,7 @@ struct MetalVertexShaderUniforms
 };
 
 // std140 alignment required
-struct MetalFragmentShaderUniforms
+struct alignas(16) MetalFragmentShaderUniforms
 {
 	float colorClampMin[4];
 	float colorClampMax[4];
@@ -103,6 +103,9 @@ struct MetalFragmentShaderUniforms
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
 };
+// MSL float4 members give this block 16-byte alignment, including tail padding.
+// The final packed block must cover the shader's full argument size.
+static_assert(sizeof(MetalFragmentShaderUniforms) == 96);
 
 // std140 alignment required
 struct MetalN2VertexShaderUniforms
