@@ -22,7 +22,7 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <xxhash.h>
-int _newlib_heap_size_user = 246_MB;
+int _newlib_heap_size_user = 250_MB;
 bool is_standalone = false;
 
 extern "C" {
