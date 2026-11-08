@@ -679,7 +679,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		{
 			// Main projectors are directly linked by a null-modem cable
 			config::BattleCableEnable.override(true);
-			if (!config::loadBool("naomi", "WCCFSlave"))
+			if (config::loadInt("naomi", "WCCFNode", 0) == 0)
 			{
 				config::ActAsServer.override(true);
 				config::NetworkServer.override("localhost:37392");
@@ -693,7 +693,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				std::string server = "naomi:WCCFServer=" + config::loadStr("naomi", "WCCFServer");
 
 				const char *args[] = {
-						"-config", "naomi:WCCFSlave=yes",
+						"-config", "naomi:WCCFNode=1",
 						"-config", server.c_str(),
 						"-config", region.c_str(),
 						"-config", left.c_str(),

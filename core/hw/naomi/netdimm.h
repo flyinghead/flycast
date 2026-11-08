@@ -55,8 +55,60 @@ protected:
 	int schedCallback() override;
 
 private:
+	struct LocalSocket
+	{
+		virtual ~LocalSocket() = default;
+		virtual ssize_t sendto(const void *data, ssize_t len, int flags,
+				const sockaddr *addr, socklen_t addrlen) = 0;
+		virtual ssize_t recvfrom(void *data, ssize_t len, int flags,
+				sockaddr *addr, socklen_t *addrlen) = 0;
+	};
+	struct Socket {
+		Socket() = default;
+		Socket(sock_t fd) : fd(fd) {}
+
+		int close();
+
+		bool isClosed() const {
+			return fd == INVALID_SOCKET;
+		}
+
+		bool isBusy() const {
+			return connecting || receiving || sending;
+		}
+
+		sock_t fd = INVALID_SOCKET;
+		bool connecting = false;
+		bool receiving = false;
+		u8 *recvData = nullptr;
+		u32 recvLen = 0;
+		bool sending = false;
+		const u8 *sendData = nullptr;
+		u32 sendLen = 0;
+		u64 connectTimeout = 0;
+		u64 connectTime = 0;
+		u64 sendTimeout = 0;
+		u64 sendTime = 0;
+		u64 recvTimeout = 0;
+		u64 recvTime = 0;
+		int lastError = 0;
+		int port = 0;
+		sockaddr *srcAddr = nullptr;
+		socklen_t *addrLen = nullptr;
+		std::unique_ptr<LocalSocket> localSocket;
+#ifdef NET_TRACE
+		void openTrace();
+		void closeTrace();
+		void traceRecv(const u8 *data, size_t len);
+		void traceSend(const u8 *data, size_t len);
+
+		FILE *trcFile = nullptr;
+#endif
+	};
+
 	void systemCmd(int cmd);
 	void netCmd(int cmd);
+	void wccfInterceptSocket(Socket &socket, sockaddr_in& addr);
 
 	template<typename T>
 	void poke(u32 address, T value)
@@ -91,47 +143,6 @@ private:
 		return false;
 	}
 
-	struct Socket {
-		Socket() = default;
-		Socket(sock_t fd) : fd(fd) {}
-
-		int close();
-
-		bool isClosed() const {
-			return fd == INVALID_SOCKET;
-		}
-
-		bool isBusy() const {
-			return connecting || receiving || sending;
-		}
-
-		sock_t fd = INVALID_SOCKET;
-		bool connecting = false;
-		bool receiving = false;
-		u8 *recvData = nullptr;
-		u32 recvLen = 0;
-		bool sending = false;
-		const u8 *sendData = nullptr;
-		u32 sendLen = 0;
-		u64 connectTimeout = 0;
-		u64 connectTime = 0;
-		u64 sendTimeout = 0;
-		u64 sendTime = 0;
-		u64 recvTimeout = 0;
-		u64 recvTime = 0;
-		int lastError = 0;
-		int port = 0;
-		sockaddr *srcAddr = nullptr;
-		socklen_t *addrLen = nullptr;
-#ifdef NET_TRACE
-		void openTrace();
-		void closeTrace();
-		void traceRecv(const u8 *data, size_t len);
-		void traceSend(const u8 *data, size_t len);
-
-		FILE *trcFile = nullptr;
-#endif
-	};
 	std::vector<Socket> sockets;
 	int lastError = 0; // for socket() and select()
 	bool dnsInProgress = false;

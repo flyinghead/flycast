@@ -20,7 +20,6 @@
 #include "cfg/option.h"
 #include "ggpo.h"
 #include "naomi_network.h"
-//#include "net_serial_maxspeed.h"
 #include "null_modem.h"
 #include "hw/naomi/naomi_flashrom.h"
 
@@ -81,14 +80,15 @@ void NetworkHandshake::init()
 		if (settings.content.gameId == "MAXIMUM SPEED")
 			configure_maxspeed_flash(true, config::ActAsServer);
 		else if (settings.content.gameId.substr(0, 4) == "WCCF")
-#ifdef LIBRETRO
-			setNaomiNetworkConfig(0, 8);	// FIXME libretro
-#else
-			setNaomiNetworkConfig(config::loadBool("naomi", "WCCFSlave") ? 1 : 0, 8);	// FIXME node count
-#endif
+			setNaomiNetworkConfig(config::ActAsServer ? 0 : 1, 8);
 		instance = new BattleCableHandshake();
 	}
-	else {
+	else
+	{
+#ifndef LIBRETRO
+		if (settings.content.gameId.substr(0, 4) == "WCCF")
+			setNaomiNetworkConfig(config::loadInt("naomi", "WCCFNode", -1), 8);
+#endif
 		instance = nullptr;
 	}
 }
