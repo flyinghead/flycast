@@ -1761,6 +1761,9 @@ int schedCallback(int tag, int cycles, int lag, void *arg)
 {
 	// DMA done
 	reg74 |= 1;
+	// Needed by initdo (avoids texture corruption on start screen)
+	// but doesn't seem to be used by other game.
+	asic_RaiseInterruptBothCLX(holly_YUV_DMA);
 	return 0;
 }
 
