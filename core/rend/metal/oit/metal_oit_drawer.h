@@ -244,7 +244,6 @@ protected:
 	MetalOITBuffers         *oitBuffers      = nullptr;
 	MetalSamplers           *samplers        = nullptr;
 	id<MTLBuffer>            curMainBuffer   = nil;
-	std::unique_ptr<MetalRingBuffer> ring;
 	u32                      currentBaseOffset = 0;
 	bool                     dithering       = false;
 	/// Per-channel dither divisor derived from fb_W_CTRL.fb_packmode in Draw()

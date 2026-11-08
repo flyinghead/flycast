@@ -126,6 +126,12 @@ public:
 	/// compilation lazily, so this can stall the first time it runs).
 	void Init()
 	{
+		const int layers = std::max(8, std::min(128, (int)config::PerPixelLayers));
+		if (layers != maxLayers)
+		{
+			term();
+			maxLayers = layers;
+		}
 		if (oitLibrary != nil)
 			return;
 		id<MTLDevice> device = MetalContext::Instance()->GetDevice();
@@ -138,7 +144,7 @@ public:
 		fragmentOrdering = MetalOITFragmentOrderingFor(device);
 		auto compile = [&](bool rasterOrder, NSError **err) {
 			MTLCompileOptions *options = [[MTLCompileOptions alloc] init];
-			options.preprocessorMacros = @{ @"OIT_RASTER_ORDER" : @(rasterOrder ? 1 : 0) };
+			options.preprocessorMacros = @{ @"OIT_RASTER_ORDER" : @(rasterOrder ? 1 : 0), @"OIT_MAX_FRAGMENTS" : @(maxLayers) };
 			return [device newLibraryWithSource:srcNS options:options error:err];
 		};
 		NSError *err = nil;
@@ -742,7 +748,8 @@ private:
 
 	// Compiled MSL library + cached function handles. Built once by
 	// Init() and reused for every pipeline state. Dropped in term().
-	id<MTLLibrary>  oitLibrary        = nil;
+	int maxLayers = 0;
+	id<MTLLibrary> oitLibrary = nil;
 	id<MTLFunction> collectVertexFn   = nil;
 	id<MTLFunction> collectFragmentFn = nil;
 	id<MTLFunction> resolveVertexFn   = nil;

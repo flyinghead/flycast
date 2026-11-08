@@ -29,7 +29,7 @@ void MetalQuadPipeline::CreatePipeline()
 	[pipelineDescriptor setInputPrimitiveTopology:MTLPrimitiveTopologyClassTriangle];
 
 	auto color = pipelineDescriptor.colorAttachments[0];
-	[color setBlendingEnabled:TRUE];
+	[color setBlendingEnabled:blend];
 	[color setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
 	[color setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
 	[color setRgbBlendOperation:MTLBlendOperationAdd];
@@ -93,14 +93,18 @@ void MetalQuadPipeline::Init(MetalShaders *shaderManager)
 
 void MetalQuadDrawer::Init(MetalQuadPipeline *pipeline) {
 	this->pipeline = pipeline;
-	buffer = std::make_unique<MetalQuadBuffer>();
 }
 
 void MetalQuadDrawer::Draw(id<MTLRenderCommandEncoder> commandEncoder, id<MTLTexture> texture, MetalQuadVertex *vertices, bool nearestFilter, const float *color)
 {
-	pipeline->BindPipeline(commandEncoder);
-	buffer->Update(vertices);
-	buffer->Bind(commandEncoder);
+	if (!pipeline->BindPipeline(commandEncoder))
+		return;
+	const MetalQuadVertex defaults[4] {
+		{ -1, -1, 0, 0, 1 }, { 1, -1, 0, 1, 1 },
+		{ -1, 1, 0, 0, 0 }, { 1, 1, 0, 1, 0 }
+	};
+	[commandEncoder setVertexBytes:vertices != nullptr ? vertices : defaults
+		length:sizeof(defaults) atIndex:0];
 
 	if (texture != nil)
 	{
@@ -115,5 +119,5 @@ void MetalQuadDrawer::Draw(id<MTLRenderCommandEncoder> commandEncoder, id<MTLTex
 	}
 
 	[commandEncoder setFragmentBytes:color length:sizeof(float) * 4 atIndex:0];
-	buffer->Draw(commandEncoder);
+	[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
 }

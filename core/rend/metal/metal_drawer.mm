@@ -444,6 +444,11 @@ void MetalDrawer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, in
 		if (param.count == 0)
 			continue;
 
+		if (param.isNaomi2())
+			[encoder setVertexBuffer:curMainBuffer offset:currentBaseOffset + offsets.naomi2ModVolOffset
+				+ (first + cmv) * (sizeof(MetalN2VertexShaderUniforms)
+				+ MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), kConstantBufferAlign)) atIndex:1];
+
 		u32 mv_mode = param.isp.DepthMode;
 
 		if (mod_base == -1)
@@ -541,15 +546,13 @@ void MetalDrawer::UploadMainBuffer(const MetalVertexShaderUniforms &vertexUnifor
 		 offsets.lightsOffset = packNaomi2Lights(packer);
 	}
 
-	u64 totalSize = packer.size();
-	if (!ring)
-		ring.reset(new MetalRingBuffer(std::max<u64>(512 * 1024, totalSize), 3));
-	else if (totalSize > ring->getSliceSize())
-		ring.reset(new MetalRingBuffer(totalSize, 3));
-
-	currentBaseOffset = (u32)ring->baseOffset();
-	packer.uploadToBuffer(ring->getBuffer(), currentBaseOffset);
-	curMainBuffer = ring->getBuffer();
+	// Each upload stays exclusive until the command pool retires its GPU work.
+	verify(packer.size() <= std::numeric_limits<u32>::max());
+	MetalBufferData *upload = GetMainBuffer((u32)packer.size());
+	verify(upload->buffer != nil);
+	packer.upload(*upload);
+	currentBaseOffset = 0;
+	curMainBuffer = upload->buffer;
 }
 
 bool MetalDrawer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture) {
@@ -881,7 +884,7 @@ void MetalTextureDrawer::EndRenderPass()
 		// blit. On RTT-heavy scenes (Sonic Adventure reflections, DOA2
 		// intro, etc.) that pattern cost an additional 1–5 ms per RTT
 		// (sometimes more under GPU saturation). Removed.
-		id<MTLTexture> srcTexture = texture ? texture->GetTexture() : colorAttachment;
+		id<MTLTexture> srcTexture = colorAttachment;
 		if (!srcTexture) {
 			ERROR_LOG(RENDERER, "RTT readback failed: no source texture");
 			MetalDrawer::EndRenderPass();
@@ -1009,16 +1012,16 @@ void MetalScreenDrawer::Init(MetalSamplers *samplers, MetalShaders *shaders, con
 		[depthAttachment setLabel:@"Screen Depth Attachment"];
 	}
 
-	if (framebuffers.size() > 3)
+	if (framebuffers.size() > 1)
 	{
-		framebuffers.resize(3);
-		loadPassDescriptors.resize(3);
-		clearPassDescriptors.resize(3);
-		clearNeeded.resize(3);
+		framebuffers.resize(1);
+		loadPassDescriptors.resize(1);
+		clearPassDescriptors.resize(1);
+		clearNeeded.resize(1);
 	}
 	else
 	{
-		while (framebuffers.size() < 3)
+		while (framebuffers.size() < 1)
 		{
 			MTLTextureDescriptor *texDescriptor = [[MTLTextureDescriptor alloc] init];
 			texDescriptor.width = viewport.width;
@@ -1076,6 +1079,7 @@ id<MTLRenderCommandEncoder> MetalScreenDrawer::BeginRenderPass() {
 		MTLRenderPassDescriptor* passDescriptor = clearNeeded[GetCurrentImage()] || rendContext->clearFramebuffer ? clearPassDescriptors[GetCurrentImage()] : loadPassDescriptors[GetCurrentImage()];
 		clearNeeded[GetCurrentImage()] = false;
 		currentEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+		currentScissor = MTLScissorRect {};
 		renderPassStarted = true;
 
 		DEBUG_LOG(RENDERER, "Screen render pass started, imageIndex=%d", GetCurrentImage());
@@ -1131,23 +1135,23 @@ void MetalBaseDrawer::scaleAndWriteFramebuffer(id<MTLTexture> finalTexture)
 		scaledTexture = cachedScaledTexture;
 
 		id<MTLCommandBuffer> commandBuffer = commandPool->Allocate();
-		id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
-
-		// NOTE: a blit copy, not a scale (Vulkan blitImage filters here); the
-		// copy is bounded to the smaller of the two so it cannot overrun the
-		// scaled target when the scaler shrinks (hscale / vscale > 1).
-		[blitEncoder copyFromTexture:finalTexture
-						 sourceSlice:0
-						 sourceLevel:0
-						sourceOrigin:MTLOriginMake(0, 0, 0)
-						  sourceSize:MTLSizeMake(std::min({ width, scaledW, (u32)finalTexture.width }),
-												 std::min({ height, scaledH, (u32)finalTexture.height }), 1)
-						   toTexture:scaledTexture
-					destinationSlice:0
-					destinationLevel:0
-				   destinationOrigin:MTLOriginMake(0, 0, 0)];
-
-		[blitEncoder endEncoding];
+		MTLRenderPassDescriptor *pass = [MTLRenderPassDescriptor renderPassDescriptor];
+		pass.colorAttachments[0].texture = scaledTexture;
+		pass.colorAttachments[0].loadAction = MTLLoadActionDontCare;
+		pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+		id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:pass];
+		scalePipeline.Init(&scaleShaders);
+		scaleDrawer.Init(&scalePipeline);
+		const float u = std::min(width, (u32)finalTexture.width) / (float)finalTexture.width;
+		const float v = std::min(height, (u32)finalTexture.height) / (float)finalTexture.height;
+		MetalQuadVertex vertices[4] {
+			{ -1, -1, 0, 0, v }, { 1, -1, 0, u, v },
+			{ -1, 1, 0, 0, 0 }, { 1, 1, 0, u, 0 }
+		};
+		[encoder setViewport:MTLViewport { 0, 0, (double)scaledW, (double)scaledH, 0, 1 }];
+		if (scalePipeline.BindPipeline(encoder))
+			scaleDrawer.Draw(encoder, finalTexture, vertices, false);
+		[encoder endEncoding];
 
 		finalTexture = scaledTexture;
 		width = scaledW;

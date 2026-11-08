@@ -63,7 +63,8 @@ void MetalCommandPool::Init(size_t chainSize)
 	this->chainSize = chainSize;
 	device = MetalContext::Instance()->GetDevice();
 
-	queue = [device newCommandQueue];
+	// Commit rendering and presentation on one queue, including after bounded waits.
+	queue = MetalContext::Instance()->GetQueue();
 
 	DEBUG_LOG(RENDERER, "MetalCommandPool::Init chainSize=%zu", chainSize);
 	if (events.size() > chainSize)
@@ -160,6 +161,10 @@ void MetalCommandPool::Term()
 			(void)obj.release();
 	}
 	quarantine.clear();
+	index = 0;
+	frameStarted = false;
+	queue = nil;
+	device = nil;
 }
 
 void MetalCommandPool::BeginFrame()

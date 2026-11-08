@@ -71,10 +71,11 @@ private:
 class MetalQuadPipeline
 {
 public:
-	MetalQuadPipeline(bool ignoreTexAlpha, bool rotate = false)
-			: rotate(rotate), ignoreTexAlpha(ignoreTexAlpha) {}
+	MetalQuadPipeline(bool ignoreTexAlpha, bool rotate = false, bool blend = true)
+			: rotate(rotate), ignoreTexAlpha(ignoreTexAlpha), blend(blend) {}
 	void Init(MetalShaders *shaderManager);
 	void Term() {
+		pipeline = nil;
 		linearSampler = nil;
 		nearestSampler = nil;
 	}
@@ -106,6 +107,7 @@ private:
 	MetalShaders *shaderManager = nullptr;
 	bool rotate;
 	bool ignoreTexAlpha;
+	bool blend;
 };
 
 class MetalQuadDrawer
@@ -121,5 +123,4 @@ public:
 	void Draw(id<MTLRenderCommandEncoder> commandEncoder, id<MTLTexture> texture, MetalQuadVertex vertices[4] = nullptr, bool nearestFilter = false, const float *color = nullptr);
 private:
 	MetalQuadPipeline *pipeline = nullptr;
-	std::unique_ptr<MetalQuadBuffer> buffer;
 };

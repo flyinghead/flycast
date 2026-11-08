@@ -69,6 +69,7 @@ bool MetalOITDrawer::Draw(const MetalTexture *fogTexture,
 	const int h = (int)viewport.height;
 	if (w <= 0 || h <= 0)
 		return false;
+	pipelineManager->Init();
 	MakeBuffers(w, h);
 	if (colorAttachments[0] == nil)
 		return false;
@@ -155,6 +156,7 @@ bool MetalOITDrawer::Draw(const MetalTexture *fogTexture,
 			continue;
 
 		auto setupEncoder = [&](id<MTLRenderCommandEncoder> e) {
+			currentScissor = MTLScissorRect {};
 			[e setViewport:viewport];
 			[e setFrontFacingWinding:MTLWindingCounterClockwise];
 			[e setVertexBuffer:curMainBuffer offset:currentBaseOffset + 0 atIndex:30];
@@ -672,14 +674,14 @@ void MetalOITDrawer::drawRegularPoly(id<MTLRenderCommandEncoder> encoder, u32 li
 		}
 
 		size_t size = sizeof(MetalN2VertexShaderUniforms)
-					  + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), 16);
+					  + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), kConstantBufferAlign);
 		u64 finalOffset = currentBaseOffset + offset + index * size;
 		if (finalOffset >= [curMainBuffer length])
 			return;
 		[encoder setVertexBuffer:curMainBuffer offset:finalOffset atIndex:1];
 
 		if (offsets.lightsOffset != (u64)-1) {
-			size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
+			size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), kConstantBufferAlign);
 			if (poly.lightModel >= 256)
 				return;
 			u64 lightsOffset = currentBaseOffset + offsets.lightsOffset + poly.lightModel * size;
@@ -726,6 +728,12 @@ void MetalOITDrawer::drawOpaqueModVols(id<MTLRenderCommandEncoder> encoder, int 
 	for (int cmv = 0; cmv < count; ++cmv) {
 		ModifierVolumeParam &param = mvParams[cmv];
 		if (param.count == 0) continue;
+		auto bindVolumeUniforms = [&]() {
+			if (param.isNaomi2())
+				[encoder setVertexBuffer:curMainBuffer offset:currentBaseOffset + offsets.naomi2ModVolOffset
+					+ (first + cmv) * (sizeof(MetalN2VertexShaderUniforms) + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), kConstantBufferAlign)) atIndex:1];
+		};
+		bindVolumeUniforms();
 		const u32 mv_mode = param.isp.DepthMode;
 		if (mod_base == -1) mod_base = param.first;
 		ModVolMode pipeMode = (!param.isp.VolumeLast && mv_mode > 0)
@@ -963,15 +971,13 @@ void MetalOITDrawer::UploadMainBuffer(const MetalVertexShaderUniforms &vertexUni
 		offsets.lightsOffset = packNaomi2Lights(packer);
 	}
 
-	u64 totalSize = packer.size();
-	if (!ring)
-		ring.reset(new MetalRingBuffer(std::max<u64>(512 * 1024, totalSize), 3));
-	else if (totalSize > ring->getSliceSize())
-		ring.reset(new MetalRingBuffer(totalSize, 3));
-
-	currentBaseOffset = (u32)ring->baseOffset();
-	packer.uploadToBuffer(ring->getBuffer(), currentBaseOffset);
-	curMainBuffer = ring->getBuffer();
+	// Each upload stays exclusive until the command pool retires its GPU work.
+	verify(packer.size() <= std::numeric_limits<u32>::max());
+	MetalBufferData *upload = GetMainBuffer((u32)packer.size());
+	verify(upload->buffer != nil);
+	packer.upload(*upload);
+	currentBaseOffset = 0;
+	curMainBuffer = upload->buffer;
 }
 
 // ----- MetalOITDrawer: per-poly orchestration -----------------------------
@@ -1060,6 +1066,12 @@ void MetalOITDrawer::DrawModifierVolumes(__strong id<MTLRenderCommandEncoder> &e
 		ModifierVolumeParam &param = params[cmv];
 		if (param.count == 0)
 			continue;
+		auto bindVolumeUniforms = [&]() {
+			if (param.isNaomi2())
+				[encoder setVertexBuffer:curMainBuffer offset:currentBaseOffset + (useSharedMvo ? offsets.naomi2ModVolOffset : offsets.naomi2TrModVolOffset)
+					+ (first + cmv) * (sizeof(MetalN2VertexShaderUniforms) + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), kConstantBufferAlign)) atIndex:1];
+		};
+		bindVolumeUniforms();
 		const u32 mv_mode = param.isp.DepthMode;
 		if (mod_base == -1)
 			mod_base = param.first;
@@ -1083,6 +1095,7 @@ void MetalOITDrawer::DrawModifierVolumes(__strong id<MTLRenderCommandEncoder> &e
 
 		if (mv_mode == 1 || mv_mode == 2) {
 			orderFragments(param.tileclip);
+			bindVolumeUniforms();
 
 			ModVolMode sumMode = (mv_mode == 1) ? ModVolMode::Inclusion
 												: ModVolMode::Exclusion;
@@ -1099,6 +1112,7 @@ void MetalOITDrawer::DrawModifierVolumes(__strong id<MTLRenderCommandEncoder> &e
 			mod_base = -1;
 
 			orderFragments(param.tileclip);
+			bindVolumeUniforms();
 		}
 	}
 
@@ -1284,7 +1298,7 @@ void MetalOITDrawer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType,
 		}
 
 		size_t size = sizeof(MetalN2VertexShaderUniforms)
-					  + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), 16);
+					  + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), kConstantBufferAlign);
 		u64 finalOffset = currentBaseOffset + offset + index * size;
 		if (finalOffset >= [curMainBuffer length])
 			return;
@@ -1292,7 +1306,7 @@ void MetalOITDrawer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType,
 
 		if (offsets.lightsOffset != (u64)-1)
 		{
-			size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
+			size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), kConstantBufferAlign);
 			if (poly.lightModel >= 256)
 				return;
 			u64 lightsOffset = currentBaseOffset + offsets.lightsOffset + poly.lightModel * size;
@@ -1389,8 +1403,6 @@ void MetalOITScreenDrawer::EndFrame()
 		frameRendered = true;
 	}
 	currentCommandBuffer = nil;
-	// Swap ping-pong so the next frame writes to the other color slot.
-	framebufferIndex = (framebufferIndex + 1) & 1;
 }
 
 MTLRenderPassDescriptor *MetalOITScreenDrawer::getOitRenderPassDescriptor(
@@ -1398,11 +1410,8 @@ MTLRenderPassDescriptor *MetalOITScreenDrawer::getOitRenderPassDescriptor(
 {
 	(void)renderPassIndex;
 	(void)renderPassCount;
-	// Every pass of the frame targets the SAME attachment (non-initial passes
-	// load it), and the resolve reads/writes it in place via framebuffer
-	// fetch. The old per-pass toggle here, combined with EndFrame's per-frame
-	// toggle, made single-pass frames render into the same slot every frame —
-	// so the sibling the resolve sampled as "background" was never written.
+	// Keep the screen target across renders. With delayed swapping, a second
+	// render may need to load the first render before either is presented.
 	const int idx = framebufferIndex;
 	MTLRenderPassDescriptor *desc = tempPassDescriptors[idx];
 	if (desc == nil) {
@@ -1413,7 +1422,7 @@ MTLRenderPassDescriptor *MetalOITScreenDrawer::getOitRenderPassDescriptor(
 		return nil;
 
 	desc.colorAttachments[0].texture     = colorAttachments[idx];
-	desc.colorAttachments[0].loadAction  = initialPass ? MTLLoadActionClear : MTLLoadActionLoad;
+	desc.colorAttachments[0].loadAction  = initialPass && (clearNeeded[idx] || rendContext->clearFramebuffer) ? MTLLoadActionClear : MTLLoadActionLoad;
 	desc.colorAttachments[0].storeAction = MTLStoreActionStore;
 	desc.colorAttachments[0].clearColor  = MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
 
@@ -1440,9 +1449,7 @@ bool MetalOITScreenDrawer::PresentFrame()
 	if (!frameRendered)
 		return false;
 	frameRendered = false;
-	// After EndFrame() the framebufferIndex has already advanced; present
-	// the slot we just finished rendering to, which is the PREVIOUS index.
-	int presentIdx = (framebufferIndex + 1) & 1;
+	int presentIdx = framebufferIndex;
 	if (colorAttachments[presentIdx] == nil)
 		return false;
 	MetalContext::Instance()->PresentFrame(colorAttachments[presentIdx], viewport, aspectRatio);

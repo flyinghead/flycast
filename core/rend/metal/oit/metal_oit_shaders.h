@@ -37,7 +37,7 @@ using namespace metal;
 #endif
 
 constant constexpr uint kEOL = 0xFFFFFFFFu;
-constant constexpr uint kMaxFragmentsPerPixel = 32u;
+constant constexpr uint kMaxFragmentsPerPixel = OIT_MAX_FRAGMENTS;
 
 constant constexpr uint SHADOW_STENCIL = 0x40000000u;
 constant constexpr uint SHADOW_ACC     = 0x80000000u;

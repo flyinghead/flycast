@@ -78,7 +78,7 @@ protected:
 	// Render-thread only; holds no game state across a reload.
 	PixelBuffer<u32> framebufferScratch;
 	MetalTextureCache textureCache;
-	MTLViewport viewport = MTLViewport { 0, 0, 640, 480, 0, 0 };
+	MTLViewport viewport = MTLViewport { 0, 0, 640, 480, 0, 1 };
 	bool framebufferRendered = false;
 	// The context being rendered (set in Process, handed to the drawers in
 	// Render). Replaces the removed _pvrrc global (90301d5c3).

@@ -26,6 +26,9 @@ bool BaseMetalRenderer::BaseInit()
 {
 	texCommandPool.Init();
 	fbCommandPool.Init();
+	custom_texture.setCapabilities(CustomTextureCapabilities::rgbaOnly(CustomTextureBackend::Metal,
+			[MetalContext::Instance()->GetDevice() supportsFamily:MTLGPUFamilyApple1]
+			&& ![MetalContext::Instance()->GetDevice() supportsFamily:MTLGPUFamilyApple3] ? 8192 : 16384));
 
 	return true;
 }
@@ -61,8 +64,8 @@ BaseTextureCacheData *BaseMetalRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 		}
 	}
 	else if (tf->IsCustomTextureAvailable()) {
-		// TODO
 		tf->SetCommandBuffer(texCommandBuffer);
+		tf->CheckCustomTexture();
 	}
 	tf->SetCommandBuffer(nil);
 	textureCache.SetInFlight(tf);
@@ -232,9 +235,9 @@ public:
 	{
 		NOTICE_LOG(RENDERER, "MetalRenderer::Term");
 		WaitIdle();
-		texCommandPool.Term();
 		screenDrawer.Term();
 		textureDrawer.Term();
+		texCommandPool.Term();
 		samplerManager.term();
 		BaseMetalRenderer::Term();
 	}
@@ -345,24 +348,8 @@ Renderer* rend_Metal()
 #include "oit/metal_oit_pipeline.h"
 #include "oit/metal_oit_drawer.h"
 
-// The OIT frame is waited on before presenting (see Render() below).
-//
-// MetalCommandPool::Init creates its OWN command queue, and
-// MetalContext::PresentFrame builds its command buffer from MetalContext's
-// queue. Metal does not order work across separate queues, and nothing
-// synchronized the two, so the present could sample the color attachment while
-// the OIT frame was still writing it. The resolve, which composites the whole
-// translucent layer, is the LAST thing written each frame, so losing that race
-// yields the opaque-only image: background intact, translucent layer missing
-// for that frame. That was the strobing BIOS logo and the flickering texture
-// layer over 3D scenes, and it hit OIT far harder than the regular renderer
-// because collect+resolve makes the GPU frame long enough to lose the race
-// often. Waiting removes the flicker.
-//
-// The bounded CPU wait in WaitForLastFrame (200ms timeout) is used rather than
-// a GPU-side encodeWaitForEvent: a cross-queue GPU wait on an event that never
-// gets signalled would hang the GPU, and the pool has a known phantom-event
-// path. Costs a CPU/GPU serialization point per frame on the OIT path only.
+// Screen, RTT and presentation commands share a queue. The bounded wait below
+// is for CPU-side render completion; GPU resource ordering does not depend on it.
 
 class OITMetalRenderer : public MetalRenderer
 {

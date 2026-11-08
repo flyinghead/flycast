@@ -24,6 +24,7 @@
 #include "metal_shaders.h"
 #include "metal_pipeline.h"
 #include "metal_buffer.h"
+#include "metal_quad.h"
 #include "metal_commandpool.h"
 #include "rend/texconv.h"
 #include "rend/transform_matrix.h"
@@ -258,7 +259,13 @@ protected:
 
 		if (!rendContext->lightModels.empty())
 		{
-			offset = packer.addUniform(&rendContext->lightModels[0], rendContext->lightModels.size() * sizeof(decltype(rendContext->lightModels[0])));
+			// Pad every model to the same constant-buffer stride used when binding.
+			for (const auto& model : rendContext->lightModels)
+			{
+				u64 modelOffset = packer.addUniform(&model, sizeof(model));
+				if (offset == (u64)-1)
+					offset = modelOffset;
+			}
 		}
 
 		return offset;
@@ -277,6 +284,8 @@ protected:
 	void scaleAndWriteFramebuffer(id<MTLTexture> finalTexture);
 
 	void releaseReadbackTextures() {
+		scalePipeline.Term();
+		scaleShaders.term();
 		cachedScaledTexture = nil;
 		cachedScaledWidth = cachedScaledHeight = 0;
 		cachedReadableTexture = nil;
@@ -295,6 +304,9 @@ private:
 	// MetalTextureDrawer::rttReadback -- scaleAndWriteFramebuffer() runs every
 	// frame under EmulateFramebuffer and was allocating ~1.2MB per call.
 	PixelBuffer<u32> fbReadback;
+	MetalShaders scaleShaders;
+	MetalQuadPipeline scalePipeline { false, false, false };
+	MetalQuadDrawer scaleDrawer;
 
 	// The two MTLTextures scaleAndWriteFramebuffer() needs, cached across
 	// frames. Both were allocated per call, which is a good deal more expensive
@@ -399,11 +411,6 @@ private:
 	void DrawList(id<MTLRenderCommandEncoder> encoder, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, int count);
 	void UploadMainBuffer(const MetalVertexShaderUniforms& vertexUniforms, const MetalFragmentShaderUniforms& fragmentUniforms);
-	void AdvanceFrameBuffers() {
-		if (!ring)
-			return;
-		ring->advance();
-	}
 
 	int imageIndex = 0;
 	struct {
@@ -422,7 +429,6 @@ private:
 		u64 indexCount = 0;
 	} offsets;
 	id<MTLBuffer> curMainBuffer = nil;
-	std::unique_ptr<MetalRingBuffer> ring;
 	u32 currentBaseOffset = 0;
 	std::unique_ptr<MetalPipelineManager> pipelineManager = nullptr;
 	bool dithering = false;
@@ -438,6 +444,11 @@ public:
 		cleanupFramebuffers();
 	}
 	void Init(MetalSamplers *samplers, MetalShaders *shaders, const MTLViewport& viewport);
+	void Term() override {
+		EndRenderPass();
+		cleanupFramebuffers();
+		frameRendered = false;
+	}
 
 	void EndRenderPass() override;
 	bool PresentFrame()
@@ -482,7 +493,7 @@ private:
 	std::vector<MTLRenderPassDescriptor*> loadPassDescriptors;
 	std::vector<MTLRenderPassDescriptor*> clearPassDescriptors;
 	id<MTLTexture> depthAttachment;
-	MTLViewport viewport;
+	MTLViewport viewport {};
 	MetalShaders *shaderManager = nullptr;
 	std::vector<bool> clearNeeded;
 	bool frameRendered = false;

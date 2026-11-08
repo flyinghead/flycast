@@ -62,9 +62,7 @@ public:
 
 	std::string getDriverName() override;
 
-	std::string getDriverVersion() override {
-		return "";
-	}
+	std::string getDriverVersion() override;
 
 	bool isAMD() override {
 		return false;

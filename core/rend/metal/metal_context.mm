@@ -79,7 +79,7 @@ bool MetalContext::init()
 	// MTLSharedEvent waitUntilSignaledValue:timeoutMS: (MetalCommandPool) requires macOS 12
 	if (@available(macOS 12.0, *)) {
 	} else {
-		ERROR_LOG(RENDERER, "The Metal renderer requires macOS 12 or later");
+		gui_error("The Metal renderer requires macOS 12 or later. Falling back to OpenGL.");
 		return false;
 	}
 #ifdef USE_SDL
@@ -265,23 +265,12 @@ void MetalContext::Present()
 // Fit the content aspect ratio into the drawable
 void MetalContext::getFrameRect(float aspectRatio, float& viewportX, float& viewportY, float& viewportWidth, float& viewportHeight) const
 {
-	float drawableWidth = (float)width;
-	float drawableHeight = (float)height;
-	float screenAR = drawableWidth / drawableHeight;
-
-	if (screenAR >= aspectRatio) {
-		// Screen is wider than content: pillarbox
-		viewportHeight = drawableHeight;
-		viewportWidth = drawableHeight * aspectRatio;
-		viewportX = (drawableWidth - viewportWidth) / 2.0f;
-		viewportY = 0;
-	} else {
-		// Screen is taller than content: letterbox
-		viewportWidth = drawableWidth;
-		viewportHeight = drawableWidth / aspectRatio;
-		viewportX = 0;
-		viewportY = (drawableHeight - viewportHeight) / 2.0f;
-	}
+	int dx = 0, dy = 0;
+	getWindowboxDimensions(width, height, aspectRatio, dx, dy, config::Rotate90);
+	viewportX = dx;
+	viewportY = dy;
+	viewportWidth = width - 2 * dx;
+	viewportHeight = height - 2 * dy;
 }
 
 #ifdef USE_METALFX
@@ -327,6 +316,8 @@ void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float
 	float viewportWidth, viewportHeight, viewportX, viewportY;
 	getFrameRect(aspectRatio, viewportX, viewportY, viewportWidth, viewportHeight);
 
+	const float sourceWidth = texture.width;
+	const float sourceHeight = texture.height;
 	bool upscaled = false;
 #ifdef USE_METALFX
 	// Use the upscaled frame if it still matches the frame size
@@ -355,6 +346,12 @@ void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float
 			{  1,  1, 0, 1, 0 },  // top-right
 	};
 
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	for (auto& vertex : vtx) {
+		vertex.x += shiftX * 2.f / sourceWidth;
+		vertex.y -= shiftY * 2.f / sourceHeight;
+	}
 	[commandEncoder pushDebugGroup:@"DrawFrame"];
 
 	const bool bound = config::Rotate90
@@ -741,4 +738,9 @@ MetalContext::~MetalContext() {
 	verify(contextInstance == this);
 	term();
 	contextInstance = nullptr;
+}
+
+std::string MetalContext::getDriverVersion()
+{
+	return NSProcessInfo.processInfo.operatingSystemVersionString.UTF8String;
 }
