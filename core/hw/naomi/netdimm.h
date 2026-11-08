@@ -57,10 +57,15 @@ protected:
 private:
 	struct LocalSocket
 	{
+#ifdef _MSC_VER
+		using locsize_t = int;
+#else
+		using locsize_t = ssize_t;
+#endif
 		virtual ~LocalSocket() = default;
-		virtual ssize_t sendto(const void *data, ssize_t len, int flags,
+		virtual locsize_t sendto(const void *data, locsize_t len, int flags,
 				const sockaddr *addr, socklen_t addrlen) = 0;
-		virtual ssize_t recvfrom(void *data, ssize_t len, int flags,
+		virtual locsize_t recvfrom(void *data, locsize_t len, int flags,
 				sockaddr *addr, socklen_t *addrlen) = 0;
 	};
 	struct Socket {

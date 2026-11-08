@@ -964,17 +964,17 @@ void NetDimm::wccfInterceptSocket(Socket &socket, sockaddr_in& addr)
 			// Fake port 59200 socket to allow connecting multiple nodes from the same IP
 			struct Port59200Socket : public LocalSocket
 			{
-				ssize_t sendto(const void *data, ssize_t len, int flags,
+				locsize_t sendto(const void *data, locsize_t len, int flags,
 						const sockaddr *addr, socklen_t addrlen) override
 				{
 					DEBUG_LOG(NAOMI, "Port 59200: send: %.*s", (int)len, (char *)data);
 					return len;
 				}
-				ssize_t recvfrom(void *data, ssize_t len, int flags,
+				locsize_t recvfrom(void *data, locsize_t len, int flags,
 						sockaddr *addr, socklen_t *addrlen) override
 				{
 					DEBUG_LOG(NAOMI, "Port 59200: recv %d", (int)len);
-					len = std::min(len, (ssize_t)3);
+					len = std::min(len, (locsize_t)3);
 					memcpy(data, "OK", len);
 					return len;
 				}
