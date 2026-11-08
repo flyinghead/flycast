@@ -42,6 +42,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
+#include <optional>
 
 static SDL_Window* window = NULL;
 static u32 windowFlags;
@@ -59,6 +60,7 @@ static bool mouseCaptured;
 static std::string clipboardText;
 static std::string barcode;
 static u64 lastBarcodeTime;
+static std::optional<std::string> pendingGamePath;
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
@@ -296,6 +298,7 @@ void input_sdl_init()
 
 void input_sdl_quit()
 {
+	pendingGamePath.reset();
 	EventManager::unlisten(Event::Terminate, emuEventCallback);
 	EventManager::unlisten(Event::Pause, emuEventCallback);
 	EventManager::unlisten(Event::Resume, emuEventCallback);
@@ -356,6 +359,18 @@ bool sdl_queue_open_file(const char *path)
 	return true;
 }
 
+// Input is also polled from Maple DMA in unthreaded mode. Defer game changes
+// until the outer UI loop, after the emulation call stack has unwound.
+void sdl_start_pending_game()
+{
+	if (pendingGamePath)
+	{
+		std::string path = std::move(*pendingGamePath);
+		pendingGamePath.reset();
+		gui_start_game(path);
+	}
+}
+
 void input_sdl_handle()
 {
 	SDLGamepad::UpdateRumble();
@@ -365,7 +380,8 @@ void input_sdl_handle()
 	{
 		if (event.type == openFileEventType())
 		{
-			gui_start_game((const char *)event.user.data1);
+			if (!pendingGamePath)
+				pendingGamePath = (const char *)event.user.data1;
 			SDL_free(event.user.data1);
 			continue;
 		}
@@ -609,7 +625,8 @@ void input_sdl_handle()
 				break;
 
 			case SDL_DROPFILE:
-				gui_start_game(event.drop.file);
+				if (!pendingGamePath)
+					pendingGamePath = event.drop.file;
 				SDL_free(event.drop.file);
 				break;
 

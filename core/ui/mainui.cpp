@@ -18,6 +18,9 @@
 */
 
 #include "mainui.h"
+#ifdef USE_SDL
+#include "sdl/sdl.h"
+#endif
 #include "hw/pvr/Renderer_if.h"
 #include "gui.h"
 #include "oslib/oslib.h"
@@ -57,6 +60,9 @@ bool mainui_rend_frame()
 
 	os_DoEvents();
 	os_UpdateInputState();
+#ifdef USE_SDL
+	sdl_start_pending_game();
+#endif
 
 	if (gui_is_open())
 	{
