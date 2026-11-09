@@ -251,6 +251,8 @@ void pci_dma_write(PCIDevice *dev, dma_addr_t addr, const void *buf, dma_addr_t 
 
 void bba_Serialize(Serializer& ser)
 {
+	if (rtl8139device == nullptr)
+		return;
 	ser << GAPS_regs;
 	ser << GAPS_ram;
 	ser << dmaOffset;
@@ -260,6 +262,8 @@ void bba_Serialize(Serializer& ser)
 
 void bba_Deserialize(Deserializer& deser)
 {
+	if (rtl8139device == nullptr)
+		return;
 	deser >> GAPS_regs;
 	deser >> GAPS_ram;
 	deser >> dmaOffset;

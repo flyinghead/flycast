@@ -645,6 +645,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "enabled",
    },
    {
+      CORE_OPTION_NAME "_vblank_pacing",
+      "Vblank Pacing",
+      NULL,
+      "Each frame the frontend runs emulates exactly one vblank, whether or not the game drew. For frontends that pace the core by its frame rate rather than by blocking on audio; without it, loading screens that draw nothing run several vblanks per frame and their sound arrives in bursts. Needs Threaded Rendering disabled.",
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_auto_skip_frame",
       "Auto Skip Frame",
       NULL,

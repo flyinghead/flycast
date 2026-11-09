@@ -59,7 +59,7 @@ private:
 	std::vector<BaseOption *> options;
 	std::string gameId;
 	retro_environment_t retroEnv = nullptr;
-	const retro_core_option_v2_definition *optionDefs;
+	const retro_core_option_v2_definition *optionDefs = nullptr;
 
 	template<typename T, bool>
 	friend class Option;

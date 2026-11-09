@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**Please Note: This form is the minimum required information for submitting bugs.**  
-**Removing this form may lead to your issue being closed until it is completed.**
+<!-- Please Note: This form is the minimum required information for submitting bugs. -->
+<!-- Removing this form may lead to your issue being closed until it is completed. -->
 
 Platform / OS / Hardware: 
 
@@ -18,24 +18,23 @@ Hardware:
 
 **_Description of the Issue_**
 
-Add a short, concise description of the issue here
+<!-- Add a short, concise description of the issue here -->
 
 **_Debugging Steps Tested_**
 
-  * Fill in any steps already tried here
-  * Begin each new line with an asterisk
-  * If no steps are required, please skip
+  <!-- Fill in any steps already tried here -->
+  <!-- Begin each new line with an asterisk -->
+  <!--  If no steps are required, please skip -->
 
 **_Logs Gathered_**
 
 ```
-
 Please paste the contents of the log / logs here
-You may leave this field blank if you have none.
+Delete this field if you have none.
 
 ```
 
 
 **_Screenshots_**
 
-(Replace this line with any issue screenshots)
+<!-- Replace this line with any issue screenshots -->
