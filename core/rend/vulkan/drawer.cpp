@@ -445,6 +445,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		depthAttachment->Init(width, height, GetContext()->GetDepthFormat(),
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
 				"RTT DEPTH ATTACHMENT");
+		setImageLayout(commandBuffer, depthAttachment->GetImage(), GetContext()->GetDepthFormat(),
+				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	}
 	vk::Image colorImage;
 	vk::ImageView colorImageView;
