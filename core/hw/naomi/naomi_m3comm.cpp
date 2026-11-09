@@ -97,7 +97,11 @@ void NaomiM3Comm::connectNetwork()
 bool NaomiM3Comm::receiveNetwork()
 {
 	const u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
-	const u32 packet_size = slot_size * slot_count;
+	const u64 packet_size64 = (u64)slot_size * slot_count;
+	if (slot_size == 0 || slot_count < 2 || packet_size64 >= 0x4000
+			|| 0x100 + slot_size + packet_size64 > sizeof(comm_ram))
+		throw NaomiNetwork::Exception("Invalid communication RAM layout");
+	const u32 packet_size = (u32)packet_size64;
 
 	std::unique_ptr<u8[]> buf = std::make_unique<u8[]>(packet_size);
 
@@ -113,7 +117,12 @@ bool NaomiM3Comm::receiveNetwork()
 
 void NaomiM3Comm::sendNetwork()
 {
-	const u32 packet_size = swap16(*(u16*)&m68k_ram[0x204]) * slot_count;
+	const u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
+	const u64 packet_size64 = (u64)slot_size * slot_count;
+	if (slot_size == 0 || slot_count < 2 || packet_size64 >= 0x4000
+			|| 0x100 + packet_size64 > sizeof(comm_ram))
+		throw NaomiNetwork::Exception("Invalid communication RAM layout");
+	const u32 packet_size = (u32)packet_size64;
 	naomiNetwork.send(&comm_ram[0x100], packet_size, packet_number);
 	packet_number++;
 }
