@@ -354,7 +354,7 @@ int main(int argc, char* argv[])
 	scePowerSetGpuXbarClockFrequency(166);
 	SDL_setenv("VITA_DISABLE_TOUCH_BACK", "1", 1); // Disabling rearpad
 	vglUseTripleBuffering(GL_FALSE);
-	vglSetParamBufferSize(6_MB);
+	vglSetParamBufferSize(8_MB);	// 6 MB filled up in heavy scenes and forced partial renders
 	vglUseCachedMem(GL_TRUE);
 	vglInitWithCustomThreshold(0, 960, 544, 256_MB, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 #endif

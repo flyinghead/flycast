@@ -27,7 +27,7 @@ jobs:
           sudo apt-get -y install ccache gh
           sed -zE -i 's@#if defined\(__vita__\)[[:space:]]*struct hostent[[:space:]]*\{[^}]*\};[[:space:]]*#endif@#if defined(__vita__)\n#include <netdb.h>\n#endif@' /usr/local/vitasdk/arm-vita-eabi/include/asio/detail/impl/socket_ops.ipp
           git clone --depth 1 https://github.com/Rinnegatamante/vitaGL.git
-          make -C vitaGL DEPTH_STENCIL_HACK=1 HAVE_SHADER_CACHE=1 HAVE_WRAPPED_ALLOCATORS=1 NO_DEBUG=1 NO_SPLASHSCREEN=1 -j4 install
+          make -C vitaGL HAVE_SHADER_CACHE=1 HAVE_WRAPPED_ALLOCATORS=1 NO_DEBUG=1 NO_SPLASHSCREEN=1 -j4 install
           git clone -b vitagl --depth 1 https://github.com/Northfear/SDL.git
           cmake -S SDL -B SDL_build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake -DVIDEO_VITA_VGL=ON
           cmake --build SDL_build --config Release
