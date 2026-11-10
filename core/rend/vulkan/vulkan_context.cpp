@@ -1073,6 +1073,8 @@ void VulkanContext::Present() noexcept
 			// resolution of the screen (which is often vertical so we don't).
 			if (res == vk::Result::eSuboptimalKHR)
 				resized = true;
+#else
+			(void)res;
 #endif
 #ifndef SWAPPY
 			if (lastFrameView && IsValid() && !gui_is_open()
@@ -1521,7 +1523,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	commandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	static const float scopeColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	CommandBufferDebugScope _(commandBuffer.get(), "GetLastFrame", scopeColor);
+	CommandBufferDebugScope cmdBufDebug(commandBuffer.get(), "GetLastFrame", scopeColor);
 
 	// render pass
 	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), imageFormat, vk::SampleCountFlagBits::e1,
@@ -1587,6 +1589,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 			vk::WholeSize);
 	commandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
 					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
+	cmdBufDebug.end();
 	commandBuffer->end();
 
 	vk::UniqueFence fence = device->createFenceUnique(vk::FenceCreateInfo());

@@ -49,7 +49,7 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport) {
 void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB)
 {
 	static const float scopeColor[4] = { 0.25f, 0.25f, 0.25f, 0.25f };
-	CommandBufferDebugScope _(commandBuffer, "scaleAndWriteFramebuffer", scopeColor);
+	CommandBufferDebugScope cmdBufDebug(commandBuffer, "scaleAndWriteFramebuffer", scopeColor);
 
 	u32 width = rendContext->globClip.x;
 	u32 height = rendContext->globClip.y;
@@ -102,7 +102,7 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 			vk::WholeSize);
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
 					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
-
+	cmdBufDebug.end();
 	commandBuffer.end();
 	commandPool->EndFrameAndWait();
 
@@ -641,6 +641,8 @@ void ScreenDrawer::createAttachments(vk::CommandBuffer cmdBuffer)
 		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(),
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
 				"DEPTH ATTACHMENT");
+		setImageLayout(cmdBuffer, depthAttachment->GetImage(), GetContext()->GetDepthFormat(),
+				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	}
 
 	while (colorAttachments.size() < GetSwapChainSize())
@@ -905,6 +907,8 @@ void DynamicRender::beginRender(vk::CommandBuffer cmdBuffer, int index)
 					| vk::ImageUsageFlagBits::eInputAttachment,
 				"2ND ACCUM");
 		drawer->secAccumView = secAccum->GetImageView();
+		setImageLayout(cmdBuffer, secAccum->GetImage(), vk::Format::eR8G8B8A8Unorm,
+				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eRenderingLocalReadKHR);
 	}
 	vk::RenderingAttachmentInfoKHR colorAttachments[2] {};
 	colorAttachments[0].imageView = renderTarget;

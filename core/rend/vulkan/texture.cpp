@@ -110,6 +110,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	case vk::ImageLayout::eDepthStencilReadOnlyOptimal:
 		destinationAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead;
 		break;
+	case vk::ImageLayout::eRenderingLocalReadKHR:
+		destinationAccessMask = vk::AccessFlagBits::eShaderRead;
+		break;
 	default:
 		verify(false);
 		break;
@@ -136,6 +139,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 		break;
 	case vk::ImageLayout::eDepthStencilReadOnlyOptimal:
 		destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+		break;
+	case vk::ImageLayout::eRenderingLocalReadKHR:
+		destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		break;
 	default:
 		verify(false);

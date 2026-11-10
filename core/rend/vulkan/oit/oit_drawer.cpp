@@ -290,7 +290,6 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	if (needAttachmentTransition)
 	{
 		needAttachmentTransition = false;
-		// Not convinced that this is really needed but it makes validation layers happy
 		for (auto& attachment : colorAttachments)
 			setImageLayout(cmdBuffer, attachment->GetImage(), vk::Format::eR8G8B8A8Unorm, 1,
 					vk::ImageLayout::eUndefined, getAttachmentInitialLayout());

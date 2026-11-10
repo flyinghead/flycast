@@ -360,12 +360,16 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 	  *pipelineLayout,                            // layout
 	  renderPass                                  // renderPass
 	);
+	// dynamic local read
 	const vk::Format colorAttachmentFormats[] { vk::Format::eR8G8B8A8Unorm, vk::Format::eR8G8B8A8Unorm };
 	vk::PipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo { 0, colorAttachmentFormats,
 		GetContext()->GetDepthFormat(), GetContext()->GetDepthFormat() };
-	u32 inputIndexes[] { vk::AttachmentUnused, 1 };
+	const u32 inputIndexes[] { vk::AttachmentUnused, 1 };
 	vk::RenderingInputAttachmentIndexInfoKHR riai { inputIndexes };
 	pipelineRenderingCreateInfo.pNext = &riai;
+	const u32 locIndexes[2] { 0, vk::AttachmentUnused };
+	const vk::RenderingAttachmentLocationInfoKHR rali { locIndexes };
+	riai.pNext = &rali;
 	if (dynamicLocalReadSupported)
 		graphicsPipelineCreateInfo.pNext = &pipelineRenderingCreateInfo;
 
@@ -496,12 +500,16 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 	  *pipelineLayout,                            // layout
 	  renderPass                                  // renderPass
 	);
+	// dynamic local read
 	const vk::Format colorAttachmentFormats[] { vk::Format::eR8G8B8A8Unorm, vk::Format::eR8G8B8A8Unorm };
 	vk::PipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo { 0, colorAttachmentFormats,
 		GetContext()->GetDepthFormat(), GetContext()->GetDepthFormat() };
-	u32 inputIndexes[] { vk::AttachmentUnused, 1 };
+	const u32 inputIndexes[] { vk::AttachmentUnused, 1 };
 	vk::RenderingInputAttachmentIndexInfoKHR riai { inputIndexes };
 	pipelineRenderingCreateInfo.pNext = &riai;
+	const u32 locIndexes[2] { 0, vk::AttachmentUnused };
+	const vk::RenderingAttachmentLocationInfoKHR rali { locIndexes };
+	riai.pNext = &rali;
 	if (dynamicLocalReadSupported)
 		graphicsPipelineCreateInfo.pNext = &pipelineRenderingCreateInfo;
 
@@ -686,21 +694,24 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  *pipelineLayout,                            // layout
 	  renderPass                                  // renderPass
 	);
+	// dynamic local read
 	const vk::Format colorAttachmentFormats[] { vk::Format::eR8G8B8A8Unorm, vk::Format::eR8G8B8A8Unorm };
 	vk::PipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo { 0, colorAttachmentFormats,
 		GetContext()->GetDepthFormat(), GetContext()->GetDepthFormat() };
 	u32 inputIndexes[] { vk::AttachmentUnused, 1 };
 	vk::RenderingInputAttachmentIndexInfoKHR riai { inputIndexes };
 	pipelineRenderingCreateInfo.pNext = &riai;
+	u32 locIndexes[2] { 0, vk::AttachmentUnused };
+	const vk::RenderingAttachmentLocationInfoKHR rali { locIndexes };
+	riai.pNext = &rali;
 	if (dynamicLocalReadSupported)
 	{
 		graphicsPipelineCreateInfo.pNext = &pipelineRenderingCreateInfo;
 		if (pp.tsp.DstSelect == 1)
 		{
 			// Write to attachment 1
-			static const u32 indexes[] { vk::AttachmentUnused, 0 };
-			static const vk::RenderingAttachmentLocationInfoKHR rali { indexes };
-			riai.pNext = &rali;
+			locIndexes[0] = vk::AttachmentUnused;
+			locIndexes[1] = 0;
 			inputIndexes[1] = vk::AttachmentUnused;
 		}
 	}

@@ -34,7 +34,7 @@ public:
 #ifdef VK_DEBUG
 class CommandBufferDebugScope {
 private:
-	const vk::CommandBuffer commandBuffer;
+	vk::CommandBuffer commandBuffer;
 
 public:
 	CommandBufferDebugScope(
@@ -56,9 +56,16 @@ public:
 		commandBuffer.insertDebugUtilsLabelEXT(label);
 	}
 
+	void end()
+	{
+		if (commandBuffer != nullptr)
+			commandBuffer.endDebugUtilsLabelEXT();
+		commandBuffer = nullptr;
+	}
+
 	~CommandBufferDebugScope()
 	{
-		commandBuffer.endDebugUtilsLabelEXT();
+		end();
 	}
 };
 #else
@@ -72,6 +79,10 @@ public:
 	}
 
 	void operator()(std::string_view scopeName, const float scopeColor[4]) const
+	{
+	}
+
+	void end()
 	{
 	}
 
