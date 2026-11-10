@@ -23,6 +23,7 @@
 #include <vitaGL.h>
 #include <xxhash.h>
 int _newlib_heap_size_user = 250_MB;
+unsigned int _pthread_stack_default_user = 256 * 1024; // The 32 KB default overflows in the game loading thread with redump .cue images
 bool is_standalone = false;
 
 extern "C" {
