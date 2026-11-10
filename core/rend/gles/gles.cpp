@@ -219,7 +219,7 @@ uniform sampler2D tex,fog_table;
 uniform float trilinear_alpha;
 uniform float4 fog_clamp_min;
 uniform float4 fog_clamp_max;
-#if pp_Palette == 1
+#if pp_Palette != 0
 uniform sampler2D palette;
 uniform short palette_index;
 #endif
@@ -256,7 +256,7 @@ float4 fog_clamp(float4 col)
 #endif
 }
 
-#if pp_Palette == 1
+#if pp_Palette != 0
 
 float4 palettePixel(float3 coords)
 {
