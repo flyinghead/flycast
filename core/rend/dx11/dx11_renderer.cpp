@@ -581,7 +581,8 @@ void DX11Renderer::displayFramebuffer()
 	// Shift
 	x += shiftX;
 	y += shiftY;
-	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+	// Keep the opaque alpha cleared above: video routing sends this buffer and receivers may blend with its alpha
+	deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, false, false), nullptr, 0xffffffff);
 	quad->draw(fbTextureView, samplers->getSampler(config::LinearInterpolation), nullptr, x, y, w, h, config::Rotate90);
 #endif
 }
@@ -1455,6 +1456,7 @@ void DX11Renderer::renderVideoRouting()
 			deviceContext->OMSetRenderTargets(1, &vrScaledRenderTarget.get(), nullptr);
 			deviceContext->RSSetViewports(1, &scaledViewPort);
 			deviceContext->CopyResource(vrStagingTexture.get(), backBufferTexture);
+			deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
 			quad->draw(vrStagingTextureSRV, samplers->getSampler(true));
 			os_VideoRoutingPublishFrameTexture(vrScaledTexture);
 
