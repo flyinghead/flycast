@@ -184,14 +184,19 @@ private:
 class BlendStates
 {
 public:
-	ComPtr<ID3D11BlendState> getState(bool enable, int srcBlend = 0, int destBlend = 0, bool disableWrite = false)
+	ComPtr<ID3D11BlendState> getState(bool enable, int srcBlend = 0, int destBlend = 0, bool disableWrite = false, bool writeAlpha = true)
 	{
-		int hash = (int)enable | (srcBlend << 1) | (destBlend << 5) | ((int)disableWrite << 9);
+		int hash = (int)enable | (srcBlend << 1) | (destBlend << 5) | ((int)disableWrite << 9) | ((int)writeAlpha << 10);
 		auto& state = states[hash];
 		if (!state)
 		{
 			D3D11_BLEND_DESC desc{};
-			desc.RenderTarget[0].RenderTargetWriteMask = disableWrite ? 0 : D3D11_COLOR_WRITE_ENABLE_ALL;
+			if (disableWrite)
+				desc.RenderTarget[0].RenderTargetWriteMask = 0;
+			else if (writeAlpha)
+				desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+			else
+				desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_RED | D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_BLUE;
 			desc.RenderTarget[0].BlendEnable = enable;
 			desc.RenderTarget[0].SrcBlend = SrcBlend[srcBlend];
 			desc.RenderTarget[0].DestBlend = DestBlend[destBlend];
