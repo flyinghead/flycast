@@ -453,9 +453,12 @@ public:
 	}
 	TextureCacheData(TextureCacheData&& other) : BaseTextureCacheData(std::move(other)) {
 		std::swap(texID, other.texID);
+		std::swap(storage, other.storage);
 	}
 
 	GLuint texID = 0;   //gl texture
+	// width, height, mipmap levels and internal format of the immutable storage of texID. All 0 if unknown.
+	std::array<int, 4> storage {};
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;
