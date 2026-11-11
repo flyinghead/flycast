@@ -1,4 +1,5 @@
-if(APPLE AND NOT LIBRETRO)
+# APPLE is set from the host before project(), so exclude Android builds on macOS hosts
+if(APPLE AND NOT LIBRETRO AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 	# Requirement from SDL
 	# Minimum version for $<LINK_LIBRARY:feature,library-list>
 	cmake_minimum_required(VERSION 3.24)
@@ -27,7 +28,7 @@ if(MINGW)
 	add_link_options("-Wl,--subsystem,windows:6.1")
 endif()
 
-if(APPLE)
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 	if(CMAKE_SYSTEM_NAME STREQUAL iOS)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
