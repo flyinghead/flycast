@@ -197,7 +197,8 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					((config::CrosshairColor[i] >> 16) & 0xff) / 255.f,
 					((config::CrosshairColor[i] >> 24) & 0xff) / 255.f
 			};
-			deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
+			// Colour only: video routing sends the back buffer, whose alpha must stay opaque
+			deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5, false, false), nullptr, 0xffffffff);
 			quad.draw(xhairTextureView, samplers->getSampler(false), colors);
 		}
 	}
