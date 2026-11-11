@@ -16,6 +16,7 @@
  */
 #include "osd.h"
 #include "stdclass.h"
+#include <mutex>
 #ifdef LIBRETRO
 #include "vmu_xhair.h"
 #endif
@@ -23,12 +24,18 @@
 u32 vmu_lcd_data[8][48 * 32];
 bool vmu_lcd_status[8];
 u64 vmuLastChanged[8];
+#ifndef LIBRETRO
+static std::mutex vmuMutex;
+#endif
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
 	int vmu_id = bus_id * 2 + bus_port;
 	if (vmu_id < 0 || vmu_id >= (int)std::size(vmu_lcd_data))
 		return;
+#ifndef LIBRETRO
+	std::lock_guard<std::mutex> _(vmuMutex);
+#endif
 	u32 *p = &vmu_lcd_data[vmu_id][0];
 	for (int i = 0; i < (int)std::size(vmu_lcd_data[vmu_id]); i++, buffer++)
 #ifdef LIBRETRO
@@ -44,6 +51,19 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 #endif
 	vmuLastChanged[vmu_id] = getTimeMs();
 }
+
+#ifndef LIBRETRO
+u64 getVmuScreen(int vmu_id, u32 *dst)
+{
+	if (vmu_id < 0 || vmu_id >= (int)std::size(vmu_lcd_data))
+		return 0;
+	std::lock_guard<std::mutex> _(vmuMutex);
+	if (!vmu_lcd_status[vmu_id])
+		return 0;
+	memcpy(dst, vmu_lcd_data[vmu_id], sizeof(vmu_lcd_data[vmu_id]));
+	return vmuLastChanged[vmu_id];
+}
+#endif
 
 static const int lightgunCrosshairData[16 * 16] =
 {

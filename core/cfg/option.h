@@ -462,6 +462,11 @@ extern Option<int> ScreenStretching;	// in percent. 150 means stretch from 4/3 t
 extern Option<bool> StretchToFill;
 extern Option<bool> Fog;
 extern Option<bool> FloatVMUs;
+#ifdef __ANDROID__
+extern Option<bool> VmuSecondaryScreen;
+// 0: fit (keep aspect ratio), 1: integer scaling, 2: stretch
+extern Option<int> VmuSecondaryScreenScaling;
+#endif
 extern Option<bool> Rotate90;
 extern Option<bool> PerStripSorting;
 extern Option<bool> DelayFrameSwapping;	// Delay swapping frame until FB_R_SOF matches FB_W_SOF

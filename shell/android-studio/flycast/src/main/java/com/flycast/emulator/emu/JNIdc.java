@@ -27,4 +27,8 @@ public final class JNIdc
 	public static native boolean guiIsContentBrowser();
 	public static native void guiSetInsets(int left, int right, int top, int bottom);
 	public static native void postRestore(String filesDir);
+
+	public static native boolean isVmuSecondaryScreenEnabled();
+	public static native long getVmuScreen(int vmuId, int[] pixels);
+	public static native int getVmuSecondaryScreenScaling();
 }
