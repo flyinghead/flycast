@@ -25,6 +25,11 @@ extern bool vmu_lcd_status[8];
 extern u64 vmuLastChanged[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
+#ifndef LIBRETRO
+// Copies the given VMU screen (RGBA, 48x32) into dst.
+// Returns the last change timestamp, or 0 if the VMU screen isn't active.
+u64 getVmuScreen(int vmu_id, u32 *dst);
+#endif
 
 // Crosshair
 const u32 *getCrosshairTextureData();
