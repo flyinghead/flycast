@@ -46,6 +46,12 @@ layout (binding = 0, std430) coherent restrict buffer PixelBuffer {
 layout (binding = 1, std430) readonly buffer TrPolyParamBuffer {
 	PolyParam tr_poly_params[];
 };
+
+// Area 1 color of two-volume translucent fragments, indexed like pixels[].
+// Only grown past a stub when a game actually uses two-volume TR polys.
+layout (binding = 2, std430) coherent restrict buffer PixelColor1Buffer {
+	uint pixel_color1[];
+};
 )";
 
 static const char* VertexShaderSource = R"(
@@ -271,25 +277,13 @@ uint getNextPixelIndex()
 
 #endif
 
-void main()
-{
-	setFragDepth(vtx_uv.z);
-	
-	#if PASS == PASS_OIT
-		// Manual depth testing
-		float frontDepth = texture(DepthTex, gl_FragCoord.xy / vec2(textureSize(DepthTex, 0))).r;
-		if (gl_FragDepth < frontDepth)
-			discard;
-	#endif
-	
-	// Clip inside the box
-	#if pp_ClipInside == 1
-		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
-				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
-			discard;
-	#endif
-	
+// Shades the fragment using one of the polygon's two parameter sets. volIdx is
+// always 0 except for a two-volume poly in the OIT pass: there the translucent
+// modifier volumes haven't been drawn yet, so both areas are evaluated and the
+// resolve pass picks between them.
 #if SECACCUM == 0
+vec4 computeColor(int volIdx)
+{
 	vec4 color = vtx_base;
 	vec4 offset = vtx_offs;
 	bool area1 = false;
@@ -303,6 +297,9 @@ void main()
 		#if PASS == PASS_COLOR
 			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / vec2(textureSize(shadow_stencil, 0)));
 			if (stencil.r == 0x81u) {
+		#else
+			if (volIdx == 1) {
+		#endif
 				color = vtx_base1;
 				offset = vtx_offs1;
 				area1 = true;
@@ -312,7 +309,6 @@ void main()
 				cur_shading_instr = shading_instr[1];
 				cur_fog_control = fog_control[1];
 			}
-		#endif
 	#endif
 	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		color /= vtx_uv.z;
@@ -425,6 +421,44 @@ void main()
 		color.a = 1.0;
 	#endif
 
+	return color;
+}
+#endif
+
+// Number of parameter sets this fragment has to shade. Anything but a
+// two-volume translucent poly keeps 1 and compiles to what it did before.
+#if PASS == PASS_OIT && pp_TwoVolumes == 1 && SECACCUM == 0
+#define NUM_AREAS 2
+#else
+#define NUM_AREAS 1
+#endif
+
+void main()
+{
+	setFragDepth(vtx_uv.z);
+	
+	#if PASS == PASS_OIT
+		// Manual depth testing
+		float frontDepth = texture(DepthTex, gl_FragCoord.xy / vec2(textureSize(DepthTex, 0))).r;
+		if (gl_FragDepth < frontDepth)
+			discard;
+	#endif
+	
+	// Clip inside the box
+	#if pp_ClipInside == 1
+		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
+				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
+			discard;
+	#endif
+	
+#if SECACCUM == 0
+	#if PASS == PASS_OIT
+	uint packedColor[NUM_AREAS];
+	for (int volIdx = 0; volIdx < NUM_AREAS; volIdx++)
+		packedColor[volIdx] = packColors(clamp(computeColor(volIdx), vec4(0.0), vec4(1.0)));
+	#else
+	vec4 color = computeColor(0);
+	#endif
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 #else
 	// SECACCUM == 1
@@ -438,11 +472,15 @@ void main()
 		uint idx =  getNextPixelIndex();
 		
 		Pixel pixel;
-		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
+		pixel.color = packedColor[0];
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = vtx_index;
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
+#if NUM_AREAS == 2
+		// Read back by the resolve pass if this fragment lands inside a volume
+		pixel_color1[idx] = packedColor[1];
+#endif
 		
 #if NOUVEAU == 0
 		discard;
@@ -859,11 +897,16 @@ bool OpenGL4Renderer::renderFrame(int rendering_width, int rendering_height)
 	{
 		std::vector<u32> trPolyParams(gl.rendContext->global_param_tr.size() * 2);
 		int i = 0;
+		bool twoVolumeTr = false;
 		for (const PolyParam& pp : gl.rendContext->global_param_tr)
 		{
 			trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
 			trPolyParams[i++] = pp.tsp1.full;
+			if (pp.tsp1.full != (u32)-1)
+				twoVolumeTr = true;
 		}
+		if (twoVolumeTr)
+			gl4EnsurePixelColor1Buffer();
 		gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
 	}
 	else {
