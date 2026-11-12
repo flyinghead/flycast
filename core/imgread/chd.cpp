@@ -27,6 +27,10 @@ struct CHDDisc : Disc
 		if (chd)
 			chd_close(chd);
 	}
+
+private:
+	bool readSector(Track& track, u32 fad, u8 *sector);
+	int fixDataTrackPosition(Track& track);
 };
 
 struct CHDTrack : TrackFile
@@ -104,6 +108,53 @@ static u32 getSectorSize(const std::string& type)
 		return 2352;	// CDROM XA Mode2 Data
 
 	throw FlycastException(strprintf(i18n::T("chd: track type %s is not supported"), type.c_str()));
+}
+
+static u32 bcdToInt(u8 v) {
+	return (v >> 4) * 10 + (v & 0xf);
+}
+
+bool CHDDisc::readSector(Track& track, u32 fad, u8 *sector)
+{
+	SectorFormat secfmt;
+	SubcodeFormat subfmt;
+	return track.file->Read(fad, sector, &secfmt, nullptr, &subfmt);
+}
+
+// CHD files don't record where the second session of a MIL-CD starts, nor whether the data
+// track pregap is stored in the track. Raw data sectors hold their own address in their header,
+// so use it to place the track, and the ISO 9660 volume descriptor to find its start.
+// Returns the number of frames the track has been moved by.
+int CHDDisc::fixDataTrackPosition(Track& track)
+{
+	CHDTrack *file = (CHDTrack *)track.file;
+	if (file->fmt != 2352)
+		return 0;
+	static const u8 SYNC[12] { 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0 };
+	u8 sector[2352];
+	if (!readSector(track, track.StartFAD, sector) || memcmp(sector, SYNC, sizeof(SYNC)) != 0)
+		return 0;
+	// address of the first sector stored in the track
+	const u32 headerFad = (bcdToInt(sector[12]) * 60 + bcdToInt(sector[13])) * 75 + bcdToInt(sector[14]);
+	const int shift = (int)headerFad - (int)track.StartFAD;
+	if (shift == 0)
+		return 0;
+	file->Offset -= shift;
+	u32 startFad = headerFad;
+	// The track data starts after the pregap if the volume descriptor is 16 sectors after it
+	for (u32 pregap : { 0u, 150u })
+	{
+		if (readSector(track, headerFad + pregap + 16, sector)
+				&& memcmp(&sector[24 + 1], "CD001", 5) == 0)
+		{
+			startFad = headerFad + pregap;
+			break;
+		}
+	}
+	INFO_LOG(GDROM, "chd: data track moved from FAD %d to %d", track.StartFAD, startFad);
+	track.StartFAD = startFad;
+	track.EndFAD += shift;
+	return shift;
 }
 
 void CHDDisc::tryOpen(const char* file)
@@ -254,11 +305,12 @@ void CHDDisc::tryOpen(const char* file)
 			tracks.back().StartFAD += gap;
 			tracks.back().EndFAD += gap;
 			((CHDTrack *)tracks.back().file)->Offset -= gap;
+			const int shift = fixDataTrackPosition(tracks.back());
 			ses.StartFAD = tracks.back().StartFAD;
 			sessions.push_back(ses);
 			DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
 
-			EndFAD = LeadOut.StartFAD = total_frames + gap;
+			EndFAD = LeadOut.StartFAD = total_frames + gap + shift;
 		}
 		else
 		{

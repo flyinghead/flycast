@@ -768,12 +768,16 @@ bool OpenGLRenderer::renderLastFrame()
 	int dy = 0;
 	glcache.Disable(GL_SCISSOR_TEST);
 	getWindowboxDimensions(settings.display.width, settings.display.height, gl.ofbo.aspectRatio, dx, dy, config::Rotate90);
+	// The PVR video output registers only apply to the PVR (not to the Sega Hikaru)
+	float borderColor[3] { 0.f, 0.f, 0.f };
+	if (!lastFrameHikaru)
+		VO_BORDER_COL.getRGBColor(borderColor);
 
 	if (gl.bogusBlitFramebuffer || config::Rotate90)
 	{
 		glViewport(dx, dy, settings.display.width - dx * 2, settings.display.height - dy * 2);
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
-		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+		glcache.ClearColor(borderColor[0], borderColor[1], borderColor[2], 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config::LinearInterpolation ? GL_LINEAR : GL_NEAREST);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config::LinearInterpolation ? GL_LINEAR : GL_NEAREST);
@@ -800,7 +804,7 @@ bool OpenGLRenderer::renderLastFrame()
 #ifndef GLES2
 		framebuffer->bind(GL_READ_FRAMEBUFFER);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
-		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+		glcache.ClearColor(borderColor[0], borderColor[1], borderColor[2], 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
 				dx, settings.display.height - dy, settings.display.width - dx, dy,

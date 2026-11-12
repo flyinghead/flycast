@@ -49,6 +49,18 @@ std::string libGDR_GetTrackIsrc(u32 trackNum)
 	return disc->tracks[trackNum - 1].isrc;
 }
 
+// Provide the media catalog number and ISRCs for images that don't store them (chd, gdi)
+void libGDR_SetMissingSubcodeInfo(const char *catalog, const std::vector<const char *>& isrc)
+{
+	if (disc == nullptr)
+		return;
+	if (disc->catalog.empty())
+		disc->catalog = catalog;
+	for (size_t i = 0; i < isrc.size() && i < disc->tracks.size(); i++)
+		if (disc->tracks[i].isrc.empty())
+			disc->tracks[i].isrc = isrc[i];
+}
+
 void libGDR_GetTrackAdrAndControl(u32 trackNum, u8& adr, u8& ctrl)
 {
 	if (trackNum == 0 || disc == nullptr || trackNum > disc->tracks.size())

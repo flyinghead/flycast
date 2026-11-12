@@ -382,13 +382,16 @@ void InputMapping::clear_axis(u32 port, DreamcastKey id)
 		return;
 	}
 
-	while (true)
+	for (auto it = axes[port].begin(); it != axes[port].end();)
 	{
-		std::pair<u32, bool> code = get_axis_code(port, id);
-		if (code.first == (u32)-1)
-			break;
-		axes[port][code] = EMU_AXIS_NONE;
-		dirty = true;
+		if (it->second == id)
+		{
+			it = axes[port].erase(it);
+			dirty = true;
+		}
+		else {
+			++it;
+		}
 	}
 }
 
@@ -397,7 +400,7 @@ void InputMapping::set_axis(u32 port, DreamcastKey id, u32 code, bool positive)
 	if (id != EMU_AXIS_NONE)
 	{
 		clear_axis(port, id);
-		axes[port][std::make_pair(code, positive)] = id;
+		axes[port].emplace(std::make_pair(code, positive), id);
 		dirty = true;
 	}
 }
@@ -664,20 +667,20 @@ std::pair<u32, bool> InputMapping::get_axis_code(u32 port, DreamcastKey key)
 	return std::make_pair(InputDef::INVALID_CODE, false);
 }
 
-DreamcastKey InputMapping::get_button_id(
+std::list<DreamcastKey> InputMapping::get_button_ids(
 	u32 port,
 	const InputMapping::InputSet& inputSet) const
 {
+	std::list<DreamcastKey> matchedKeys;
 	if (port >= NUM_PORTS || inputSet.empty())
 	{
 		// Invalid port or no input
-		return EMU_BTN_NONE;
+		return matchedKeys;
 	}
 
-	DreamcastKey matchedKey = EMU_BTN_NONE;
 	size_t matchedInputSize = 0;
 
-	const std::map<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
+	const std::multimap<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
 	for (const auto& it : inputMap)
 	{
 		const DreamcastKey& key = it.second;
@@ -686,16 +689,19 @@ DreamcastKey InputMapping::get_button_id(
 			const InputMapping::ButtonCombo& combo = it.first;
 			if (inputSet.ends_with(combo.inputs, combo.sequential))
 			{
+				// Only the longest matching combos are activated
 				if (combo.inputs.size() > matchedInputSize)
 				{
 					matchedInputSize = combo.inputs.size();
-					matchedKey = key;
+					matchedKeys.clear();
 				}
+				if (combo.inputs.size() == matchedInputSize)
+					matchedKeys.push_back(key);
 			}
 		}
 	}
 
-	return matchedKey;
+	return matchedKeys;
 }
 
 std::list<DreamcastKey> InputMapping::get_button_released_ids(
@@ -734,14 +740,22 @@ void InputMapping::clear_button(u32 port, DreamcastKey id)
 		return;
 	}
 
-	std::map<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
+	std::multimap<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
 	std::multimap<DreamcastKey, ButtonCombo>& revInputMap = reverseButtonMap[port];
 
 	// Remove the existing
 	const auto& range = revInputMap.equal_range(id);
 	for(auto existing = range.first; existing != range.second;)
 	{
-		inputMap.erase(existing->second);
+		// Only remove this key: the same combo may be mapped to other keys
+		auto comboRange = inputMap.equal_range(existing->second);
+		for (auto it = comboRange.first; it != comboRange.second;)
+		{
+			if (it->second == id)
+				it = inputMap.erase(it);
+			else
+				++it;
+		}
 		existing = revInputMap.erase(existing);
 		dirty = true;
 	}
@@ -755,27 +769,13 @@ bool InputMapping::set_button(u32 port, DreamcastKey id, const InputMapping::But
 		return false;
 	}
 
-	std::map<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
+	std::multimap<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
 	std::multimap<DreamcastKey, ButtonCombo>& revInputMap = reverseButtonMap[port];
 
-	// Remove the existing by ID
+	// Remove the existing by ID. Other keys mapped to the same inputs are kept.
 	clear_button(port, id);
 
-	// Remove all combos that intersect this
-	for (std::map<ButtonCombo, DreamcastKey>::const_iterator iter = inputMap.begin(); iter != inputMap.end();)
-	{
-		if (combo.intersects(iter->first))
-		{
-			revInputMap.erase(iter->second);
-			iter = inputMap.erase(iter);
-		}
-		else
-		{
-			++iter;
-		}
-	}
-
-	inputMap[combo] = id;
+	inputMap.emplace(combo, id);
 	revInputMap.insert(std::make_pair(id, combo));
 
 	dirty = true;

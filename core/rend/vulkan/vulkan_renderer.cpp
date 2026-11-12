@@ -32,6 +32,7 @@ bool BaseVulkanRenderer::BaseInit(vk::RenderPass renderPass, int subpass)
 	quadPipeline->Init(&shaderManager, renderPass, subpass);
 	framebufferDrawer = std::make_unique<QuadDrawer>();
 	framebufferDrawer->Init(quadPipeline.get());
+	hikaruDrawer.Init(&texCommandPool);
 
 	return true;
 }
@@ -45,6 +46,7 @@ void BaseVulkanRenderer::Term()
 #endif
 	framebufferDrawer.reset();
 	quadPipeline.reset();
+	hikaruDrawer.Term();
 	textureCache.Clear();
 	fogTexture = nullptr;
 	paletteTexture = nullptr;
@@ -107,12 +109,23 @@ void BaseVulkanRenderer::Process(TA_context* ctx)
 	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
 		GetContext()->setSwapInterval(ctx->rend.swapInterval);
 
-	ta_parse(ctx, true);
+	if (!ctx->rend.hikaru)
+	{
+		ta_parse(ctx, true);
 
-	// TODO can't update fog or palette twice in multi render
-	CheckFogTexture();
-	CheckPaletteTexture();
+		// TODO can't update fog or palette twice in multi render
+		CheckFogTexture();
+		CheckPaletteTexture();
+	}
+	// else Sega Hikaru: drawn by its own renderer, nothing to parse
 	texCommandBuffer.end();
+}
+
+bool BaseVulkanRenderer::renderHikaru()
+{
+	lastFrameHikaru = true;
+	hikaruDrawer.Draw(*rendContext->hikaru, rendContext->framebufferWidth, rendContext->framebufferHeight);
+	return true;
 }
 
 void BaseVulkanRenderer::ReInitOSD()
@@ -303,6 +316,9 @@ public:
 	bool Render() override
 	{
 		try {
+			if (rendContext->hikaru)
+				return renderHikaru();
+			lastFrameHikaru = false;
 			Drawer *drawer;
 			if (rendContext->isRTT)
 				drawer = &textureDrawer;
@@ -332,6 +348,8 @@ public:
 		if (clearLastFrame)
 			return false;
 		try {
+			if (lastFrameHikaru)
+				return presentHikaru();
 			if (config::EmulateFramebuffer || framebufferRendered)
 				return presentFramebuffer();
 			else

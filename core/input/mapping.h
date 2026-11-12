@@ -183,7 +183,14 @@ public:
 	//! @param[in] inputSet The input set to look for
 	//! @return EMU_BTN_NONE if no key should be activated
 	//! @return the key that should be activated due to the given input set otherwise
-	DreamcastKey get_button_id(u32 port, const InputSet& inputSet) const;
+	DreamcastKey get_button_id(u32 port, const InputSet& inputSet) const {
+		std::list<DreamcastKey> keys = get_button_ids(port, inputSet);
+		return keys.empty() ? EMU_BTN_NONE : keys.front();
+	}
+
+	//! Resolves an ordered set of inputs into all the keys mapped to it
+	//! @return the keys that should be activated due to the given input set, empty if none
+	std::list<DreamcastKey> get_button_ids(u32 port, const InputSet& inputSet) const;
 
 	//! Resolves currently active keys with a released input into keys that should be released
 	//! @param[in] port The port that the given inputs belong to [0,NUM_PORTS)
@@ -236,6 +243,15 @@ public:
 		else
 			return EMU_AXIS_NONE;
 	}
+	//! @return all the keys mapped to the given axis direction
+	std::vector<DreamcastKey> get_axis_ids(u32 port, u32 code, bool pos) const
+	{
+		std::vector<DreamcastKey> keys;
+		auto range = axes[port].equal_range(std::make_pair(code, pos));
+		for (auto it = range.first; it != range.second; ++it)
+			keys.push_back(it->second);
+		return keys;
+	}
 	std::pair<u32, bool> get_axis_code(u32 port, DreamcastKey key);
 
 	void clear_axis(u32 port, DreamcastKey id);
@@ -269,11 +285,11 @@ private:
 	void loadv1(config::IniFile& mf);
 	static std::vector<std::string> strSplit(const std::string str, char c, size_t maxsplit = 0);
 
-	std::map<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];
+	std::multimap<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];
 	std::map<u32, bool> triggers;
 
-	//! ButtonCombo -> DreamcastKey
-	std::map<ButtonCombo, DreamcastKey> buttonMap[NUM_PORTS];
+	//! ButtonCombo -> DreamcastKey (an input can be mapped to several keys)
+	std::multimap<ButtonCombo, DreamcastKey> buttonMap[NUM_PORTS];
 	//! DreamcastKey -> ButtonCombo
 	std::multimap<DreamcastKey, ButtonCombo> reverseButtonMap[NUM_PORTS];
 

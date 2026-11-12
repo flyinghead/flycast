@@ -157,6 +157,7 @@ bool DX11Renderer::Init()
 	quad = std::make_unique<Quad>();
 	quad->init(device, deviceContext, shaders);
 	n2Helper.init(device, deviceContext);
+	hikaruRenderer.init(device, deviceContext);
 
 	updateFogTable = true;
 
@@ -177,6 +178,7 @@ void DX11Renderer::Term()
 	os_VideoRoutingTermDX();
 #endif
 	n2Helper.term();
+	hikaruRenderer.term();
 	vtxConstants.reset();
 	pxlConstants.reset();
 	fbTex.reset();
@@ -319,6 +321,13 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw, int area)
 void DX11Renderer::Process(TA_context* ctx)
 {
 	rendContext = &ctx->rend;
+	if (ctx->rend.hikaru)
+	{
+		// Sega Hikaru: drawn by its own renderer, nothing to parse
+		if (ctx->rend.swapInterval > 0)
+			DX11Context::Instance()->setSwapInterval(ctx->rend.swapInterval);
+		return;
+	}
 	if (resetTextureCache) {
 		texCache.Clear();
 		resetTextureCache = false;
@@ -473,6 +482,31 @@ void DX11Renderer::setupPixelShaderConstants()
 
 bool DX11Renderer::Render()
 {
+	if (rendContext->hikaru)
+	{
+		// Sega Hikaru: its own renderer, then the usual output
+		lastFrameHikaru = true;
+		resetContextState();
+		resize(rendContext->framebufferWidth, rendContext->framebufferHeight);
+		hikaruRenderer.draw(*rendContext->hikaru, fbRenderTarget, depthTexView, width, height);
+		aspectRatio = 4.f / 3.f;
+#ifndef LIBRETRO
+		deviceContext->OMSetRenderTargets(1, &DX11Context::Instance()->getRenderTarget().get(), nullptr);
+		displayFramebuffer(false);
+		drawOSD();
+		renderVideoRouting();
+		DX11Context::Instance()->setFrameRendered();
+#else
+		ID3D11RenderTargetView *nullView = nullptr;
+		deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+		DX11Context::Instance()->presentFrame(fbTextureView, width, height);
+#endif
+		frameRendered = true;
+		frameRenderedOnce = true;
+		clearLastFrame = false;
+		return true;
+	}
+	lastFrameHikaru = false;
 	resetContextState();
 	bool is_rtt = rendContext->isRTT;
 	if (!is_rtt)
@@ -515,7 +549,7 @@ bool DX11Renderer::Render()
 		aspectRatio = getOutputFramebufferAspectRatio();
 #ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &DX11Context::Instance()->getRenderTarget().get(), nullptr);
-		displayFramebuffer();
+		displayFramebuffer(!lastFrameHikaru);
 		drawOSD();
 		renderVideoRouting();
 		DX11Context::Instance()->setFrameRendered();
@@ -532,7 +566,7 @@ bool DX11Renderer::Render()
 	return !is_rtt;
 }
 
-void DX11Renderer::displayFramebuffer()
+void DX11Renderer::displayFramebuffer(bool pvrVideo)
 {
 #ifndef LIBRETRO
 	D3D11_VIEWPORT vp{};
@@ -544,13 +578,18 @@ void DX11Renderer::displayFramebuffer()
 
 	const D3D11_RECT r = { 0, 0, settings.display.width, settings.display.height };
 	deviceContext->RSSetScissorRects(1, &r);
-	float colors[4];
-	VO_BORDER_COL.getRGBColor(colors);
-	colors[3] = 1.f;
+	// The PVR video output registers only apply to the PVR (not to the Sega Hikaru)
+	float colors[4] { 0.f, 0.f, 0.f, 1.f };
+	if (pvrVideo)
+	{
+		VO_BORDER_COL.getRGBColor(colors);
+		colors[3] = 1.f;
+	}
 	deviceContext->ClearRenderTargetView(DX11Context::Instance()->getRenderTarget(), colors);
 
-	float shiftX, shiftY;
-	getVideoShift(shiftX, shiftY);
+	float shiftX = 0.f, shiftY = 0.f;
+	if (pvrVideo)
+		getVideoShift(shiftX, shiftY);
 	shiftX *=  2.f / width;
 	shiftY *=  -2.f / height;
 
@@ -942,7 +981,7 @@ bool DX11Renderer::RenderLastFrame()
 {
 	if (!frameRenderedOnce || clearLastFrame)
 		return false;
-	displayFramebuffer();
+	displayFramebuffer(!lastFrameHikaru);
 	return true;
 }
 
@@ -1032,7 +1071,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	aspectRatio = getDCFramebufferAspectRatio();
 
 	deviceContext->OMSetRenderTargets(1, &DX11Context::Instance()->getRenderTarget().get(), nullptr);
-	displayFramebuffer();
+	displayFramebuffer(!lastFrameHikaru);
 	drawOSD();
 	renderVideoRouting();
 	DX11Context::Instance()->setFrameRendered();

@@ -92,6 +92,10 @@ public:
 	bool Render() override
 	{
 		try {
+			if (rendContext->hikaru)
+				// Sega Hikaru: its own renderer
+				return renderHikaru();
+			lastFrameHikaru = false;
 			OITDrawer *drawer;
 			if (rendContext->isRTT)
 				drawer = &textureDrawer;
@@ -121,6 +125,8 @@ public:
 		if (clearLastFrame)
 			return false;
 		try {
+			if (lastFrameHikaru)
+				return presentHikaru();
 			if (config::EmulateFramebuffer || framebufferRendered)
 				return presentFramebuffer();
 			else

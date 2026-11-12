@@ -23,6 +23,7 @@
 #include "input/keyboard_device.h"
 #include "input/mouse.h"
 #include "hw/maple/maple_devs.h"
+#include "hw/naomi/naomi_cart.h"
 #include "vgamepad.h"
 #include "oslib/storage.h"
 
@@ -812,6 +813,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				game_btn_name = GetCurrentGameButtonName(systemMapping->key);
 				if (game_btn_name == nullptr)
 					game_btn_name = GetCurrentGameAxisName(systemMapping->key);
+				// Hikaru games only list the inputs they use
+				if (game_btn_name == nullptr && game_started && settings.platform.isHikaru()
+						&& NaomiGameInputs != nullptr && systemMapping->key <= DC_AXIS3_DOWN)
+					continue;
 			}
 			if (game_btn_name != nullptr && game_btn_name[0] != '\0')
 				ImGui::Text("%s - %s", systemMapping->name, game_btn_name);

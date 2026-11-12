@@ -698,6 +698,10 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	bool Render() override
 	{
+		if (gl.rendContext->hikaru)
+			// Sega Hikaru: its own renderer
+			return renderHikaruFrame();
+		lastFrameHikaru = false;
 		saveCurrentFramebuffer();
 		renderFrame(gl.rendContext->framebufferWidth, gl.rendContext->framebufferHeight);
 		if (gl.rendContext->isRTT) {

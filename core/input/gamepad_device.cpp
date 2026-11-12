@@ -206,11 +206,8 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 		if (currentInputs.insert_back(inputDef))
 		{
 			// Handle keys activated by this new input
-			DreamcastKey mappedKey = input_mapper->get_button_id(0, currentInputs);
-			if (mappedKey != EMU_BTN_NONE) {
-				mappedKeys.push_back(mappedKey);
-				currentKeys.push_back(mappedKey);
-			}
+			mappedKeys = input_mapper->get_button_ids(0, currentInputs);
+			currentKeys.insert(currentKeys.end(), mappedKeys.begin(), mappedKeys.end());
 		}
 	}
 	else
@@ -235,8 +232,8 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 	{
 		const InputMapping::InputSet simpleInput{inputDef};
 		for (int port = 1; port < 4; port++) {
-			DreamcastKey mappedKey = input_mapper->get_button_id(port, simpleInput);
-			rc = handleButtonInput(port, mappedKey, pressed) || rc;
+			for (DreamcastKey mappedKey : input_mapper->get_button_ids(port, simpleInput))
+				rc = handleButtonInput(port, mappedKey, pressed) || rc;
 		}
 	}
 
@@ -527,23 +524,23 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		for (u32 port = 0; port < 4; port++)
 		{
 			if (!input_mapper->isTrigger(code)) {
-				DreamcastKey key = input_mapper->get_axis_id(port, code, !positive);
 				// Reset opposite axis to 0
-				handle_axis(port, key, 0, code);
+				for (DreamcastKey key : input_mapper->get_axis_ids(port, code, !positive))
+					handle_axis(port, key, 0, code);
 			}
-			DreamcastKey key = input_mapper->get_axis_id(port, code, positive);
-			rc = handle_axis(port, key, value, code) || rc;
+			for (DreamcastKey key : input_mapper->get_axis_ids(port, code, positive))
+				rc = handle_axis(port, key, value, code) || rc;
 		}
 	}
 	else
 	{
 		if (!input_mapper->isTrigger(code)) {
-			DreamcastKey key = input_mapper->get_axis_id(0, code, !positive);
 			// Reset opposite axis to 0
-			handle_axis(_maple_port, key, 0, code);
+			for (DreamcastKey key : input_mapper->get_axis_ids(0, code, !positive))
+				handle_axis(_maple_port, key, 0, code);
 		}
-		DreamcastKey key = input_mapper->get_axis_id(0, code, positive);
-		rc = handle_axis(_maple_port, key, value, code);
+		for (DreamcastKey key : input_mapper->get_axis_ids(0, code, positive))
+			rc = handle_axis(_maple_port, key, value, code) || rc;
 	}
 
 	// Update axis press tracking for button combinations

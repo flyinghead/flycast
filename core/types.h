@@ -153,6 +153,7 @@ struct settings_t
 		bool isArcade() const { return !isConsole(); }
 		bool isConsole() const { return system == DC_PLATFORM_DREAMCAST; }
 		bool isSystemSP() const { return system == DC_PLATFORM_SYSTEMSP; }
+		bool isHikaru() const { return system == DC_PLATFORM_HIKARU; }
 	} platform;
 
 	struct {

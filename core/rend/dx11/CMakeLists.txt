@@ -18,6 +18,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         dx11context_lr.h
         dx11_driver.h
         dx11_naomi2.cpp
+        dx11_hikaru.cpp
         dx11_naomi2.h
         oit/dx11_oitbuffers.h
         oit/dx11_oitrenderer.cpp

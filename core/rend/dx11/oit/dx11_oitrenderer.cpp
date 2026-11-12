@@ -648,6 +648,9 @@ struct DX11OITRenderer : public DX11Renderer
 
 	bool Render() override
 	{
+		if (rendContext->hikaru)
+			// Sega Hikaru: its own renderer
+			return DX11Renderer::Render();
 		resetContextState();
 		bool is_rtt = rendContext->isRTT;
 
