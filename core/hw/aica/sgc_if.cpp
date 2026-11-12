@@ -22,6 +22,7 @@
 #include "aica.h"
 #include "aica_if.h"
 #include "aica_mem.h"
+#include "aica_chip.h"
 #include "dsp.h"
 #include "audio/audiostream.h"
 #include "hw/gdrom/gdrom_if.h"
@@ -29,6 +30,7 @@
 #include "serialize.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #undef FAR
@@ -413,9 +415,11 @@ enum PCMSType
 
 */
 
+#define Chans (*ChannelEx::chans)
+
 struct ChannelEx
 {
-	static ChannelEx Chans[64];
+	static std::array<ChannelEx, 64> *chans;	// channels of the active chip
 
 	ChannelCommonData* ccd;
 
@@ -1461,9 +1465,19 @@ static void staticinitialise()
 }
 static OnLoad staticInit(staticinitialise);
 
-ChannelEx ChannelEx::Chans[64];
+static std::array<ChannelEx, 64> chipChans[MAX_CHIPS];
+std::array<ChannelEx, 64> *ChannelEx::chans = &chipChans[0];
 
-#define Chans ChannelEx::Chans
+// Chips after the first: output of the last sample, and the chip feeding chip 0's EXTS
+static s32 chipOutput[MAX_CHIPS][2];
+static int externalSource = -1;
+static int activeChipIndex;
+
+void selectChip(int chip)
+{
+	ChannelEx::chans = &chipChans[chip];
+	activeChipIndex = chip;
+}
 
 void init()
 {
@@ -1475,6 +1489,12 @@ void init()
 void term()
 {
 	dsp::term();
+}
+
+void initChip()
+{
+	ChannelEx::initAll();
+	dsp::resetState();
 }
 
 void WriteChannelReg(u32 channel, u32 reg, int size)
@@ -1561,14 +1581,28 @@ void AICA_Sample()
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input
 	
-	if (cdda_index >= CDDA_SIZE)
+	s32 EXTS0L = 0;
+	s32 EXTS0R = 0;
+	if (activeChipIndex == 0)
 	{
-		cdda_index = 0;
-		libCore_CDDA_Sector(cdda_sector);
+		if (externalSource >= 0)
+		{
+			// Output of another chip (Hikaru: the optional sound board)
+			EXTS0L = chipOutput[externalSource][0];
+			EXTS0R = chipOutput[externalSource][1];
+		}
+		else
+		{
+			if (cdda_index >= CDDA_SIZE)
+			{
+				cdda_index = 0;
+				libCore_CDDA_Sector(cdda_sector);
+			}
+			EXTS0L = cdda_sector[cdda_index];
+			EXTS0R = cdda_sector[cdda_index+1];
+			cdda_index += 2;
+		}
 	}
-	s32 EXTS0L = cdda_sector[cdda_index];
-	s32 EXTS0R = cdda_sector[cdda_index+1];
-	cdda_index += 2;
 
 	//Final MIX ..
 	//Add CDDA / DSP effect(s)
@@ -1588,14 +1622,17 @@ void AICA_Sample()
 			VolumePan(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
+	if (activeChipIndex == 0)
+	{
 #ifdef LIBRETRO
-	if (settings.aica.muteAudio)
+		if (settings.aica.muteAudio)
 #else
-	if (settings.input.fastForwardMode || settings.aica.muteAudio)
+		if (settings.input.fastForwardMode || settings.aica.muteAudio)
 #endif
-		return;
+			return;
+	}
 
-	if (config::VmuSound)
+	if (config::VmuSound && activeChipIndex == 0)
 	{
 		SampleType b = beep.getSample();
 		mixl += b;
@@ -1630,7 +1667,13 @@ void AICA_Sample()
 	mixl = std::clamp(mixl, -32768, 32767);
 	mixr = std::clamp(mixr, -32768, 32767);
 
-	WriteSample(mixr, mixl);
+	if (activeChipIndex == 0)
+		WriteSample(mixr, mixl);
+	else
+	{
+		chipOutput[activeChipIndex][0] = mixl;
+		chipOutput[activeChipIndex][1] = mixr;
+	}
 }
 
 void serialize(Serializer& ser)
@@ -1735,3 +1778,18 @@ void deserialize(Deserializer& deser)
 }
 
 } // namespace aica::sgc
+
+namespace aica
+{
+
+void getChipOutput(int chip, s32& left, s32& right)
+{
+	left = sgc::chipOutput[chip][0];
+	right = sgc::chipOutput[chip][1];
+}
+
+void setExternalSource(int chip) {
+	sgc::externalSource = chip;
+}
+
+} // namespace aica

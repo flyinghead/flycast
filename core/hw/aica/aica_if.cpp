@@ -20,19 +20,57 @@
 #include "dsp.h"
 #include "sgc_if.h"
 #include "aica.h"
+#include "aica_chip.h"
 
 #include <ctime>
 
 namespace aica
 {
 
-RamRegion aica_ram;
-static u32 VREG;
-static u32 ARMRST;
-static u32 rtc_EN;
+RamRegion aica_ram;	// wave RAM of the active chip
+static RamRegion parkedRam[MAX_CHIPS];	// wave RAM of the chips that are not active
+
+struct ChipInterface
+{
+	u32 vreg;
+	u32 armrst;
+	u32 rtcEnable;
+	u32 rtc;
+};
+static ChipInterface chipInterface[MAX_CHIPS];
+static ChipInterface *iface = &chipInterface[0];
+#define VREG (iface->vreg)
+#define ARMRST (iface->armrst)
+#define rtc_EN (iface->rtcEnable)
+#define RealTimeClock (iface->rtc)
+
 int dma_sched_id = -1;
-static u32 RealTimeClock;
 int rtc_schid = -1;
+
+void selectChipInterface(int from, int to)
+{
+	parkedRam[from] = aica_ram;
+	aica_ram = parkedRam[to];
+	iface = &chipInterface[to];
+}
+
+u8 *chipRam(int chip) {
+	return chip == activeChip() ? &aica_ram[0] : &parkedRam[chip][0];
+}
+
+void allocChipRam(int chip, bool alloc)
+{
+	verify(chip != 0 && chip != activeChip());
+	if (alloc)
+	{
+		parkedRam[chip].alloc(ARAM_SIZE);
+		parkedRam[chip].zero();
+	}
+	else
+	{
+		parkedRam[chip].free();
+	}
+}
 
 u32 GetRTC_now()
 {
@@ -183,7 +221,7 @@ template void writeAicaReg<>(u32 addr, u32 data);
 
 static int DreamcastSecond(int tag, int cycles, int jitter, void *arg)
 {
-	RealTimeClock++;
+	chipInterface[0].rtc++;
 
 	dc_prof_periodical();
 
@@ -528,10 +566,10 @@ void serialize(Serializer& ser)
 
 	dsp::state.serialize(ser);
 
-	for (const auto& timer : timers)
+	for (int i = 0; i < 3; i++)
 	{
-		ser << timer.c_step;
-		ser << timer.m_step;
+		ser << timers[i].c_step;
+		ser << timers[i].m_step;
 	}
 
 	if (!ser.rollback())
@@ -541,7 +579,7 @@ void serialize(Serializer& ser)
 	ser << rtc_EN;
 	ser << RealTimeClock;
 
-	ser << aica_reg;
+	ser.serialize(aica_reg, AICA_REG_SIZE);
 
 	sgc::serialize(ser);
 }
@@ -583,7 +621,7 @@ void deserialize(Deserializer& deser)
 	deser >> rtc_EN;
 	deser >> RealTimeClock;
 
-	deser >> aica_reg;
+	deser.deserialize(aica_reg, AICA_REG_SIZE);
 
 	sgc::deserialize(deser);
 }

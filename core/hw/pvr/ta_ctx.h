@@ -6,7 +6,10 @@
 #include <glm/glm.hpp>
 
 #include <algorithm>
+#include <memory>
 #include <vector>
+
+namespace hikaru { struct DrawList; }
 
 class BaseTextureCacheData;
 struct N2LightModel;
@@ -246,6 +249,10 @@ struct rend_context
 {
 	f32 fZ_max;
 
+	// Sega Hikaru: the frame is a Hikaru draw list, drawn by the renderer's Hikaru backend.
+	// Nothing else in the context is used then.
+	std::shared_ptr<hikaru::DrawList> hikaru;
+
 	bool isRTT;
 	bool clearFramebuffer;
 	
@@ -280,6 +287,7 @@ struct rend_context
 
 	void Clear()
 	{
+		hikaru.reset();
 		idx.clear();
 		global_param_op.clear();
 		global_param_pt.clear();

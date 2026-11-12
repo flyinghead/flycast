@@ -72,7 +72,8 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 		val >>= 1;
 	}
 	u32 arcade_key;
-	if (settings.platform.isNaomi())
+	// Naomi and Hikaru share the same JVS button mapping
+	if (!settings.platform.isAtomiswave())
 	{
 		if (pos >= std::size(naomi_button_mapping))
 			return nullptr;
@@ -96,6 +97,10 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
 {
 	if (NaomiGameInputs == nullptr || axis == EMU_BTN_NONE)
 		return nullptr;
+	// The swracer levers are also steered with the left stick (see the analog inputs below)
+	if (settings.platform.isHikaru() && settings.content.gameId == "swracer"
+			&& (axis == DC_AXIS_LEFT || axis == DC_AXIS_RIGHT))
+		return axis == DC_AXIS_LEFT ? "STEER LEFT" : "STEER RIGHT";
 
 	for (int i = 0; NaomiGameInputs->axes[i].name != nullptr; i++)
 	{
@@ -187,6 +192,11 @@ struct MIEImpl : public MIE
 	}
 	void updateStatus() override {}
 	std::string getEepromPath();
+
+	u32 jvsRawMessage(u8 node, const u8 *in, u32 len, u8 *out) override;
+	u32 jvsBoardCount() const override {
+		return (u32)io_boards.size();
+	}
 
 	Pipe *serialPipe = nullptr;
 };
@@ -1638,6 +1648,82 @@ MIEImpl::MIEImpl()
 	EEPROM = eeprom;
 }
 
+u32 MIEImpl::jvsRawMessage(u8 node, const u8 *in, u32 len, u8 *out)
+{
+	if (len == 0)
+		return 0;
+	if (node == ALL_NODES)
+	{
+		// Broadcast: reset or address assignment. Only one board answers an address assignment.
+		u32 outLen = 0;
+		for (auto& board : io_boards)
+		{
+			outLen = board->handle_jvs_message(in, len, out);
+			if (outLen != 0)
+				break;
+		}
+		return outLen;
+	}
+	if (node - 1u >= io_boards.size())
+		return 0;
+	jvs_io_board& board = *io_boards[node - 1];
+	// handle_jvs_message() answers the setup commands (0x10-0x15) one at a time, as the Naomi
+	// maple path sends them. A raw JVS packet can chain several of them, and the reply then has
+	// a single status byte followed by one report and its data per command.
+	auto setupCmdLength = [&](u32 pos) -> u32 {
+		u8 cmd = in[pos];
+		if (cmd >= 0x10 && cmd <= 0x14)
+			return 1;
+		if (cmd == 0x15)
+		{
+			// main board id: zero-terminated string
+			u32 l = 1;
+			while (pos + l < len && in[pos + l] != 0)
+				l++;
+			return std::min(l + 1, len - pos);
+		}
+		return 0;
+	};
+	u32 cmdLen = setupCmdLength(0);
+	if (cmdLen == 0 || cmdLen == len)
+		return board.handle_jvs_message(in, len, out);
+
+	// reply: E0 00 len status {report data...}... checksum
+	u32 outLen = 4;
+	out[0] = 0xe0;
+	out[1] = 0;
+	out[3] = 1;		// status: normal
+	u32 pos = 0;
+	while (pos < len)
+	{
+		cmdLen = setupCmdLength(pos);
+		u8 reply[0x100];
+		u32 replyLen;
+		if (cmdLen == 0)
+		{
+			// rest of the packet
+			cmdLen = len - pos;
+			replyLen = board.handle_jvs_message(&in[pos], cmdLen, reply);
+		}
+		else {
+			replyLen = board.handle_jvs_message(&in[pos], cmdLen, reply);
+		}
+		// skip sync, node, length and status; drop the checksum
+		if (replyLen > 5)
+		{
+			memcpy(&out[outLen], &reply[4], replyLen - 5);
+			outLen += replyLen - 5;
+		}
+		pos += cmdLen;
+	}
+	out[2] = outLen - 3 + 1;	// status + reports + checksum
+	u8 sum = 0;
+	for (u32 i = 1; i < outLen; i++)
+		sum += out[i];
+	out[outLen++] = sum;
+	return outLen;
+}
+
 void MIEImpl::send_jvs_message(u32 node_id, u32 channel, u32 length, const u8 *data)
 {
 	if (node_id - 1 < io_boards.size())
@@ -2300,6 +2386,8 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 							}
 						}
 
+						// Star Wars Racer (Hikaru): both levers are driven by the accelerator and the steering
+						const bool swracerLevers = settings.platform.isHikaru() && settings.content.gameId == "swracer";
 						u32 player_num = first_player;
 						u32 player_axis = axis;
 						for (; axis < buffer_in[cmdi + 1]; axis++, player_axis++)
@@ -2337,8 +2425,21 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 											axis_value = 0;
 											break;
 										}
+										if (swracerLevers && player_axis < 2)
+										{
+											// lever = accelerator * (1 - steering towards its side)
+											const MapleInputState& state = mapleInputState[player_num];
+											int steer = state.fullAxes[PJAI_X1] * 2;
+											if ((state.kcode & DC_DPAD_LEFT) == 0)
+												steer = -0xffff;
+											else if ((state.kcode & DC_DPAD_RIGHT) == 0)
+												steer = 0xffff;
+											steer = std::clamp(player_axis == 0 ? -steer : steer, 0, 0xffff);
+											axis_value = (u32)axis_value * (0xffff - steer) / 0xffff;
+										}
 										if (axisDesc.inverted)
 											axis_value = 0xffffu - axis_value;
+										axis_value = axisDesc.rangeMin + (u32)axis_value * (axisDesc.rangeMax - axisDesc.rangeMin) / 0xffff;
 										// this fixes kingrt66 immediate win
 										if (axis_value >= 0x8000 && axis_value < 0x8100)
 											axis_value = 0x8100;

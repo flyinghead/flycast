@@ -10,6 +10,7 @@ bool rend_init_renderer();
 void rend_term_renderer();
 void rend_vblank();
 void rend_start_render();
+void rend_start_render(TA_context *ctx);
 int rend_end_render(int tag, int cycles, int jitter, void *arg);
 void rend_cancel_emu_wait();
 bool rend_single_frame(const bool& enabled);

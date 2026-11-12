@@ -428,6 +428,7 @@ namespace recompiler {
 void init();
 void term();
 void flush();
+void selectChip(int chip);	// entry points of an AICA chip (see hw/aica/aica_chip.h)
 void compile();
 void *getMemOp(bool load, bool byte);
 template<u32 Pd> void DYNACALL MSR_do(u32 v, u32 mask);

@@ -9,6 +9,8 @@ void term();
 void reset();
 void run(u32 samples);
 void enable(bool enabled);
+// Switches the ARM7 state to another AICA chip (see hw/aica/aica_chip.h)
+void selectChip(int from, int to);
 // Called when the arm interrupts the SH4 to make sure it has enough cycles to finish what it's doing.
 void avoidRaceCondition();
 

@@ -16,6 +16,14 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/mmu.h"
 #include "oslib/virtmem.h"
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#endif
 
 #if defined(__unix__) && defined(DYNA_OPROF)
 #include <opagent.h>
@@ -41,7 +49,20 @@ static bm_Map blkmap;
 u32 protected_blocks;
 u32 unprotected_blocks;
 
-#define FPCA(x) ((DynarecCodeEntryPtr&)p_sh4rcb->fpcb[(x>>1)&FPCB_MASK])
+// Block lookup table of the current CPU if it isn't CPU 0 (whose table is in p_sh4rcb).
+// The table of CPU 0 only covers 32 MB of addresses, so that its BIOS and RAM share entries.
+// The others are also indexed by the 64 MB area of the address, so that they can run code
+// anywhere in their address space.
+static void **cpuFpcb;
+constexpr size_t CPU_FPCB_ENTRIES = 8 * (FPCB_MASK + 1);
+
+static inline DynarecCodeEntryPtr& fpcbEntry(u32 addr)
+{
+	if (cpuFpcb == nullptr)
+		return (DynarecCodeEntryPtr&)p_sh4rcb->fpcb[(addr >> 1) & FPCB_MASK];
+	return (DynarecCodeEntryPtr&)cpuFpcb[((addr & 0x1fffffff) >> 26) * (FPCB_MASK + 1) + ((addr >> 1) & FPCB_MASK)];
+}
+#define FPCA(x) fpcbEntry(x)
 
 // addr must be a physical address
 // This returns an executable address
@@ -346,10 +367,14 @@ void bm_ResetCache()
 	// blkmap includes temp blocks as well
 	all_temp_blocks.clear();
 
-	for (size_t i = 0; i < pageCount; i++)
-		blocks_per_page[i].clear();
+	// The protected pages only hold blocks of CPU 0
+	if (bm_CurrentCpu() == 0)
+	{
+		for (size_t i = 0; i < pageCount; i++)
+			blocks_per_page[i].clear();
 
-	memset(unprotected_pages, 0, pageCount);
+		memset(unprotected_pages, 0, pageCount);
+	}
 
 #ifdef DYNA_OPROF
 	if (oprofHandle)
@@ -482,7 +507,8 @@ void RuntimeBlockInfo::Discard()
 void RuntimeBlockInfo::SetProtectedFlags()
 {
 	// Don't write protect rom and BIOS/IP.BIN (Grandia II)
-	if (!IsOnRam(addr) || (addr & 0x1FFF0000) == 0x0c000000)
+	// Only the RAM of CPU 0 is protected: the code of other CPUs is checked when run
+	if (bm_CurrentCpu() != 0 || !IsOnRam(addr) || (addr & 0x1FFF0000) == 0x0c000000)
 	{
 		this->read_only = false;
 		unprotected_blocks++;
@@ -513,6 +539,12 @@ void bm_RamWriteAccess(u32 addr)
 	addr &= RAM_MASK;
 	if (unprotected_pages[addr / PAGE_SIZE])
 		return;
+	// The protected blocks are those of CPU 0
+	struct CpuZero {
+		int previous = bm_CurrentCpu();
+		CpuZero() { bm_SelectCpu(0); }
+		~CpuZero() { bm_SelectCpu(previous); }
+	} cpuZero;
 
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
@@ -558,6 +590,92 @@ bool bm_RamWriteAccess(void *p)
 		return false;
 	bm_RamWriteAccess(offset);
 	return true;
+}
+
+//
+// CPUs
+//
+struct BmCpuState
+{
+	bm_Set all_temp_blocks;
+	bm_List del_blocks;
+	bm_Map blkmap;
+	u32 protected_blocks = 0;
+	u32 unprotected_blocks = 0;
+	void **fpcb = nullptr;
+};
+// State of the CPUs not selected (the selected one is in the globals above)
+static BmCpuState parkedCpus[MAX_SH4_CPUS];
+static int currentCpu;
+
+static void swapState(BmCpuState& state)
+{
+	std::swap(all_temp_blocks, state.all_temp_blocks);
+	std::swap(del_blocks, state.del_blocks);
+	std::swap(blkmap, state.blkmap);
+	std::swap(protected_blocks, state.protected_blocks);
+	std::swap(unprotected_blocks, state.unprotected_blocks);
+	std::swap(cpuFpcb, state.fpcb);
+}
+
+int bm_CurrentCpu() {
+	return currentCpu;
+}
+
+void bm_SelectCpu(int cpu)
+{
+	if (cpu == currentCpu)
+		return;
+	verify(cpu >= 0 && cpu < MAX_SH4_CPUS);
+	swapState(parkedCpus[currentCpu]);
+	swapState(parkedCpus[cpu]);
+	currentCpu = cpu;
+}
+
+void **bm_Fpcb() {
+	return cpuFpcb != nullptr ? cpuFpcb : p_sh4rcb->fpcb;
+}
+
+size_t bm_FpcbSize() {
+	return cpuFpcb != nullptr ? CPU_FPCB_ENTRIES * sizeof(void *) : sizeof(p_sh4rcb->fpcb);
+}
+
+// The lookup table of another CPU is reserved, its pages are allocated on first access
+// like the one of CPU 0 (see addrspace::bm_lockedWrite)
+bool bm_InitCpu(int cpu)
+{
+	verify(cpu > 0 && cpu < MAX_SH4_CPUS && cpu != currentCpu);
+	if (!addrspace::virtmemEnabled())
+		return false;
+	BmCpuState& state = parkedCpus[cpu];
+	if (state.fpcb != nullptr)
+		return true;
+	constexpr size_t size = CPU_FPCB_ENTRIES * sizeof(void *);
+#ifdef _WIN32
+	state.fpcb = (void **)VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_NOACCESS);
+#elif defined(__unix__) || defined(__APPLE__)
+	void *p = mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+	state.fpcb = p == MAP_FAILED ? nullptr : (void **)p;
+#endif
+	return state.fpcb != nullptr;
+}
+
+void bm_TermCpu(int cpu)
+{
+	verify(cpu > 0 && cpu < MAX_SH4_CPUS && cpu != currentCpu);
+	BmCpuState& state = parkedCpus[cpu];
+	state.all_temp_blocks.clear();
+	state.del_blocks.clear();
+	state.blkmap.clear();
+	if (state.fpcb != nullptr)
+	{
+#ifdef _WIN32
+		VirtualFree(state.fpcb, 0, MEM_RELEASE);
+#elif defined(__unix__) || defined(__APPLE__)
+		munmap(state.fpcb, CPU_FPCB_ENTRIES * sizeof(void *));
+#endif
+		state.fpcb = nullptr;
+	}
 }
 
 bool print_stats = true;

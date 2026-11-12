@@ -4,6 +4,7 @@
 #include "hw/sh4/sh4_mmr.h"
 
 #include "hw/naomi/naomi.h"
+#include "hw/hikaru/hikaru.h"
 #include "cfg/option.h"
 #include "modules.h"
 
@@ -19,6 +20,17 @@ static void write_BSC_PDTRA_arcade(u32 addr, u16 data)
 static void write_BSC_PDTRA(u32 addr, u16 data)
 {
 	BSC_PDTRA.full = data;
+}
+
+static void write_BSC_PDTRA_hikaru(u32 addr, u16 data)
+{
+	BSC_PDTRA.full = data;
+	hikaru::portAWrite(data);
+}
+
+static u16 read_BSC_PDTRA_hikaru(u32 addr)
+{
+	return hikaru::portARead();
 }
 
 static u16 read_BSC_PDTRA_arcade(u32 addr)
@@ -142,6 +154,8 @@ void BSCRegisters::reset()
 
 	if (settings.platform.isNaomi() || settings.platform.isSystemSP())
 		setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA_arcade, write_BSC_PDTRA_arcade);
+	else if (settings.platform.isHikaru())
+		setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA_hikaru, write_BSC_PDTRA_hikaru);
 	else
 		setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA, write_BSC_PDTRA);
 }

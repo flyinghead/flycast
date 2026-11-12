@@ -469,6 +469,7 @@ void mcfg_CreateDevices()
 		break;
 	case DC_PLATFORM_NAOMI:
 	case DC_PLATFORM_NAOMI2:
+	case DC_PLATFORM_HIKARU:	// MIE + JVS I/O board, same as Naomi
 		createNaomiDevices();
 		break;
 	case DC_PLATFORM_ATOMISWAVE:

@@ -46,6 +46,7 @@
 #include "systemsp.h"
 #include "hopper.h"
 #include "midiffb.h"
+#include "hw/hikaru/hikaru.h"
 #include "oslib/i18n.h"
 
 using namespace i18n;
@@ -272,6 +273,9 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 			break;
 		case AW:
 			CurrentCartridge = new AWCartridge(game->size);
+			break;
+		case HIKARU:
+			CurrentCartridge = new hikaru::HikaruCartridge(game->size);
 			break;
 		case GD:
 			{
@@ -815,6 +819,8 @@ int naomi_cart_GetPlatform(const char *path)
 		return DC_PLATFORM_NAOMI;
 	else if (game->cart_type == AW)
 		return DC_PLATFORM_ATOMISWAVE;
+	else if (game->cart_type == HIKARU)
+		return DC_PLATFORM_HIKARU;
 	else if (game->bios != nullptr && !strcmp("naomi2", game->bios))
 		return DC_PLATFORM_NAOMI2;
 	else if (game->bios != nullptr && !strcmp("segasp", game->bios))

@@ -685,6 +685,7 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 
 	case 2:	// Media catalog number (UPC/bar code)
 		{
+			const std::string catalog = libGDR_GetDiskCatalog();
 			//2 DATA Length MSB (0 = 0h)
 			subc_info[2] = 0;
 			//3 DATA Length LSB (24 = 18h)
@@ -696,13 +697,52 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 			subc_info[6] = 0;
 			subc_info[7] = 0;
 			//8 MCVal (bit 7)
-			subc_info[8] = 0;	// not valid
+			subc_info[8] = catalog.length() == 13 ? 0x80 : 0;
 			//9-21 Media catalog number
-			memcpy(&subc_info[9], "0000000000000", 13);
+			if (catalog.length() == 13)
+				memcpy(&subc_info[9], catalog.c_str(), 13);
+			else
+				memcpy(&subc_info[9], "0000000000000", 13);
 			//22-23 reserved
 			subc_info[22] = 0;
 			subc_info[23] = 0;
 			DEBUG_LOG(GDROM, "gd_get_subcode: format 2 (Media catalog number). audio %x", subc_info[1]);
+		}
+		break;
+
+	case 3:	// ISRC
+		{
+			u32 curFad = cdda.status == cdda_t::Playing || cdda.status == cdda_t::Paused ? cdda.CurrAddr.FAD : fad;
+			u32 elapsed;
+			u32 tracknum = libGDR_GetTrackNumber(curFad, elapsed);
+			const std::string isrc = libGDR_GetTrackIsrc(tracknum);
+			//2 DATA Length MSB (0 = 0h)
+			subc_info[2] = 0;
+			//3 DATA Length LSB (24 = 18h)
+			subc_info[3] = 0x18;
+			//4 Format Code
+			subc_info[4] = 3;
+			//5-7 reserved
+			subc_info[5] = 0;
+			subc_info[6] = 0;
+			subc_info[7] = 0;
+			//8 TCVal (bit 7)
+			subc_info[8] = isrc.length() == 12 ? 0x80 : 0;
+			//9-20 ISRC: country code (2), owner code (3), year (2), serial number (5)
+			if (isrc.length() == 12)
+			{
+				memcpy(&subc_info[9], isrc.c_str(), 12);
+			}
+			else
+			{
+				memset(&subc_info[9], 0, 5);
+				memcpy(&subc_info[14], "0000000", 7);
+			}
+			//21-23 reserved
+			subc_info[21] = 0;
+			subc_info[22] = 0;
+			subc_info[23] = 0;
+			DEBUG_LOG(GDROM, "gd_get_subcode: format 3 (ISRC) track %d. audio %x", tracknum, subc_info[1]);
 		}
 		break;
 	}

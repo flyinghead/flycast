@@ -167,6 +167,9 @@ struct AxisDescriptor
    AxisType type;
    u32 axis;
    bool inverted;
+   // Half axes: the values sent for released and fully pressed
+   u16 rangeMin = 0;
+   u16 rangeMax = 0xffff;
 };
 
 struct InputDescriptors

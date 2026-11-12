@@ -19,10 +19,19 @@ constexpr u32 CODE_SIZE = 10_MB;
 constexpr u32 TEMP_CODE_SIZE = 1_MB;
 constexpr u32 FULL_SIZE = CODE_SIZE + TEMP_CODE_SIZE;
 DECLARE_CODE_CACHE(SH4_TCB, FULL_SIZE)
+// Code cache of the other CPUs (see rdv_InitCpu)
+constexpr u32 CPU_CODE_SIZE = 4_MB;
+constexpr u32 CPU_TEMP_CODE_SIZE = 512_KB;
+constexpr u32 CPU_FULL_SIZE = CPU_CODE_SIZE + CPU_TEMP_CODE_SIZE;
+DECLARE_CODE_CACHE(SH4_TCB_CPU1, CPU_FULL_SIZE)
 
 static u8* CodeCache;
 static u8* TempCodeCache;
+static u32 codeSize = CODE_SIZE;
+static u32 tempCodeSize = TEMP_CODE_SIZE;
 ptrdiff_t cc_rx_offset;
+// Memory handlers of the current CPU, null for CPU 0
+static const Sh4CpuMemory *cpuMemory;
 
 static std::unordered_set<u32> smc_hotspots;
 
@@ -46,9 +55,9 @@ void Sh4CodeBuffer::advance(u32 size)
 u32 Sh4CodeBuffer::getFreeSpace()
 {
 	if (tempBuffer)
-		return TEMP_CODE_SIZE - tempLastAddr;
+		return tempCodeSize - tempLastAddr;
 	else
-		return CODE_SIZE - lastAddr;
+		return codeSize - lastAddr;
 }
 
 void *Sh4CodeBuffer::getBase()
@@ -58,7 +67,7 @@ void *Sh4CodeBuffer::getBase()
 
 u32 Sh4CodeBuffer::getSize()
 {
-	return FULL_SIZE;
+	return codeSize + tempCodeSize;
 }
 
 void Sh4CodeBuffer::reset(bool temporary)
@@ -417,6 +426,9 @@ static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, Runti
 
 bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
 {
+	if (cpuMemory != nullptr)
+		// Not the SH-4 address space
+		return false;
 	size = std::min(size, 4);
 	if (!translateAddress(addr, size, MMU_TT_DREAD, physAddr, block))
 		return false;
@@ -427,6 +439,9 @@ bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& phys
 
 bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
 {
+	if (cpuMemory != nullptr)
+		// Not the SH-4 address space
+		return false;
 	size = std::min(size, 4);
 	if (!translateAddress(addr, size, MMU_TT_DWRITE, physAddr, block))
 		return false;
@@ -438,5 +453,119 @@ bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& phy
 void rdv_SetFailedToFindBlockHandler(void (*handler)())
 {
 	ngen_FailedToFindBlock = handler;
+}
+
+u8 *rdv_GetMemPtr(u32 addr, u32 size)
+{
+	if (cpuMemory != nullptr)
+		return cpuMemory->getMemPtr(addr, size);
+	return GetMemPtr(addr, size);
+}
+
+//
+// Other CPUs
+//
+struct CpuState
+{
+	u8 *codeCache = nullptr;
+	u8 *tempCodeCache = nullptr;
+	u32 codeSize = 0;
+	u32 tempCodeSize = 0;
+	Sh4CodeBuffer codeBuffer;
+	std::unordered_set<u32> smcHotspots;
+	Sh4Dynarec *dynarec = nullptr;
+	const Sh4CpuMemory *memory = nullptr;
+};
+// State of the CPUs not selected (the selected one is in the globals above)
+static CpuState parkedCpus[MAX_SH4_CPUS];
+static int currentCpu;
+
+static void swapState(CpuState& state)
+{
+	std::swap(CodeCache, state.codeCache);
+	std::swap(TempCodeCache, state.tempCodeCache);
+	std::swap(codeSize, state.codeSize);
+	std::swap(tempCodeSize, state.tempCodeSize);
+	std::swap(codeBuffer, state.codeBuffer);
+	std::swap(smc_hotspots, state.smcHotspots);
+	std::swap(sh4Dynarec, state.dynarec);
+	std::swap(cpuMemory, state.memory);
+}
+
+void rdv_SelectCpu(int cpu)
+{
+	if (cpu == currentCpu)
+		return;
+	verify(cpu >= 0 && cpu < MAX_SH4_CPUS);
+	swapState(parkedCpus[currentCpu]);
+	swapState(parkedCpus[cpu]);
+	bm_SelectCpu(cpu);
+	currentCpu = cpu;
+}
+
+bool rdv_InitCpu(int cpu, const Sh4CpuMemory& memory)
+{
+	verify(cpu == 1 && currentCpu == 0);
+#ifdef FEAT_NO_RWX_PAGES
+	return false;
+#else
+	if (sh4Dynarec == nullptr || CodeCache == nullptr || Sh4Recompiler::Instance == nullptr)
+		return false;
+	CpuState& state = parkedCpus[cpu];
+	if (state.dynarec == nullptr)
+	{
+		Sh4Dynarec *dynarec = sh4Dynarec->createCpu(memory);
+		if (dynarec == nullptr)
+			return false;
+		if (!bm_InitCpu(cpu))
+		{
+			delete dynarec;
+			return false;
+		}
+		u8 *cache = nullptr;
+		if (!virtmem::prepare_jit_block(SH4_TCB_CPU1, CPU_FULL_SIZE, (void**)&cache) || cache == nullptr)
+		{
+			bm_TermCpu(cpu);
+			delete dynarec;
+			return false;
+		}
+		state.codeCache = cache;
+		state.tempCodeCache = cache + CPU_CODE_SIZE;
+		state.codeSize = CPU_CODE_SIZE;
+		state.tempCodeSize = CPU_TEMP_CODE_SIZE;
+		state.codeBuffer = Sh4CodeBuffer();
+		state.dynarec = dynarec;
+	}
+	state.memory = &memory;
+	rdv_SelectCpu(cpu);
+	sh4Dynarec->init(Sh4cntx, codeBuffer);
+	Sh4Recompiler::Instance->ResetCache();
+	rdv_SelectCpu(0);
+	return true;
+#endif
+}
+
+void rdv_TermCpu(int cpu)
+{
+	verify(cpu == 1 && currentCpu == 0);
+	CpuState& state = parkedCpus[cpu];
+	if (state.dynarec == nullptr)
+		return;
+	delete state.dynarec;
+	if (state.codeCache != nullptr && state.codeCache != SH4_TCB_CPU1)
+		virtmem::release_jit_block(state.codeCache, CPU_FULL_SIZE);
+	state = CpuState();
+	bm_TermCpu(cpu);
+}
+
+void rdv_ResetCpuCache()
+{
+	Sh4Recompiler::Instance->ResetCache();
+}
+
+void rdv_RunCpu()
+{
+	verify(currentCpu != 0);
+	sh4Dynarec->mainloop(nullptr);
 }
 #endif  // FEAT_SHREC != DYNAREC_NONE

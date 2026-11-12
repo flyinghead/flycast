@@ -1,6 +1,8 @@
 #include "aica.h"
 #include "aica_if.h"
 #include "aica_mem.h"
+#include "aica_chip.h"
+#include "dsp.h"
 #include "sgc_if.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
@@ -14,6 +16,9 @@ namespace aica
 #define SH4_IRQ_BIT (1 << (holly_SPU_IRQ & 31))
 
 std::deque<u8> midiSendBuffer;
+
+static int numChips = 1;	// see aica_chip.h
+static int currentChip;
 
 //Interrupts
 //arm side
@@ -65,6 +70,9 @@ static void update_arm_interrupts()
 static bool UpdateSh4Ints()
 {
 	u32 p_ints = MCIEB->full & MCIPD->full;
+	if (currentChip != 0)
+		// Only chip 0 is wired to the holly interrupt controller
+		return p_ints != 0;
 	if (p_ints)
 	{
 		if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
@@ -80,23 +88,80 @@ static bool UpdateSh4Ints()
 	}
 }
 
-AicaTimer timers[3];
+static AicaTimer chipTimers[MAX_CHIPS][3];
+AicaTimer *timers = chipTimers[0];
 int aica_schid = -1;
 constexpr int AICA_TICK = 4535;		// 44.1 KHz
 
+//
+// Chips (see aica_chip.h)
+//
+void selectChipInterface(int from, int to);
+void allocChipRam(int chip, bool alloc);
+
+int chipCount() {
+	return numChips;
+}
+
+int activeChip() {
+	return currentChip;
+}
+
+void selectChip(int chip)
+{
+	if (chip == currentChip)
+		return;
+	verify(chip >= 0 && chip < numChips);
+	selectChipRegs(chip);
+	selectChipInterface(currentChip, chip);
+	timers = chipTimers[chip];
+	sgc::selectChip(chip);
+	dsp::selectChip(currentChip, chip);
+	arm::selectChip(currentChip, chip);
+	currentChip = chip;
+}
+
+void setChipCount(int count)
+{
+	verify(count >= 1 && count <= MAX_CHIPS);
+	selectChip(0);
+	for (int i = 1; i < std::max(count, numChips); i++)
+		if ((i < count) != (i < numChips))
+			allocChipRam(i, i < count);
+	numChips = count;
+	if (count == 1)
+		setExternalSource(-1);
+}
+
 static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
 {
-	arm::run(1);
-
+	if (numChips == 1)
+	{
+		arm::run(1);
+	}
+	else
+	{
+		// The other chips first: their output may be the external input of chip 0
+		for (int i = numChips - 1; i >= 0; i--)
+		{
+			selectChip(i);
+			arm::run(1);
+		}
+	}
 	return AICA_TICK;
+}
+
+void rescheduleUpdate()
+{
+	sh4_sched_request(aica_schid, AICA_TICK);
 }
 
 //Mainloop
 
 void timeStep()
 {
-	for (auto& timer : timers)
-		timer.StepTimer(1);
+	for (int i = 0; i < 3; i++)
+		timers[i].StepTimer(1);
 
 	SCIPD->SAMPLE_DONE = 1;
 	MCIPD->SAMPLE_DONE = 1;
@@ -258,17 +323,29 @@ void init()
 
 void reset(bool hard)
 {
-	if (hard)
+	for (int chip = numChips - 1; chip >= 0; chip--)
 	{
-		initMem();
-		sgc::term();
-		sgc::init();
-		sh4_sched_request(aica_schid, AICA_TICK);
+		selectChip(chip);
+		if (hard)
+		{
+			initMem();
+			if (chip == 0)
+			{
+				sgc::term();
+				sgc::init();
+			}
+			else
+			{
+				sgc::initChip();
+			}
+		}
+		for (int i = 0; i < 3; i++)
+			timers[i].Init(aica_reg, i);
+		resetRtc(hard);
+		arm::reset();
 	}
-	for (std::size_t i = 0; i < std::size(timers); i++)
-		timers[i].Init(aica_reg, i);
-	resetRtc(hard);
-	arm::reset();
+	if (hard)
+		sh4_sched_request(aica_schid, AICA_TICK);
 }
 
 void term()

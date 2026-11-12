@@ -7,8 +7,7 @@
 
 #include "build.h"
 
-#if FEAT_DSPREC != DYNAREC_JIT
-
+// Always built: the DSP of the extra AICA chips runs here (see aica_chip.h)
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
@@ -19,7 +18,7 @@ namespace aica
 namespace dsp
 {
 
-void runStep()
+void runStepInterpreter()
 {
 	if (state.stopped)
 		return;
@@ -217,6 +216,11 @@ void runStep()
 		state.MDEC_CT = state.RBL + 1;		// RBL is ring buffer length - 1
 }
 
+#if FEAT_DSPREC != DYNAREC_JIT
+void runStep() {
+	runStepInterpreter();
+}
+#endif
+
 } // namespace dsp
 } // namespace aica
-#endif

@@ -10,6 +10,8 @@ template<typename T> void writeRegInternal(u32 addr, T data);
 void initMem();
 void termMem();
 
-alignas(4) extern u8 aica_reg[0x8000];
+constexpr u32 AICA_REG_SIZE = 0x8000;
+extern u8 *aica_reg;	// registers of the active chip (see aica_chip.h)
+void selectChipRegs(int chip);
 
 }

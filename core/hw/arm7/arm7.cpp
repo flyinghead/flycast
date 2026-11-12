@@ -1,6 +1,7 @@
 #include "arm7.h"
 #include "arm_mem.h"
 #include "arm7_rec.h"
+#include "hw/aica/aica_chip.h"
 
 namespace aica::arm
 {
@@ -353,6 +354,58 @@ void enable(bool enabled)
 void update_armintc()
 {
 	reg[INTR_PEND].I=e68k_out && armFiqEnable;
+}
+
+//
+// Chips (see hw/aica/aica_chip.h). The recompiled code addresses arm_Reg, so the registers
+// of the active chip are copied there.
+//
+struct ArmState
+{
+	reg_pair regs[RN_ARM_REG_COUNT];
+	bool irqEnable;
+	bool fiqEnable;
+	int mode;
+	bool enabled;
+	int clockTicks;
+	bool aica_interr;
+	u32 aica_reg_L;
+	bool e68k_out;
+	u32 e68k_reg_L;
+	u32 e68k_reg_M;
+};
+static ArmState chipStates[MAX_CHIPS];
+
+void selectChip(int from, int to)
+{
+	ArmState& out = chipStates[from];
+	memcpy(out.regs, arm_Reg, sizeof(arm_Reg));
+	out.irqEnable = armIrqEnable;
+	out.fiqEnable = armFiqEnable;
+	out.mode = armMode;
+	out.enabled = Arm7Enabled;
+	out.clockTicks = arm7ClockTicks;
+	out.aica_interr = aica_interr;
+	out.aica_reg_L = aica_reg_L;
+	out.e68k_out = e68k_out;
+	out.e68k_reg_L = e68k_reg_L;
+	out.e68k_reg_M = e68k_reg_M;
+
+	const ArmState& in = chipStates[to];
+	memcpy(arm_Reg, in.regs, sizeof(arm_Reg));
+	armIrqEnable = in.irqEnable;
+	armFiqEnable = in.fiqEnable;
+	armMode = in.mode;
+	Arm7Enabled = in.enabled;
+	arm7ClockTicks = in.clockTicks;
+	aica_interr = in.aica_interr;
+	aica_reg_L = in.aica_reg_L;
+	e68k_out = in.e68k_out;
+	e68k_reg_L = in.e68k_reg_L;
+	e68k_reg_M = in.e68k_reg_M;
+#if FEAT_AREC != DYNAREC_NONE
+	recompiler::selectChip(to);
+#endif
 }
 
 #if FEAT_AREC != DYNAREC_NONE

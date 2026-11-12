@@ -1,5 +1,6 @@
 #include "dsp.h"
 #include "aica.h"
+#include "aica_chip.h"
 /*
 	DSP rec_v1
 
@@ -19,7 +20,16 @@
 namespace aica::dsp
 {
 
-DSPState state;
+DSPState state;	// state of the active chip (see aica_chip.h)
+static DSPState chipStates[MAX_CHIPS];	// state of the chips that are not active
+static int activeChip;
+
+void selectChip(int from, int to)
+{
+	chipStates[from] = state;
+	state = chipStates[to];
+	activeChip = to;
+}
 
 //float format is ?
 u16 DYNACALL PACK(s32 val)
@@ -106,14 +116,18 @@ void recompile() {
 }
 #endif
 
-void init()
+void resetState()
 {
 	memset(&state, 0, sizeof(state));
 	state.RBL = 0x8000 - 1;
 	state.RBP = 0;
 	state.MDEC_CT = 1;
 	state.dirty = true;
+}
 
+void init()
+{
+	resetState();
 	recInit();
 }
 
@@ -141,12 +155,16 @@ void step()
 				state.stopped = false;
 				break;
 			}
-		if (!state.stopped)
+		// The recompiler only runs the program of chip 0
+		if (!state.stopped && activeChip == 0)
 			recompile();
 	}
 	if (state.stopped)
 		return;
-	runStep();
+	if (activeChip == 0)
+		runStep();
+	else
+		runStepInterpreter();
 }
 
 } // namespace aica::dsp

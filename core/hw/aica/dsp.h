@@ -61,6 +61,9 @@ extern DSPState state;
 void init();
 void term();
 void step();
+void resetState();
+void selectChip(int from, int to);
+void runStepInterpreter();
 void writeProg(u32 addr);
 
 void recInit();

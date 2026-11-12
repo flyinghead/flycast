@@ -251,7 +251,7 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 #ifdef USE_WINCE_HACK
 	// WinCE hack
 	TLB_Entry& entry = UTLB[CCN_MMUCR.URC];
-	if (wince_resolve_address(va, entry))
+	if (winCE && wince_resolve_address(va, entry))
 	{
 		CCN_PTEL.reg_data = entry.Data.reg_data;
 		CCN_PTEA.reg_data = entry.Assistance.reg_data;

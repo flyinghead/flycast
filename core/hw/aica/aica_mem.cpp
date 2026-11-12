@@ -3,24 +3,41 @@
 #include "aica_if.h"
 #include "dsp.h"
 #include "sgc_if.h"
+#include "aica_chip.h"
 #include "hw/hwreg.h"
 
 namespace aica
 {
 
-alignas(4) u8 aica_reg[0x8000];
+// Registers of each chip. aica_reg and the pointers below are those of the active chip.
+alignas(4) static u8 chipRegs[MAX_CHIPS][AICA_REG_SIZE];
+u8 *aica_reg = chipRegs[0];
 
-CommonData_struct * const CommonData = (CommonData_struct *)&aica_reg[0x2800];
-DSPData_struct * const DSPData = (DSPData_struct *)&aica_reg[0x3000];
+CommonData_struct *CommonData = (CommonData_struct *)&chipRegs[0][0x2800];
+DSPData_struct *DSPData = (DSPData_struct *)&chipRegs[0][0x3000];
 //slave cpu (arm7)
-InterruptInfo * const SCIEB = (InterruptInfo *)&aica_reg[SCIEB_addr];
-InterruptInfo * const SCIPD = (InterruptInfo *)&aica_reg[SCIPD_addr];
-InterruptInfo * const SCIRE = (InterruptInfo *)&aica_reg[SCIRE_addr];
+InterruptInfo *SCIEB = (InterruptInfo *)&chipRegs[0][SCIEB_addr];
+InterruptInfo *SCIPD = (InterruptInfo *)&chipRegs[0][SCIPD_addr];
+InterruptInfo *SCIRE = (InterruptInfo *)&chipRegs[0][SCIRE_addr];
 //Main cpu (sh4)
-InterruptInfo * const MCIEB = (InterruptInfo *)&aica_reg[MCIEB_addr];
-InterruptInfo * const MCIPD = (InterruptInfo *)&aica_reg[MCIPD_addr];
-InterruptInfo * const MCIRE = (InterruptInfo *)&aica_reg[MCIRE_addr];
-DSP_OUT_VOL_REG const * const dsp_out_vol = (DSP_OUT_VOL_REG *)&aica_reg[0x2000];
+InterruptInfo *MCIEB = (InterruptInfo *)&chipRegs[0][MCIEB_addr];
+InterruptInfo *MCIPD = (InterruptInfo *)&chipRegs[0][MCIPD_addr];
+InterruptInfo *MCIRE = (InterruptInfo *)&chipRegs[0][MCIRE_addr];
+DSP_OUT_VOL_REG const *dsp_out_vol = (DSP_OUT_VOL_REG *)&chipRegs[0][0x2000];
+
+void selectChipRegs(int chip)
+{
+	aica_reg = chipRegs[chip];
+	CommonData = (CommonData_struct *)&aica_reg[0x2800];
+	DSPData = (DSPData_struct *)&aica_reg[0x3000];
+	SCIEB = (InterruptInfo *)&aica_reg[SCIEB_addr];
+	SCIPD = (InterruptInfo *)&aica_reg[SCIPD_addr];
+	SCIRE = (InterruptInfo *)&aica_reg[SCIRE_addr];
+	MCIEB = (InterruptInfo *)&aica_reg[MCIEB_addr];
+	MCIPD = (InterruptInfo *)&aica_reg[MCIPD_addr];
+	MCIRE = (InterruptInfo *)&aica_reg[MCIRE_addr];
+	dsp_out_vol = (DSP_OUT_VOL_REG *)&aica_reg[0x2000];
+}
 
 static void (*midiReceiver)(u8 data);
 
@@ -205,7 +222,7 @@ template void writeRegInternal<>(u32 addr, u32 data);
 
 void initMem()
 {
-	memset(aica_reg, 0, sizeof(aica_reg));
+	memset(aica_reg, 0, AICA_REG_SIZE);
 	aica_ram[ARAM_SIZE - 1] = 1;
 	aica_ram.zero();
 	midiReceiver = nullptr;

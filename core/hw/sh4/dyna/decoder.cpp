@@ -18,6 +18,7 @@
 #include "hw/sh4/modules/mmu.h"
 #include "decoder_opcodes.h"
 #include "cfg/option.h"
+#include "hw/sh4/sh4_sched.h"
 
 #define BLOCK_MAX_SH_OPS_SOFT 500
 #define BLOCK_MAX_SH_OPS_HARD 511
@@ -951,6 +952,36 @@ void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op)
 	block->guest_cycles += cycleCounter.countCycles(op);
 }
 
+
+// A short block that branches back to itself and only reads memory, compares and tests
+// is waiting for an interrupt or the other CPU to change what it reads. It leaves the
+// loop in the same state however many times it runs, so each pass is charged a whole
+// time slice: emulated time reaches the change at once instead of spinning on the host.
+static bool isWaitLoop(const RuntimeBlockInfo *block)
+{
+	if ((block->BlockType != BET_Cond_0 && block->BlockType != BET_Cond_1)
+			|| block->BranchBlock != block->vaddr || block->guest_opcodes > 6)
+		return false;
+	for (u32 addr = block->vaddr; addr < block->vaddr + block->sh4_code_size; addr += 2)
+	{
+		u16 op = IReadMem16(addr);
+		bool ok = (op & 0xf00c) == 0x6000 && (op & 3) != 3	// mov.b/w/l @Rm,Rn
+			|| (op & 0xfc00) == 0xc400 && (op & 0xff00) != 0xc700	// mov.b/w/l @(disp,GBR),R0
+			|| (op & 0xfe00) == 0x8400	// mov.b/w @(disp,Rm),R0
+			|| (op & 0xf000) == 0x5000	// mov.l @(disp,Rm),Rn
+			|| (op & 0xb000) == 0x9000	// mov.w/l @(disp,PC),Rn
+			|| (op & 0xf0ff) == 0x4015 || (op & 0xf0ff) == 0x4011	// cmp/pl, cmp/pz
+			|| (op & 0xff00) == 0x8800 || (op & 0xff00) == 0xc800 || (op & 0xff00) == 0xc900	// cmp/eq #, tst #, and #
+			|| (op & 0xf00f) == 0x3000 || ((op & 0xf00f) >= 0x3002 && (op & 0xf00f) <= 0x3003)
+			|| ((op & 0xf00f) >= 0x3006 && (op & 0xf00f) <= 0x3007) || (op & 0xf00f) == 0x2008	// cmp, tst
+			|| (op & 0xf00f) == 0x600c || (op & 0xf00f) == 0x600d	// extu.b, extu.w
+			|| (op & 0xf900) == 0x8900;	// bt, bf, bt/s, bf/s
+		if (!ok)
+			return false;
+	}
+	return true;
+}
+
 bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
@@ -996,8 +1027,11 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					}
 
 					if (state.cpu.is_delayslot && OpDesc[op]->SetPC())
-						throw FlycastException("Fatal: SH4 branch instruction in delay slot");
-					if (!OpDesc[op]->rec_oph)
+					{
+						// Slot illegal instruction exception
+						dec_illegalOp(op);
+					}
+					else if (!OpDesc[op]->rec_oph)
 					{
 						if (!dec_generic(op))
 						{
@@ -1065,6 +1099,8 @@ _end:
 
 	//make sure we don't use wayy-too-few cycles
 	blk->guest_cycles = std::max(1U, blk->guest_cycles);
+	if (settings.platform.isHikaru() && isWaitLoop(blk))
+		blk->guest_cycles = SH4_TIMESLICE;
 	blk = nullptr;
 
 	return true;

@@ -42,7 +42,8 @@ enum CartridgeType {
 	M2,
 	M4,
 	AW,
-	GD
+	GD,
+	HIKARU
 };
 
 enum RotationType {

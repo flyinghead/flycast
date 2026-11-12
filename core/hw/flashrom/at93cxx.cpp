@@ -40,7 +40,7 @@ void AT93CxxSerialEeprom::writeCLK(bool state)
 			else
 			{
 				command.push_back(di);
-				if (command.size() == 9)
+				if ((int)command.size() == 3 + addrBits())
 				{
 					int opCode = (int)command[1] * 2 + (int)command[2];
 					switch (opCode)
@@ -56,7 +56,7 @@ void AT93CxxSerialEeprom::writeCLK(bool state)
 								command.clear();
 								break;
 							case 1: // write all
-								expected = 3 + 6 + 16; // 6 bits of address, 16 bits of data
+								expected = 3 + addrBits() + dataBits();
 								break;
 							case 2: // erase all
 								EEPROM_LOG("serial eeprom: ERAL");
@@ -73,18 +73,21 @@ void AT93CxxSerialEeprom::writeCLK(bool state)
 						}
 						break;
 					case 1: // write
-						expected = 3 + 6 + 16; // 6 bits of address, 16 bits of data
+						expected = 3 + addrBits() + dataBits();
 						break;
 					case 2: // read
-						dataOut = Read(getCommandAddress() * 2, 2);
-						dataOutBits = 17; // actually 16 but 0 means no data
+						if (x8)
+							dataOut = Read(getCommandAddress(), 1);
+						else
+							dataOut = Read(getCommandAddress() * 2, 2);
+						dataOutBits = dataBits() + 1; // leading dummy 0 bit (also, 0 means no data)
 						EEPROM_LOG("serial eeprom: READ %x: %x", getCommandAddress(), dataOut);
 						command.clear();
 						break;
 					case 3: // erase
 						EEPROM_LOG("serial eeprom: ERASE %x", getCommandAddress());
 						if (writeEnable)
-							*(u16 *)&data[(getCommandAddress() * 2) &  mask] = 0xffff;
+							writeWord(getCommandAddress(), 0xffff);
 						command.clear();
 						break;
 					}
@@ -99,14 +102,14 @@ void AT93CxxSerialEeprom::writeCLK(bool state)
 							u16 v = getCommandData();
 							EEPROM_LOG("serial eeprom: WRAL = %x", v);
 							if (writeEnable)
-								for (u32 i = 0; i < size; i += 2)
-									*(u16 *)&data[i & mask] = v;
+								for (u32 i = 0; i < size >> (x8 ? 0 : 1); i++)
+									writeWord(i, v);
 						}
 						break;
 					case 1: // write
 						EEPROM_LOG("serial eeprom: WRITE %x = %x", getCommandAddress(), getCommandData());
 						if (writeEnable)
-							*(u16 *)&data[(getCommandAddress() * 2) &  mask] = getCommandData();
+							writeWord(getCommandAddress(), getCommandData());
 						break;
 					}
 					command.clear();

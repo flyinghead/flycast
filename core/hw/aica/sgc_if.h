@@ -10,6 +10,8 @@ void WriteChannelReg(u32 channel, u32 reg, int size);
 
 void init();
 void term();
+void initChip();	// state of an extra chip (see aica_chip.h)
+void selectChip(int chip);
 
 union fp_22_10
 {
