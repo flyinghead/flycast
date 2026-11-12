@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-10-26 13:07\n"
+"PO-Revision-Date: 2026-11-12 03:13\n"
 "Last-Translator: \n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
@@ -20,89 +20,89 @@ msgstr ""
 #: core/achievements/achievements.cpp:379
 #, c-format
 msgid "User %s authenticated"
-msgstr ""
+msgstr "Benutzer %s authentifiziert"
 
 #: core/achievements/achievements.cpp:395
 msgid "RetroAchievements authentication failed"
-msgstr ""
+msgstr "RetroAchievements-Authentifizierung fehlgeschlagen"
 
 #: core/achievements/achievements.cpp:430
 msgid "No user token returned"
-msgstr ""
+msgstr "Kein Benutzertoken zurückgegeben"
 
 #: core/achievements/achievements.cpp:582
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "Verbindung zu RetroAchievements getrennt"
 
 #: core/achievements/achievements.cpp:586
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "Verbindung zu RetroAchievements wiederhergestellt"
 
 #: core/achievements/achievements.cpp:616
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr ""
+msgstr "Erfolg %s freigeschaltet!"
 
 #: core/achievements/achievements.cpp:656
 #, c-format
 msgid "Leaderboard %s started"
-msgstr ""
+msgstr "Bestenliste %s gestartet"
 
 #: core/achievements/achievements.cpp:663
 #, c-format
 msgid "Leaderboard %s failed"
-msgstr ""
+msgstr "Bestenliste %s fehlgeschlagen"
 
 #: core/achievements/achievements.cpp:670
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr ""
+msgstr "Ergebnis für Bestenliste %s eingereicht"
 
 #: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Mastered %s"
-msgstr ""
+msgstr "%s gemeistert"
 
 #: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Completed %s"
-msgstr ""
+msgstr "%s abgeschlossen"
 
 #: core/achievements/achievements.cpp:698
 #, c-format
 msgid "%d achievements, %d points"
-msgstr ""
+msgstr "%d Erfolge, %d Punkte"
 
 #: core/achievements/achievements.cpp:946
 #, c-format
 msgid "You have %d of %d achievements unlocked."
-msgstr ""
+msgstr "Du hast %d von %d Erfolgen freigeschaltet."
 
 #: core/achievements/achievements.cpp:948
 msgid "This game has no achievements."
-msgstr ""
+msgstr "Dieses Spiel hat keine Erfolge."
 
 #: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
 msgid "Hardcore Mode"
-msgstr ""
+msgstr "Hardcore-Modus"
 
 #: core/achievements/achievements.cpp:984
 msgid "Hardcore mode disabled"
-msgstr ""
+msgstr "Hardcore-Modus deaktiviert"
 
 #: core/achievements/achievements.cpp:984
 msgid "Unrecognized media inserted"
-msgstr ""
+msgstr "Unbekanntes Medium eingelegt"
 
 #: core/achievements/achievements.cpp:991
 msgid "Media change failed"
-msgstr ""
+msgstr "Medienwechsel fehlgeschlagen"
 
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "WARNUNG: DreamConn von Anschluss %c getrennt"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
