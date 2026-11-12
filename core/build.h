@@ -110,7 +110,7 @@
 #endif
 
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) \
-	&& !defined(__SWITCH__) && !defined(LIBRETRO) && !defined(__NetBSD__) && !defined(__OpenBSD__)
+	&& !defined(__SWITCH__) && !defined(LIBRETRO) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__vita__)
 #define NAOMI_MULTIBOARD
 #endif
 

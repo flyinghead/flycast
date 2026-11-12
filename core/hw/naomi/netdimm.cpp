@@ -33,6 +33,25 @@
 #endif
 #include <asio.hpp>
 
+#ifdef __vita__
+#include <functional>
+namespace asio::placeholders
+{
+	static inline constexpr auto& error
+		= std::placeholders::_1;
+	static inline constexpr auto& bytes_transferred
+		= std::placeholders::_2;
+	static inline constexpr auto& iterator
+		= std::placeholders::_2;
+	static inline constexpr auto& results
+		= std::placeholders::_2;
+	static inline constexpr auto& endpoint
+		= std::placeholders::_2;
+	static inline constexpr auto& signal_number
+		= std::placeholders::_2;
+}
+#endif
+
 //#define HTTP_TRACE
 
 const char *VF4_SERVER_NAME = "vfnet.flyca.st";
