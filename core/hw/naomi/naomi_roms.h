@@ -93,3 +93,6 @@ struct Game
 	int multiboard;
 };
 extern const Game Games[];
+
+// Input descriptor for a decrypted dump, by cartridge header title, or nullptr
+InputDescriptors *naomiInputsForBootTitle(const char *title);
