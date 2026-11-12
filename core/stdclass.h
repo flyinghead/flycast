@@ -25,6 +25,13 @@ extern const unsigned long PAGE_SIZE;
 #define MAX_PAGE_SIZE 16384
 #elif defined(__APPLE__) && defined(__aarch64__)
 #define PAGE_SIZE 16384
+#elif defined(__APPLE__) && defined(__x86_64__)
+// Mach headers can define PAGE_SIZE as the runtime vm_page_size variable.
+// Keep the maximum a constant for layout checks, regardless of include order.
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 4096
+#endif
+#define MAX_PAGE_SIZE 4096
 #elif !defined(PAGE_SIZE)
 #define PAGE_SIZE 4096
 #endif
