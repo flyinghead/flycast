@@ -46,62 +46,83 @@ struct ModemEmu : public SerialPort::Pipe
 			toSend.pop_front();
 			return c;
 		}
-		else if (dataMode)
-			return net::modbba::readModem();
-		else
-			return 0;
+		if (dataMode)
+		{
+			try {
+				return net::modbba::readModem();
+			} catch (const net::modbba::ConnectionClosed& e) {
+				dataMode = false;
+				send("NO CARRIER");
+				return '\n';
+			}
+		}
+		return 0;
 	}
 
 	int available() override
 	{
 		if (!toSend.empty())
 			return toSend.size();
-		else if (dataMode)
-			return net::modbba::modemAvailable();
-		else
-			return 0;
+		if (dataMode)
+		{
+			try {
+				return net::modbba::modemAvailable();
+			} catch (const net::modbba::ConnectionClosed& e) {
+				dataMode = false;
+				send("\nNO CARRIER");
+				return toSend.size();
+			}
+		}
+		return 0;
 	}
 
 	void write(u8 data) override
 	{
 		if (dataMode)
 		{
-			if (pluses == 3)
-			{
-				if (sh4_sched_now64() - plusTime >= SH4_MAIN_CLOCK)
+			try {
+				if (pluses == 3)
 				{
-					dataMode = false;
-					send("OK");
-					recvBuf.push_back(data);
+					if (sh4_sched_now64() - plusTime >= SH4_MAIN_CLOCK)
+					{
+						dataMode = false;
+						send("OK");
+						recvBuf.push_back(data);
+					}
+					else
+					{
+						net::modbba::writeModem('+');
+						net::modbba::writeModem('+');
+						net::modbba::writeModem('+');
+						net::modbba::writeModem(data);
+					}
+					pluses = 0;
+					plusTime = 0;
+				}
+				else if (data == '+')
+				{
+					if (++pluses == 3)
+						plusTime = sh4_sched_now64();
 				}
 				else
 				{
-					net::modbba::writeModem('+');
-					net::modbba::writeModem('+');
-					net::modbba::writeModem('+');
+					while (pluses > 0) {
+						net::modbba::writeModem('+');
+						pluses--;
+					}
 					net::modbba::writeModem(data);
 				}
-				pluses = 0;
-				plusTime = 0;
-			}
-			else if (data == '+')
-			{
-				if (++pluses == 3)
-					plusTime = sh4_sched_now64();
-			}
-			else
-			{
-				while (pluses > 0) {
-					net::modbba::writeModem('+');
-					pluses--;
-				}
-				net::modbba::writeModem(data);
+			} catch (const net::modbba::ConnectionClosed& e) {
+				dataMode = false;
+				send("\nNO CARRIER");
 			}
 		}
-		else if (data == '\r' || data == '\n')
+		else if (data == '\r' || data == '\n') {
 			handleCmd();
-		else
+		}
+		else {
 			recvBuf.push_back(data);
+		}
 	}
 
 private:
