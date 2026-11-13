@@ -21,8 +21,10 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "hw/aica/aica_if.h"
+#include "hw/aica/aica_chip.h"
 #include "imgread/common.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/hikaru/hikaru.h"
 #include "reios/reios.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_if.h"
@@ -61,6 +63,11 @@ static void loadSpecialSettings()
 
 	if (settings.platform.isConsole())
 	{
+		// Ghost Blade: the media catalog number and ISRCs are used to decrypt the game
+		if (prod_id == "T65181N")
+			libGDR_SetMissingSubcodeInfo("0731453345927", {
+					"USPR39640267", "USPR39640268", "USPR39640269", "USPR39640270", "USPR39640271", "USPR39640271",
+					"USPR39640272", "USPR39640273", "USPR39640274", "USPR39640275", "USPR39640276" });
 		// Tony Hawk's Pro Skater 2
 		if (prod_id == "T13008D 05" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
@@ -451,6 +458,8 @@ void Emulator::dc_reset(bool hard)
 	aica::reset(hard);
 	getSh4Executor()->Reset(true);
 	mem_Reset(hard);
+	if (settings.platform.isHikaru())
+		hikaru::reset(hard);
 }
 
 static void setPlatform(int platform)
@@ -496,6 +505,14 @@ static void setPlatform(int platform)
 		settings.platform.bios_size = 2_MB;
 		settings.platform.flash_size = 128_KB;	// sram
 		break;
+	case DC_PLATFORM_HIKARU:
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 8_MB;	// unused (PVR)
+		settings.platform.aram_size = 8_MB;	// wave RAM of the main sound board (the AICA on bus page 0x0C)
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = hikaru::SRAM_SIZE;	// battery-backed ram
+		hikaru::init();
+		break;
 	default:
 		die("Unsupported platform");
 		break;
@@ -504,6 +521,8 @@ static void setPlatform(int platform)
 	settings.platform.ram_mask = settings.platform.ram_size - 1;
 	settings.platform.vram_mask = settings.platform.vram_size - 1;
 	settings.platform.aram_mask = settings.platform.aram_size - 1;
+	// Hikaru: main and optional sound boards
+	aica::setChipCount(platform == DC_PLATFORM_HIKARU ? 2 : 1);
 	addrspace::initMappings();
 }
 

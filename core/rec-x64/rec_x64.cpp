@@ -22,11 +22,6 @@ using namespace Xbyak::util;
 #include "oslib/virtmem.h"
 #include "cfg/option.h"
 
-static void (*mainloop)();
-static void (*handleException)();
-
-static u64 jmp_rsp;
-
 namespace MemSize {
 	enum {
 		S8,
@@ -52,12 +47,32 @@ namespace MemType {
 	};
 }
 
-static const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count];
-static const u8 *MemHandlerStart, *MemHandlerEnd;
-static UnwindInfo unwinder;
+// State of the code generated for each SH-4 CPU (see rdv_InitCpu)
+struct RecCpu
+{
+	void (*mainloop)() = nullptr;
+	void (*handleException)() = nullptr;
+	u64 jmp_rsp = 0;
+	const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count] {};
+	const u8 *MemHandlerStart = nullptr;
+	const u8 *MemHandlerEnd = nullptr;
+	UnwindInfo unwinder;
 #ifndef _WIN32
-static float xmmSave[4];
+	float rc->xmmSave[4] {};
 #endif
+	// Memory handlers of a CPU with its own address space, null for the SH-4 address space
+	const Sh4CpuMemory *memory = nullptr;
+};
+static RecCpu recCpus[MAX_SH4_CPUS];
+// The CPU whose code is generated or run
+static RecCpu *rc = &recCpus[0];
+
+// End of the time slice of a CPU other than the main one: return from its main loop
+static int cpuSliceEnd()
+{
+	Sh4cntx.CpuRunning = 0;
+	return 0;
+}
 
 static void ngen_blockcheckfail(u32 pc) {
 	//printf("X64 JIT: SMC invalidation at %08X\n", pc);
@@ -74,7 +89,7 @@ static void handle_sh4_exception(Sh4Context *ctx, SH4ThrownException& ex, u32 pc
 	}
 	Do_Exception(pc, ex.expEvn);
 	ctx->cycle_counter += 4;	// probably more is needed
-	handleException();
+	rc->handleException();
 }
 
 static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
@@ -233,7 +248,7 @@ public:
 					genMmuLookup(block, op, 0);
 
 					int size = op.size == 1 ? MemSize::S8 : op.size == 2 ? MemSize::S16 : op.size == 4 ? MemSize::S32 : MemSize::S64;
-					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
+					GenCall((void (*)())rc->MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
 
 #if ALLOC_F64 == false
 					if (size == MemSize::S64)
@@ -280,7 +295,7 @@ public:
 						shil_param_to_host_reg(op.rs2, call_regs64[1]);
 
 					int size = op.size == 1 ? MemSize::S8 : op.size == 2 ? MemSize::S16 : op.size == 4 ? MemSize::S32 : MemSize::S64;
-					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
+					GenCall((void (*)())rc->MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
 				}
 			}
 			break;
@@ -659,31 +674,31 @@ public:
 
 	void genMainloop()
 	{
-		unwinder.start((void *)getCurr());
+		rc->unwinder.start((void *)getCurr());
 
 		push(rbx);
-		unwinder.pushReg(getSize(), Xbyak::Operand::RBX);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::RBX);
 		push(rbp);
-		unwinder.pushReg(getSize(), Xbyak::Operand::RBP);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::RBP);
 #ifdef _WIN32
 		push(rdi);
-		unwinder.pushReg(getSize(), Xbyak::Operand::RDI);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::RDI);
 		push(rsi);
-		unwinder.pushReg(getSize(), Xbyak::Operand::RSI);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::RSI);
 #endif
 		push(r12);
-		unwinder.pushReg(getSize(), Xbyak::Operand::R12);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::R12);
 		push(r13);
-		unwinder.pushReg(getSize(), Xbyak::Operand::R13);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::R13);
 		push(r14);
-		unwinder.pushReg(getSize(), Xbyak::Operand::R14);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::R14);
 		push(r15);
-		unwinder.pushReg(getSize(), Xbyak::Operand::R15);
+		rc->unwinder.pushReg(getSize(), Xbyak::Operand::R15);
 		sub(rsp, STACK_ALIGN);
-		unwinder.allocStack(getSize(), STACK_ALIGN);
-		unwinder.endProlog(getSize());
+		rc->unwinder.allocStack(getSize(), STACK_ALIGN);
+		rc->unwinder.endProlog(getSize());
 
-		mov(qword[rip + &jmp_rsp], rsp);
+		mov(qword[rip + &rc->jmp_rsp], rsp);
 
 	//run_loop:
 		Xbyak::Label run_loop;
@@ -709,7 +724,10 @@ public:
 
 		add(ecx, SH4_TIMESLICE);
 		mov(dword[rax], ecx);
-		call(UpdateSystem_INTC);
+		if (rc->memory == nullptr)
+			call(UpdateSystem_INTC);
+		else
+			call(cpuSliceEnd);
 		jmp(run_loop);
 
 	//end_run_loop:
@@ -726,37 +744,37 @@ public:
 		pop(rbp);
 		pop(rbx);
 		ret();
-		size_t unwindSize = unwinder.end(getSize());
+		size_t unwindSize = rc->unwinder.end(getSize());
 		setSize(getSize() + unwindSize);
 
-		unwinder.start((void *)getCurr());
+		rc->unwinder.start((void *)getCurr());
 		size_t startOffset = getSize();
 #ifdef _WIN32
 		// 32-byte shadow space + 8 for stack 16-byte alignment
-		unwinder.allocStack(0, 40);
+		rc->unwinder.allocStack(0, 40);
 #else
 		// stack 16-byte alignment
-		unwinder.allocStack(0, 8);
+		rc->unwinder.allocStack(0, 8);
 #endif
-		unwinder.endProlog(0);
+		rc->unwinder.endProlog(0);
 
 	//handleException:
 		Xbyak::Label handleExceptionLabel;
 		L(handleExceptionLabel);
-		mov(rsp, qword[rip + &jmp_rsp]);
+		mov(rsp, qword[rip + &rc->jmp_rsp]);
 		jmp(run_loop);
 
 		genMemHandlers();
 
 		size_t savedSize = getSize();
 		setSize(codeBuffer.getFreeSpace() - 128 - startOffset);
-		unwindSize = unwinder.end(getSize());
+		unwindSize = rc->unwinder.end(getSize());
 		verify(unwindSize <= 128);
 		setSize(savedSize);
 
 		ready();
-		mainloop = (void (*)())getCode();
-		handleException = (void(*)())handleExceptionLabel.getAddress();
+		rc->mainloop = (void (*)())getCode();
+		rc->handleException = (void(*)())handleExceptionLabel.getAddress();
 
 		codeBuffer.advance(getSize());
 	}
@@ -767,7 +785,7 @@ public:
 			return false;
 
 		//printf("rewriteMemAccess pc %p\n", context.pc);
-		if (context.pc < (size_t)MemHandlerStart || context.pc >= (size_t)MemHandlerEnd)
+		if (context.pc < (size_t)rc->MemHandlerStart || context.pc >= (size_t)rc->MemHandlerEnd)
 			return false;
 
 		u8 *retAddr = *(u8 **)context.rsp;
@@ -776,16 +794,16 @@ public:
 		{
 			for (int op = 0; op < MemOp::Count; op++)
 			{
-				if ((void *)MemHandlers[MemType::Fast][size][op] != ca)
+				if ((void *)rc->MemHandlers[MemType::Fast][size][op] != ca)
 					continue;
 
 				//found !
 				const u8 *start = getCurr();
 				u32 memAddress = context.r9;
 				if (op == MemOp::W && size >= MemSize::S32 && (memAddress >> 26) == 0x38)
-					call(MemHandlers[MemType::StoreQueue][size][MemOp::W]);
+					call(rc->MemHandlers[MemType::StoreQueue][size][MemOp::W]);
 				else
-					call(MemHandlers[MemType::Slow][size][op]);
+					call(rc->MemHandlers[MemType::Slow][size][op]);
 				verify(getCurr() - start == 5);
 
 				ready();
@@ -1074,7 +1092,7 @@ private:
 		s32 sz=block->sh4_code_size;
 		u32 sa=block->addr;
 
-		void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+		void* ptr = (void*)rdv_GetMemPtr(sa, sz > 8 ? 8 : sz);
 		if (ptr)
 		{
 			while (sz > 0)
@@ -1101,7 +1119,7 @@ private:
 					sa += 2;
 				}
 				jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
-				ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+				ptr = (void*)rdv_GetMemPtr(sa, sz > 8 ? 8 : sz);
 			}
 		}
 	}
@@ -1111,15 +1129,25 @@ private:
 		// make sure the memory handlers are set
 		verify(ReadMem8 != nullptr);
 
-		MemHandlerStart = getCurr();
+		rc->MemHandlerStart = getCurr();
+		// A CPU with its own address space only uses its memory handlers
+		const Sh4CpuMemory *memory = rc->memory;
+		const void *read8 = memory != nullptr ? (const void *)memory->read8 : (const void *)addrspace::read8;
+		const void *read16 = memory != nullptr ? (const void *)memory->read16 : (const void *)addrspace::read16;
+		const void *read32 = memory != nullptr ? (const void *)memory->read32 : (const void *)addrspace::read32;
+		const void *read64 = memory != nullptr ? (const void *)memory->read64 : (const void *)addrspace::read64;
+		const void *write8 = memory != nullptr ? (const void *)memory->write8 : (const void *)addrspace::write8;
+		const void *write16 = memory != nullptr ? (const void *)memory->write16 : (const void *)addrspace::write16;
+		const void *write32 = memory != nullptr ? (const void *)memory->write32 : (const void *)addrspace::write32;
+		const void *write64 = memory != nullptr ? (const void *)memory->write64 : (const void *)addrspace::write64;
 		for (int type = 0; type < MemType::Count; type++)
 		{
 			for (int size = 0; size < MemSize::Count; size++)
 			{
 				for (int op = 0; op < MemOp::Count; op++)
 				{
-					MemHandlers[type][size][op] = getCurr();
-					if (type == MemType::Fast && addrspace::virtmemEnabled())
+					rc->MemHandlers[type][size][op] = getCurr();
+					if (type == MemType::Fast && addrspace::virtmemEnabled() && memory == nullptr)
 					{
 						mov(rax, (uintptr_t)addrspace::ram_base);
 						mov(r9, call_regs64[0]);
@@ -1160,6 +1188,11 @@ private:
 					{
 						if (op != MemOp::W || size < MemSize::S32)
 							continue;
+						if (memory != nullptr)
+						{
+							jmp(size == MemSize::S32 ? write32 : write64);	// tail call
+							continue;
+						}
 						Xbyak::Label no_sqw;
 
 						mov(r9d, call_regs[0]);
@@ -1176,9 +1209,9 @@ private:
 						ret();
 						L(no_sqw);
 						if (size == MemSize::S32)
-							jmp((const void *)addrspace::write32);	// tail call
+							jmp(write32);	// tail call
 						else
-							jmp((const void *)addrspace::write64);	// tail call
+							jmp(write64);	// tail call
 						continue;
 					}
 					else
@@ -1189,21 +1222,21 @@ private:
 							switch (size) {
 							case MemSize::S8:
 								sub(rsp, STACK_ALIGN);
-								call((const void *)addrspace::read8);
+								call(read8);
 								movsx(eax, al);
 								add(rsp, STACK_ALIGN);
 								break;
 							case MemSize::S16:
 								sub(rsp, STACK_ALIGN);
-								call((const void *)addrspace::read16);
+								call(read16);
 								movsx(eax, ax);
 								add(rsp, STACK_ALIGN);
 								break;
 							case MemSize::S32:
-								jmp((const void *)addrspace::read32);	// tail call
+								jmp(read32);	// tail call
 								continue;
 							case MemSize::S64:
-								jmp((const void *)addrspace::read64);	// tail call
+								jmp(read64);	// tail call
 								continue;
 							default:
 								die("1..8 bytes");
@@ -1213,16 +1246,16 @@ private:
 						{
 							switch (size) {
 							case MemSize::S8:
-								jmp((const void *)addrspace::write8);		// tail call
+								jmp(write8);		// tail call
 								continue;
 							case MemSize::S16:
-								jmp((const void *)addrspace::write16);	// tail call
+								jmp(write16);	// tail call
 								continue;
 							case MemSize::S32:
-								jmp((const void *)addrspace::write32);	// tail call
+								jmp(write32);	// tail call
 								continue;
 							case MemSize::S64:
-								jmp((const void *)addrspace::write64);	// tail call
+								jmp(write64);	// tail call
 								continue;
 							default:
 								die("1..8 bytes");
@@ -1233,7 +1266,7 @@ private:
 				}
 			}
 		}
-		MemHandlerEnd = getCurr();
+		rc->MemHandlerEnd = getCurr();
 	}
 
 	void saveXmmRegisters()
@@ -1243,13 +1276,13 @@ private:
 			return;
 
 		if (regalloc.IsMapped(xmm8, current_opid))
-			movd(ptr[rip + &xmmSave[0]], xmm8);
+			movd(ptr[rip + &rc->xmmSave[0]], xmm8);
 		if (regalloc.IsMapped(xmm9, current_opid))
-			movd(ptr[rip + &xmmSave[1]], xmm9);
+			movd(ptr[rip + &rc->xmmSave[1]], xmm9);
 		if (regalloc.IsMapped(xmm10, current_opid))
-			movd(ptr[rip + &xmmSave[2]], xmm10);
+			movd(ptr[rip + &rc->xmmSave[2]], xmm10);
 		if (regalloc.IsMapped(xmm11, current_opid))
-			movd(ptr[rip + &xmmSave[3]], xmm11);
+			movd(ptr[rip + &rc->xmmSave[3]], xmm11);
 #endif
 	}
 
@@ -1260,13 +1293,13 @@ private:
 			return;
 
 		if (regalloc.IsMapped(xmm8, current_opid))
-			movd(xmm8, ptr[rip + &xmmSave[0]]);
+			movd(xmm8, ptr[rip + &rc->xmmSave[0]]);
 		if (regalloc.IsMapped(xmm9, current_opid))
-			movd(xmm9, ptr[rip + &xmmSave[1]]);
+			movd(xmm9, ptr[rip + &rc->xmmSave[1]]);
 		if (regalloc.IsMapped(xmm10, current_opid))
-			movd(xmm10, ptr[rip + &xmmSave[2]]);
+			movd(xmm10, ptr[rip + &rc->xmmSave[2]]);
 		if (regalloc.IsMapped(xmm11, current_opid))
-			movd(xmm11, ptr[rip + &xmmSave[3]]);
+			movd(xmm11, ptr[rip + &rc->xmmSave[3]]);
 #endif
 	}
 
@@ -1310,15 +1343,46 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 	compiler->RegWriteback_FPU(reg, nreg);
 }
 
+// Make the code generation or execution use the state of a CPU until the end of the scope
+struct SelectCpu
+{
+	RecCpu *previous;
+	explicit SelectCpu(RecCpu *cpu) : previous(rc) { rc = cpu; }
+	~SelectCpu() { rc = previous; }
+};
+
 class X64Dynarec : public Sh4Dynarec
 {
 public:
-	X64Dynarec() {
+	X64Dynarec() : cpu(&recCpus[0]) {
 		sh4Dynarec = this;
+	}
+	// Another CPU, with its own address space
+	X64Dynarec(RecCpu *cpu, const Sh4CpuMemory& memory) : cpu(cpu) {
+		cpu->memory = &memory;
+	}
+	~X64Dynarec() override
+	{
+		if (cpu != &recCpus[0])
+		{
+			cpu->unwinder.clear();
+			*cpu = RecCpu();
+			if (rc == cpu)
+				rc = &recCpus[0];
+		}
+	}
+
+	Sh4Dynarec *createCpu(const Sh4CpuMemory& memory) override
+	{
+		for (int i = 1; i < MAX_SH4_CPUS; i++)
+			if (recCpus[i].memory == nullptr)
+				return new X64Dynarec(&recCpus[i], memory);
+		return nullptr;
 	}
 
 	void compile(RuntimeBlockInfo* block, bool smc_checks, bool optimise) override
 	{
+		SelectCpu select(cpu);
 		void* protStart = codeBuffer->get();
 		size_t protSize = codeBuffer->getFreeSpace();
 		virtmem::jit_set_exec(protStart, protSize, false);
@@ -1336,15 +1400,18 @@ public:
 
 	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override
 	{
+		SelectCpu select(cpu);
 		this->sh4ctx = &sh4ctx;
 		this->codeBuffer = &codeBuffer;
 	}
 
 	void mainloop(void *) override
 	{
-		verify(::mainloop != nullptr);
+		// Another CPU runs within a time slice of the main one, whose main loop must be found again after
+		SelectCpu select(cpu);
+		verify(rc->mainloop != nullptr);
 		try {
-			::mainloop();
+			rc->mainloop();
 		} catch (const SH4ThrownException& ex) {
 			ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop code %x", ex.expEvn);
 			throw FlycastException("Fatal: Unhandled SH4 exception");
@@ -1371,6 +1438,7 @@ public:
 		if (codeBuffer == nullptr)
 			// init() not called yet
 			return false;
+		SelectCpu select(cpu);
 		u8 *retAddr = *(u8**)context.rsp - 5;
 		if (retAddr < (u8*)codeBuffer->getBase() || retAddr >= (u8*)codeBuffer->getBase() + codeBuffer->getSize())
 			return false;
@@ -1389,14 +1457,15 @@ public:
 
 	void handleException(host_context_t &context) override
 	{
-		context.pc = (uintptr_t)::handleException;
+		context.pc = (uintptr_t)cpu->handleException;
 	}
 
 	void reset() override
 	{
-		unwinder.clear();
+		SelectCpu select(cpu);
+		rc->unwinder.clear();
 		// Avoid generating the main loop more than once
-		if (::mainloop != nullptr && ::mainloop != codeBuffer->get())
+		if (rc->mainloop != nullptr && rc->mainloop != codeBuffer->get())
 			return;
 
 		void* protStart = codeBuffer->get();
@@ -1413,6 +1482,7 @@ public:
 	}
 
 private:
+	RecCpu *cpu;
 	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 	BlockCompiler *ccCompiler = nullptr;

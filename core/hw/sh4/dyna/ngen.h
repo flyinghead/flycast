@@ -4,6 +4,7 @@
 #include "blockmanager.h"
 #include "oslib/host_context.h"
 #include "../sh4_interpreter.h"
+#include "../sh4_mem.h"
 
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with
@@ -47,6 +48,34 @@ enum CanonicalParamType
 	CPT_ptr,	// register pointer
 	CPT_sh4ctx,	// Sh4Context pointer
 };
+
+// Memory handlers of an SH-4 CPU with its own address space (see rdv_InitCpu)
+struct Sh4CpuMemory
+{
+	ReadMem8Func read8;
+	ReadMem16Func read16;
+	ReadMem32Func read32;
+	ReadMem64Func read64;
+	WriteMem8Func write8;
+	WriteMem16Func write16;
+	WriteMem32Func write32;
+	WriteMem64Func write64;
+	// Host pointer to size bytes at addr, or nullptr if it isn't memory. Used to check the code of blocks.
+	u8 *(*getMemPtr)(u32 addr, u32 size);
+};
+
+// Additional SH-4 CPUs. Only the selected CPU runs, and its context must be in p_sh4rcb->cntx
+// while it is selected. Their blocks are kept apart and always checked before running.
+// Returns false if the dynarec doesn't support it (the CPU must then be interpreted).
+bool rdv_InitCpu(int cpu, const Sh4CpuMemory& memory);
+void rdv_TermCpu(int cpu);
+void rdv_SelectCpu(int cpu);
+// Run the selected CPU until its cycle counter is exhausted (cpu > 0)
+void rdv_RunCpu();
+// Clear the code cache of the selected CPU
+void rdv_ResetCpuCache();
+// Host pointer to guest memory for block checks, in the address space of the current CPU
+u8 *rdv_GetMemPtr(u32 addr, u32 size);
 
 bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block = nullptr);
 bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block = nullptr);
@@ -99,6 +128,11 @@ public:
 	// Rewrite the memory access at host PC address 'faultAddress'. This fast memory access failed and should be rewritten
 	// to use mem access handlers.
 	virtual bool rewrite(host_context_t& context, void *faultAddress) = 0;
+	// Create a dynarec for another CPU, which uses the given memory handlers and whose main loop returns when
+	// its cycle counter is exhausted. Returns nullptr if not supported.
+	virtual Sh4Dynarec *createCpu(const Sh4CpuMemory& memory) {
+		return nullptr;
+	}
 	// Allocate a new block information structure.
 	virtual RuntimeBlockInfo *allocateBlock() {
 		return new RuntimeBlockInfo();

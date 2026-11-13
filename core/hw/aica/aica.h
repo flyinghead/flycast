@@ -312,17 +312,18 @@ struct DSP_OUT_VOL_REG
 	u32 :16;
 };
 
-extern InterruptInfo * const MCIEB;
-extern InterruptInfo * const MCIPD;
-extern InterruptInfo * const MCIRE;
-extern InterruptInfo * const SCIEB;
-extern InterruptInfo * const SCIPD;
-extern InterruptInfo * const SCIRE;
+// Registers of the active chip (see aica_chip.h)
+extern InterruptInfo *MCIEB;
+extern InterruptInfo *MCIPD;
+extern InterruptInfo *MCIRE;
+extern InterruptInfo *SCIEB;
+extern InterruptInfo *SCIPD;
+extern InterruptInfo *SCIRE;
 extern std::deque<u8> midiSendBuffer;
 
-extern CommonData_struct * const CommonData;
-extern DSPData_struct * const DSPData;
-extern const DSP_OUT_VOL_REG * const dsp_out_vol;
+extern CommonData_struct *CommonData;
+extern DSPData_struct *DSPData;
+extern const DSP_OUT_VOL_REG *dsp_out_vol;
 
 template<typename T>
 void writeTimerAndIntReg(u32 reg, T data);
@@ -399,6 +400,6 @@ public:
 	}
 };
 
-extern AicaTimer timers[3];
+extern AicaTimer *timers;	// the 3 timers of the active chip
 
 } // namespace aica

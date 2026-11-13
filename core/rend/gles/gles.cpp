@@ -11,6 +11,7 @@
 #include "wsi/gl_context.h"
 #include "emulator.h"
 #include "naomi2.h"
+#include "hikaru.h"
 #include "oslib/i18n.h"
 
 #ifdef TEST_AUTOMATION
@@ -462,6 +463,7 @@ void termGLCommon()
 	os_VideoRoutingTermGL();
 #endif
 	gl.quadDrawer.reset();
+	hikaruTerm();
 
 	// palette, fog
 	glcache.DeleteTextures(1, &fogTextureId);
@@ -1063,7 +1065,16 @@ void OpenGLRenderer::Process(TA_context* ctx)
 {
 	if (gl.gl_major < 3 && settings.platform.isNaomi2())
 		throw RendererException(i18n::T("OpenGL ES 3.0+ required for Naomi 2"));
+	if (gl.gl_major < 3 && settings.platform.isHikaru())
+		throw RendererException(i18n::T("OpenGL ES 3.0+ required for Hikaru"));
 	gl.rendContext = &ctx->rend;
+	if (ctx->rend.hikaru)
+	{
+		// Sega Hikaru: drawn by its own renderer, nothing to parse
+		if (ctx->rend.swapInterval > 0)
+			GraphicsContext::Instance()->setSwapInterval(ctx->rend.swapInterval);
+		return;
+	}
 	if (resetTextureCache) {
 		TexCache.Clear();
 		resetTextureCache = false;
@@ -1329,6 +1340,10 @@ void OpenGLRenderer::Term()
 
 bool OpenGLRenderer::Render()
 {
+	if (gl.rendContext->hikaru)
+		// Sega Hikaru: its own renderer, then the usual output
+		return renderHikaruFrame();
+	lastFrameHikaru = false;
 	saveCurrentFramebuffer();
 	renderFrame(gl.rendContext->framebufferWidth, gl.rendContext->framebufferHeight);
 	if (gl.rendContext->isRTT) {

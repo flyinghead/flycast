@@ -21,6 +21,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/ta_ctx.h"
 #include "commandpool.h"
+#include "hikaru_drawer.h"
 #include "pipeline.h"
 #include "shaders.h"
 
@@ -63,6 +64,9 @@ protected:
 	void CheckFogTexture();
 	void CheckPaletteTexture();
 	bool presentFramebuffer();
+	// Sega Hikaru: its own renderer, the same for the standard and OIT renderers
+	bool renderHikaru();
+	bool presentHikaru() { return hikaruDrawer.PresentFrame(); }
 
 	ShaderManager shaderManager;
 	std::unique_ptr<Texture> fogTexture;
@@ -78,4 +82,6 @@ protected:
 	CommandPool fbCommandPool;
 	bool framebufferRendered = false;
 	rend_context *rendContext = nullptr;
+	HikaruDrawer hikaruDrawer;
+	bool lastFrameHikaru = false;
 };

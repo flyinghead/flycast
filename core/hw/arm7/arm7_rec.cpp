@@ -22,6 +22,8 @@
 #if	FEAT_AREC != DYNAREC_NONE
 
 #include "arm7_rec.h"
+#include "hw/aica/aica_chip.h"
+#include <memory>
 #include "arm7.h"
 #include "hw/aica/aica_if.h"
 #include "oslib/virtmem.h"
@@ -48,6 +50,26 @@ namespace recompiler {
 u8* icPtr;
 u8* ICache;
 void (*EntryPoints[ARAM_SIZE_MAX / 4])();
+// The entry points of the code compiled for each chip (see hw/aica/aica_chip.h): the blocks of a chip
+// come from its own wave RAM. Chip 0 uses EntryPoints.
+using EntryPoint = void (*)();
+static std::unique_ptr<EntryPoint[]> chipEntryPoints[MAX_CHIPS];
+static void (**entryPoints)() = EntryPoints;
+
+void selectChip(int chip)
+{
+	if (chip == 0)
+	{
+		entryPoints = EntryPoints;
+		return;
+	}
+	if (chipEntryPoints[chip] == nullptr)
+	{
+		chipEntryPoints[chip].reset(new EntryPoint[std::size(EntryPoints)]);
+		std::fill_n(chipEntryPoints[chip].get(), std::size(EntryPoints), arm_compilecode);
+	}
+	entryPoints = chipEntryPoints[chip].get();
+}
 
 DECLARE_CODE_CACHE(ARM7_TCB, ICacheSize)
 
@@ -571,7 +593,7 @@ void compile()
 	// also the size of the EntryPoints table. This way the dynarec
 	// main loop doesn't have to worry about the actual aica
 	// ram size. The aica ram always wraps to 8 MB anyway.
-	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())writeToExec(rv);
+	entryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())writeToExec(rv);
 
 	block_ops.clear();
 
@@ -661,6 +683,9 @@ void flush()
 	verify(arm_compilecode != nullptr);
 	for (u32 i = 0; i < std::size(EntryPoints); i++)
 		EntryPoints[i] = arm_compilecode;
+	for (auto& table : chipEntryPoints)
+		if (table != nullptr)
+			std::fill_n(table.get(), std::size(EntryPoints), arm_compilecode);
 }
 
 void init()
@@ -739,7 +764,7 @@ void run(u32 samples)
 		if (Arm7Enabled)
 		{
 			arm_Reg[CYCL_CNT].I += ARM_CYCLES_PER_SAMPLE;
-			arm_mainloop(arm_Reg, recompiler::EntryPoints);
+			arm_mainloop(arm_Reg, recompiler::entryPoints);
 		}
 		timeStep();
 	}

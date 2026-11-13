@@ -40,7 +40,7 @@ public:
 	static void Create(retro_hw_render_interface_vulkan *render_if);
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
-	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio, bool pvrVideo = true);
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }

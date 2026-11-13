@@ -26,7 +26,8 @@
 class AT93CxxSerialEeprom : public WritableChip
 {
 public:
-	AT93CxxSerialEeprom(u32 size) : WritableChip(size) {
+	// x8: 8-bit organization (ORG pin low), otherwise 16-bit
+	AT93CxxSerialEeprom(u32 size, bool x8 = false) : WritableChip(size), x8(x8) {
 		memset(data, 0xff, size);
 	}
 
@@ -42,7 +43,14 @@ public:
 	}
 
 	// chip select (active high)
-	void writeCS(bool state) {
+	void writeCS(bool state)
+	{
+		// deselecting the chip aborts any partially received instruction
+		if (cs && !state)
+		{
+			command.clear();
+			expected = 0;
+		}
 		cs = state;
 	}
 
@@ -62,11 +70,24 @@ public:
 	void Deserialize(Deserializer& deser) override;
 
 private:
+	void writeWord(u32 addr, u16 v)
+	{
+		if (x8)
+			data[addr & mask] = (u8)v;
+		else
+			*(u16 *)&data[(addr * 2) & mask] = v;
+	}
+	int addrBits() const {
+		return x8 ? 7 : 6;
+	}
+	int dataBits() const {
+		return x8 ? 8 : 16;
+	}
 	u8 getCommandAddress() const
 	{
-		verify(command.size() >= 9);
+		verify((int)command.size() >= 3 + addrBits());
 		u8 addr = 0;
-		for (int i = 3; i < 9; i++) {
+		for (int i = 3; i < 3 + addrBits(); i++) {
 			addr <<= 1;
 			addr |= command[i];
 		}
@@ -75,15 +96,16 @@ private:
 
 	u16 getCommandData() const
 	{
-		verify(command.size() >= 25);
+		verify((int)command.size() >= 3 + addrBits() + dataBits());
 		u16 v = 0;
-		for (int i = 9; i < 25; i++) {
+		for (int i = 3 + addrBits(); i < 3 + addrBits() + dataBits(); i++) {
 			v <<= 1;
 			v |= command[i];
 		}
 		return v;
 	}
 
+	const bool x8;
 	bool cs = false;
 	bool clk = false;
 	bool di = false;
@@ -101,6 +123,6 @@ private:
 class AT93C46SerialEeprom : public AT93CxxSerialEeprom
 {
 public:
-	AT93C46SerialEeprom() : AT93CxxSerialEeprom(128) {}
+	AT93C46SerialEeprom(bool x8 = false) : AT93CxxSerialEeprom(128, x8) {}
 };
 

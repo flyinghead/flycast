@@ -312,6 +312,12 @@ struct BaseMIE : public maple_base
 struct MIE : public BaseMIE, public SerialPort
 {
 	static std::shared_ptr<maple_device> Create();
+
+	// Raw JVS access, used when the MIE firmware is emulated (Hikaru).
+	// Sends a JVS packet payload to the given node (0xff: all nodes) and returns the length of the
+	// reply packet (sync, node, length, data, checksum, unescaped) written to out, or 0 if none.
+	virtual u32 jvsRawMessage(u8 node, const u8 *in, u32 len, u8 *out) = 0;
+	virtual u32 jvsBoardCount() const = 0;
 };
 
 struct RFIDReaderWriter : public BaseMIE

@@ -551,6 +551,7 @@ protected:
 	}
 
 	bool renderLastFrame();
+	bool renderHikaruFrame();
 	void renderVideoRouting();
 	void drawOSD();
 
@@ -559,6 +560,7 @@ private:
 
 protected:
 	bool frameRendered = false;
+	bool lastFrameHikaru = false;
 	int width = 640;
 	int height = 480;
 	void initVideoRoutingFrameBuffer();

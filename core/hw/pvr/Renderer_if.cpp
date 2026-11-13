@@ -200,10 +200,19 @@ private:
 		if (taContext == nullptr)
 			return;
 
-		// tile clipping is used to calculate framebuffer size in RTT below
-		setTileClipping(taContext->rend);
 		int width, height;
-		getScaledFramebufferSize(taContext->rend, width, height);
+		if (taContext->rend.hikaru)
+		{
+			// Sega Hikaru: 640x480 at the render resolution, independent of the PVR registers
+			height = config::RenderResolution;
+			width = (int)std::round(640.f * height / 480.f / 2.f) * 2;
+		}
+		else
+		{
+			// tile clipping is used to calculate framebuffer size in RTT below
+			setTileClipping(taContext->rend);
+			getScaledFramebufferSize(taContext->rend, width, height);
+		}
 		taContext->rend.framebufferWidth = width;
 		taContext->rend.framebufferHeight = height;
 		bool renderToScreen = !taContext->rend.isRTT && !config::EmulateFramebuffer;
@@ -585,6 +594,20 @@ void rend_start_render()
 		pvrQueue.enqueue(PvrMessageQueue::Render);
 		if (!config::DelayFrameSwapping && !ctx->rend.isRTT && !config::EmulateFramebuffer)
 			pvrQueue.enqueue(PvrMessageQueue::Present);
+	}
+}
+
+// Render a context built outside of the TA (Sega Hikaru)
+void rend_start_render(TA_context *ctx)
+{
+	render_called = true;
+	pend_rend = false;
+	if (QueueRender(ctx))
+	{
+		pend_rend = true;
+		pvrQueue.enqueue(PvrMessageQueue::Render);
+		// No guest framebuffer flip to wait for: present right away
+		pvrQueue.enqueue(PvrMessageQueue::Present);
 	}
 }
 

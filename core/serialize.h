@@ -76,7 +76,8 @@ public:
 		V57,
 		V58,
 		V59,
-		Current = V59,
+		V60,	// Sega Hikaru spot lights
+		Current = V60,
 
 		Next = Current + 1,
 	};

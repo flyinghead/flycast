@@ -81,6 +81,17 @@ static u64 dec_MRd(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_ReadM,d,s,
 static u64 dec_MWt(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_WriteM,d,s,shop_writem,sz); }
 
 static sh4_opcodelistentry missing_opcode = {dec_illegalOp, iNotImplemented, 0, 0, ReadWritePC, "missing", 0, 0, CO, 1 };
+static sh4_opcodelistentry undefined_opcode = {dec_i0000_0000_0000_1001, i0000_0000_0000_1001, 0, 0, Normal, "undefined", 1, 0, MT, 1 };
+
+// Most undefined opcodes execute as no-ops. Only these raise a general illegal instruction exception.
+static bool isIllegalOpcode(u32 op)
+{
+	return (op & 0xf0ff) == 0x003b
+		|| (op & 0xf0cf) == 0x004b
+		|| (op & 0xf0ef) == 0x00ca
+		|| (op & 0xf0ff) == 0x00ea
+		|| op == 0xfffd;
+}
 
 static sh4_opcodelistentry opcodes[]=
 {
@@ -349,8 +360,16 @@ static void BuildOpcodeTables()
 
 	for (int i=0;i<0x10000;i++)
 	{
-		OpPtr[i]=iNotImplemented;
-		OpDesc[i]=&missing_opcode;
+		if (isIllegalOpcode(i))
+		{
+			OpPtr[i]=iNotImplemented;
+			OpDesc[i]=&missing_opcode;
+		}
+		else
+		{
+			OpPtr[i]=i0000_0000_0000_1001;
+			OpDesc[i]=&undefined_opcode;
+		}
 	}
 
 	for (int i2=0;opcodes[i2].oph;i2++)

@@ -10,6 +10,7 @@ TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
 static u32 ITLB_LRU_USE[64];
 bool mmuOn;
+bool winCE;
 
 //SQ fast remap , mainly hackish , assumes 1MB pages
 //max 64MB can be remapped on SQ
@@ -447,12 +448,37 @@ void mmu_set_state()
 				|| memcmp(GetMemPtr(0x8c011118, 4), magic, sizeof(magic)) == 0)
 		{
 			mmuOn = true;
+			winCE = true;
 			NOTICE_LOG(SH4, "Enabling Full MMU support");
+		}
+		else if (!mmuOn)
+		{
+			// Enable Full MMU if the UTLB is empty (it will be filled by the TLB miss handler, e.g. KallistiOS)
+			// or if it already contains entries other than store queue mappings
+			bool fullMmu = true;
+			for (const TLB_Entry& entry : UTLB)
+			{
+				if (entry.Data.V == 0)
+					continue;
+				if ((entry.Address.VPN & (0xFC000000 >> 10)) != (0xE0000000 >> 10)
+						&& entry.Address.VPN != 0x30040 && entry.Address.VPN != 0x30000)
+				{
+					fullMmu = true;
+					break;
+				}
+				fullMmu = false;
+			}
+			if (fullMmu)
+			{
+				mmuOn = true;
+				NOTICE_LOG(SH4, "Enabling Full MMU support");
+			}
 		}
 	}
 	else
 	{
 		mmuOn = false;
+		winCE = false;
 	}
 
 	SetMemoryHandlers();

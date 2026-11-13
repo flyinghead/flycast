@@ -83,6 +83,17 @@ void bm_Periodical_1s();
 void bm_Init();
 void bm_Term();
 
+// Several SH-4 CPUs can be recompiled, each with its own blocks. CPU 0 is the main one:
+// only its blocks are write-protected in RAM, the blocks of other CPUs are always checked.
+constexpr int MAX_SH4_CPUS = 2;
+bool bm_InitCpu(int cpu);
+void bm_TermCpu(int cpu);
+void bm_SelectCpu(int cpu);
+int bm_CurrentCpu();
+// The block lookup table of the current CPU
+void **bm_Fpcb();
+size_t bm_FpcbSize();
+
 void bm_vmem_pagefill(void** ptr,u32 size_bytes);
 static inline bool bm_IsRamPageProtected(u32 addr)
 {

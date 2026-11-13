@@ -623,8 +623,12 @@ static u16 block_decrypt(uint32_t game_key, uint16_t sequence_key, uint16_t coun
 	return aux;
 }
 
+static u16 (*cryptoReader)(u32 addr);
+
 static u16 m_read(uint32_t addr)
 {
+	if (cryptoReader != nullptr)
+		return cryptoReader(addr);
 	return ((M2Cartridge *)CurrentCartridge)->ReadCipheredData(addr);
 }
 
@@ -790,8 +794,9 @@ static void enc_fill()
 	buffer_pos = 0;
 }
 
-u16 cryptoDecrypt()
+u16 cryptoDecrypt(u16 (*read)(u32 addr))
 {
+  cryptoReader = read;
   u8* base;
   if(!cryptoReady)
     cryptoStart();

@@ -139,12 +139,14 @@ bool Sh4Interpreter::IsCpuRunning()
 	return ctx->CpuRunning;
 }
 
-//TODO : Check for valid delayslot instruction
 void Sh4Interpreter::ExecuteDelayslot()
 {
 	try {
 		u32 op = ReadNexOp();
 
+		if (OpDesc[op]->SetPC())
+			// Slot illegal instruction
+			throw SH4ThrownException(ctx->pc - 2, Sh4Ex_IllegalInstr);
 		ExecuteOpcode(op);
 	} catch (SH4ThrownException& ex) {
 		AdjustDelaySlotException(ex);

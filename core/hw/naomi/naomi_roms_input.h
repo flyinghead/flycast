@@ -112,6 +112,46 @@ static InputDescriptors _18wheelr_inputs = {
 	  },
 };
 
+// Star Wars Racer Arcade (Odin): the left button of the cabinet is wired to the 1P RIGHT switch and the
+// right button to 1P LEFT. The levers are analog channels 0 and 1, low when pushed forward.
+static InputDescriptors swracer_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "BOOST" },
+			{ NAOMI_BTN1_KEY, "BRAKE" },
+			{ NAOMI_BTN2_KEY, "LEFT BUTTON", NAOMI_RIGHT_KEY },
+			{ NAOMI_BTN3_KEY, "RIGHT BUTTON", NAOMI_LEFT_KEY },
+			// Steering only reduces the levers (see maple_jvs.cpp)
+			{ NAOMI_LEFT_KEY, "STEER LEFT", NAOMI_BTN8_KEY },
+			{ NAOMI_RIGHT_KEY, "STEER RIGHT", NAOMI_BTN8_KEY },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	  },
+	  {
+			// Both levers follow the accelerator (right trigger), minus the steering towards their side
+			// forward is low (Odin): released 0xc000, fully pushed 0x4000
+			{ "ACCELERATE", Half, 4, true, 0x4000, 0xc000 },
+			{ "ACCELERATE", Half, 4, true, 0x4000, 0xc000 },
+	  },
+};
+
+// Planet Harriers (Odin): analog channel 0 is the vertical stick, low when pulled down, and
+// channel 1 the horizontal stick, low to the left. The view buttons are the 1P LEFT and RIGHT switches.
+static InputDescriptors pharrier_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "BULLET" },
+			{ NAOMI_BTN1_KEY, "MISSILE" },
+			{ NAOMI_BTN2_KEY, "BOMB" },
+			{ NAOMI_LEFT_KEY, "VR L" },
+			{ NAOMI_RIGHT_KEY, "VR R" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	  },
+	  {
+			{ "STICK V", Full, 1, true },
+			{ "STICK H", Full, 0 },
+	  },
+};
+
 static InputDescriptors alienfnt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LEFT SHOT" },

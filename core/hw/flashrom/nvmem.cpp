@@ -381,6 +381,7 @@ void init()
 		sys_nvmem = new SRamChip(settings.platform.flash_size);
 		break;
 	case DC_PLATFORM_SYSTEMSP:
+	case DC_PLATFORM_HIKARU:
 		sys_rom = new RomChip(settings.platform.bios_size);
 		sys_nvmem = new SRamChip(settings.platform.flash_size);
 		break;

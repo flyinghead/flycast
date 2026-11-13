@@ -23,6 +23,8 @@ const u16 IRLPriority = 0x0246;
 #define IRLP9 &IRLPriority,0
 #define IRLP11 &IRLPriority,4
 #define IRLP13 &IRLPriority,8
+// Independent IRL pins: IRL1 level 10, IRL2 level 7, IRL3 level 4
+const u16 IndepIRLPriority = 0x047a;
 
 #define GIPA(p) &INTC_IPRA.reg_data,4*p
 #define GIPB(p) &INTC_IPRB.reg_data,4*p
@@ -86,6 +88,11 @@ static const InterptSourceList_Entry InterruptSourceList[sh4_INT_ID_COUNT] =
 	//REF
 	{ GIPB(2), Sh4Ex_REF_RCMI },		//sh4_REF_RCMI
 	{ GIPA(2), Sh4Ex_REF_ROVI },		//sh4_REF_ROVI
+
+	//Independent IRL pins
+	{ &IndepIRLPriority, 0, Sh4Ex_ExtInterrupt5 },	//sh4_IRL1_INDEP
+	{ &IndepIRLPriority, 4, Sh4Ex_ExtInterrupt8 },	//sh4_IRL2_INDEP
+	{ &IndepIRLPriority, 8, Sh4Ex_ExtInterruptB },	//sh4_IRL3_INDEP
 };
 
 //Maps siid -> EventID
@@ -218,6 +225,21 @@ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 	//printf("RaiseException: from pc %08x to %08x, event %x\n", epc, next_pc, expEvn);
 }
 
+
+// Used to run another SH-4 context (Hikaru slave CPU): hide this CPU's interrupts
+// while the other context is active, then recompute the state from this CPU's SR.
+static u32 suspendedVmask;
+void interrupts_suspend()
+{
+	suspendedVmask = interrupt_vmask;
+	interrupt_vmask = 0;
+	recalc_pending_itrs();
+}
+void interrupts_resume()
+{
+	interrupt_vmask = suspendedVmask;
+	SRdecode();
+}
 
 //Init/Res/Term
 void interrupts_init()

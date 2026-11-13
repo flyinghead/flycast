@@ -63,10 +63,17 @@ enum InterruptID
 	sh4_REF_RCMI    = 26,
 	sh4_REF_ROVI    = 27,
 
+	// IRL pins in independent mode (ICR.IRLM=1), used by the Hikaru. IRL0 isn't used.
+	sh4_IRL1_INDEP  = 28,	// level 10, INTEVT 0x2A0
+	sh4_IRL2_INDEP  = 29,	// level 7, INTEVT 0x300
+	sh4_IRL3_INDEP  = 30,	// level 4, INTEVT 0x360
+
 	sh4_INT_ID_COUNT
 };
 
 void SetInterruptPend(InterruptID intr);
+void interrupts_suspend();
+void interrupts_resume();
 void ResetInterruptPend(InterruptID intr);
 inline static void InterruptPend(InterruptID intr, bool v)
 {

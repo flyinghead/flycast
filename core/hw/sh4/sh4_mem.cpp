@@ -10,6 +10,7 @@
 #include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
+#include "hw/hikaru/hikaru.h"
 #include "hw/sh4/modules/mmu.h"
 #include "cfg/option.h"
 
@@ -147,6 +148,16 @@ void mem_map_default()
 	//-----------
 	//P4
 	//0xExxx xxxx	-> internal area
+
+	if (settings.platform.isHikaru())
+	{
+		// The Hikaru has its own memory map. 00-E0: 7 mirrors (P0-P3)
+		for (int i = 0; i < 7; i++)
+			hikaru::mapArea(i << 5);
+		map_area7(); // On Chip RAM
+		map_p4();
+		return;
+	}
 
 	//Init Memmaps (register handlers)
 	map_area0_init();

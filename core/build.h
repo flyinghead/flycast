@@ -11,6 +11,7 @@
 #define DC_PLATFORM_NAOMI2      3
 #define DC_PLATFORM_ATOMISWAVE  4
 #define DC_PLATFORM_SYSTEMSP    5
+#define DC_PLATFORM_HIKARU      6
 
 //HOST_CPU
 #define CPU_X86      0x20000001

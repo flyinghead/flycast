@@ -108,7 +108,8 @@ public:
 	void BeginRenderPass();
 	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
 	void Present() noexcept;
-	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
+	// pvrVideo: the PVR video output registers (border color, video shift) apply
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio, bool pvrVideo = true) noexcept;
 	void PresentLastFrame();
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height);
 
@@ -277,6 +278,7 @@ private:
 	vk::ImageView lastFrameView;
 	vk::Extent2D lastFrameExtent;
 	float lastFrameAR = 0.f;
+	bool lastFramePvrVideo = true;
 
 	std::unique_ptr<VulkanOverlay> overlay;
 	std::vector<std::vector<std::unique_ptr<Deletable>>> inFlightObjects;

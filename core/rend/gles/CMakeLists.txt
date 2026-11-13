@@ -4,6 +4,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         gles.cpp
         gles.h
         gltex.cpp
+        hikaru.cpp
+        hikaru.h
         quad.cpp
         postprocess.cpp
         postprocess.h

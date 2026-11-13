@@ -358,12 +358,14 @@ static void free_pages(void *p)
 // or by flushing it and making it fault on access again.
 void bm_reset()
 {
+	// The table of the current CPU
+	void **fpcb = bm_Fpcb();
 	// If we allocated it via vmem:
 	if (ram_base)
-		virtmem::reset_mem(p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
+		virtmem::reset_mem(fpcb, bm_FpcbSize());
 	else
 		// We allocated it via a regular malloc/new/whatever on the heap
-		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
+		bm_vmem_pagefill(fpcb, bm_FpcbSize());
 }
 
 // This gets called whenever there is a pagefault, it is possible that it lands
@@ -375,8 +377,8 @@ bool bm_lockedWrite(u8* address)
 		return false;  // No vmem, therefore not us who caused this.
 
 	uintptr_t ptrint = (uintptr_t)address;
-	uintptr_t start  = (uintptr_t)p_sh4rcb->fpcb;
-	uintptr_t end    = start + sizeof(p_sh4rcb->fpcb);
+	uintptr_t start  = (uintptr_t)bm_Fpcb();
+	uintptr_t end    = start + bm_FpcbSize();
 
 	if (ptrint >= start && ptrint < end)
 	{
@@ -455,12 +457,25 @@ void initMappings()
 			// This is outside of the 512MB addr space. We map 8MB in all cases to help some games read past the end of aica ram
 			{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
 		};
-		virtmem::create_mappings(&mem_mappings[0], std::size(mem_mappings));
+		// Hikaru: only main RAM is at the same place. Everything else in the low 512 MB must fault
+		// so that it goes through the handlers. VRAM (unused by the Hikaru) is parked in area 4.
+		const virtmem::Mapping hikaru_mappings[] = {
+			{0x00000000, 0x0C000000,                               0,         0, false},  // BIOS, MIE, bus windows, bridge
+			{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // main RAM + mirror
+			{0x10000000, 0x11000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // PVR VRAM (unused)
+			{0x11000000, 0x20000000,                               0,         0, false},  // GPU, bus windows, texture RAM
+			{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
+		};
+		const bool hikaru = settings.platform.isHikaru();
+		if (hikaru)
+			virtmem::create_mappings(&hikaru_mappings[0], std::size(hikaru_mappings));
+		else
+			virtmem::create_mappings(&mem_mappings[0], std::size(mem_mappings));
 
 		// Point buffers to actual data pointers
 		// This *must* be the first r/w mirror (switch)
 		aica::aica_ram.setRegion(&ram_base[0x20000000], ARAM_SIZE); // Points to the writable AICA addrspace
-		vram.setRegion(&ram_base[0x04000000], VRAM_SIZE); // Points to first vram mirror (writable and lockable)
+		vram.setRegion(&ram_base[hikaru ? 0x10000000 : 0x04000000], VRAM_SIZE); // Points to first vram mirror (writable and lockable)
 		mem_b.setRegion(&ram_base[0x0C000000], RAM_SIZE); // Main memory, first mirror
 		elan::RAM = &ram_base[0x0A000000];
 	}
@@ -490,18 +505,23 @@ void release()
 	}
 }
 
+// Offset of the first VRAM mirror in the virtual address space (see initMappings)
+static u32 vramMapOffset() {
+	return settings.platform.isHikaru() ? 0x10000000 : 0x04000000;
+}
+
 void protectVram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
 #ifndef __SWITCH__
 	if (virtmemEnabled())
 	{
-		virtmem::region_lock(ram_base + 0x04000000 + addr, size);	// P0
+		virtmem::region_lock(ram_base + vramMapOffset() + addr, size);	// P0
 		//virtmem::region_lock(ram_base + 0x06000000 + addr, size);	// P0 - mirror
 		if (VRAM_SIZE == 0x800000)
 		{
 			// wraps when only 8MB VRAM
-			virtmem::region_lock(ram_base + 0x04000000 + addr + VRAM_SIZE, size);	// P0 wrap
+			virtmem::region_lock(ram_base + vramMapOffset() + addr + VRAM_SIZE, size);	// P0 wrap
 			//virtmem::region_lock(ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
 		}
 	}
@@ -518,12 +538,12 @@ void unprotectVram(u32 addr, u32 size)
 #ifndef __SWITCH__
 	if (virtmemEnabled())
 	{
-		virtmem::region_unlock(ram_base + 0x04000000 + addr, size);		// P0
+		virtmem::region_unlock(ram_base + vramMapOffset() + addr, size);		// P0
 		//virtmem::region_unlock(ram_base + 0x06000000 + addr, size);	// P0 - mirror
 		if (VRAM_SIZE == 0x800000)
 		{
 			// wraps when only 8MB VRAM
-			virtmem::region_unlock(ram_base + 0x04000000 + addr + VRAM_SIZE, size);		// P0 wrap
+			virtmem::region_unlock(ram_base + vramMapOffset() + addr + VRAM_SIZE, size);		// P0 wrap
 			//virtmem::region_unlock(ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
 		}
 	}
@@ -542,7 +562,7 @@ u32 getVramOffset(void *addr)
 		ptrdiff_t offset = (u8*)addr - ram_base;
 		if (offset < 0 || offset >= 0x20000000)
 			return -1;
-		if ((offset >> 24) != 4)
+		if ((u32)(offset >> 24) != vramMapOffset() >> 24)
 			return -1;
 
 		return offset & VRAM_MASK;

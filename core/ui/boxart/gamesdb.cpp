@@ -239,6 +239,16 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 	}
 }
 
+// Lower case letters and digits only, so that "Star Wars: Racer Arcade" matches "Star Wars Racer Arcade"
+static std::string normalizeTitle(const std::string& title)
+{
+	std::string s;
+	for (char c : title)
+		if (std::isalnum((u8)c))
+			s += (char)std::tolower((u8)c);
+	return s;
+}
+
 bool TheGamesDb::parseGameInfo(const json& gameArray, const json& boxartArray, GameBoxart& item, const std::string& diskId)
 {
 	for (const auto& game : gameArray)
@@ -255,6 +265,17 @@ bool TheGamesDb::parseGameInfo(const json& gameArray, const json& boxartArray, G
 			} catch (const json::exception& e) {
 			}
 			if (!found)
+				continue;
+		}
+		else if (item.arcade)
+		{
+			// Arcade name searches are fuzzy: only accept the same title
+			std::string title;
+			try {
+				title = game.at("game_title");
+			} catch (const json::exception& e) {
+			}
+			if (normalizeTitle(title) != normalizeTitle(item.searchName))
 				continue;
 		}
 		// Name

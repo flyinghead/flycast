@@ -28,6 +28,7 @@
 #include "dx11_shaders.h"
 #include "dx11_renderstate.h"
 #include "dx11_naomi2.h"
+#include "dx11_hikaru.h"
 #ifndef LIBRETRO
 #include "dx11_driver.h"
 #endif
@@ -96,7 +97,7 @@ protected:
 	void updateFogTexture();
 	void updatePaletteTexture();
 	void readRttRenderTarget(u32 texAddress);
-	void displayFramebuffer();
+	void displayFramebuffer(bool pvrVideo = true);
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
@@ -129,6 +130,8 @@ protected:
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
 	Naomi2Helper n2Helper;
+	HikaruRenderer hikaruRenderer;
+	bool lastFrameHikaru = false;
 	float aspectRatio = 4.f / 3.f;
 	bool dithering = false;
 	rend_context *rendContext;

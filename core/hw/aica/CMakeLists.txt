@@ -1,6 +1,7 @@
 target_sources(${PROJECT_NAME} PRIVATE
         aica.cpp
         aica.h
+        aica_chip.h
         aica_if.cpp
         aica_if.h
         aica_mem.cpp

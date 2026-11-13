@@ -13,6 +13,7 @@
 #include "reios/reios.h"
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/hikaru/hikaru.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "imgread/common.h"
@@ -50,6 +51,8 @@ void dc_serialize(Serializer& ser)
 	ser << config::Region.get();
 
 	naomi_cart_serialize(ser);
+	if (settings.platform.isHikaru())
+		hikaru::serialize(ser);
 	reios_serialize(ser);
 	achievements::serialize(ser);
 
@@ -99,6 +102,8 @@ void dc_deserialize(Deserializer& deser)
 	config::Region.get() = region;
 
 	naomi_cart_deserialize(deser);
+	if (settings.platform.isHikaru())
+		hikaru::deserialize(deser);
 	reios_deserialize(deser);
 	achievements::deserialize(deser);
 	sh4_sched_ffts();

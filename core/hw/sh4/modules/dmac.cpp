@@ -212,10 +212,11 @@ static void WriteCHCR(u32 addr, u32 data)
            	DMAC_DAR(ch) = dst;
            	DMAC_DMATCR(ch) = len;
         }
-
-        InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);
-        InterruptMask(dmac_itr[ch], DMAC_CHCR(ch).IE);
     }
+	// The DMTE interrupt request is TE & IE, whatever the other bits.
+	// Clearing TE or IE without starting a new transfer must withdraw it.
+	InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);
+	InterruptMask(dmac_itr[ch], DMAC_CHCR(ch).IE);
 }
 
 //Init term res

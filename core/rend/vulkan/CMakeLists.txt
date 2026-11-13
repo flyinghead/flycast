@@ -20,6 +20,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         compiler.h
         drawer.cpp
         drawer.h
+        hikaru_drawer.cpp
+        hikaru_drawer.h
+        hikaru_shaders.cpp
+        hikaru_shaders.h
         pipeline.cpp
         pipeline.h
         quad.cpp

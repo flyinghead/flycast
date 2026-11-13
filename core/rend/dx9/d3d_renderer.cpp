@@ -318,6 +318,8 @@ void D3DRenderer::Process(TA_context* ctx)
 	}
 	if (settings.platform.isNaomi2())
 		throw RendererException(i18n::T("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"));
+	if (settings.platform.isHikaru())
+		throw RendererException(i18n::T("DirectX 9 doesn't support Hikaru games. Select a different graphics API"));
 
 	rendContext = &ctx->rend;
 	if (resetTextureCache) {
