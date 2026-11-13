@@ -144,7 +144,12 @@ public:
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
 		while (!ringBuffer.write((const u8 *)frame, samples * 4) && wait)
-			pushWait.Wait();
+		{
+			if (!pushWait.Wait(200)) {
+				WARN_LOG(AUDIO, "Oboe wait timeout");
+				return 0;
+			}
+		}
 
 		return 1;
 	}
