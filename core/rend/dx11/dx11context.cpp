@@ -334,6 +334,8 @@ void DX11Context::resize()
 			settings.display.height = desc.BufferDesc.Height;
 			NOTICE_LOG(RENDERER, "Swapchain resized: %d x %d", desc.BufferDesc.Width, desc.BufferDesc.Height);
 		}
+		settings.display.width = std::max(settings.display.width, 1);
+		settings.display.height = std::max(settings.display.height, 1);
 	}
 	// TODO minimized window
 }

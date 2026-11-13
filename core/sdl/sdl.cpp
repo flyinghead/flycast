@@ -689,6 +689,9 @@ bool sdl_update_display_metrics(SDL_Window *window, u32 windowFlags)
 		settings.display.width = windowWidth;
 		settings.display.height = windowHeight;
 	}
+	// windows can report a 0x0 size when window is minimized
+	settings.display.width = std::max(settings.display.width, 1);
+	settings.display.height = std::max(settings.display.height, 1);
 
 	if (windowWidth > 0)
 		settings.display.pointScale = (float)settings.display.width / windowWidth;
@@ -951,6 +954,8 @@ bool sdl_recreate_window(u32 flags)
 			}
 		}
 	}
+	settings.display.width = std::max(settings.display.width, 1);
+	settings.display.height = std::max(settings.display.height, 1);
 
 	return true;
 }
