@@ -4,16 +4,16 @@
 #include "oslib/i18n.h"
 #include <sstream>
 
-static Disc* load_gdi(const char* file, std::vector<u8> *digest)
+static Disc* load_gdi(const char* file, std::vector<u8> *digest, hostfs::Storage& storage)
 {
-	hostfs::File *t = hostfs::storage().openFile(file, "rb");
+	hostfs::File *t = storage.openFile(file, "rb");
 	if (t == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(strprintf(i18n::T("Cannot open GDI file %s"), file));
 	}
 
-	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
+	hostfs::FileInfo fileInfo = storage.getFileInfo(file);
 	size_t gdi_len = fileInfo.size;
 
 	char gdi_data[16384] {};
@@ -40,7 +40,7 @@ static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 
 	INFO_LOG(GDROM, "GDI: %d tracks", trackCount);
 
-	std::string basepath = hostfs::storage().getParentPath(file);
+	std::string basepath = storage.getParentPath(file);
 
 	MD5Sum md5;
 
@@ -128,14 +128,14 @@ static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 		t.StartFAD = FADS + 150;
 		t.CTRL = CTRL;
 
-		std::string path = hostfs::storage().getSubPath(basepath, track_filename);
-		hostfs::File *file = hostfs::storage().openFile(path, "rb");
+		std::string path = storage.getSubPath(basepath, track_filename);
+		hostfs::File *file = storage.openFile(path, "rb");
 		if (file == nullptr)
 			throw FlycastException(strprintf(i18n::T("GDI file: Cannot open track %s"), path.c_str()));
 		if (digest != nullptr)
 			md5.add(file);
 		t.file = new RawTrackFile(file, OFFSET, t.StartFAD, SSIZE);
-		hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(path);
+		hostfs::FileInfo fileInfo = storage.getFileInfo(path);
 		if ((fileInfo.size - OFFSET) % SSIZE != 0)
 			WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), SSIZE);
 		t.EndFAD = t.StartFAD + (u32)(fileInfo.size - OFFSET) / SSIZE - 1;
@@ -154,10 +154,10 @@ static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 }
 
 
-Disc* gdi_parse(const char* file, std::vector<u8> *digest)
+Disc* gdi_parse(const char* file, std::vector<u8> *digest, hostfs::Storage& storage)
 {
 	if (get_file_extension(file) != "gdi")
 		return nullptr;
 
-	return load_gdi(file, digest);
+	return load_gdi(file, digest, storage);
 }

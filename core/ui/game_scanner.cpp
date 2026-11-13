@@ -22,6 +22,7 @@
 #include "oslib/storage.h"
 #include "cfg/option.h"
 #include "oslib/i18n.h"
+#include "imgread/common.h"
 
 static bool operator<(const GameMedia &left, const GameMedia &right)
 {
@@ -74,10 +75,15 @@ void GameScanner::add_game_directory(const std::string& path)
 		std::string extension = get_file_extension(item.name);
 		if (extension == "zip" || extension == "7z")
 		{
-			string_tolower(gameName);
-			auto it = arcade_games.find(gameName);
+			std::string arcadeName = gameName;
+			string_tolower(arcadeName);
+			auto it = arcade_games.find(arcadeName);
 			if (it == arcade_games.end())
+			{
+				if (extension == "7z" && is7zDisc(item.path))
+					insert_game(GameMedia{ fileName, item.path, item.name, gameName });
 				continue;
+			}
 			gameName = it->second->description;
 			fileName = fileName + " (" + gameName + ")";
 			insert_game(GameMedia{ fileName, item.path, item.name, gameName, true });

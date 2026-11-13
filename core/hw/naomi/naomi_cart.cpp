@@ -156,12 +156,18 @@ static const Game *FindGame(const char *filename)
 	size_t folder_pos = get_last_slash_pos(gameName);	// Only for standard path
 	if (folder_pos != std::string::npos)
 		gameName = gameName.substr(folder_pos + 1);
+	string_tolower(gameName);
 
 	for (int i = 0; Games[i].name != nullptr; i++)
 		if (gameName == Games[i].name)
 			return &Games[i];
 
 	return nullptr;
+}
+
+bool naomi_cart_IsKnownGame(const char *filename)
+{
+	return FindGame(filename) != nullptr;
 }
 
 void naomi_cart_LoadBios(const char *filename)

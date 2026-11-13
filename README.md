@@ -14,6 +14,12 @@ Information about configuration and supported features can be found on [**TheArc
 
 Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
+## Loading games from 7z archives
+
+Dreamcast games can be loaded directly from `.7z` files containing exactly one `.gdi`, `.cue`, `.cdi`, or `.chd` image. Include all tracks referenced by a GDI or CUE file, keeping their relative folder paths intact. Archives containing multiple disc images must be split into one archive per disc.
+
+Flycast extracts the required files to temporary disk storage for the duration of play, so enough free space for the uncompressed image is needed. Loading may take longer than opening an unpacked image, and solid archives can require enough memory to decompress an entire solid block. Existing arcade `.7z` ROM sets remain supported with their standard ROM set names.
+
 ## Downloads ![android](https://flyinghead.github.io/flycast-builds/android.jpg) ![windows](https://flyinghead.github.io/flycast-builds/windows.png) ![linux](https://flyinghead.github.io/flycast-builds/ubuntu.png) ![apple](https://flyinghead.github.io/flycast-builds/apple.png) ![switch](https://flyinghead.github.io/flycast-builds/switch.png) ![xbox](https://flyinghead.github.io/flycast-builds/xbox.png)
 
 Get builds for your system from the [**builds page**](https://flyinghead.github.io/flycast-builds/) or [**GitHub Releases**](https://github.com/flyinghead/flycast/releases).

@@ -212,6 +212,10 @@ private:
 };
 
 Disc* OpenDisc(const std::string& path, std::vector<u8> *digest = nullptr);
+// Internal disc readers can also read members of an archive through a Storage.
+Disc* OpenDisc(const std::string& path, std::vector<u8> *digest, hostfs::Storage& storage);
+// Inspects the archive directory without decompressing disc data.
+bool is7zDisc(const std::string& path);
 
 struct RawTrackFile : TrackFile
 {
