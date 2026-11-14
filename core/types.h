@@ -84,7 +84,9 @@ inline static void JITWriteProtect(bool enabled) {
 
 #include "log/Log.h"
 
-#ifndef _MSC_VER
+#ifdef _MSC_VER
+#define strtok_r strtok_s
+#else
 #define stricmp strcasecmp
 #endif
 

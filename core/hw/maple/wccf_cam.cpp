@@ -975,7 +975,7 @@ void WccfCameraImpl::OnSetup()
 					rep.status = Reply::ok;
 				}
 			});
-		httpServer->addUriHandler("/image/", [this](const Request& req, Reply& rep)
+		httpServer->addUriHandler("/image/", [](const Request& req, Reply& rep)
 			{
 				for (const Header& header : req.headers)
 				{
@@ -1082,7 +1082,7 @@ void WccfCameraImpl::OnSetup()
 				rep.setContent(content, "image/png");
 				rep.addHeader("ETag", settings.content.fileName + "-" + std::to_string(playerId));
 			});
-		httpServer->addUriHandler("/version", [this](const Request& req, Reply& rep)
+		httpServer->addUriHandler("/version", [](const Request& req, Reply& rep)
 			{
 				rep.addHeader("Access-Control-Allow-Origin", "*");
 				rep.addHeader("Access-Control-Allow-Methods", "GET");

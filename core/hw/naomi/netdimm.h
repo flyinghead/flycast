@@ -150,7 +150,6 @@ private:
 
 	std::vector<Socket> sockets;
 	int lastError = 0; // for socket() and select()
-	bool dnsInProgress = false;
 	u32 serverIp = 0; //0x0100007f for testing only
 	bool wccf = false;
 

@@ -308,9 +308,6 @@ private:
 	/// Perform an asynchronous accept operation.
 	void doAccept();
 
-	/// The io_context used to perform asynchronous operations.
-	asio::io_context& io_context;
-
 	/// Acceptor used to listen for incoming connections.
 	asio::ip::tcp::acceptor acceptor;
 

@@ -579,10 +579,11 @@ void InputMapping::load(hostfs::File* fp)
 		}
 	}
 	std::string triggers = mf.get("emulator", "triggers", "");
-	const char *p = strtok(triggers.data(), ",");
+	char *saveptr;
+	const char *p = strtok_r(triggers.data(), ",", &saveptr);
 	while (p != nullptr) {
 		addTrigger(atoi(p), strchr(p, '~') != nullptr);
-		p = strtok(nullptr, ",");
+		p = strtok_r(nullptr, ",", &saveptr);
 	}
 	dirty = false;
 }

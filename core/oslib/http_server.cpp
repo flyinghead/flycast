@@ -756,8 +756,7 @@ void ConnectionManager::stopAll()
 }
 
 HttpServer::HttpServer(asio::io_context& io_context, const std::string& address, uint16_t port)
-  : io_context(io_context),
-    acceptor(io_context),
+  : acceptor(io_context),
     connectionManager(),
     requestHandler()
 {

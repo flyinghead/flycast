@@ -783,13 +783,6 @@ int NetDimm::schedCallback()
 	}
 	if (SB_ISTEXT & 8)	// holly_EXP_PCI
 		return SH4_MAIN_CLOCK;
-//	if (dnsInProgress)
-//	{
-//		NOTICE_LOG(NAOMI, "getIpByDns completed");
-//		returnToNaomi(false, 0, serverIp);
-//		dnsInProgress = false;
-//		return SH4_MAIN_CLOCK;
-//	}
 
 	// regularly peek the test request address
 	peek<u32>(0xc01fc08);
@@ -1105,12 +1098,6 @@ void NetDimm::netCmd(int cmd)
 		{
 			char *name = (char *)&dimm_data[buffer[1]];
 			INFO_LOG(NAOMI, "getIpByDns %s", name);
-			//dnsInProgress = true;
-			//sh4_sched_request(schedId, POLL_CYCLES * 10);
-
-			//int len = buffer[2];
-			//u32 dns1 = buffer[3];
-			//u32 dns2 = buffer[4];
 			returnToNaomi(retCmd, false, 0, serverIp);
 			break;
 		}

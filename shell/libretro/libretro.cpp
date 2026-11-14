@@ -877,8 +877,9 @@ static void update_variables(bool first_startup)
 		char str[100];
 		snprintf(str, sizeof(str), "%s", var.value);
 
-		char *pch = strtok(str, "x");
-		pch = strtok(NULL, "x");
+		char *saveptr;
+		char *pch = strtok_r(str, "x", &saveptr);
+		pch = strtok_r(NULL, "x", &saveptr);
 		if (pch != nullptr)
 			config::RenderResolution = strtoul(pch, NULL, 0);
 

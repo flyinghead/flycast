@@ -137,7 +137,7 @@ public:
 	void Init() override;
 	void Term() override;
 
-	void clear_temp_cache(bool full);
+	void clearTempCache(bool full);
 
 	static Sh4Recompiler *Instance;
 };

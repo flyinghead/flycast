@@ -97,7 +97,7 @@ static bool reios_locate_bootfile(const char* bootfile)
 		offset = 2048;
 		size -= offset;
 	}
-	bootSectors = size / 2048;
+	bootSectors = (size + 2047) / 2048;
 
 	u8 *dest = GetMemPtr(0x8c010000, size);
 	if (dest == nullptr) {

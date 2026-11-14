@@ -69,7 +69,7 @@ void Sh4CodeBuffer::reset(bool temporary)
 		lastAddr = 0;
 }
 
-void Sh4Recompiler::clear_temp_cache(bool full)
+void Sh4Recompiler::clearTempCache(bool full)
 {
 	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
 	codeBuffer.reset(true);
@@ -82,7 +82,7 @@ void Sh4Recompiler::ResetCache()
 	codeBuffer.reset(false);
 	bm_ResetCache();
 	smc_hotspots.clear();
-	clear_temp_cache(true);
+	clearTempCache(true);
 }
 
 void Sh4Recompiler::Run()
@@ -173,7 +173,7 @@ static DynarecCodeEntryPtr compilePC(u32 blockcheck_failures)
 	{
 		codeBuffer.useTempBuffer(true);
 		if (codeBuffer.getFreeSpace() < 32_KB)
-			Sh4Recompiler::Instance->clear_temp_cache(false);
+			Sh4Recompiler::Instance->clearTempCache(false);
 		rbi->temp_block = true;
 		if (rbi->read_only)
 			INFO_LOG(DYNAREC, "WARNING: temp block %x (%x) is protected!", rbi->vaddr, rbi->addr);
@@ -363,6 +363,7 @@ void Sh4Recompiler::Init()
 	verify(CodeCache != nullptr);
 
 	TempCodeCache = CodeCache + CODE_SIZE;
+	codeBuffer = {};
 	sh4Dynarec->init(*getContext(), codeBuffer);
 	bm_ResetCache();
 }
