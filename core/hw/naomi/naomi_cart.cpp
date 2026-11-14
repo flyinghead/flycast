@@ -504,7 +504,7 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 		}
 	}
 	delete fp;
-	if (progress->cancelled) {
+	if (progress != nullptr && progress->cancelled) {
 		free(romBase);
 		throw LoadCancelledException();
 	}
