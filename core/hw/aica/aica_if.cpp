@@ -140,6 +140,11 @@ static void ArmSetRST()
 {
 	ARMRST &= 1;
 	arm::enable(ARMRST == 0);
+	if (ARMRST == 1)
+	{
+		asic_CancelInterrupt(holly_SPU_DMA);
+		asic_CancelInterrupt(holly_SPU_IRQ);
+	}
 }
 
 template<typename T>
@@ -221,18 +226,10 @@ void termRtc()
 
 static int dma_end_sched(int tag, int cycles, int jitter, void *arg)
 {
-	u32 len = SB_ADLEN & 0x7FFFFFFF;
-
 	if (SB_ADLEN & 0x80000000)
 		SB_ADEN = 0;
-	else
-		SB_ADEN = 1;
 
-	SB_ADSTAR += len;
-	SB_ADSTAG += len;
 	SB_ADST = 0;	// dma done
-	SB_ADLEN = 0;
-
 	// indicate that dma is not happening, or has been paused
 	SB_ADSUSP |= 0x10;
 
@@ -387,23 +384,24 @@ static void Write_SB_ADST(u32 addr, u32 data)
 			}
 
 			if (SB_ADDIR == 1)
-			{
 				//swap direction
 				std::swap(src, dst);
-				DEBUG_LOG(AICA, "AICA-DMA : SB_ADDIR==1 DMA Read to 0x%X from 0x%X %x bytes", dst, src, SB_ADLEN);
-			}
-			else
-				DEBUG_LOG(AICA, "AICA-DMA : SB_ADDIR==0:DMA Write to 0x%X from 0x%X %x bytes", dst, src, SB_ADLEN);
+			DEBUG_LOG(AICA, "DMA[DIR=%d] %x -> %x (0x%x bytes, SB_ADLEN[31] %d)", SB_ADDIR, src, dst,
+					len, (SB_ADLEN & 0x80000000) != 0);
 
 			WriteMemBlock_nommu_dma(dst, src, len);
 
 			// indicate that dma is in progress
+			SB_ADSTARD = SB_ADSTAR;
+			SB_ADSTAGD = SB_ADSTAG;
+			SB_ADLEND = len;
 			SB_ADST = 1;
 			SB_ADSUSP &= ~0x10;
 
 			// Schedule the end of DMA transfer interrupt
-			// theoretical: 16 bits @ 25 MHz, actual: 11.3 MiB/s, here: 15.9 MiB/s
-			int cycles = len * (SH4_MAIN_CLOCK / 2 / G2_BUS_CLOCK) * 3;
+			// 16 bits @ 25 MHz, simul optimum: 11.3 MiB/s, here: 7.95 MiB/s
+			// Real hardware: 5.5 MiB/s
+			const int cycles = len * 24;
 			if (cycles <= 512)
 				dma_end_sched(0, 0, 0, nullptr);
 			else
@@ -417,7 +415,8 @@ static u32 Read_SB_ADST(u32 addr)
 	// Le Mans and Looney Tunes sometimes send the same dma transfer twice after checking SB_ADST == 0.
 	// To avoid this, we pretend SB_ADST is still set when there is a pending aica-dma interrupt.
 	// This is only done once.
-	if ((SB_ISTNRM & (1 << (u8)holly_SPU_DMA)) && !(SB_ADST & 2))
+	// DragonRiders now also needs this
+	if ((SB_ISTNRM & (1 << (u8)holly_SPU_DMA)) && SB_ADST == 0)
 	{
 		SB_ADST |= 2;
 		return 1;
