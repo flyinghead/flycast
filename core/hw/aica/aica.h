@@ -345,6 +345,14 @@ class AicaTimer
 	AicaTimerData* data;
 	u32 id;
 
+	// Last reload written, to recognize a repeated one (see isRepeatedReload)
+	u64 samplesElapsed = 0;
+	u32 overflows = 0;
+	bool reloadValid = false;
+	u16 reloadValue = 0;
+	u32 reloadOverflows = 0;
+	u64 reloadSample = 0;
+
 public:
 	s32 c_step;
 	u32 m_step;
@@ -355,10 +363,14 @@ public:
 		id=timer;
 		m_step=1<<(data->md);
 		c_step=m_step;
+		samplesElapsed = 0;
+		overflows = 0;
+		forgetReload();
 	}
 
 	void StepTimer(u32 samples)
 	{
+		samplesElapsed += samples;
 		do
 		{
 			c_step--;
@@ -368,6 +380,7 @@ public:
 				data->count++;
 				if (data->count==0)
 				{
+					overflows++;
 					if (id==0)
 					{
 						SCIPD->TimerA=1;
@@ -396,6 +409,27 @@ public:
 			m_step=n_step;
 			c_step=m_step;
 		}
+	}
+
+	// A sound driver may write the same reload value twice in its interrupt handler.
+	// The ARM runs one sample at a time, so the second write can land after the
+	// timer has already counted once and set it back, losing a tick.
+	// A write that repeats the previous one within one sample with no overflow in
+	// between can't be meant to restart the count, so it is ignored.
+	bool isRepeatedReload(u16 value)
+	{
+		if (reloadValid && value == reloadValue && overflows == reloadOverflows
+				&& samplesElapsed - reloadSample <= 1)
+			return true;
+		reloadValid = true;
+		reloadValue = value;
+		reloadOverflows = overflows;
+		reloadSample = samplesElapsed;
+		return false;
+	}
+
+	void forgetReload() {
+		reloadValid = false;
 	}
 };
 

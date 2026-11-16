@@ -570,6 +570,7 @@ void deserialize(Deserializer& deser)
 	{
 		deser >> timers[i].c_step;
 		deser >> timers[i].m_step;
+		timers[i].forgetReload();
 	}
 
 	if (!deser.rollback())
