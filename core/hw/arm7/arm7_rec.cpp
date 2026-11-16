@@ -649,7 +649,7 @@ void compile()
 
 	block_ssa_pass();
 
-	arm7backend_compile(block_ops, cycles);
+	backend::compile(block_ops, cycles);
 
 	arm_printf("arm7rec_compile done: %p,%p", rv, icPtr);
 }
@@ -657,7 +657,7 @@ void compile()
 void flush()
 {
 	icPtr = ICache;
-	arm7backend_flush();
+	backend::flush();
 	verify(arm_compilecode != nullptr);
 	for (u32 i = 0; i < std::size(EntryPoints); i++)
 		EntryPoints[i] = arm_compilecode;
@@ -677,6 +677,7 @@ void init()
 
 void term()
 {
+	backend::term();
 #ifdef FEAT_NO_RWX_PAGES
 	if (ICache != nullptr)
 		virtmem::release_jit_block(ARM7_TCB, ICache, ICacheSize);

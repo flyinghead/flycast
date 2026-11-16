@@ -423,7 +423,10 @@ static void emitFallback(const ArmOp& op)
 	call((void *)recompiler::interpret);
 }
 
-void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
+namespace backend
+{
+
+void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	ass = Arm32Assembler((u8 *)recompiler::currentCode(), recompiler::spaceLeft());
 
@@ -485,7 +488,7 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	regalloc = nullptr;
 }
 
-void arm7backend_flush()
+void flush()
 {
 	if (!recompiler::empty())
 	{
@@ -560,6 +563,12 @@ void arm7backend_flush()
 	recompiler::advance(ass.GetBuffer()->GetSizeInBytes());
 }
 
+void term()
+{
+	unwinder.clear();
+}
+
+} // namespace backend
 } // namespace arm
 } // namespace aica
 #endif // HOST_CPU == CPU_ARM && FEAT_AREC != DYNAREC_NONE

@@ -1418,6 +1418,13 @@ public:
 		virtmem::jit_set_exec(protStart, protSize, true);
 	}
 
+	void term() override
+	{
+		unwinder.clear();
+		this->sh4ctx = nullptr;
+		this->codeBuffer = nullptr;
+	}
+
 private:
 	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;

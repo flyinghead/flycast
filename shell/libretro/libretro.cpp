@@ -367,8 +367,6 @@ void retro_init()
 	first_run = true;
 	memset(device_type, -1, sizeof(device_type));
 	
-	static bool emuInited;
-
 	// Logging
 	struct retro_log_callback log;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -403,9 +401,6 @@ void retro_init()
         set_user_data_dir(std::string(data_dir) + "/");
 #endif
 
-	if (!addrspace::reserve())
-		ERROR_LOG(VMEM, "Cannot reserve memory space");
-
 #if defined(__linux__) || defined(__FreeBSD__)
 	// SDL evdev keyboard driver installs a SIGSEGV signal handler by default, which replaces flycast's one.
 	// Make sure to avoid this if SDL is initialized after the core (which happens).
@@ -414,14 +409,6 @@ void retro_init()
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
 	i18n::init();
-
-#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
-	if (!emuInited)
-#else
-	(void)emuInited;
-#endif
-		emu.init();
-	emuInited = true;
 }
 
 void retro_deinit()
@@ -436,12 +423,7 @@ void retro_deinit()
 		std::lock_guard<std::mutex> lock(mtx_serialization);
 	}
 	os_UninstallFaultHandler();
-	
-#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
-	addrspace::release();
-#else
-	emu.term();
-#endif
+
 	libretro_supports_bitmasks = false;
 	led_state_cb = NULL;
 	memset(retro_led_state, 0, sizeof(retro_led_state));

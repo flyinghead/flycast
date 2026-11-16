@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "hw/modem/v42.h"
+#include "emulator.h"
 
 namespace modem
 {
@@ -42,6 +43,16 @@ public:
 class V42Test : public ::testing::Test
 {
 protected:
+	void SetUp() override
+	{
+		emu.init(DC_PLATFORM_DREAMCAST);
+		emu.dc_reset(true);
+	}
+
+	void TearDown() override {
+		emu.term();
+	}
+
 	void setConnected(V42Protocol& v42) {
 		v42.phase = V42Protocol::Connected;
 	}

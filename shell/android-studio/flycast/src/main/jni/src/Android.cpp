@@ -20,6 +20,7 @@
 #include "http_client.h"
 #include "achievements/achievements.h"
 #include "android_locale.h"
+#include "oslib/i18n.h"
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -594,6 +595,7 @@ std::string getFilesPath()
 
 void dc_exit()
 {
+	gui_cancel_load();
 	settings.content.path.clear();
 	if (g_activity != nullptr)
 	{

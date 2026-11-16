@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/addrspace.h"
 #include "emulator.h"
 
 #include "hw/sh4/sh4_core.h"
@@ -113,10 +112,11 @@ class Div32Test : public ::testing::Test {
 protected:
 	void SetUp() override
 	{
-		if (!addrspace::reserve())
-			die("addrspace::reserve failed");
-		emu.init();
-		emu.dc_reset(true);
+        emu.init(DC_PLATFORM_DREAMCAST);
+	}
+
+	void TearDown() override {
+		emu.term();
 	}
 
 	void div32s(u32 n1, u32 n2, u32 n3)

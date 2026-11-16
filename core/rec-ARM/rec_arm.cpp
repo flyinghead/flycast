@@ -471,6 +471,13 @@ public:
 		ass->canonFinish(op);
 	}
 
+	void term() override
+	{
+		unwinder.clear();
+		this->sh4ctx = nullptr;
+		this->codeBuffer = nullptr;
+	}
+
 private:
 	void generate_mainloop();
 

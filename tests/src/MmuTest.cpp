@@ -18,7 +18,6 @@
  */
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/addrspace.h"
 #include "emulator.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_core.h"
@@ -27,12 +26,14 @@ class MmuTest : public ::testing::Test {
 protected:
 	void SetUp() override
 	{
-		if (!addrspace::reserve())
-			die("addrspace::reserve failed");
-		emu.init();
+        emu.init(DC_PLATFORM_DREAMCAST);
 		emu.dc_reset(true);
 		CCN_MMUCR.AT = 1;
 		MMU_reset();
+	}
+
+	void TearDown() override {
+		emu.term();
 	}
 };
 

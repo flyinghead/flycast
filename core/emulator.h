@@ -105,21 +105,13 @@ class Emulator
 {
 public:
 	/**
-	 * Initialize the emulator. Does nothing if already initialized.
-	 */
-	void init();
-	/**
-	 * Terminate the emulator. After calling this method, the application must be restarted.
-	 */
-	void term();
-	/**
-	 * Load the specified game/media. Will call init() first.
+	 * Load the specified game/media.
 	 * May throw if the game cannot be loaded.
 	 * If a game is already loaded, or the emulator is in the error state, unloadGame() must be called first.
 	 */
 	void loadGame(const char *path, LoadProgress *progress = nullptr);
 	/**
-	 * Reset the emulator in order to load another game. After calling this method, only loadGame() and term() can be called.
+	 * Reset the emulator in order to load another game. After calling this method, only loadGame() can be called.
 	 * Does nothing if no game is loaded.
 	 */
 	void unloadGame();
@@ -192,7 +184,10 @@ public:
 		runner.runOnThread(func);
 	}
 
-	void dc_reset(bool hard); // for tests only
+	// For tests only
+	void init(int platform);
+	void dc_reset(bool hard);
+	void term();
 
 private:
 	bool checkStatus(bool wait = false);
@@ -205,7 +200,6 @@ private:
 		Loaded,
 		Running,
 		Error,
-		Terminated,
 	};
 	State state = Uninitialized;
 	std::shared_future<void> threadResult;

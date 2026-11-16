@@ -2264,6 +2264,13 @@ public:
 			generate_mainloop();
 	}
 
+	void term() override
+	{
+		unwinder.clear();
+		this->sh4ctx = nullptr;
+		this->codeBuffer = nullptr;
+	}
+
 	void mainloop(void* v_cntx) override
 	{
 		try {

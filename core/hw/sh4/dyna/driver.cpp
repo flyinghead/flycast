@@ -371,6 +371,7 @@ void Sh4Recompiler::Init()
 void Sh4Recompiler::Term()
 {
 	INFO_LOG(DYNAREC, "Sh4Recompiler::Term");
+	sh4Dynarec->term();
 #ifdef FEAT_NO_RWX_PAGES
 	if (CodeCache != nullptr)
 		virtmem::release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, FULL_SIZE);

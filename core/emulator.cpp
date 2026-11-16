@@ -470,12 +470,6 @@ static void loadSpecialSettings()
 
 void Emulator::dc_reset(bool hard)
 {
-	if (hard)
-	{
-		NetworkHandshake::term();
-		memwatch::unprotect();
-		memwatch::reset();
-	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	aica::reset(hard);
@@ -485,8 +479,6 @@ void Emulator::dc_reset(bool hard)
 
 static void setPlatform(int platform)
 {
-	if (VRAM_SIZE != 0)
-		addrspace::unprotectVram(0, VRAM_SIZE);
 	elan::ERAM_SIZE = 0;
 	switch (platform)
 	{
@@ -534,23 +526,21 @@ static void setPlatform(int platform)
 	settings.platform.ram_mask = settings.platform.ram_size - 1;
 	settings.platform.vram_mask = settings.platform.vram_size - 1;
 	settings.platform.aram_mask = settings.platform.aram_size - 1;
-	addrspace::initMappings();
 }
 
-void Emulator::init()
+void Emulator::init(int platform)
 {
 	if (state != Uninitialized)
-	{
-		verify(state == Init);
 		return;
-	}
-	// Default platform
-	setPlatform(DC_PLATFORM_DREAMCAST);
 
+	addrspace::reserve();
+	setPlatform(platform);
+	addrspace::initMappings();
 	libGDR_init();
 	pvr::init();
 	aica::init();
 	mem_Init();
+	mem_map_default();
 	reios_init();
 
 	// the recompiler may start generating code at this point and needs a fully configured machine
@@ -600,7 +590,6 @@ int getGamePlatform(const std::string& filename)
 
 void Emulator::loadGame(const char *path, LoadProgress *progress)
 {
-	init();
 	try {
 		DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 
@@ -625,8 +614,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			settings.content.fileName.clear();
 		}
 
-		setPlatform(getGamePlatform(settings.content.fileName));
-		mem_map_default();
+		init(getGamePlatform(settings.content.fileName));
 
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
@@ -791,11 +779,8 @@ void Emulator::unloadGame()
 				&& !settings.naomi.multiboard && !config::GGPOEnable && !naomiNetworkSupported())
 			gui_saveState(false);
 #endif
-		try {
-			dc_reset(true);
-		} catch (const FlycastException& e) {
-			ERROR_LOG(COMMON, "%s", e.what());
-		}
+		NetworkHandshake::term();
+
 		// Flush the VMU files to disk
 		mcfg_DestroyDevices(true);
 		config::Settings::instance().reset();
@@ -806,11 +791,11 @@ void Emulator::unloadGame()
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
+	term();
 }
 
 void Emulator::term()
 {
-	unloadGame();
 	if (state == Init)
 	{
 		debugger::term();
@@ -833,10 +818,10 @@ void Emulator::term()
 		mem_Term();
 		libGDR_term();
 		ice::term();
+		addrspace::release();
 
-		state = Terminated;
+		state = Uninitialized;
 	}
-	addrspace::release();
 }
 
 void Emulator::stop()

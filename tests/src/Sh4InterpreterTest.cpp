@@ -24,14 +24,15 @@ class Sh4InterpreterTest : public Sh4OpTest {
 protected:
 	void SetUp() override
 	{
-		if (!addrspace::reserve())
-			die("addrspace::reserve failed");
-		emu.init();
-		mem_map_default();
+        emu.init(DC_PLATFORM_DREAMCAST);
 		emu.dc_reset(true);
 		ctx = &p_sh4rcb->cntx;
 		sh4 = Get_Sh4Interpreter();
 		sh4->Init();
+	}
+
+	void TearDown() override {
+		emu.term();
 	}
 	void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) override
 	{

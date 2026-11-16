@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "types.h"
 #include "emulator.h"
-#include "hw/mem/addrspace.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/ta_ctx.h"
 #include "rend/TexCache.h"
@@ -28,13 +27,12 @@ class FramebufferWriteTest : public ::testing::Test
 protected:
 	void SetUp() override
 	{
-		if (!addrspace::reserve())
-			die("addrspace::reserve failed");
-		// emu.init() maps VRAM; the test only needs that. dc_reset() would
-		// reset every module, including TMU, which TimerTest leaves
-		// terminated (its scheduler ids are -1) and which then indexes the
-		// scheduler list out of bounds.
-		emu.init();
+		emu.init(DC_PLATFORM_DREAMCAST);
+		emu.dc_reset(true);
+	}
+
+	void TearDown() override {
+		emu.term();
 	}
 
 	template<int Red, int Green, int Blue, int Alpha>

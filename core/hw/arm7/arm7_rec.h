@@ -460,8 +460,12 @@ static inline void *execToWrite(void * addr) {
 
 } // namespace recompiler
 
-void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles);
-void arm7backend_flush();
+namespace backend
+{
+void compile(const std::vector<ArmOp>& block_ops, u32 cycles);
+void flush();
+void term();
+}
 
 extern void (*arm_compilecode)();
 using arm_mainloop_t = void (*)(reg_pair *arm_regs, void (*entrypoints[])());

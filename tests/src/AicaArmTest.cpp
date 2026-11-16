@@ -1,7 +1,6 @@
 #include "types.h"
 
 #if FEAT_AREC != DYNAREC_NONE
-#include "hw/mem/addrspace.h"
 #include "hw/arm7/arm7.h"
 #include "hw/aica/aica_if.h"
 #include "hw/arm7/arm7_rec.h"
@@ -24,11 +23,13 @@ class AicaArmTest : public ::testing::Test {
 protected:
 	void SetUp() override
 	{
-		if (!addrspace::reserve())
-			die("addrspace::reserve failed");
-		emu.init();
+		emu.init(DC_PLATFORM_DREAMCAST);
 		emu.dc_reset(true);
 		Arm7Enabled = true;
+	}
+
+	void TearDown() override {
+		emu.term();
 	}
 
 	void PrepareOp(u32 op)

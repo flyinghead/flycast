@@ -77,11 +77,6 @@ int flycast_init(int argc, char* argv[])
 	settings.aica.muteAudio = true;
 #endif
 	try {
-		if (!addrspace::reserve())
-		{
-			ERROR_LOG(VMEM, "Failed to alloc mem");
-			return -1;
-		}
 		config::parseCommandLine(argc, argv);
 		if (config::loadInt("naomi", "BoardId") != 0)
 		{
@@ -128,6 +123,7 @@ int flycast_init(int argc, char* argv[])
 #ifndef __ANDROID__
 void dc_exit()
 {
+	gui_cancel_load();
 	try {
 		emu.unloadGame();
 	} catch (...) { }
@@ -170,7 +166,7 @@ void flycast_term()
 {
 	gui_cancel_load();
 	lua::term();
-	emu.term();
+	emu.unloadGame();
 	os_DestroyWindow();
 	gui_term();
 	os_TermInput();

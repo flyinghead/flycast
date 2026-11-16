@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/addrspace.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
@@ -10,10 +9,12 @@ class SerializeTest : public ::testing::Test {
 protected:
 	void SetUp() override
 	{
-		if (!addrspace::reserve())
-			die("addrspace::reserve failed");
-		emu.init();
+        emu.init(DC_PLATFORM_DREAMCAST);
 		emu.dc_reset(true);
+	}
+
+	void TearDown() override {
+		emu.term();
 	}
 };
 

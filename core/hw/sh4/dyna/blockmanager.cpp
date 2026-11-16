@@ -410,6 +410,8 @@ void bm_Term()
 	bm_Reset();
 	delete[] unprotected_pages;
 	delete[] blocks_per_page;
+	blkmap.clear();
+	all_temp_blocks.clear();
 }
 
 void bm_WriteBlockMap(const std::string& file)

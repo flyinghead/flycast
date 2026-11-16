@@ -741,19 +741,28 @@ void AArch64ArmRegAlloc::StoreReg(int host_reg, Arm7Reg armreg)
 	assembler.Str(getReg(host_reg), arm_reg_operand(armreg));
 }
 
-void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
+namespace backend
+{
+
+void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	Arm7Compiler assembler;
 	assembler.compile(block_ops, cycles);
 }
 
-void arm7backend_flush()
+void flush()
 {
 	unwinder.clear();
 	Arm7Compiler assembler;
 	assembler.generateMainLoop();
 }
 
+void term()
+{
+	unwinder.clear();
+}
+
+} // namespace backend
 } // namespace arm
 } // namespace aica
 #endif // ARM64

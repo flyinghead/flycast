@@ -997,7 +997,10 @@ void X64ArmRegAlloc::StoreReg(int host_reg, Arm7Reg armreg)
 	assembler.mov(dword[rip + &arm_Reg[(u32)armreg].I], getReg32(host_reg));
 }
 
-void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
+namespace backend
+{
+
+void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	void* protStart = recompiler::currentCode();
 	size_t protSize = recompiler::spaceLeft();
@@ -1014,7 +1017,7 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
-void arm7backend_flush()
+void flush()
 {
 	void* protStart = recompiler::currentCode();
 	size_t protSize = recompiler::spaceLeft();
@@ -1032,5 +1035,11 @@ void arm7backend_flush()
 	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
+void term()
+{
+	unwinder.clear();
+}
+
+} // namespace backend
 } // namespace aica::arm
 #endif // X64 && DYNAREC_JIT

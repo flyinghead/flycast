@@ -69,6 +69,12 @@ bool region_unlock(void *start, size_t len)
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
+	if (ramBase != nullptr)
+	{
+		*sh4rcb_addr = reserved_base;
+		*vmem_base_addr = (u8 *)reserved_base + sizeof(Sh4RCB);
+		return true;
+	}
 	// Allocate RAM
 	ramSize += sizeof(Sh4RCB);
 	virtmem::ramSize = ramSize;
@@ -122,6 +128,12 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 }
 
 void destroy()
+{
+	// Re-creating the virtual memory fails on switch so keep it until
+	// exiting the app.
+}
+
+void realDestroy()
 {
 	deleteMappings();
 	constexpr size_t fpcb_size = sizeof(Sh4RCB::fpcb);
@@ -268,7 +280,8 @@ bool prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdif
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)code_area - (char*)ptr_rw;
-	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %ld\n", code_area, ptr_rw, (long)*rx_offset);
+	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %ld, size: %zd",
+			code_area, ptr_rw, (long)*rx_offset, size);
 
 	return true;
 }
