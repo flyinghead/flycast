@@ -431,6 +431,9 @@ static void loadSpecialSettings()
 				|| prod_id == "MK-5118450")	// Shenmue II (EU)
 				&& !memcmp(ip_meta.disk_num, "4/4  ", 5))
 			config::WidescreenGameHacks.override(false);
+		if (prod_id == "T-8113N"			// Ducati World (US)
+				|| prod_id == "T-8121D-50")	// Ducati World (EU)
+			config::VSync.override(false);
 	}
 	else if (settings.platform.isArcade())
 	{
