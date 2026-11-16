@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2018 The RetroArch team
+/* Copyright (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------------
  * The following license statement only applies to this libretro API header (libretro_d3d.h)
@@ -30,30 +30,11 @@
 #include "libretro.h"
 
 #ifdef HAVE_D3D11
+#include "libretro_d3d11.h"
+#endif
 
-#include <d3d11.h>
-#include <d3dcompiler.h>
-
-#define RETRO_HW_RENDER_INTERFACE_D3D11_VERSION 1
-
-struct retro_hw_render_interface_d3d11
-{
-  /* Must be set to RETRO_HW_RENDER_INTERFACE_D3D11. */
-  enum retro_hw_render_interface_type interface_type;
-  /* Must be set to RETRO_HW_RENDER_INTERFACE_D3D11_VERSION. */
-  unsigned interface_version;
-
-  /* Opaque handle to the d3d11 backend in the frontend
-   * which must be passed along to all function pointers
-   * in this interface.
-   */
-  void* handle;
-  ID3D11Device *device;
-  ID3D11DeviceContext *context;
-  D3D_FEATURE_LEVEL featureLevel;
-  pD3DCompile D3DCompile;
-};
-
+#ifdef HAVE_D3D12
+#include "libretro_d3d12.h"
 #endif
 
 #endif /* LIBRETRO_DIRECT3D_H__ */

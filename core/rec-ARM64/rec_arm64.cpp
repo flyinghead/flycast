@@ -77,6 +77,10 @@ static DynaCode *writeStoreQueue64;
 
 static void jitWriteProtect(Sh4CodeBuffer &codeBuffer, bool enable)
 {
+#ifdef FEAT_NO_RWX_PAGES
+    if (cc_rx_offset != 0)
+    	return;
+#endif
 #ifdef TARGET_IPHONE
     if (enable)
     	virtmem::region_set_exec(codeBuffer.getBase(), codeBuffer.getSize());
@@ -2375,10 +2379,11 @@ public:
 			// init() not called yet
 			return false;
 		//LOGI("Sh4Dynarec::rewrite pc %zx\n", context.pc);
-		u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
-		if ((u8 *)code_ptr < (u8 *)codeBuffer->getBase()
-				|| (u8 *)code_ptr >= (u8 *)codeBuffer->getBase() + codeBuffer->getSize())
+		u8 *rx_base = (u8 *)CC_RW2RX(codeBuffer->getBase());
+		if ((u8 *)context.pc < rx_base
+				|| (u8 *)context.pc >= rx_base + codeBuffer->getSize())
 			return false;
+		u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 		jitWriteProtect(*codeBuffer, false);
 		u32 armv8_op = *code_ptr;
 		bool is_read = false;
