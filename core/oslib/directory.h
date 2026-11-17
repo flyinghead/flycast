@@ -40,7 +40,11 @@ namespace flycast {
     using ::stat;
     using ::access;
     using ::mkdir;
+#ifdef __SWITCH__
+    int rename(const char *oldpath, const char *newpath);
+#else
     using ::rename;
+#endif
     using ::unlink;
 #else
     DIR *opendir(char const *dirname);

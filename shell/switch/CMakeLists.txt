@@ -3,7 +3,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		stubs.c
 		context_switch.S
 		nswitch.h
-		ucontext.h)
+		ucontext.h
+		directory.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 		i18n.cpp
