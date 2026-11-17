@@ -782,42 +782,45 @@ bool ClassicRender::beforeDrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listT
 void ScreenClassicRender::init(Drawer *drawer)
 {
 	ClassicRender::init(drawer);
-	std::array<vk::AttachmentDescription, 2> attachmentDescriptions = {
-			// Color attachment
-			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-					vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
-					vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-					config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
-					config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
-			// Depth attachment
-			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vkCtx()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
-	};
-	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	if (!renderPassLoad)
+	{
+		std::array<vk::AttachmentDescription, 2> attachmentDescriptions = {
+				// Color attachment
+				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
+						vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
+				// Depth attachment
+				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vkCtx()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
+						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+						vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
+		};
+		vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+		vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-	vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-					nullptr,
-					colorReference,
-					nullptr,
-					&depthReference);
+		vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
+						nullptr,
+						colorReference,
+						nullptr,
+						&depthReference);
 
-	vk::SubpassDependency dependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-			vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead,vk::DependencyFlagBits::eByRegion);
+		vk::SubpassDependency dependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead,vk::DependencyFlagBits::eByRegion);
 
-	renderPassLoad = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-			attachmentDescriptions,
-			subpass,
-			dependency));
+		renderPassLoad = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+				attachmentDescriptions,
+				subpass,
+				dependency));
 
-	attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
-	renderPassClear = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-			attachmentDescriptions,
-			subpass,
-			dependency));
-	drawer->pipelineManager->setRenderPass(*renderPassClear);
+		attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
+		renderPassClear = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+				attachmentDescriptions,
+				subpass,
+				dependency));
+		drawer->pipelineManager->setRenderPass(*renderPassClear);
+	}
 }
 
 void ScreenClassicRender::term()
