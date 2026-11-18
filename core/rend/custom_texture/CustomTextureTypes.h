@@ -78,6 +78,7 @@ enum class CustomTextureBackend : uint8_t
 	Direct3D9,
 	OpenGL,
 	OpenGLES,
+	Metal,
 };
 
 struct CustomTextureCandidate
