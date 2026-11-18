@@ -14,13 +14,19 @@
 #include <cassert>
 #include <time.h>
 
-#if defined(__ANDROID__)
+#if defined(__linux__)
 #undef PAGE_MASK
 #endif
-#if defined(__ANDROID__) && (HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
+#if defined(__linux__) && (!defined(__ANDROID__) || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
 #undef PAGE_SIZE
 extern const unsigned long PAGE_SIZE;
+#if defined(__ANDROID__)
 #define MAX_PAGE_SIZE 16384
+#else
+// Linux ARM64 supports 4, 16 and 64 KB pages. Only structure layout needs a
+// compile-time maximum; allocations and protection use the runtime PAGE_SIZE.
+#define MAX_PAGE_SIZE 65536
+#endif
 #elif defined(__APPLE__) && defined(__aarch64__)
 #define PAGE_SIZE 16384
 #elif !defined(PAGE_SIZE)

@@ -14,7 +14,7 @@
 
 #ifdef _WIN32
 #include <algorithm>
-#elif defined(__ANDROID__)
+#elif defined(__linux__)
 #include <unistd.h>
 #endif
 
@@ -208,7 +208,7 @@ void cResetEvent::Wait()
     state = false;
 }
 
-#if defined(__ANDROID__) && (HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
+#if defined(__linux__) && (!defined(__ANDROID__) || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
 const unsigned long PAGE_SIZE = (unsigned long)sysconf(_SC_PAGESIZE);
 #endif
 
