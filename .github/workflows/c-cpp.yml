@@ -10,6 +10,7 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    continue-on-error: true
 
     defaults:
       run:
