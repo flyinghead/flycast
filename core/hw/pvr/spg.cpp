@@ -265,6 +265,7 @@ bool spg_Init()
 {
 	render_end_schid = sh4_sched_register(0, &rend_end_render);
 	vblank_schid = sh4_sched_register(0, &spg_line_sched);
+	spg_Reset();
 
 	return true;
 }
@@ -277,7 +278,7 @@ void spg_Term()
 	vblank_schid = -1;
 }
 
-void spg_Reset(bool hard)
+void spg_Reset()
 {
 	CalculateSync();
 

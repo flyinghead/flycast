@@ -10,7 +10,7 @@ public:
 	void Start() override;
 	void Stop() override;
 	void Step() override;
-	void Reset(bool hard) override;
+	void Reset() override;
 	void Init() override;
 	void Term() override;
 	bool IsCpuRunning() override;

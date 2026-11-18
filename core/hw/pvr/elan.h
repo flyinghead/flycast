@@ -22,7 +22,6 @@
 namespace elan {
 
 void init();
-void reset(bool hard);
 void term();
 
 void vmem_init();

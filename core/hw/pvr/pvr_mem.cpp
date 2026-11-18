@@ -27,7 +27,7 @@ static u32 YUV_y_size;
 
 static u32 YUV_index;
 
-void YUV_init()
+void YUV_start()
 {
 	YUV_x_curr = 0;
 	YUV_y_curr = 0;
@@ -126,7 +126,7 @@ static void YUV_data(const SQBuffer *data, u32 count)
 		return;
 	}
 	if (YUV_blockcount == TA_YUV_TEX_CNT)
-		YUV_init();
+		YUV_start();
 
 	u32 block_size = TA_YUV_TEX_CTRL.yuv_form == 0 ? 384 : 512;
 	if (block_size != 384)
@@ -189,7 +189,7 @@ void YUV_deserialize(Deserializer& deser)
 	deser >> YUV_index;
 }
 
-void YUV_reset()
+void YUV_init()
 {
 	memset(YUV_tempdata, 0, sizeof(YUV_tempdata));
 	YUV_dest = 0;

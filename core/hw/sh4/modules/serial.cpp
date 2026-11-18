@@ -371,6 +371,7 @@ void SCIFSerialPort::init()
 		schedId = sh4_sched_register(0, schedCallback, this);
 	if (brkSchedId == -1)
 		brkSchedId = sh4_sched_register(1, schedCallback, this);
+	pipe = nullptr;
 }
 
 void SCIFSerialPort::term()
@@ -598,10 +599,10 @@ void SCIFRegisters::init()
 
 	SCIFSerialPort::Instance().init();
 
-	reset(true);
+	reset();
 }
 
-void SCIFRegisters::reset(bool hard)
+void SCIFRegisters::reset()
 {
 	super::reset();
 
@@ -620,8 +621,6 @@ void SCIFRegisters::reset(bool hard)
 	SCIF_SCBRR2 = 0xFF;
 	SCIF_SCFSR2.full = 0x060;
 
-	if (hard)
-		SCIFSerialPort::Instance().setPipe(nullptr);
 	SCIFSerialPort::Instance().reset();
 }
 

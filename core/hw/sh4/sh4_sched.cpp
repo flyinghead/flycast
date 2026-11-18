@@ -188,16 +188,16 @@ void sh4_sched_tick(int cycles)
 	sh4_sched_ffts();
 }
 
-void sh4_sched_reset(bool hard)
+void sh4_sched_init()
 {
-	if (hard)
-	{
-		sh4_sched_ffb = 0;
-		sh4_sched_next_id = -1;
-		for (sched_list& sched : sch_list)
-			sched.start = sched.end = -1;
-		Sh4cntx.sh4_sched_next = 0;
-	}
+	sh4_sched_ffb = 0;
+	sh4_sched_next_id = -1;
+	sch_list.clear();
+}
+
+void sh4_sched_term()
+{
+	sch_list.clear();
 }
 
 void sh4_sched_serialize(Serializer& ser, int id)
@@ -214,7 +214,6 @@ void sh4_sched_deserialize(Deserializer& deser, int id)
 	deser >> sch_list[id].end;
 }
 
-// FIXME modules should save their scheduling data so that it doesn't depend on their scheduler id
 // hw/gdrom/gdromv3.cpp
 extern int gdrom_schid;
 // hw/maple/maple_if.cpp

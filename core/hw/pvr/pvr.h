@@ -24,7 +24,7 @@ namespace pvr
 
 void init();
 void term();
-void reset(bool hard);
+void reset();
 
 void serialize(Serializer& ser);
 void deserialize(Deserializer& deser);

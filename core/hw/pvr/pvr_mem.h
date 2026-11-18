@@ -13,10 +13,10 @@ void pvr_WriteReg(u32 paddr, u32 data);
 void DYNACALL TAWrite(u32 address, const SQBuffer *data, u32 count);
 void DYNACALL TAWriteSQ(u32 address, const SQBuffer *sqb);
 
-void YUV_init();
+void YUV_start();
 void YUV_serialize(Serializer& ser);
 void YUV_deserialize(Deserializer& deser);
-void YUV_reset();
+void YUV_init();
 
 // 32-bit vram path handlers
 // The 32-bit bus interleaves the two VRAM banks every 32 bits.

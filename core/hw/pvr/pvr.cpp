@@ -35,31 +35,28 @@ extern bool pal_needs_update;
 namespace pvr
 {
 
-void reset(bool hard)
+void reset()
 {
-	Regs_Reset(hard);
-	spg_Reset(hard);
-	if (hard)
-		rend_reset();
-	tactx_Term();
-	elan::reset(hard);
-	if (hard)
-	{
-		ta_parse_reset();
-		YUV_reset();
-		taRenderPass = 0;
-	}
+	pvr_regReset();
+	spg_Reset();
+	tactx_term();
 }
 
 void init()
 {
+	pvr_regInit();
 	spg_Init();
 	elan::init();
+	rend_init();
+	YUV_init();
+	ta_parse_reset();
+	taRenderPass = 0;
+	tactx_init();
 }
 
 void term()
 {
-	tactx_Term();
+	tactx_term();
 	spg_Term();
 	elan::term();
 }

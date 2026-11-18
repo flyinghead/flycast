@@ -89,7 +89,7 @@ class SCIFRegisters : public RegisterBank<SCIF, 10>
 
 public:
 	void init();
-	void reset(bool hard);
+	void reset();
 	void term();
 };
 extern SCIFRegisters scif;

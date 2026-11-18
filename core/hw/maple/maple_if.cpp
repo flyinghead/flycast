@@ -346,7 +346,6 @@ static void maple_SB_MDAPRO_Write(u32 addr, u32 data)
 		SB_MDAPRO = data & 0x00007f7f;
 }
 
-//Init registers :)
 void maple_Init()
 {
 	hollyRegs.setWriteHandler<SB_MDST_addr>(maple_SB_MDST_Write);
@@ -358,11 +357,12 @@ void maple_Init()
 #endif
 
 	maple_schid = sh4_sched_register(0, maple_schd);
+	maple_Reset();
 }
 
 static u64 reconnect_time;
 
-void maple_Reset(bool hard)
+void maple_Reset()
 {
 	maple_ddt_pending_reset = false;
 	SB_MDTSEL = 0;

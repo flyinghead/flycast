@@ -598,7 +598,7 @@ void sh4_mmr_init()
 	MMU_init();
 }
 
-void sh4_mmr_reset(bool hard)
+void sh4_mmr_reset()
 {
 	OnChipRAM = {};
 	//Reset register values
@@ -608,7 +608,7 @@ void sh4_mmr_reset(bool hard)
 	dmac.reset();
 	intc.reset();
 	rtc.reset();
-	scif.reset(hard);
+	scif.reset();
 	sci.reset();
 	tmu.reset();
 	ubc.reset();

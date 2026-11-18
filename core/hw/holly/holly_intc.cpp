@@ -249,72 +249,59 @@ static void Write_SB_IML2ERR(u32 addr, u32 data)
 
 void asic_reg_Init()
 {
-}
+	hollyRegs.setWriteHandler<SB_ISTEXT_addr>(Write_SB_ISTEXT);
+	hollyRegs.setWriteHandler<SB_ISTERR_addr>(Write_SB_ISTERR);
 
-void asic_reg_Term()
-{
-
-}
-//Reset -> Reset - Initialise to default values
-void asic_reg_Reset(bool hard)
-{
-	if (hard)
+	if (settings.platform.isNaomi2())
 	{
-		hollyRegs.setWriteHandler<SB_ISTEXT_addr>(Write_SB_ISTEXT);
-		hollyRegs.setWriteHandler<SB_ISTERR_addr>(Write_SB_ISTERR);
+		hollyRegs.setHandlers<SB_ISTNRM_addr>(Read_SB_ISTNRM<true>, Write_SB_ISTNRM<true>);
 
-		if (settings.platform.isNaomi2())
-		{
-			hollyRegs.setHandlers<SB_ISTNRM_addr>(Read_SB_ISTNRM<true>, Write_SB_ISTNRM<true>);
+		//NRM
+		//6
+		hollyRegs.setWriteHandler<SB_IML6NRM_addr>(Write_SB_IML6NRM<true>);
+		//4
+		hollyRegs.setWriteHandler<SB_IML4NRM_addr>(Write_SB_IML4NRM<true>);
+		//2
+		hollyRegs.setWriteHandler<SB_IML2NRM_addr>(Write_SB_IML2NRM<true>);
+		//EXT
+		//6
+		hollyRegs.setWriteHandler<SB_IML6EXT_addr>(Write_SB_IML6EXT<true>);
+		//4
+		hollyRegs.setWriteHandler<SB_IML4EXT_addr>(Write_SB_IML4EXT<true>);
+		//2
+		hollyRegs.setWriteHandler<SB_IML2EXT_addr>(Write_SB_IML2EXT<true>);
+		//ERR
+		//6
+		hollyRegs.setWriteHandler<SB_IML6ERR_addr>(Write_SB_IML6ERR<true>);
+		//4
+		hollyRegs.setWriteHandler<SB_IML4ERR_addr>(Write_SB_IML4ERR<true>);
+		//2
+		hollyRegs.setWriteHandler<SB_IML2ERR_addr>(Write_SB_IML2ERR<true>);
+	}
+	else
+	{
+		hollyRegs.setHandlers<SB_ISTNRM_addr>(Read_SB_ISTNRM<false>, &Write_SB_ISTNRM<false>);
 
-			//NRM
-			//6
-			hollyRegs.setWriteHandler<SB_IML6NRM_addr>(Write_SB_IML6NRM<true>);
-			//4
-			hollyRegs.setWriteHandler<SB_IML4NRM_addr>(Write_SB_IML4NRM<true>);
-			//2
-			hollyRegs.setWriteHandler<SB_IML2NRM_addr>(Write_SB_IML2NRM<true>);
-			//EXT
-			//6
-			hollyRegs.setWriteHandler<SB_IML6EXT_addr>(Write_SB_IML6EXT<true>);
-			//4
-			hollyRegs.setWriteHandler<SB_IML4EXT_addr>(Write_SB_IML4EXT<true>);
-			//2
-			hollyRegs.setWriteHandler<SB_IML2EXT_addr>(Write_SB_IML2EXT<true>);
-			//ERR
-			//6
-			hollyRegs.setWriteHandler<SB_IML6ERR_addr>(Write_SB_IML6ERR<true>);
-			//4
-			hollyRegs.setWriteHandler<SB_IML4ERR_addr>(Write_SB_IML4ERR<true>);
-			//2
-			hollyRegs.setWriteHandler<SB_IML2ERR_addr>(Write_SB_IML2ERR<true>);
-		}
-		else
-		{
-			hollyRegs.setHandlers<SB_ISTNRM_addr>(Read_SB_ISTNRM<false>, &Write_SB_ISTNRM<false>);
-
-			//NRM
-			//6
-			hollyRegs.setWriteHandler<SB_IML6NRM_addr>(Write_SB_IML6NRM<false>);
-			//4
-			hollyRegs.setWriteHandler<SB_IML4NRM_addr>(Write_SB_IML4NRM<false>);
-			//2
-			hollyRegs.setWriteHandler<SB_IML2NRM_addr>(Write_SB_IML2NRM<false>);
-			//EXT
-			//6
-			hollyRegs.setWriteHandler<SB_IML6EXT_addr>(Write_SB_IML6EXT<false>);
-			//4
-			hollyRegs.setWriteHandler<SB_IML4EXT_addr>(Write_SB_IML4EXT<false>);
-			//2
-			hollyRegs.setWriteHandler<SB_IML2EXT_addr>(Write_SB_IML2EXT<false>);
-			//ERR
-			//6
-			hollyRegs.setWriteHandler<SB_IML6ERR_addr>(Write_SB_IML6ERR<false>);
-			//4
-			hollyRegs.setWriteHandler<SB_IML4ERR_addr>(Write_SB_IML4ERR<false>);
-			//2
-			hollyRegs.setWriteHandler<SB_IML2ERR_addr>(Write_SB_IML2ERR<false>);
-		}
+		//NRM
+		//6
+		hollyRegs.setWriteHandler<SB_IML6NRM_addr>(Write_SB_IML6NRM<false>);
+		//4
+		hollyRegs.setWriteHandler<SB_IML4NRM_addr>(Write_SB_IML4NRM<false>);
+		//2
+		hollyRegs.setWriteHandler<SB_IML2NRM_addr>(Write_SB_IML2NRM<false>);
+		//EXT
+		//6
+		hollyRegs.setWriteHandler<SB_IML6EXT_addr>(Write_SB_IML6EXT<false>);
+		//4
+		hollyRegs.setWriteHandler<SB_IML4EXT_addr>(Write_SB_IML4EXT<false>);
+		//2
+		hollyRegs.setWriteHandler<SB_IML2EXT_addr>(Write_SB_IML2EXT<false>);
+		//ERR
+		//6
+		hollyRegs.setWriteHandler<SB_IML6ERR_addr>(Write_SB_IML6ERR<false>);
+		//4
+		hollyRegs.setWriteHandler<SB_IML4ERR_addr>(Write_SB_IML4ERR<false>);
+		//2
+		hollyRegs.setWriteHandler<SB_IML2ERR_addr>(Write_SB_IML2ERR<false>);
 	}
 }
-

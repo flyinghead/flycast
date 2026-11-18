@@ -245,29 +245,29 @@ void midiSend(u8 data)
 	UpdateSh4Ints();
 }
 
+static void initTimers()
+{
+	for (std::size_t i = 0; i < std::size(timers); i++)
+		timers[i].Init(aica_reg, i);
+}
+
 void init()
 {
 	initMem();
 	initRtc();
+	initTimers();
 
 	sgc::init();
 	if (aica_schid == -1)
 		aica_schid = sh4_sched_register(0, &AicaUpdate);
+	sh4_sched_request(aica_schid, AICA_TICK);
 	arm::init();
 }
 
-void reset(bool hard)
+void reset()
 {
-	if (hard)
-	{
-		initMem();
-		sgc::term();
-		sgc::init();
-		sh4_sched_request(aica_schid, AICA_TICK);
-	}
-	for (std::size_t i = 0; i < std::size(timers); i++)
-		timers[i].Init(aica_reg, i);
-	resetRtc(hard);
+	initTimers();
+	resetRtc();
 	arm::reset();
 }
 
@@ -276,6 +276,7 @@ void term()
 	arm::term();
 	sgc::term();
 	termMem();
+	termRtc();
 	sh4_sched_unregister(aica_schid);
 	aica_schid = -1;
 }

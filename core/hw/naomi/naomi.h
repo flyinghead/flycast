@@ -6,7 +6,7 @@
 
 void naomi_reg_Init();
 void naomi_reg_Term();
-void naomi_reg_Reset(bool hard);
+void naomi_reg_Reset();
 void naomi_Serialize(Serializer& ser);
 void naomi_Deserialize(Deserializer& deser);
 

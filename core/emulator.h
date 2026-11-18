@@ -186,13 +186,13 @@ public:
 
 	// For tests only
 	void init(int platform);
-	void dc_reset(bool hard);
 	void term();
 
 private:
 	bool checkStatus(bool wait = false);
 	void runInternal();
 	void diskChange();
+	void softReset();
 
 	enum State {
 		Uninitialized = 0,

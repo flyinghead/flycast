@@ -96,21 +96,15 @@ void Sh4Interpreter::Step()
 	Instance = nullptr;
 }
 
-void Sh4Interpreter::Reset(bool hard)
+void Sh4Interpreter::Reset()
 {
-	ctx = &p_sh4rcb->cntx;
 	verify(!ctx->CpuRunning);
 
-	if (hard)
-	{
-		// in case ram base has changed
-		sh4cycles.init(ctx);
-		icache.init(ctx);
-		ocache.init(ctx);
-		int schedNext = ctx->sh4_sched_next;
-		memset(ctx, 0, sizeof(*ctx));
-		ctx->sh4_sched_next = schedNext;
-	}
+	// Reset the sh4 context but keep the scheduler running
+	int schedNext = ctx->sh4_sched_next;
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->sh4_sched_next = schedNext;
+
 	ctx->pc = 0xA0000000;
 
 	memset(ctx->r, 0, sizeof(ctx->r));
@@ -126,8 +120,8 @@ void Sh4Interpreter::Reset(bool hard)
 	ctx->fpscr.full = 0x00040001;
 	ctx->old_fpscr = ctx->fpscr;
 
-	icache.Reset(hard);
-	ocache.Reset(hard);
+	icache.Reset();
+	ocache.Reset();
 	sh4cycles.reset();
 	ctx->cycle_counter = SH4_TIMESLICE;
 
@@ -191,7 +185,6 @@ int UpdateSystem_INTC()
 void Sh4Interpreter::Init()
 {
 	ctx = &p_sh4rcb->cntx;
-	memset(ctx, 0, sizeof(*ctx));
 	sh4cycles.init(ctx);
 	icache.init(ctx);
 	ocache.init(ctx);

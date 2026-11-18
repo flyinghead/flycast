@@ -471,13 +471,12 @@ static void loadSpecialSettings()
 	}
 }
 
-void Emulator::dc_reset(bool hard)
+void Emulator::softReset()
 {
-	sh4_sched_reset(hard);
-	pvr::reset(hard);
-	aica::reset(hard);
-	getSh4Executor()->Reset(true);
-	mem_Reset(hard);
+	pvr::reset();
+	aica::reset();
+	getSh4Executor()->Reset();
+	mem_Reset();
 }
 
 static void setPlatform(int platform)
@@ -539,6 +538,7 @@ void Emulator::init(int platform)
 	addrspace::reserve();
 	setPlatform(platform);
 	addrspace::initMappings();
+	sh4_sched_init();
 	libGDR_init();
 	pvr::init();
 	aica::init();
@@ -616,12 +616,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			settings.content.path.clear();
 			settings.content.fileName.clear();
 		}
+		config::Settings::instance().reset();
+		config::Settings::instance().load(false);
 
 		init(getGamePlatform(settings.content.fileName));
 
-		config::Settings::instance().reset();
-		config::Settings::instance().load(false);
-		dc_reset(true);
 		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
 
 		if (settings.platform.isConsole())
@@ -758,7 +757,7 @@ void Emulator::runInternal()
 				if (resetRequested)
 				{
 					nvmem::saveFiles();
-					dc_reset(false);
+					softReset();
 					if (!restartCpu())
 						resetRequested = false;
 				}
@@ -821,6 +820,7 @@ void Emulator::term()
 		mem_Term();
 		libGDR_term();
 		ice::term();
+		sh4_sched_term();
 		addrspace::release();
 
 		state = Uninitialized;

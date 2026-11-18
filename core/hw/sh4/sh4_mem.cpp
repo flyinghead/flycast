@@ -183,15 +183,10 @@ void mem_Init()
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
-void mem_Reset(bool hard)
+void mem_Reset()
 {
-	//mem is reset on hard restart (power on), not soft reset
-	if (hard)
-		mem_b.zero();
-
-	//Reset registers
-	sh4_area0_Reset(hard);
-	sh4_mmr_reset(hard);
+	sh4_area0_Reset();
+	sh4_mmr_reset();
 }
 
 void mem_Term()

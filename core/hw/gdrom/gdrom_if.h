@@ -3,7 +3,7 @@
 
 void gdrom_reg_Init();
 void gdrom_reg_Term();
-void gdrom_reg_Reset(bool hard);
+void gdrom_reg_Reset();
 
 u32  ReadMem_gdrom(u32 Addr, u32 sz);
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);

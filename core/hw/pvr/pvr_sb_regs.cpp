@@ -121,11 +121,3 @@ void pvr_sb_Init()
 	//0x005F6820    SB_SDST RW  Sort-DMA start
 	hollyRegs.setWriteHandler<SB_SDST_addr>(RegWrite_SB_SDST);
 }
-
-void pvr_sb_Term()
-{
-}
-
-void pvr_sb_Reset(bool hard)
-{
-}

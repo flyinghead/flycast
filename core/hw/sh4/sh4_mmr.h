@@ -9,7 +9,7 @@ void map_area7();
 void map_p4();
 
 void sh4_mmr_init();
-void sh4_mmr_reset(bool hard);
+void sh4_mmr_reset();
 void sh4_mmr_term();
 
 namespace sh4

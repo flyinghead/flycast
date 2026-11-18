@@ -39,7 +39,7 @@ void SetCurrentTARC(u32 addr)
 		
 		//clear context
 		ta_ctx=0;
-		ta_tad.Reset(0);
+		ta_tad.Reset(nullptr);
 	}
 }
 
@@ -191,7 +191,15 @@ TA_context *tactx_Pop(u32 addr)
 	return nullptr;
 }
 
-void tactx_Term()
+void tactx_init()
+{
+	RenderCount = 0;
+	ta_ctx = nullptr;
+	ta_tad.Reset(nullptr);
+	rqueue = nullptr;
+}
+
+void tactx_term()
 {
 	if (ta_ctx != nullptr)
 		SetCurrentTARC(TACTX_NONE);

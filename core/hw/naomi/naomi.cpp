@@ -237,8 +237,22 @@ void naomi_reg_Init()
 #else
 	mainSerialId.setData(romSerialData);
 #endif
+	mainSerialId.reset();
+	romSerialId.reset();
 	if (dmaSchedId == -1)
 		dmaSchedId = sh4_sched_register(0, naomiDmaSched);
+	if (settings.platform.isArcade())
+	{
+		hollyRegs.setWriteHandler<SB_GDST_addr>(Naomi_DmaStart);
+		hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
+		if (settings.platform.isNaomi())
+			m3comm = std::make_unique<NaomiM3Comm>();
+		if (settings.naomi.multiboard)
+			multiboard = std::make_unique<Multiboard>();
+		networkOutput.reset();
+		atomiswave::reset();
+		midiffb::reset();
+	}
 }
 
 // Sets the full content of the rom board serial eeprom (132 bytes)
@@ -266,36 +280,18 @@ void naomi_reg_Term()
 	midiffb::term();
 }
 
-void naomi_reg_Reset(bool hard)
+void naomi_reg_Reset()
 {
-	hollyRegs.setWriteHandler<SB_GDST_addr>(Naomi_DmaStart);
-	hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
 	sh4_sched_request(dmaSchedId, -1);
 
 	atomiswave::reset();
 
-	if (hard)
-	{
-		naomi_cart_Close();
-		multiboard.reset();
-		m3comm.reset();
-		if (settings.platform.isNaomi())
-			m3comm = std::make_unique<NaomiM3Comm>();
-		if (settings.naomi.multiboard)
-			multiboard = std::make_unique<Multiboard>();
-		networkOutput.reset();
-		mainSerialId.reset();
-		romSerialId.reset();
-	}
-	else
-	{
-		if (multiboard != nullptr)
-			multiboard->reset();
-		if (m3comm != nullptr)
-			m3comm->closeNetwork();
-	}
+	if (multiboard != nullptr)
+		multiboard->reset();
+	if (m3comm != nullptr)
+		m3comm->closeNetwork();
 	midiffb::reset();
 }
 

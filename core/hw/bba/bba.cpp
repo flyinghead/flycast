@@ -84,8 +84,10 @@ void pci_set_irq(PCIDevice *pci_dev, int level)
 	setInterrupt();
 }
 
-static void bba_Init()
+void bba_Init()
 {
+	if (!config::EmulateBBA || !(settings.platform.isConsole() || settings.platform.isAtomiswave()))
+		return;
 	NICConf nicConf = { 0xc, 0xa, 0xf, 0xe, 0, 0 };
 	rtl8139device = rtl8139_init(&nicConf);
 	pci_rtl8139_realize(PCI_DEVICE(rtl8139device));
@@ -108,16 +110,6 @@ void bba_Term()
 	}
 	sh4_sched_unregister(rxSchedId);
 	rxSchedId = -1;
-}
-
-void bba_Reset(bool hard)
-{
-	if (hard)
-	{
-		bba_Term();
-		if (config::EmulateBBA && (settings.platform.isConsole() || settings.platform.isAtomiswave()))
-			bba_Init();
-	}
 }
 
 u32 bba_ReadMem(u32 addr, u32 sz)

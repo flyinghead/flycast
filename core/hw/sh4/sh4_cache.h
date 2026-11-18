@@ -104,10 +104,8 @@ public:
 			line.valid = false;
 	}
 
-	void Reset(bool hard)
-	{
-		if (hard)
-			memset(&lines[0], 0, sizeof(lines));
+	void Reset() {
+		memset(&lines[0], 0, sizeof(lines));
 	}
 
 	void Serialize(Serializer& ser) {
@@ -379,10 +377,8 @@ public:
 		}
 	}
 
-	void Reset(bool hard)
-	{
-		if (hard)
-			memset(&lines[0], 0, sizeof(lines));
+	void Reset() {
+		memset(&lines[0], 0, sizeof(lines));
 	}
 
 	void Serialize(Serializer& ser)

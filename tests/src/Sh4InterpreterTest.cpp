@@ -25,7 +25,6 @@ protected:
 	void SetUp() override
 	{
         emu.init(DC_PLATFORM_DREAMCAST);
-		emu.dc_reset(true);
 		ctx = &p_sh4rcb->cntx;
 		sh4 = Get_Sh4Interpreter();
 		sh4->Init();

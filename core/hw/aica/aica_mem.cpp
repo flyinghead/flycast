@@ -206,8 +206,6 @@ template void writeRegInternal<>(u32 addr, u32 data);
 void initMem()
 {
 	memset(aica_reg, 0, sizeof(aica_reg));
-	aica_ram[ARAM_SIZE - 1] = 1;
-	aica_ram.zero();
 	midiReceiver = nullptr;
 }
 

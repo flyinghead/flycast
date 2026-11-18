@@ -130,7 +130,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case STARTRENDER_addr:
 		rend_start_render();
-		YUV_init();
+		YUV_start();
 		return;
 
 	case TA_LIST_INIT_addr:
@@ -179,12 +179,12 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case TA_YUV_TEX_BASE_addr:
 		PvrReg(addr, u32) = data & 0x00FFFFF8;
-		YUV_init();
+		YUV_start();
 		return;
 
 	case TA_YUV_TEX_CTRL_addr:
 		PvrReg(addr, u32) = data;
-		YUV_init();
+		YUV_start();
 		return;
 
 	case FB_R_SOF1_addr:
@@ -226,10 +226,8 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	PvrReg(addr, u32) = data;
 }
 
-void Regs_Reset(bool hard)
+void pvr_regReset()
 {
-	if (hard)
-		memset(&pvr_regs[0], 0, sizeof(pvr_regs));
 	ID_Reg              = 0x17FD11DB;
 	REVISION            = 0x00000011;
 	SOFTRESET           = 0x00000007;
@@ -251,4 +249,10 @@ void Regs_Reset(bool hard)
 	SCALER_CTL.full     = 0x00000400;
 	FB_BURSTCTRL        = 0x00090639;
 	PT_ALPHA_REF        = 0x000000FF;
+}
+
+void pvr_regInit()
+{
+	memset(&pvr_regs[0], 0, sizeof(pvr_regs));
+	pvr_regReset();
 }

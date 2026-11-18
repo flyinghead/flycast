@@ -425,7 +425,6 @@ void initMappings()
 #if FEAT_SHREC != DYNAREC_NONE
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 #endif
-		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 
 		mem_b.alloc(RAM_SIZE);
 		vram.alloc(VRAM_SIZE);
@@ -462,6 +461,7 @@ void initMappings()
 	}
 
 	// Clear out memory
+	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 	aica::aica_ram.zero();
 	vram.zero();
 	mem_b.zero();

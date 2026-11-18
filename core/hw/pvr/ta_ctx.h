@@ -380,7 +380,8 @@ extern TA_context* ta_ctx;
 extern tad_context ta_tad;
 
 TA_context* tactx_Pop(u32 addr);
-void tactx_Term();
+void tactx_init();
+void tactx_term();
 TA_context *tactx_Alloc();
 
 /*

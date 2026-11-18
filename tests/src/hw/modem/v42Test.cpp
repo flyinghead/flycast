@@ -46,7 +46,6 @@ protected:
 	void SetUp() override
 	{
 		emu.init(DC_PLATFORM_DREAMCAST);
-		emu.dc_reset(true);
 	}
 
 	void TearDown() override {

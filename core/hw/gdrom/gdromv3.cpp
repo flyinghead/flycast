@@ -1353,7 +1353,22 @@ void gdrom_reg_Init()
 {
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
 	statusSchid = sh4_sched_register(0, &statusSched);
-	gd_disc_change();
+
+	hollyRegs.setWriteHandler<SB_GDST_addr>(GDROM_DmaStart);
+	hollyRegs.setWriteHandler<SB_GDEN_addr>(GDROM_DmaEnable);
+
+	// set default hardware information
+	memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
+	GD_HardwareInfo.speed = 0x0;
+	GD_HardwareInfo.standby_hi = 0x00;
+	GD_HardwareInfo.standby_lo = 0xb4;
+	GD_HardwareInfo.read_flags = 0x19;
+	GD_HardwareInfo.read_retry = 0x08;
+	memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
+	memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
+	memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
+	gdr::termDrive();
+	gdrom_reg_Reset();
 }
 
 void gdrom_reg_Term()
@@ -1364,25 +1379,8 @@ void gdrom_reg_Term()
 	statusSchid = -1;
 }
 
-void gdrom_reg_Reset(bool hard)
+void gdrom_reg_Reset()
 {
-	if (hard)
-	{
-		hollyRegs.setWriteHandler<SB_GDST_addr>(GDROM_DmaStart);
-		hollyRegs.setWriteHandler<SB_GDEN_addr>(GDROM_DmaEnable);
-
-		// set default hardware information
-		memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
-		GD_HardwareInfo.speed = 0x0;
-		GD_HardwareInfo.standby_hi = 0x00;
-		GD_HardwareInfo.standby_lo = 0xb4;
-		GD_HardwareInfo.read_flags = 0x19;
-		GD_HardwareInfo.read_retry = 0x08;
-		memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
-		memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
-		memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
-		gdr::termDrive();
-	}
 	SB_GDST = 0;
 	SB_GDEN = 0;
 

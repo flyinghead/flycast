@@ -651,36 +651,30 @@ void sb_Init()
 	maple_Init();
 	aica::sbInit();
 
+	bba_Init();
 	ModemInit();
+
+	SB_SBREV = 0xB;
+	SB_G2ID = 0x12;
+	SB_G1SYSM = ((0 << 4) | 1);
+	SB_TFREM = 8;
+	SB_PDAPRO = 0x7f00;
+	SB_GDAPRO = 0x7f00;
 }
 
-void sb_Reset(bool hard)
+void sb_Reset()
 {
-	if (hard)
-	{
-		hollyRegs.reset();
-
-		SB_SBREV = 0xB;
-		SB_G2ID = 0x12;
-		SB_G1SYSM = ((0 << 4) | 1);
-		SB_TFREM = 8;
-		SB_PDAPRO = 0x7f00;
-		SB_GDAPRO = 0x7f00;
-	}
 	SB_ISTNRM = 0;
 	SB_ISTNRM1 = 0;
 
-	bba_Reset(hard);
 	ModemReset();
 
-	asic_reg_Reset(hard);
 	if (settings.platform.isConsole())
-		gdrom_reg_Reset(hard);
+		gdrom_reg_Reset();
 	else
-		naomi_reg_Reset(hard);
-	pvr_sb_Reset(hard);
-	maple_Reset(hard);
-	aica::sbReset(hard);
+		naomi_reg_Reset();
+	maple_Reset();
+	aica::sbReset();
 }
 
 void sb_Term()
@@ -689,10 +683,8 @@ void sb_Term()
 	ModemTerm();
 	aica::sbTerm();
 	maple_Term();
-	pvr_sb_Term();
 	gdrom_reg_Term();
 	naomi_reg_Term();
-	asic_reg_Term();
 	hollyRegs.term();
 }
 

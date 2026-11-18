@@ -9,7 +9,7 @@
 u32 sb_ReadMem(u32 addr);
 void sb_WriteMem(u32 addr, u32 data);
 void sb_Init();
-void sb_Reset(bool hard);
+void sb_Reset();
 void sb_Term();
 void sb_serialize(Serializer& ser);
 void sb_deserialize(Deserializer& deser);

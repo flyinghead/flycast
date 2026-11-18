@@ -205,15 +205,12 @@ void initRtc()
 	RealTimeClock = GetRTC_now();
 	if (rtc_schid == -1)
 		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
+	sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+	resetRtc();
 }
 
-void resetRtc(bool hard)
+void resetRtc()
 {
-	if (hard)
-	{
-		initRtc();
-		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
-	}
 	VREG = 0;
 	ARMRST = 0;
 }
@@ -495,14 +492,13 @@ void sbInit()
 	hollyRegs.setWriteOnly<SB_G2APRO_addr>(Write_SB_G2APRO);
 
 	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
+	sbReset();
 }
 
-void sbReset(bool hard)
+void sbReset()
 {
-	if (hard) {
-		SB_ADST = 0;
-		SB_G2APRO = 0x7f00;
-	}
+	SB_ADST = 0;
+	SB_G2APRO = 0x7f00;
 }
 
 void sbTerm()

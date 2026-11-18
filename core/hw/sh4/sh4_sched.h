@@ -47,7 +47,8 @@ bool sh4_sched_is_scheduled(int id);
 void sh4_sched_tick(int cycles);
 
 void sh4_sched_ffts();
-void sh4_sched_reset(bool hard);
+void sh4_sched_init();
+void sh4_sched_term();
 
 void sh4_sched_serialize(Serializer& ser);
 void sh4_sched_deserialize(Deserializer& deser);

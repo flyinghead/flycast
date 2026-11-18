@@ -268,18 +268,10 @@ void sh4_area0_Init()
 	nvmem::init();
 }
 
-void sh4_area0_Reset(bool hard)
+void sh4_area0_Reset()
 {
-	if (hard)
-	{
-		nvmem::term();
-		nvmem::init();
-	}
-	else
-	{
-		nvmem::reset();
-	}
-	sb_Reset(hard);
+	nvmem::reset();
+	sb_Reset();
 }
 
 void sh4_area0_Term()

@@ -6,5 +6,5 @@ void map_area0(u32 base);
 
 //Init/Res/Term
 void sh4_area0_Init();
-void sh4_area0_Reset(bool hard);
+void sh4_area0_Reset();
 void sh4_area0_Term();

@@ -135,7 +135,7 @@ public:
 	}
 	void Run() override;
 	void ResetCache() override;
-	void Reset(bool hard) override;
+	void Reset() override;
 	void Init() override;
 	void Term() override;
 

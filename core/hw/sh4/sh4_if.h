@@ -108,7 +108,7 @@ public:
 	virtual void Start() = 0;
 	virtual void Stop() = 0;
 	virtual void Step() = 0;
-	virtual void Reset(bool hard) = 0;
+	virtual void Reset() = 0;
 	virtual void Init() = 0;
 	virtual void Term() = 0;
 	virtual void ResetCache() = 0;
