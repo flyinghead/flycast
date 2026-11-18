@@ -210,6 +210,7 @@ void pci_rtl8139_realize(PCIDevice *dev);
 uint64_t rtl8139_ioport_read(void *opaque, hwaddr addr, unsigned size);
 void rtl8139_ioport_write(void *opaque, hwaddr addr, uint64_t val, unsigned size);
 void rtl8139_reset(RTL8139State *s);
+bool rtl8139_enabled(RTL8139State *s);
 bool rtl8139_can_receive(RTL8139State *s);
 ssize_t rtl8139_receive(RTL8139State *s, const uint8_t *buf, size_t size);
 

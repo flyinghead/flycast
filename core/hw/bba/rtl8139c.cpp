@@ -699,18 +699,20 @@ static void rtl8139_write_buffer(RTL8139State *s, const void *buf, int size)
     s->RxBufAddr += size;
 }
 
+bool rtl8139_enabled(RTL8139State *s)
+{
+    return s->clock_enabled && rtl8139_receiver_enabled(s);
+}
+
 #define MIN_BUF_SIZE 60
 
 bool rtl8139_can_receive(RTL8139State *s)
 {
     int avail;
 
-    /* Receive (drop) packets if card is disabled.  */
-    if (!s->clock_enabled) {
-        return true;
-    }
-    if (!rtl8139_receiver_enabled(s)) {
-        return true;
+    /* Can't receive packets if board is disabled.  */
+    if (!rtl8139_enabled(s)) {
+        return false;
     }
 
     avail = MOD2(s->RxBufferSize + s->RxBufPtr - s->RxBufAddr,
