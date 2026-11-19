@@ -227,7 +227,8 @@ TileClipping TransformMatrix::getTileClip(u32 val, Rect& clipRect)
 	csy = csy * 32;
 	cey = (cey + 1) * 32;
 
-	if (csx == 0 && csy == 0 && cex >= renderingContext->globClip.x && cey >= renderingContext->globClip.y)
+	if (csx == 0 && csy == 0 && cex >= renderingContext->globClip.x && cey >= renderingContext->globClip.y
+			&& tileClippingMode == TileClipping::Outside)
 		return TileClipping::Off;
 
 	glm::vec4 clip_start(csx, csy, 0, 1);

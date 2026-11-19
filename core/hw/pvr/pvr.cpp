@@ -49,7 +49,7 @@ void init()
 	elan::init();
 	rend_init();
 	YUV_init();
-	ta_parse_reset();
+	ta_parse_init();
 	taRenderPass = 0;
 	tactx_init();
 }

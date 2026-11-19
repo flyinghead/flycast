@@ -529,12 +529,15 @@ strip_end:
 	TAParserTempl();
 
 public:
+	static void init() {
+		setClipRect(0, 0, 39, 14);
+		reset();
+	}
+
 	static void reset()
 	{
 		TaCmd = ta_main;
 		BaseTAParser::reset();
-		setClipRect(0, 0, 39, 14);
-		setClipMode(0);
 	}
 
 private:
@@ -1514,11 +1517,19 @@ void ta_set_list_type(u32 listType)
 // end Naomi 2
 //
 
+using TAParser = TAParserTempl<>;
+using TAParserDX = TAParserTempl<2, 1, 0, 3>;
+
+void ta_parse_init()
+{
+	if (isDirectX(config::RendererType))
+		TAParserDX::init();
+	else
+		TAParser::init();
+}
+
 void ta_parse_reset()
 {
-	using TAParser = TAParserTempl<>;
-	using TAParserDX = TAParserTempl<2, 1, 0, 3>;
-
 	if (isDirectX(config::RendererType))
 		TAParserDX::reset();
 	else
