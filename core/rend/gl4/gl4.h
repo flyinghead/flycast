@@ -212,6 +212,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = n
 
 void initABuffer();
 void termABuffer();
+void gl4EnsurePixelColor1Buffer();
 void reshapeABuffer(int width, int height);
 void renderABuffer(bool lastPass);
 void checkOverflowAndReset();
