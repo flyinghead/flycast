@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-10-29 10:17\n"
+"PO-Revision-Date: 2026-11-20 17:27\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -252,7 +252,7 @@ msgstr "Mouse %d"
 
 #: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
 msgid "Flycast Error"
-msgstr "Error de flycast"
+msgstr "Error de Flycast"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -289,7 +289,7 @@ msgstr "No se pueden obtener atributos de %s"
 #: core/oslib/storage.cpp:265
 #, c-format
 msgid "Invalid file name %s"
-msgstr "Nombre inválido del archivo"
+msgstr "Nombre inválido del archivo %s"
 
 #: core/imgread/common.cpp:97
 msgid "Unknown disk format"
@@ -335,12 +335,12 @@ msgstr "Error de análisis CUE: menos de 3 pistas"
 #: core/imgread/chd.cpp:106
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr "CHD: el tipo de pista %s no está soportado"
+msgstr "chd: el tipo de pista %s no está soportado"
 
 #: core/imgread/chd.cpp:115
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr "No se puedo abrir el CHD"
+msgstr "No se puedo abrir el CHD %s"
 
 #: core/imgread/chd.cpp:122
 #, c-format
@@ -350,7 +350,7 @@ msgstr "Archivo CHD inválido %s"
 #: core/imgread/chd.cpp:135
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr "hunkbytes no válidos para el archivo CHD %s"
+msgstr "Hunkbytes no válidos para el archivo CHD %s"
 
 #: core/imgread/chd.cpp:181
 msgid "Unexpected track number"
@@ -751,7 +751,7 @@ msgstr "Truco de juegos para pantalla ancha"
 
 #: core/ui/settings_video.cpp:252
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr "Modifica el juego para que se muestre en formato anamórfico 16:9 y utilice el estiramiento horizontal de la pantalla. Sólo algunos juegos son compatibles."
+msgstr "Modifica el juego para que se muestre en formato anamórfico 16:9 y utilice el estiramiento horizontal de la pantalla. Solo algunos juegos son compatibles."
 
 #: core/ui/settings_video.cpp:253
 msgid "Horizontal Stretching"
@@ -811,7 +811,7 @@ msgstr "Rendimiento"
 
 #: core/ui/settings_video.cpp:311
 msgid "Automatic Frame Skipping:"
-msgstr "Saltado de Fotogramas automático"
+msgstr "Saltado de Fotogramas automático:"
 
 #: core/ui/settings_video.cpp:313 core/ui/settings_video.cpp:338
 #: core/ui/settings_network.cpp:89
@@ -880,7 +880,7 @@ msgstr "Corregir sangrado de bordes al escalar"
 
 #: core/ui/settings_video.cpp:332
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr "Ayuda cuando las texturas muestren bordes sangrados al escalarlas. Desactivar esta opción puede ser útil si hay distorsión de píxeles al escalar juegos 2D (MVC2, CVS, KOF, etcétera)."
+msgstr "Ayuda cuando las texturas muestren bordes sangrados al escalarlas. Desactivar esta opción puede ser útil si hay distorsión de píxeles al escalar juegos 2D (MVC2, CVS, KOF, etcétera)"
 
 #: core/ui/settings_video.cpp:333
 msgid "Native Depth Interpolation"
@@ -904,11 +904,11 @@ msgstr "Filtrado anisotrópico"
 
 #: core/ui/settings_video.cpp:377
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr "Valores más altos hacen que las texturas se vean en ángulos oblicuos más claros, pero son más exigentes en la GPU. Esta opción sólo tiene un impacto visible en las texturas mipmapadas."
+msgstr "Valores más altos hacen que las texturas se vean en ángulos oblicuos más claros, pero son más exigentes en la GPU. Esta opción solo tiene un impacto visible en las texturas mipmapadas."
 
 #: core/ui/settings_video.cpp:379
 msgid "Texture Filtering:"
-msgstr "Filtrado de textura"
+msgstr "Filtrado de textura:"
 
 #: core/ui/settings_video.cpp:381 core/ui/settings_general.cpp:231
 #: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
@@ -925,7 +925,7 @@ msgstr "Forzar más cercano"
 
 #: core/ui/settings_video.cpp:383
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr "Forzar el filtrado  más cercano para todas las texturas. Pero puede causar varios problemas de renderizado. Esta opción normalmente no afecta al rendimiento."
+msgstr "Forzar el filtrado más cercano para todas las texturas. Pero puede causar varios problemas de renderizado. Esta opción normalmente no afecta al rendimiento."
 
 #: core/ui/settings_video.cpp:385
 msgid "Force Linear"
@@ -987,7 +987,7 @@ msgstr "Aplicar"
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
-msgstr "añadir"
+msgstr "Añadir"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:745
 msgid "Select a Content Folder"
@@ -1027,7 +1027,7 @@ msgstr "Italiano"
 
 #: core/ui/settings_general.cpp:232
 msgid "Dreamcast Language"
-msgstr "Idioma de la dreamcast"
+msgstr "Idioma de la Dreamcast"
 
 #: core/ui/settings_general.cpp:233
 msgid "The language as configured in the Dreamcast BIOS"
@@ -1142,7 +1142,7 @@ msgstr "Muestra la carátula del juego en la lista de juegos."
 
 #: core/ui/settings_general.cpp:368
 msgid "Fetch Box Art"
-msgstr "Obtener caratula"
+msgstr "Obtener carátula"
 
 #: core/ui/settings_general.cpp:369
 msgid "Fetch cover images from TheGamesDB.net."
@@ -1154,7 +1154,7 @@ msgstr "Escala do de interfaz"
 
 #: core/ui/settings_general.cpp:370
 msgid "Adjust the size of UI elements and fonts."
-msgstr "Ajuste el tamaño de los elementos y fuentes de la interfaz"
+msgstr "Ajuste el tamaño de los elementos y fuentes de la interfaz."
 
 #: core/ui/settings_general.cpp:375
 msgid "Apply"
@@ -1182,7 +1182,7 @@ msgstr "Nintendo"
 
 #: core/ui/settings_general.cpp:381
 msgid "Aqua Chill"
-msgstr "Agua fria"
+msgstr "Agua fría"
 
 #: core/ui/settings_general.cpp:383
 msgid "UI Theme"
@@ -1194,7 +1194,7 @@ msgstr "Seleccione el tema color de la interfaz."
 
 #: core/ui/settings_general.cpp:390
 msgid "Hide Legacy Naomi Roms"
-msgstr "Ocultar roms legacy de naomi"
+msgstr "Ocultar Roms legacy de Naomi"
 
 #: core/ui/settings_general.cpp:391
 msgid "Hide .bin and .dat files from the content browser"
@@ -1210,7 +1210,7 @@ msgstr "Usa el selector de archivos Android Storage Access Framework para selecc
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "Guardado automatico"
+msgstr "Guardado automático:"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1230,7 +1230,7 @@ msgstr "Guardar el estado del juego cuando se detenga"
 
 #: core/ui/settings_general.cpp:404
 msgid "Naomi Free Play"
-msgstr "Juego  libre de Naomi"
+msgstr "Juego libre de Naomi"
 
 #: core/ui/settings_general.cpp:404
 msgid "Configure Naomi games in Free Play mode."
@@ -1358,15 +1358,15 @@ msgstr "Carpeta donde se guardan los volcados de texturas. Las subcarpetas espec
 
 #: core/ui/settings_general.cpp:493
 msgid "Box Art Folder"
-msgstr "Carpeta de caratulas"
+msgstr "Carpeta de carátulas"
 
 #: core/ui/settings_general.cpp:493
 msgid "Select the box art folder"
-msgstr "Seleciona una carpeta de caratulas"
+msgstr "Seleciona una carpeta de carátulas"
 
 #: core/ui/settings_general.cpp:494
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr "Carpeta que contiene imágenes de la caratula (png/jpg). Si está vacía, Flycast utilizará la Carpeta/boxart por defecto para descargas y arte generado"
+msgstr "Carpeta que contiene imágenes de la carátula (png/jpg). Si está vacía, Flycast utilizará la Carpeta/boxart por defecto para descargas y arte generado"
 
 #: core/ui/settings_general.cpp:497
 msgid "Controller Mapping Folders"
@@ -1403,7 +1403,7 @@ msgstr "Puerto 1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr "BIOS de dreamcast"
+msgstr "BIOS de Dreamcast"
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:65
 #: core/ui/settings_controls.cpp:167
@@ -1412,7 +1412,7 @@ msgstr "Nada"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr "Control de sega"
+msgstr "Control de Sega"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
@@ -1444,7 +1444,7 @@ msgstr "Control de pesca"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr "Control de pop'n Music"
+msgstr "Control de Pop'n Music"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
@@ -1492,11 +1492,11 @@ msgstr "Arriba"
 
 #: core/ui/settings_controls.cpp:178 core/ui/settings_controls.cpp:242
 msgid "Down"
-msgstr "Abajo "
+msgstr "Abajo"
 
 #: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:246
 msgid "Thumbstick Up"
-msgstr "Tumbstick up"
+msgstr "Joystick arriba"
 
 #: core/ui/settings_controls.cpp:183 core/ui/settings_controls.cpp:247
 msgid "Thumbstick Down"
@@ -1566,7 +1566,7 @@ msgstr "Gatillo derecho"
 
 #: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:270
 msgid "Left Trigger 2"
-msgstr "Segundo gatillo izquierdo "
+msgstr "Segundo gatillo izquierdo"
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:271
 msgid "Right Trigger 2"
@@ -1700,7 +1700,7 @@ msgstr "Tiempo agotado en %d s"
 
 #: core/ui/settings_controls.cpp:465
 msgid "Current inputs:"
-msgstr "Puertos actuales"
+msgstr "Puertos actuales:"
 
 #: core/ui/settings_controls.cpp:489
 msgid "Confirm"
@@ -1739,7 +1739,7 @@ msgstr "Puerto"
 
 #: core/ui/settings_controls.cpp:686 core/ui/settings_controls.cpp:750
 msgid "Dreamcast Controls"
-msgstr "Control de dreamcast"
+msgstr "Control de Dreamcast"
 
 #: core/ui/settings_controls.cpp:689 core/ui/settings_controls.cpp:698
 #: core/ui/settings.cpp:259
@@ -1853,7 +1853,7 @@ msgstr "Saturación"
 
 #: core/ui/settings_controls.cpp:993
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
-msgstr "Valor enviado al juego con deflexión al instante. Valores superiores al 100% saturarán antes de la deflexión completa del joysitck."
+msgstr "Valor enviado al juego con deflexión al instante. Valores superiores al 100% saturarán antes de la deflexión completa del joystick."
 
 #: core/ui/settings_controls.cpp:1006
 msgid "Physical Devices"
@@ -1896,7 +1896,7 @@ msgstr "Soporta múltiples dispositivos de apuntar (ratones, armas ligeras) y te
 
 #: core/ui/settings_controls.cpp:1108
 msgid "Dreamcast Devices"
-msgstr "Dispositivos de dreamcast"
+msgstr "Dispositivos de Dreamcast"
 
 #: core/ui/settings_controls.cpp:1121
 #, c-format
@@ -1976,7 +1976,7 @@ msgstr "La inicialización del renderizador falló.\n"
 
 #: core/ui/gui.cpp:469
 msgid "Flycast has stopped."
-msgstr "Flycast se ha detenido"
+msgstr "Flycast se ha detenido."
 
 #: core/ui/gui.cpp:576
 msgid "Resume"
@@ -2052,7 +2052,7 @@ msgstr "Cargando..."
 
 #: core/ui/gui.cpp:1011
 msgid "Your game list is empty"
-msgstr "Tu lista de juegos esta vacio"
+msgstr "Tu lista de juegos esta vacío"
 
 #: core/ui/gui.cpp:1021
 msgid "Add Game Folder"
@@ -2064,11 +2064,11 @@ msgstr "Selección inválida:"
 
 #: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
 msgid "Flycast cannot write to this folder."
-msgstr "Flycast no puedo escribir este archivo:"
+msgstr "Flycast no puedo escribir este archivo."
 
 #: core/ui/gui.cpp:1092
 msgid "Select Flycast Home Folder"
-msgstr "Selecciona la carpeta de inicio de flycast"
+msgstr "Selecciona la carpeta de inicio de Flycast"
 
 #: core/ui/gui.cpp:1126 core/ui/gui.cpp:1247 core/emulator.cpp:690
 msgid "Starting..."
@@ -2076,11 +2076,11 @@ msgstr "Comenzando..."
 
 #: core/ui/gui.cpp:1138
 msgid "Starting Network..."
-msgstr "Comenzando conexión"
+msgstr "Comenzando conexión..."
 
 #: core/ui/gui.cpp:1140
 msgid "Press Start to start the game now."
-msgstr "Presiona start para comenzar el juego ahora."
+msgstr "Presiona Start para comenzar el juego ahora."
 
 #: core/ui/gui.cpp:1148 core/ui/gui.cpp:1151
 msgid "Start Now"
@@ -2129,7 +2129,7 @@ msgstr "Activar sonidos de VMU"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Play VMU beeps when enabled."
-msgstr "La VMU reproduce pitidos cuando esta activa"
+msgstr "La VMU reproduce pitidos cuando está activa."
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
@@ -2213,7 +2213,7 @@ msgstr "Reloj del SH4"
 
 #: core/ui/settings.cpp:46
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
-msgstr "Supervisar/Enderclock La CPU SH4 principal. Por defecto es de 200 MHz. Otros valores pueden bloquear, congelar o desencadenar reacciones  inesperadas."
+msgstr "Supervisar/Enderclock La CPU SH4 principal. Por defecto es de 200 MHz. Otros valores pueden bloquear, congelar o desencadenar reacciones inesperadas."
 
 #: core/ui/settings.cpp:94
 msgid "Other"
@@ -2249,7 +2249,7 @@ msgstr "Mod de 32 MB de RAM para Dreamcast"
 
 #: core/ui/settings.cpp:106
 msgid "Enables 32MB RAM Mod for Dreamcast. May affect compatibility"
-msgstr "Activa el mod de 32 MB de RAM para Dreamcast. Podría afectar a la compatibilidad."
+msgstr "Activa el mod de 32 MB de RAM para Dreamcast. Podría afectar a la compatibilidad"
 
 #: core/ui/settings.cpp:108
 msgid "Dump Textures"
@@ -2265,7 +2265,7 @@ msgstr "Volcar texturas ya reemplazadas"
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "Vuelca siempre las texturas que ya hayan sido reemplazadas por otras personalizadas."
+msgstr "Vuelca siempre las texturas que ya hayan sido reemplazadas por otras personalizadas"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
@@ -2401,7 +2401,7 @@ msgstr "Establece un retardo de fotograma, recomendable para sesiones con ping >
 
 #: core/ui/settings_network.cpp:88
 msgid "Left Thumbstick:"
-msgstr "Joystick izquierdo"
+msgstr "Joystick izquierdo:"
 
 #: core/ui/settings_network.cpp:89
 msgid "Left thumbstick not used"
@@ -2501,7 +2501,7 @@ msgstr "El puerto UDP local a usar"
 
 #: core/ui/settings_network.cpp:166
 msgid "Match Code"
-msgstr "Codigo de partida"
+msgstr "Código de partida"
 
 #: core/ui/settings_network.cpp:173
 msgid "Choose a unique word or number and share it with your opponent."
@@ -2542,7 +2542,7 @@ msgstr "Actuar como maestro"
 
 #: core/ui/settings_network.cpp:224
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr "Sólo se utiliza para Velocidad Máxima. Uno de los pares debe ser maestro."
+msgstr "Solo se utiliza para Velocidad Máxima. Uno de los pares debe ser maestro."
 
 #: core/ui/settings_network.cpp:228
 msgid "Network Options"
@@ -2602,7 +2602,7 @@ msgstr "1 (Twin, Satellite)"
 
 #: core/ui/settings_network.cpp:262
 msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
-msgstr "Una configuración de pantalla (F355 Twin, Derby Prowners Club satellite)"
+msgstr "Una configuración de pantalla (F355 Twin, Derby Owners Club satellite)"
 
 #: core/ui/settings_network.cpp:264
 msgid "2+ (Deluxe, Main screen)"
@@ -2850,7 +2850,7 @@ msgstr "La compilación de shaders de OpenGL ha fallado"
 
 #: core/rend/gles/gles.cpp:1065
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr "Se requiere OpenGL ES 3.0+ para naomi 2"
+msgstr "Se requiere OpenGL ES 3.0+ para Naomi 2"
 
 #: core/emulator.cpp:599
 #, c-format
@@ -2960,5 +2960,5 @@ msgstr "Compartir"
 
 #: shell/switch/switch_main.cpp:86
 msgid "Not supported on Switch"
-msgstr "No soportado en switch"
+msgstr "No soportado en Switch"
 
