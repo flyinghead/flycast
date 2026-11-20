@@ -63,6 +63,15 @@ using namespace i18n;
 #include <mutex>
 #include <algorithm>
 
+#ifdef __vita__
+#include <vitasdk.h>
+extern bool is_standalone;
+extern bool is_ap_on;
+extern bool is_bypass_on;
+extern bool folder_reset;
+extern bool subfolders_read;
+#endif
+
 bool game_started;
 
 int insetLeft, insetRight, insetTop, insetBottom;
@@ -203,7 +212,7 @@ void gui_updateStyle()
 	verify(inited);
 	uiThreadRunner.init();
 
-#if !defined(TARGET_UWP) && !defined(__SWITCH__)
+#if !defined(TARGET_UWP) && !defined(__SWITCH__) && !defined(__vita__)
 	const float dpiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
 #if defined(__APPLE__) && !defined(TARGET_IPHONE)
 	if (settings.display.pointScale > 1.f)
@@ -474,6 +483,11 @@ void gui_start_game(const std::string& path)
     chat.reset();
 
 	scanner.stop();
+#ifdef __vita__
+	// FIXME: Workaround to get the json database be generated at all
+	if (config::BoxartDisplayMode)
+		boxart.term();
+#endif
 	gui_setState(GuiState::Loading);
 	gameLoader.load(path);
 }
@@ -647,6 +661,11 @@ static void gui_display_commands()
 
 		// Exit
 		if (IconButton(ICON_FA_POWER_OFF, commandLineStart ?  T("Exit") : T("Close Game"), ScaledVec2(buttonWidth, 50)).realize())
+#ifdef __vita__
+			if (is_standalone)
+				sceKernelExitProcess(0);
+			else
+#endif
 			gui_stop_game();
 
 		ImGui::NextColumn();

@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#if !defined(LIBRETRO) || !defined(__ANDROID__)
+#if !defined(__vita__) && (!defined(LIBRETRO) || !defined(__ANDROID__))
 #include "types.h"
 #include <asio.hpp>
 #include "emulator.h"
@@ -885,4 +885,4 @@ std::string CapcomDirect::getBattleCode()
 }
 
 } // namespace
-#endif // !LIBRETRO || !ANDROID
+#endif // !__vita__ && (!LIBRETRO || !__ANDROID__)

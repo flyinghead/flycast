@@ -491,6 +491,7 @@ static void setPlatform(int platform)
 		settings.platform.bios_size = 2_MB;
 		settings.platform.flash_size = 128_KB;
 		break;
+#ifndef __vita__
 	case DC_PLATFORM_NAOMI:
 		settings.platform.ram_size = 32_MB;
 		settings.platform.vram_size = 16_MB;
@@ -506,6 +507,7 @@ static void setPlatform(int platform)
 		settings.platform.flash_size = 32_KB;	// battery-backed ram
 		elan::ERAM_SIZE = 32_MB;
 		break;
+#endif
 	case DC_PLATFORM_ATOMISWAVE:
 		settings.platform.ram_size = 16_MB;
 		settings.platform.vram_size = 8_MB;
@@ -513,6 +515,7 @@ static void setPlatform(int platform)
 		settings.platform.bios_size = 128_KB;
 		settings.platform.flash_size = 128_KB;	// sram
 		break;
+#ifndef __vita__
 	case DC_PLATFORM_SYSTEMSP:
 		settings.platform.ram_size = 32_MB;
 		settings.platform.vram_size = 16_MB;
@@ -520,6 +523,7 @@ static void setPlatform(int platform)
 		settings.platform.bios_size = 2_MB;
 		settings.platform.flash_size = 128_KB;	// sram
 		break;
+#endif
 	default:
 		die("Unsupported platform");
 		break;
