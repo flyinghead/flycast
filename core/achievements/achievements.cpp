@@ -471,6 +471,9 @@ void Achievements::clientMessageCallback(const char* message, const rc_client_t*
 
 u32 Achievements::clientReadMemory(u32 address, u8* buffer, u32 num_bytes, rc_client_t* client)
 {
+	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
+	if (!achievements->isActive())
+		return 0;
 	if (address + num_bytes > RAM_SIZE)
 		return 0;
 	address += 0x0C000000;
