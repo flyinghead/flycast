@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-10-29 10:17\n"
+"PO-Revision-Date: 2026-11-20 16:13\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -340,7 +340,7 @@ msgstr "CHD: el tipo de pista %s no está soportado"
 #: core/imgread/chd.cpp:115
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr "No se puedo abrir el CHD"
+msgstr "No se puedo abrir el CHD %s"
 
 #: core/imgread/chd.cpp:122
 #, c-format
@@ -1700,7 +1700,7 @@ msgstr "Tiempo agotado en %d s"
 
 #: core/ui/settings_controls.cpp:465
 msgid "Current inputs:"
-msgstr "Puertos actuales"
+msgstr "Puertos actuales:"
 
 #: core/ui/settings_controls.cpp:489
 msgid "Confirm"
