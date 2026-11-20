@@ -496,6 +496,13 @@ void mcfg_CreateDevices()
 // Don't destroy the JVS MIE if full is false
 void mcfg_DestroyDevices(bool full)
 {
+	if (full && config::MultiboardSlaves <= 1
+			&& (settings.content.gameId == " DERBY OWNERS CLUB WE ---------"
+				|| settings.content.gameId == " DERBY OWNERS CLUB ------------"
+				|| settings.content.gameId == " DERBY OWNERS CLUB II-----------"))
+	{
+		card_reader::term();
+	}
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j <= 5; j++)
 		{
