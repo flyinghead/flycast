@@ -52,7 +52,8 @@ enum class Event {
 	Network,
 	DiskChange,
 	LocaleChange,
-	max = LocaleChange
+	RichPresence,
+    max = RichPresence
 };
 
 class EventManager
