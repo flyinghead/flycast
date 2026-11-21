@@ -10,7 +10,7 @@
     <string name="exporting_home_folder">Exportando carpeta principal</string>
     <string name="select_an_import_folder">Selecciona una carpeta de importación</string>
     <string name="importing_home_folder">Importando carpeta de inicio</string>
-    <string name="flycast_error">Error de flycast</string>
+    <string name="flycast_error">Error de Flycast</string>
     <string name="init_failed_message">La inicialización falló. Por favor, inténtalo de nuevo o reinstala.\n\nError: </string>
     <string name="exit">Salir</string>
     <string name="copying">Copiando</string>
