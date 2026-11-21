@@ -596,6 +596,33 @@ static void encodeSubcode(u8 *buffer, u8 data)
 	buffer[7] = (data & 0x01) ? 0x40 : 0;
 }
 
+// Media catalog number: 13 digits
+static bool isValidCatalog(const std::string& catalog)
+{
+	if (catalog.length() != 13)
+		return false;
+	for (char c : catalog)
+		if (c < '0' || c > '9')
+			return false;
+	return true;
+}
+
+// ISRC: 5 alphanumeric characters (country and owner codes) followed by 7 digits
+static bool isValidIsrc(const std::string& isrc)
+{
+	if (isrc.length() != 12)
+		return false;
+	for (size_t i = 0; i < isrc.length(); i++)
+	{
+		const char c = isrc[i];
+		const bool digit = c >= '0' && c <= '9';
+		const bool letter = c >= 'A' && c <= 'Z';
+		if (!digit && (i >= 5 || !letter))
+			return false;
+	}
+	return true;
+}
+
 u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 {
 	subc_info[0] = 0;
@@ -694,6 +721,8 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 
 	case 2:	// Media catalog number (UPC/bar code)
 		{
+			const std::string catalog = libGDR_GetDiskCatalog();
+			const bool validCatalog = isValidCatalog(catalog);
 			//2 DATA Length MSB (0 = 0h)
 			subc_info[2] = 0;
 			//3 DATA Length LSB (24 = 18h)
@@ -705,13 +734,47 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 			subc_info[6] = 0;
 			subc_info[7] = 0;
 			//8 MCVal (bit 7)
-			subc_info[8] = 0;	// not valid
+			subc_info[8] = validCatalog ? 0x80 : 0;
 			//9-21 Media catalog number
-			memcpy(&subc_info[9], "0000000000000", 13);
+			memcpy(&subc_info[9], validCatalog ? catalog.c_str() : "0000000000000", 13);
 			//22-23 reserved
 			subc_info[22] = 0;
 			subc_info[23] = 0;
 			DEBUG_LOG(GDROM, "gd_get_subcode: format 2 (Media catalog number). audio %x", subc_info[1]);
+		}
+		break;
+
+	case 3:	// ISRC
+		{
+			u32 curFad = cdda.status == cdda_t::Playing || cdda.status == cdda_t::Paused ? cdda.CurrAddr.FAD : fad;
+			u32 elapsed;
+			const std::string isrc = libGDR_GetTrackIsrc(libGDR_GetTrackNumber(curFad, elapsed));
+			const bool validIsrc = isValidIsrc(isrc);
+			//2 DATA Length MSB (0 = 0h)
+			subc_info[2] = 0;
+			//3 DATA Length LSB (24 = 18h)
+			subc_info[3] = 0x18;
+			//4 Format Code
+			subc_info[4] = 3;
+			//5-7 reserved
+			subc_info[5] = 0;
+			subc_info[6] = 0;
+			subc_info[7] = 0;
+			//8 TCVal (bit 7)
+			subc_info[8] = validIsrc ? 0x80 : 0;
+			//9-13 I1-I5 country and owner codes, using the 6-bit subcode Q encoding
+			//     ('0'-'9' = 00h-09h, 'A'-'Z' = 11h-2Ah)
+			for (int i = 0; i < 5; i++)
+				subc_info[9 + i] = validIsrc ? isrc[i] - '0' : 0;
+			//14-20 I6-I12 year and serial number in bits 3-0. Bits 5-4 are always set,
+			//      even when there's no ISRC.
+			for (int i = 5; i < 12; i++)
+				subc_info[9 + i] = 0x30 | (validIsrc ? isrc[i] - '0' : 0);
+			//21-23 reserved
+			subc_info[21] = 0;
+			subc_info[22] = 0;
+			subc_info[23] = 0;
+			DEBUG_LOG(GDROM, "gd_get_subcode: format 3 (ISRC). audio %x", subc_info[1]);
 		}
 		break;
 	}
