@@ -191,6 +191,7 @@ void gui_settings_general()
 		{ T("System Default"), "" },
 		{ "Deutsch", "de" },
 		{ "English", "en" },
+		{ "Español", "es" },
 		{ "Français", "fr" },
 		{ "Magyar", "hu" },
 		{ "日本語", "ja" },
