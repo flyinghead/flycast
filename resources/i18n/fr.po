@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-22 11:57+0100\n"
-"PO-Revision-Date: 2026-11-22 15:42\n"
+"PO-Revision-Date: 2026-11-22 18:31\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -321,7 +321,7 @@ msgstr "Fichier CUE : impossible d'ouvrir la piste %s"
 
 #: core/imgread/cue.cpp:209
 msgid "Invalid PREGAP in CUE file"
-msgstr ""
+msgstr "Option PREGAP invalide dans le fichier CUE"
 
 #: core/imgread/cue.cpp:226
 #, c-format
@@ -339,7 +339,7 @@ msgstr "CUE invalide : moins de 3 pistes"
 #: core/imgread/chd.cpp:106
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr "CHD : piste de type %s non supportée"
+msgstr "chd : piste de type %s non supportée"
 
 #: core/imgread/chd.cpp:115
 #, c-format
@@ -349,7 +349,7 @@ msgstr "Impossible d'ouvrir le fichier CHD %s"
 #: core/imgread/chd.cpp:122
 #, c-format
 msgid "Invalid CHD file %s"
-msgstr "Fichier CHD invalide"
+msgstr "Fichier CHD invalide %s"
 
 #: core/imgread/chd.cpp:135
 #, c-format
@@ -362,7 +362,7 @@ msgstr "Numéro de piste invalide"
 
 #: core/imgread/chd.cpp:203
 msgid "Invalid CHD: pregap is longer than the track"
-msgstr ""
+msgstr "CHD invalide : le pregap est plus long que la piste"
 
 #: core/imgread/chd.cpp:230
 msgid "Invalid CHD: less than 3 tracks"
@@ -527,7 +527,7 @@ msgstr "GDROM Naomi : impossible d'ouvrir %s.chd"
 
 #: core/hw/naomi/gdcartridge.cpp:628
 msgid "Naomi GDROM: Could not find the file to decrypt."
-msgstr "GDROM Naomi : impossible de trouver le fichier à décrypter"
+msgstr "GDROM Naomi : impossible de trouver le fichier à décrypter."
 
 #: core/hw/naomi/multiboard.cpp:475
 msgid "Center"
@@ -705,39 +705,39 @@ msgstr "Affiche les écrans LCD VMU pendant le jeu"
 
 #: core/ui/settings_video.cpp:223
 msgid "Show VMU on Secondary Display"
-msgstr ""
+msgstr "Afficher le VMU sur Écran Secondaire"
 
 #: core/ui/settings_video.cpp:224
 msgid "Show the VMU LCD screen of controller A on the secondary display, if any"
-msgstr ""
+msgstr "Affiche l'écran LCD du VMU sur l'écran secondaire si disponible"
 
 #: core/ui/settings_video.cpp:228
 msgid "Secondary Display Scaling:"
-msgstr ""
+msgstr "Mise à l'Échelle Écran Secondaire :"
 
 #: core/ui/settings_video.cpp:230
 msgid "Fit"
-msgstr ""
+msgstr "Ajuster"
 
 #: core/ui/settings_video.cpp:230
 msgid "Scale the VMU screen to fill as much of the display as possible while keeping its aspect ratio"
-msgstr ""
+msgstr "Maintient les proportions de l'écran du VMU tout en utilisant le maximum d'espace d'écran possible"
 
 #: core/ui/settings_video.cpp:232
 msgid "Integer"
-msgstr ""
+msgstr "Entier"
 
 #: core/ui/settings_video.cpp:232
 msgid "Scale the VMU screen by the largest whole number that fits, for evenly sized pixels"
-msgstr ""
+msgstr "Met à l'échelle l'écran du VMU par un facteur entier pour des pixels de taille identique"
 
 #: core/ui/settings_video.cpp:234
 msgid "Stretch"
-msgstr ""
+msgstr "Étirer"
 
 #: core/ui/settings_video.cpp:234
 msgid "Stretch the VMU screen to fill the whole display, ignoring its aspect ratio"
-msgstr ""
+msgstr "Étire l'écran du VMU pour utiliser tout l'espace disponible"
 
 #: core/ui/settings_video.cpp:239
 msgid "Full Framebuffer Emulation"
@@ -753,39 +753,39 @@ msgstr "Chargement Textures Personnalisées"
 
 #: core/ui/settings_video.cpp:243
 msgid "Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."
-msgstr ""
+msgstr "Charge les textures personnalisées de data/textures/<game id>. Supporte KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, et JPEG."
 
 #: core/ui/settings_video.cpp:252
 msgid "Custom Texture Preloading"
-msgstr ""
+msgstr "Préchargement des Textures Personnalisées"
 
 #: core/ui/settings_video.cpp:254
 msgid "Off"
-msgstr ""
+msgstr "Désactivé"
 
 #: core/ui/settings_video.cpp:257
 msgid "Load custom textures as needed."
-msgstr ""
+msgstr "Charge les textures personnalisées quand nécessaire."
 
 #: core/ui/settings_video.cpp:259
 msgid "System Memory"
-msgstr ""
+msgstr "Mémoire Système"
 
 #: core/ui/settings_video.cpp:262
 msgid "Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."
-msgstr ""
+msgstr "Précharge les textures personnalisées au démarrage du jeu pour éviter les changements de textures. Utilise de la mémoire système pour l'ensemble du paquet."
 
 #: core/ui/settings_video.cpp:266
 msgid "Video Memory"
-msgstr ""
+msgstr "Mémoire Vidéo"
 
 #: core/ui/settings_video.cpp:271
 msgid "Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack."
-msgstr ""
+msgstr "Précharge les textures personnalisées au démarrage du jeu pour éviter les changements de textures. Utilise de la mémoire vidéo pour l'ensemble du paquet."
 
 #: core/ui/settings_video.cpp:272
 msgid "Video-memory custom texture preloading is not supported by the current renderer."
-msgstr ""
+msgstr "Le préchargement de textures personnalisées en mémoire vidéo n'est pas supporté par le moteur de rendu courant."
 
 #: core/ui/settings_video.cpp:281
 msgid "Aspect Ratio"
@@ -821,11 +821,11 @@ msgstr "Modifie le jeu pour qu'il affiche son image en 16:9 anamorphique, et uti
 
 #: core/ui/settings_video.cpp:297
 msgid "Stretch to Fill"
-msgstr ""
+msgstr "Étirer en Largeur"
 
 #: core/ui/settings_video.cpp:298
 msgid "Stretch the screen to fill the entire screen or window."
-msgstr ""
+msgstr "Étire l'image pour occuper la largeur complète de l'écran ou de la fenêtre."
 
 #: core/ui/settings_video.cpp:302
 msgid "Horizontal Stretching"
@@ -1328,11 +1328,11 @@ msgstr "Suivez vos succès de jeu avec RetroAchievements.org"
 
 #: core/ui/settings_general.cpp:419
 msgid "Show Achievement Popups"
-msgstr ""
+msgstr "Afficher les Notifications de Succès"
 
 #: core/ui/settings_general.cpp:420
 msgid "Shows achievement popups in game."
-msgstr ""
+msgstr "Affiche les notifications de succès en jeu."
 
 #: core/ui/settings_general.cpp:422
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
@@ -2063,7 +2063,7 @@ msgstr "Flycast a stoppé."
 #: core/ui/gui.cpp:578
 #, c-format
 msgid "UID: %s"
-msgstr ""
+msgstr "UID: %s"
 
 #: core/ui/gui.cpp:600
 msgid "Resume"
@@ -2855,7 +2855,7 @@ msgstr "Connexion rétablie"
 #: core/network/ggpo.cpp:610
 #, c-format
 msgid "GGPO: unknown peer address %s"
-msgstr ""
+msgstr "GGPO: Adresse opposant inconnue %s"
 
 #: core/network/null_modem.h:173
 msgid "Network connected"
@@ -2863,15 +2863,15 @@ msgstr "Réseau connecté"
 
 #: core/network/rawmodem.cpp:46
 msgid "Connected to game server"
-msgstr ""
+msgstr "Connecté au serveur de jeu"
 
 #: core/network/rawmodem.cpp:134
 msgid "Network disconnected"
-msgstr ""
+msgstr "Réseau déconnecté"
 
 #: core/network/rawmodem.cpp:172
 msgid "Can't connect to game server"
-msgstr ""
+msgstr "Impossible de se connecter au serveur de jeu"
 
 #: core/network/ice.cpp:169
 msgid "Game not supported"
@@ -2931,11 +2931,11 @@ msgstr "Connecté comme nœud %d"
 
 #: core/network/capcom.cpp:440
 msgid "Connected to battle server"
-msgstr ""
+msgstr "Connecté au serveur de bataille"
 
 #: core/network/capcom.cpp:447
 msgid "Can't connect to battle server"
-msgstr ""
+msgstr "Impossible de se connecter au serveur de bataille"
 
 #: core/rend/dx9/d3d_renderer.cpp:328
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
@@ -2967,32 +2967,33 @@ msgstr "OpenGL ES 3.0+ est requis pour les jeux Naomi 2"
 
 #: core/rend/CustomTexture.cpp:1027
 msgid "Custom texture file could not be read"
-msgstr ""
+msgstr "Le fichier de texture personnalisée ne peut pas être lu"
 
 #: core/rend/CustomTexture.cpp:1030
 msgid "PNG/JPEG custom texture could not be decoded"
-msgstr ""
+msgstr "La texture personnalisée PNG/JPEG ne peut pas être décodée"
 
 #: core/rend/CustomTexture.cpp:1033
 msgid "Compressed custom texture could not be loaded.\n"
 "Supported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7"
-msgstr ""
+msgstr "Une texture personnalisée n'a pas pu être chargée.\n"
+"Formats supportés : KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7"
 
 #: core/rend/CustomTexture.cpp:1036
 msgid "Custom texture exceeds the renderer's maximum texture dimensions"
-msgstr ""
+msgstr "Une texture personnalisée excède les dimensions maximum d'une texture pour le moteur de rendu courant"
 
 #: core/rend/CustomTexture.cpp:1039
 msgid "Custom texture could not be uploaded to the GPU"
-msgstr ""
+msgstr "Une texture personnalisée n'a pas pu être transférée au GPU"
 
 #: core/rend/CustomTexture.cpp:1042
 msgid "Custom texture memory allocation failed"
-msgstr ""
+msgstr "L'allocation mémoire d'une texture personnalisée a échoué"
 
 #: core/rend/CustomTexture.cpp:1045
 msgid "DirectX 9 supports PNG/JPEG custom textures only"
-msgstr ""
+msgstr "DirectX 9 ne supporte que les textures personnalisées PNG et JPEG"
 
 #: core/emulator.cpp:632
 #, c-format
