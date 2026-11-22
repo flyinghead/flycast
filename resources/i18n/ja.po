@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-22 11:57+0100\n"
-"PO-Revision-Date: 2026-11-22 15:42\n"
+"PO-Revision-Date: 2026-11-22 23:13\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -321,7 +321,7 @@ msgstr "CUEファイル: トラック %s を開くことができません"
 
 #: core/imgread/cue.cpp:209
 msgid "Invalid PREGAP in CUE file"
-msgstr ""
+msgstr "CUEファイル内のPREGAPが無効です"
 
 #: core/imgread/cue.cpp:226
 #, c-format
@@ -362,7 +362,7 @@ msgstr "予期しないトラック番号"
 
 #: core/imgread/chd.cpp:203
 msgid "Invalid CHD: pregap is longer than the track"
-msgstr ""
+msgstr "無効なCHD：プリギャップがトラックより長い"
 
 #: core/imgread/chd.cpp:230
 msgid "Invalid CHD: less than 3 tracks"
@@ -705,39 +705,39 @@ msgstr "ゲーム中にVMUのLCD画面を表示する"
 
 #: core/ui/settings_video.cpp:223
 msgid "Show VMU on Secondary Display"
-msgstr ""
+msgstr "セカンダリディスプレイにVMUを表示"
 
 #: core/ui/settings_video.cpp:224
 msgid "Show the VMU LCD screen of controller A on the secondary display, if any"
-msgstr ""
+msgstr "コントローラーAのVMU液晶画面を2番目のディスプレイに表示する(ある場合)"
 
 #: core/ui/settings_video.cpp:228
 msgid "Secondary Display Scaling:"
-msgstr ""
+msgstr "セカンダリディスプレイのスケーリング:"
 
 #: core/ui/settings_video.cpp:230
 msgid "Fit"
-msgstr ""
+msgstr "画面サイズに合わせる"
 
 #: core/ui/settings_video.cpp:230
 msgid "Scale the VMU screen to fill as much of the display as possible while keeping its aspect ratio"
-msgstr ""
+msgstr "VMU画面のアスペクト比を維持したまま、ディスプレイを可能な限り埋めるように拡大表示する"
 
 #: core/ui/settings_video.cpp:232
 msgid "Integer"
-msgstr ""
+msgstr "整数"
 
 #: core/ui/settings_video.cpp:232
 msgid "Scale the VMU screen by the largest whole number that fits, for evenly sized pixels"
-msgstr ""
+msgstr "VMU画面を均等なサイズのピクセルで最大の整数で拡大する"
 
 #: core/ui/settings_video.cpp:234
 msgid "Stretch"
-msgstr ""
+msgstr "ストレッチ"
 
 #: core/ui/settings_video.cpp:234
 msgid "Stretch the VMU screen to fill the whole display, ignoring its aspect ratio"
-msgstr ""
+msgstr "VMU画面を拡大して画面全体を埋め、アスペクト比を無視します"
 
 #: core/ui/settings_video.cpp:239
 msgid "Full Framebuffer Emulation"
@@ -753,39 +753,39 @@ msgstr "カスタムテクスチャをロード"
 
 #: core/ui/settings_video.cpp:243
 msgid "Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."
-msgstr ""
+msgstr "data/textures/<game id> からカスタムテクスチャや高解像度テクスチャを読み込みます。KTX2/XUBC7、KTX2/XUASTC、KTX2/ETC1S、DDS/BC7、PNG、および JPEG 形式に対応しています。"
 
 #: core/ui/settings_video.cpp:252
 msgid "Custom Texture Preloading"
-msgstr ""
+msgstr "カスタムテクスチャのプリロード"
 
 #: core/ui/settings_video.cpp:254
 msgid "Off"
-msgstr ""
+msgstr "無効"
 
 #: core/ui/settings_video.cpp:257
 msgid "Load custom textures as needed."
-msgstr ""
+msgstr "必要に応じてカスタムテクスチャを読み込みます。"
 
 #: core/ui/settings_video.cpp:259
 msgid "System Memory"
-msgstr ""
+msgstr "システムメモリ"
 
 #: core/ui/settings_video.cpp:262
 msgid "Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."
-msgstr ""
+msgstr "テクスチャのポップを防ぐため、ゲーム開始時にカスタムテクスチャをプリロードします。テクスチャパック全体のシステムメモリを消費します。"
 
 #: core/ui/settings_video.cpp:266
 msgid "Video Memory"
-msgstr ""
+msgstr "ビデオメモリ"
 
 #: core/ui/settings_video.cpp:271
 msgid "Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack."
-msgstr ""
+msgstr "テクスチャのポップを防ぐため、ゲーム開始時にカスタムテクスチャをプリロードします。テクスチャパック全体のビデオメモリを消費します。"
 
 #: core/ui/settings_video.cpp:272
 msgid "Video-memory custom texture preloading is not supported by the current renderer."
-msgstr ""
+msgstr "ビデオメモリのカスタムテクスチャのプリロードは現在のレンダラーではサポートされていません。"
 
 #: core/ui/settings_video.cpp:281
 msgid "Aspect Ratio"
@@ -821,11 +821,11 @@ msgstr "16:9 アナモルフィック形式で表示されるようにゲーム�
 
 #: core/ui/settings_video.cpp:297
 msgid "Stretch to Fill"
-msgstr ""
+msgstr "画面全体に引き伸ばし"
 
 #: core/ui/settings_video.cpp:298
 msgid "Stretch the screen to fill the entire screen or window."
-msgstr ""
+msgstr "画面全体、またはウィンドウいっぱいに引き伸ばします。"
 
 #: core/ui/settings_video.cpp:302
 msgid "Horizontal Stretching"
@@ -1328,11 +1328,11 @@ msgstr "RetroAchievements.orgを使用してゲームの実績を追跡する"
 
 #: core/ui/settings_general.cpp:419
 msgid "Show Achievement Popups"
-msgstr ""
+msgstr "実績ポップアップを表示"
 
 #: core/ui/settings_general.cpp:420
 msgid "Shows achievement popups in game."
-msgstr ""
+msgstr "ゲーム中に実績ポップアップを表示します。"
 
 #: core/ui/settings_general.cpp:422
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
@@ -2063,7 +2063,7 @@ msgstr "Flycast は停止しました。"
 #: core/ui/gui.cpp:578
 #, c-format
 msgid "UID: %s"
-msgstr ""
+msgstr "UID: %s"
 
 #: core/ui/gui.cpp:600
 msgid "Resume"
