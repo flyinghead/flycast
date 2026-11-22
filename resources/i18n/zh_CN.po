@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-10-26 13:08\n"
+"POT-Creation-Date: 2026-11-22 11:57+0100\n"
+"PO-Revision-Date: 2026-11-22 15:42\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -17,85 +17,85 @@ msgstr ""
 "X-Crowdin-File-ID: 13\n"
 "Language-Team: Chinese Simplified\n"
 
-#: core/achievements/achievements.cpp:379
+#: core/achievements/achievements.cpp:389
 #, c-format
 msgid "User %s authenticated"
 msgstr "用户 %s 已通过身份验证"
 
-#: core/achievements/achievements.cpp:395
+#: core/achievements/achievements.cpp:405
 msgid "RetroAchievements authentication failed"
 msgstr "RetroAchievements 认证失败"
 
-#: core/achievements/achievements.cpp:430
+#: core/achievements/achievements.cpp:440
 msgid "No user token returned"
 msgstr "未返回有效令牌"
 
-#: core/achievements/achievements.cpp:582
+#: core/achievements/achievements.cpp:595
 msgid "RetroAchievements disconnected"
 msgstr "RetroAchievements 已断开连接"
 
-#: core/achievements/achievements.cpp:586
+#: core/achievements/achievements.cpp:599
 msgid "RetroAchievements reconnected"
 msgstr "RetroAchievements 连接已恢复"
 
-#: core/achievements/achievements.cpp:616
+#: core/achievements/achievements.cpp:629
 #, c-format
 msgid "Achievement %s unlocked!"
 msgstr "成就%s 已解锁，恭喜！"
 
-#: core/achievements/achievements.cpp:656
+#: core/achievements/achievements.cpp:669
 #, c-format
 msgid "Leaderboard %s started"
 msgstr "排行榜%s 已启动"
 
-#: core/achievements/achievements.cpp:663
+#: core/achievements/achievements.cpp:676
 #, c-format
 msgid "Leaderboard %s failed"
 msgstr "排行榜%s 出错"
 
-#: core/achievements/achievements.cpp:670
+#: core/achievements/achievements.cpp:683
 #, c-format
 msgid "Leaderboard %s submitted"
 msgstr "排行榜 %s 已提交"
 
-#: core/achievements/achievements.cpp:695
+#: core/achievements/achievements.cpp:708
 #, c-format
 msgid "Mastered %s"
 msgstr "%s全部成就已解锁"
 
-#: core/achievements/achievements.cpp:695
+#: core/achievements/achievements.cpp:708
 #, c-format
 msgid "Completed %s"
 msgstr "已完成 %s"
 
-#: core/achievements/achievements.cpp:698
+#: core/achievements/achievements.cpp:711
 #, c-format
 msgid "%d achievements, %d points"
 msgstr "%d 个成就，%d 成就点数"
 
-#: core/achievements/achievements.cpp:946
+#: core/achievements/achievements.cpp:959
 #, c-format
 msgid "You have %d of %d achievements unlocked."
 msgstr "你已解锁 %d 个成就，总共有 %d 个。"
 
-#: core/achievements/achievements.cpp:948
+#: core/achievements/achievements.cpp:961
 msgid "This game has no achievements."
 msgstr "该游戏没有成就"
 
-#: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
-#: core/ui/gui_achievements.cpp:304
+#: core/achievements/achievements.cpp:966 core/ui/settings_general.cpp:421
+#: core/ui/gui_achievements.cpp:311
 msgid "Hardcore Mode"
 msgstr "硬核模式"
 
-#: core/achievements/achievements.cpp:984
+#: core/achievements/achievements.cpp:997
 msgid "Hardcore mode disabled"
 msgstr "已禁用硬核模式"
 
-#: core/achievements/achievements.cpp:984
+#: core/achievements/achievements.cpp:997
 msgid "Unrecognized media inserted"
 msgstr "插入了无法识别的存储介质"
 
-#: core/achievements/achievements.cpp:991
+#: core/achievements/achievements.cpp:1004
 msgid "Media change failed"
 msgstr "介质更换失败"
 
@@ -104,152 +104,152 @@ msgstr "介质更换失败"
 msgid "WARNING: DreamConn disconnected from port %c"
 msgstr "警告：DreamConn 已从端口 %c 断开连接"
 
-#: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
+#: core/sdl/dreampicoport.cpp:1607 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
 msgstr "DPad2 上"
 
-#: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
+#: core/sdl/dreampicoport.cpp:1608 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
 msgstr "DPad2 下"
 
-#: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
+#: core/sdl/dreampicoport.cpp:1609 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
 msgstr "DPad2 左"
 
-#: core/sdl/dreampicoport.cpp:1616 core/ui/settings_controls.cpp:200
+#: core/sdl/dreampicoport.cpp:1610 core/ui/settings_controls.cpp:200
 msgid "DPad2 Right"
 msgstr "DPad2 右"
 
-#: core/sdl/dreampicoport.cpp:1619
+#: core/sdl/dreampicoport.cpp:1613
 msgid "VMU1 A"
 msgstr "VMU1 A"
 
-#: core/sdl/dreampicoport.cpp:1620
+#: core/sdl/dreampicoport.cpp:1614
 msgid "VMU1 B"
 msgstr "VMU1 B"
 
-#: core/sdl/dreampicoport.cpp:1621
+#: core/sdl/dreampicoport.cpp:1615
 msgid "VMU1 Up"
 msgstr "VMU1 上"
 
-#: core/sdl/dreampicoport.cpp:1622
+#: core/sdl/dreampicoport.cpp:1616
 msgid "VMU1 Down"
 msgstr "VMU1 下"
 
-#: core/sdl/dreampicoport.cpp:1623
+#: core/sdl/dreampicoport.cpp:1617
 msgid "VMU1 Left"
 msgstr "VMU1 左"
 
-#: core/sdl/dreampicoport.cpp:1624
+#: core/sdl/dreampicoport.cpp:1618
 msgid "VMU1 Right"
 msgstr "VMU1 右"
 
-#: core/sdl/dreamlink.cpp:87
+#: core/sdl/dreamlink.cpp:78
 msgid "Connected"
 msgstr "已连接"
 
-#: core/sdl/dreamlink.cpp:87
+#: core/sdl/dreamlink.cpp:78
 msgid "Disconnected"
 msgstr "已断开连接"
 
-#: core/sdl/sdl_gamepad.cpp:549
+#: core/sdl/sdl_gamepad.cpp:547
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:95
 msgid "Back"
 msgstr "返回"
 
-#: core/sdl/sdl_gamepad.cpp:550
+#: core/sdl/sdl_gamepad.cpp:548
 msgid "Guide"
 msgstr "指南"
 
-#: core/sdl/sdl_gamepad.cpp:551 core/ui/settings_controls.cpp:218
+#: core/sdl/sdl_gamepad.cpp:549 core/ui/settings_controls.cpp:218
 #: core/ui/settings_controls.cpp:274
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:131
 msgid "Start"
 msgstr "开始"
 
-#: core/sdl/sdl_gamepad.cpp:556 core/sdl/sdl_gamepad.cpp:589
+#: core/sdl/sdl_gamepad.cpp:554 core/sdl/sdl_gamepad.cpp:587
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:97
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
 msgstr "方向键 上"
 
-#: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:593
+#: core/sdl/sdl_gamepad.cpp:555 core/sdl/sdl_gamepad.cpp:591
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:99
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
 msgstr "方向键 下"
 
-#: core/sdl/sdl_gamepad.cpp:558 core/sdl/sdl_gamepad.cpp:597
+#: core/sdl/sdl_gamepad.cpp:556 core/sdl/sdl_gamepad.cpp:595
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:101
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
 msgid "DPad Left"
 msgstr "方向键左"
 
-#: core/sdl/sdl_gamepad.cpp:559 core/sdl/sdl_gamepad.cpp:601
+#: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:599
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:103
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
 msgstr "方向键右"
 
-#: core/sdl/sdl_gamepad.cpp:560
+#: core/sdl/sdl_gamepad.cpp:558
 msgid "Misc"
 msgstr "其他"
 
-#: core/sdl/sdl_gamepad.cpp:561
+#: core/sdl/sdl_gamepad.cpp:559
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
 msgstr "Paddle 1"
 
-#: core/sdl/sdl_gamepad.cpp:562
+#: core/sdl/sdl_gamepad.cpp:560
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
 msgstr "Paddle 2"
 
-#: core/sdl/sdl_gamepad.cpp:563
+#: core/sdl/sdl_gamepad.cpp:561
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
 msgstr "Paddle 3"
 
-#: core/sdl/sdl_gamepad.cpp:564
+#: core/sdl/sdl_gamepad.cpp:562
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
 msgstr "Paddle 4"
 
-#: core/sdl/sdl_gamepad.cpp:565
+#: core/sdl/sdl_gamepad.cpp:563
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
 msgstr "触控板"
 
-#: core/sdl/sdl_gamepad.cpp:624
+#: core/sdl/sdl_gamepad.cpp:622
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
 msgstr "左摇杆 X"
 
-#: core/sdl/sdl_gamepad.cpp:625
+#: core/sdl/sdl_gamepad.cpp:623
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
 msgstr "左摇杆 Y"
 
-#: core/sdl/sdl_gamepad.cpp:626
+#: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
 msgstr "右摇杆 X"
 
-#: core/sdl/sdl_gamepad.cpp:627
+#: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
 msgstr "右摇杆 Y"
 
-#: core/sdl/sdl_gamepad.cpp:706
+#: core/sdl/sdl_gamepad.cpp:704
 msgid "Default Mouse"
 msgstr "默认鼠标"
 
-#: core/sdl/sdl_gamepad.cpp:708
+#: core/sdl/sdl_gamepad.cpp:706
 #, c-format
 msgid "Mouse %d"
 msgstr "鼠标 %d"
 
-#: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
+#: core/sdl/sdl.cpp:1011 core/windows/winmain.cpp:376
 msgid "Flycast Error"
 msgstr "Flycast 错误"
 
@@ -261,7 +261,7 @@ msgstr "无音频"
 msgid "Automatic AAudio / OpenSL selection"
 msgstr "自动选择 AAudio / OpenSL"
 
-#: core/oslib/oslib.cpp:354
+#: core/oslib/oslib.cpp:355
 msgid "Can't find Pictures library"
 msgstr "找不到图片库"
 
@@ -290,11 +290,11 @@ msgstr "无法获取 %s 的属性"
 msgid "Invalid file name %s"
 msgstr "文件名 %s 无效"
 
-#: core/imgread/common.cpp:97
+#: core/imgread/common.cpp:111
 msgid "Unknown disk format"
 msgstr "磁盘格式未知"
 
-#: core/imgread/common.cpp:372 core/emulator.cpp:623
+#: core/imgread/common.cpp:390 core/emulator.cpp:656
 msgid "This media cannot be loaded"
 msgstr "无法加载此媒体文件"
 
@@ -307,27 +307,32 @@ msgstr "无法打开 CUE 文件 %s"
 msgid "CUE parse error: CUE file too big"
 msgstr "CUE 解析错误：CUE 文件过大"
 
-#: core/imgread/cue.cpp:179 core/imgread/cue.cpp:202 core/imgread/cue.cpp:206
-#: core/imgread/cue.cpp:247 core/imgread/cue.cpp:263 core/imgread/cue.cpp:275
-#: core/imgread/cue.cpp:279 core/imgread/cue.cpp:283 core/imgread/cue.cpp:287
+#: core/imgread/cue.cpp:162 core/imgread/cue.cpp:170 core/imgread/cue.cpp:185
+#: core/imgread/cue.cpp:217 core/imgread/cue.cpp:221 core/imgread/cue.cpp:280
+#: core/imgread/cue.cpp:296 core/imgread/cue.cpp:308 core/imgread/cue.cpp:312
+#: core/imgread/cue.cpp:316 core/imgread/cue.cpp:320
 msgid "Invalid CUE file"
 msgstr "CUE 文件无效"
 
-#: core/imgread/cue.cpp:184
+#: core/imgread/cue.cpp:190 core/imgread/cue.cpp:270
 #, c-format
 msgid "CUE file: cannot open track %s"
 msgstr "CUE 文件: 无法打开音轨 %s"
 
-#: core/imgread/cue.cpp:211
+#: core/imgread/cue.cpp:209
+msgid "Invalid PREGAP in CUE file"
+msgstr ""
+
+#: core/imgread/cue.cpp:226
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
 msgstr "CUE 文件: 音轨扇区类型未知 %s"
 
-#: core/imgread/cue.cpp:260
+#: core/imgread/cue.cpp:293
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
 msgstr "CUE 解析错误：无法解析或文件无效，轨道为0"
 
-#: core/imgread/cue.cpp:272
+#: core/imgread/cue.cpp:305
 msgid "CUE parse error: less than 3 tracks"
 msgstr "CUE 解析错误：轨道少于 3"
 
@@ -351,19 +356,19 @@ msgstr "CHD 文件 %s 无效"
 msgid "Invalid hunkbytes for CHD file %s"
 msgstr "CHD 文件 %s 中的 hunkbytes 无效"
 
-#: core/imgread/chd.cpp:181
+#: core/imgread/chd.cpp:189
 msgid "Unexpected track number"
 msgstr "意外的音轨编号"
 
-#: core/imgread/chd.cpp:184
-msgid "Unsupported subtype or pre/postgap"
-msgstr "不支持的子类型或前/后间隙"
+#: core/imgread/chd.cpp:203
+msgid "Invalid CHD: pregap is longer than the track"
+msgstr ""
 
-#: core/imgread/chd.cpp:210
+#: core/imgread/chd.cpp:230
 msgid "Invalid CHD: less than 3 tracks"
 msgstr "CHD无效：轨道少于3"
 
-#: core/imgread/chd.cpp:216
+#: core/imgread/chd.cpp:236
 msgid "Invalid CHD: no track found"
 msgstr "无效的 CHD：里面一个轨道都没有"
 
@@ -376,13 +381,14 @@ msgstr "无法打开 GDI 文件 %s"
 msgid "GDI file too big"
 msgstr "GDI 文件过大"
 
-#: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
-#: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
-#: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
+#: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:63 core/imgread/gdi.cpp:71
+#: core/imgread/gdi.cpp:87 core/imgread/gdi.cpp:91 core/imgread/gdi.cpp:98
+#: core/imgread/gdi.cpp:104 core/imgread/gdi.cpp:110 core/imgread/gdi.cpp:114
+#: core/imgread/gdi.cpp:122 core/imgread/gdi.cpp:147
 msgid "Invalid GDI file"
 msgstr "GDI 文件无效"
 
-#: core/imgread/gdi.cpp:132
+#: core/imgread/gdi.cpp:134
 #, c-format
 msgid "GDI file: Cannot open track %s"
 msgstr "GDI 文件：无法打开轨道 %s"
@@ -410,12 +416,12 @@ msgstr "CDI扇区大小无效"
 msgid "Cannot re-open CDI file"
 msgstr "无法重新打开 CDI 文件"
 
-#: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
-#: core/hw/maple/maple_jvs.cpp:2661
+#: core/hw/naomi/card_reader.cpp:288 core/hw/naomi/card_reader.cpp:582
+#: core/hw/naomi/card_reader.cpp:880 core/hw/maple/maple_jvs.cpp:2712
 msgid "Card ejected"
 msgstr "存储卡已被拔出"
 
-#: core/hw/naomi/naomi.cpp:359
+#: core/hw/naomi/naomi.cpp:344
 #, c-format
 msgid "Speed: %3d"
 msgstr "速度：%3d"
@@ -424,7 +430,7 @@ msgstr "速度：%3d"
 msgid "Print out saved"
 msgstr "打印件已保存"
 
-#: core/hw/naomi/systemsp.cpp:2187
+#: core/hw/naomi/systemsp.cpp:2174
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
 msgstr "SystemSP：无法打开 CompactFlash 文件 %s"
@@ -433,9 +439,9 @@ msgstr "SystemSP：无法打开 CompactFlash 文件 %s"
 msgid "Network started"
 msgstr "网络已启动"
 
-#: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:367
-#: core/hw/naomi/naomi_cart.cpp:387 core/hw/naomi/naomi_cart.cpp:413
-#: core/hw/naomi/naomi_cart.cpp:837 core/hw/naomi/gdcartridge.cpp:599
+#: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:368
+#: core/hw/naomi/naomi_cart.cpp:388 core/hw/naomi/naomi_cart.cpp:414
+#: core/hw/naomi/naomi_cart.cpp:794 core/hw/naomi/gdcartridge.cpp:602
 msgid "Memory allocation failed"
 msgstr "内存分配失败"
 
@@ -458,50 +464,51 @@ msgstr "无法打开 %s 或 %s"
 msgid "Cannot open %s"
 msgstr "无法打开 %s"
 
-#: core/hw/naomi/naomi_cart.cpp:324
+#: core/hw/naomi/naomi_cart.cpp:325
 msgid "Invalid ROM"
 msgstr "ROM 无效"
 
-#: core/hw/naomi/naomi_cart.cpp:345
+#: core/hw/naomi/naomi_cart.cpp:346
 #, c-format
 msgid "Cannot find %s"
 msgstr "找不到 %s"
 
-#: core/hw/naomi/naomi_cart.cpp:355 core/hw/naomi/naomi_cart.cpp:372
+#: core/hw/naomi/naomi_cart.cpp:356 core/hw/naomi/naomi_cart.cpp:373
 #, c-format
 msgid "Invalid ROM: truncated %s"
 msgstr "无效的 ROM：%s 被截断"
 
-#: core/hw/naomi/naomi_cart.cpp:465
+#: core/hw/naomi/naomi_cart.cpp:466
 msgid "Error: cannot load BIOS from naomi.zip"
 msgstr "错误：无法从 naomi.zip 加载 BIOS"
 
-#: core/hw/naomi/naomi_cart.cpp:481 core/hw/naomi/naomi_cart.cpp:531
+#: core/hw/naomi/naomi_cart.cpp:473
 #, c-format
 msgid "Error: can't open %s"
 msgstr "错误：无法打开 %s"
 
-#: core/hw/naomi/naomi_cart.cpp:544
+#: core/hw/naomi/naomi_cart.cpp:482
 msgid "Invalid empty ROM"
 msgstr "无效的空ROM"
 
-#: core/hw/naomi/naomi_cart.cpp:551
+#: core/hw/naomi/naomi_cart.cpp:489
 msgid "Out of memory"
 msgstr "内存不足"
 
-#: core/hw/naomi/naomi_cart.cpp:602
+#: core/hw/naomi/naomi_cart.cpp:515
 msgid "Error: Failed to load BIN/DAT file"
 msgstr "错误：无法加载 BIN/DAT 文件"
 
-#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:462
+#: core/hw/naomi/naomi_cart.cpp:665 core/hw/naomi/multiboard.cpp:462
 #: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
 #: core/ui/settings_controls.cpp:243
 msgid "Left"
 msgstr "左"
 
-#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:456
-#: core/hw/naomi/multiboard.cpp:466 core/hw/naomi/multiboard.cpp:483
-#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
+#: core/hw/naomi/naomi_cart.cpp:665 core/hw/naomi/naomi_cart.cpp:691
+#: core/hw/naomi/multiboard.cpp:456 core/hw/naomi/multiboard.cpp:466
+#: core/hw/naomi/multiboard.cpp:483 core/ui/settings_controls.cpp:180
+#: core/ui/settings_controls.cpp:244
 msgid "Right"
 msgstr "右"
 
@@ -513,12 +520,12 @@ msgstr "校准完成"
 msgid "Calibrating the wheel. Keep it centered."
 msgstr "正在校准方向盘，请保持方向盘居中"
 
-#: core/hw/naomi/gdcartridge.cpp:526
+#: core/hw/naomi/gdcartridge.cpp:527
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
 msgstr "Naomi GDROM：无法打开 %s.chd"
 
-#: core/hw/naomi/gdcartridge.cpp:611
+#: core/hw/naomi/gdcartridge.cpp:628
 msgid "Naomi GDROM: Could not find the file to decrypt."
 msgstr "Naomi GDROM：无法找到待解密文件"
 
@@ -526,69 +533,69 @@ msgstr "Naomi GDROM：无法找到待解密文件"
 msgid "Center"
 msgstr "居中"
 
-#: core/reios/reios.cpp:366 core/reios/reios.cpp:369
+#: core/reios/reios.cpp:367 core/reios/reios.cpp:370
 msgid "Reboot to BIOS"
 msgstr "重启至 BIOS"
 
-#: core/reios/reios.cpp:662
+#: core/reios/reios.cpp:663
 #, c-format
 msgid "Failed to open ELF %s"
 msgstr "无法打开 ELF 文件 %s"
 
-#: core/reios/reios.cpp:671
+#: core/reios/reios.cpp:672
 #, c-format
 msgid "Failed to locate bootfile %s"
 msgstr "无法找到启动文件 %s"
 
-#: core/reios/reios.cpp:684
+#: core/reios/reios.cpp:685
 msgid "Naomi boot failure"
 msgstr "Naomi 启动失败"
 
-#: core/reios/reios.cpp:690
+#: core/reios/reios.cpp:691
 msgid "Invalid cart size"
 msgstr "无效的卡带大小"
 
-#: core/cheats.cpp:776 core/cheats.cpp:781
+#: core/cheats.cpp:780 core/cheats.cpp:785
 msgid "Invalid cheat code"
 msgstr "金手指无效"
 
-#: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
+#: core/cheats.cpp:867 core/cheats.cpp:906 core/cheats.cpp:919
 msgid "Missing value"
 msgstr "缺失配置值"
 
-#: core/cheats.cpp:881
+#: core/cheats.cpp:885
 msgid "Missing values"
 msgstr "多个参数缺失数值"
 
-#: core/cheats.cpp:928
+#: core/cheats.cpp:932
 msgid "Missing address or value"
 msgstr "缺少地址或数值"
 
-#: core/cheats.cpp:937 core/cheats.cpp:1041
+#: core/cheats.cpp:941 core/cheats.cpp:1045
 msgid "Unsupported cheat type"
 msgstr "不支持的金手指类型"
 
-#: core/cheats.cpp:945
+#: core/cheats.cpp:949
 msgid "Missing count or value"
 msgstr "缺少计数或数值"
 
-#: core/cheats.cpp:959 core/cheats.cpp:983
+#: core/cheats.cpp:963 core/cheats.cpp:987
 msgid "Missing count or destination address"
 msgstr "缺少计数或目标地址"
 
-#: core/cheats.cpp:971
+#: core/cheats.cpp:975
 msgid "Master codes aren't supported"
 msgstr "不支持主代码"
 
-#: core/cheats.cpp:1001 core/cheats.cpp:1030
+#: core/cheats.cpp:1005 core/cheats.cpp:1034
 msgid "Unsupported conditional code"
 msgstr "不支持的条件代码"
 
-#: core/cheats.cpp:1011
+#: core/cheats.cpp:1015
 msgid "Missing test address"
 msgstr "缺少测试地址"
 
-#: core/cheats.cpp:1112
+#: core/cheats.cpp:1116
 msgid "Can't save cheat file"
 msgstr "无法保存金手指文件"
 
@@ -696,284 +703,352 @@ msgstr "在游戏中显示 VMU"
 msgid "Show the VMU LCD screens while in-game"
 msgstr "在游戏过程中显示VMU液晶屏"
 
-#: core/ui/settings_video.cpp:222
+#: core/ui/settings_video.cpp:223
+msgid "Show VMU on Secondary Display"
+msgstr ""
+
+#: core/ui/settings_video.cpp:224
+msgid "Show the VMU LCD screen of controller A on the secondary display, if any"
+msgstr ""
+
+#: core/ui/settings_video.cpp:228
+msgid "Secondary Display Scaling:"
+msgstr ""
+
+#: core/ui/settings_video.cpp:230
+msgid "Fit"
+msgstr ""
+
+#: core/ui/settings_video.cpp:230
+msgid "Scale the VMU screen to fill as much of the display as possible while keeping its aspect ratio"
+msgstr ""
+
+#: core/ui/settings_video.cpp:232
+msgid "Integer"
+msgstr ""
+
+#: core/ui/settings_video.cpp:232
+msgid "Scale the VMU screen by the largest whole number that fits, for evenly sized pixels"
+msgstr ""
+
+#: core/ui/settings_video.cpp:234
+msgid "Stretch"
+msgstr ""
+
+#: core/ui/settings_video.cpp:234
+msgid "Stretch the VMU screen to fill the whole display, ignoring its aspect ratio"
+msgstr ""
+
+#: core/ui/settings_video.cpp:239
 msgid "Full Framebuffer Emulation"
 msgstr "全帧缓冲区模拟"
 
-#: core/ui/settings_video.cpp:223
+#: core/ui/settings_video.cpp:240
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
 msgstr "完全精确的 VRAM 帧缓冲区模拟。有助于那些为实现特殊效果而直接访问帧缓冲区的游戏。速度非常慢，且与画面放大及宽屏模式不兼容"
 
-#: core/ui/settings_video.cpp:227
+#: core/ui/settings_video.cpp:242
 msgid "Load Custom Textures"
 msgstr "加载自定义纹理"
 
-#: core/ui/settings_video.cpp:228
-msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr "从 data/textures/<game id>加载自定义/高清纹理包"
+#: core/ui/settings_video.cpp:243
+msgid "Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."
+msgstr ""
 
-#: core/ui/settings_video.cpp:232
-msgid "Preload Custom Textures"
-msgstr "预加载自定义纹理"
+#: core/ui/settings_video.cpp:252
+msgid "Custom Texture Preloading"
+msgstr ""
 
-#: core/ui/settings_video.cpp:233
-msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr "在游戏开始时预加载自定义纹理包。这可能会提高性能，但会增加内存占用"
+#: core/ui/settings_video.cpp:254
+msgid "Off"
+msgstr ""
 
-#: core/ui/settings_video.cpp:239
+#: core/ui/settings_video.cpp:257
+msgid "Load custom textures as needed."
+msgstr ""
+
+#: core/ui/settings_video.cpp:259
+msgid "System Memory"
+msgstr ""
+
+#: core/ui/settings_video.cpp:262
+msgid "Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."
+msgstr ""
+
+#: core/ui/settings_video.cpp:266
+msgid "Video Memory"
+msgstr ""
+
+#: core/ui/settings_video.cpp:271
+msgid "Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack."
+msgstr ""
+
+#: core/ui/settings_video.cpp:272
+msgid "Video-memory custom texture preloading is not supported by the current renderer."
+msgstr ""
+
+#: core/ui/settings_video.cpp:281
 msgid "Aspect Ratio"
 msgstr "宽高比"
 
-#: core/ui/settings_video.cpp:241
+#: core/ui/settings_video.cpp:283
 msgid "Widescreen"
 msgstr "宽屏"
 
-#: core/ui/settings_video.cpp:242
+#: core/ui/settings_video.cpp:284
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
 msgstr "在常规的 4:3 宽高比之外绘制图形。在显示区域内可能会出现图形异常。\n"
 "“宽高比适配”可显示完整的 16:9 内容"
 
-#: core/ui/settings_video.cpp:247
+#: core/ui/settings_video.cpp:289
 msgid "Super Widescreen"
 msgstr "超宽屏"
 
-#: core/ui/settings_video.cpp:248
+#: core/ui/settings_video.cpp:290
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
 msgstr "当屏幕/窗口宽高比大于16:9时，使用其完整宽度。采用等比填充，消除黑边。不支持整数倍缩放"
 
-#: core/ui/settings_video.cpp:251
+#: core/ui/settings_video.cpp:293
 msgid "Widescreen Game Cheats"
 msgstr "宽屏补丁"
 
-#: core/ui/settings_video.cpp:252
+#: core/ui/settings_video.cpp:294
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
 msgstr "修改游戏，使其以 16:9 变形宽屏格式显示，并采用水平拉伸屏幕的方式。仅支持部分游戏"
 
-#: core/ui/settings_video.cpp:253
+#: core/ui/settings_video.cpp:297
+msgid "Stretch to Fill"
+msgstr ""
+
+#: core/ui/settings_video.cpp:298
+msgid "Stretch the screen to fill the entire screen or window."
+msgstr ""
+
+#: core/ui/settings_video.cpp:302
 msgid "Horizontal Stretching"
 msgstr "水平拉伸"
 
-#: core/ui/settings_video.cpp:254
+#: core/ui/settings_video.cpp:303
 msgid "Stretch the screen horizontally"
 msgstr "将屏幕水平拉伸"
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:305
 msgid "Rotate Screen 90°"
 msgstr "将屏幕旋转 90°"
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:305
 msgid "Rotate the screen 90° counterclockwise"
 msgstr "将屏幕逆时针旋转90°"
 
-#: core/ui/settings_video.cpp:260
+#: core/ui/settings_video.cpp:310
 msgid "Per Pixel Settings"
 msgstr "逐像素设置"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "512 MB"
 msgstr "512 MB"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "1 GB"
 msgstr "1 GB"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "2 GB"
 msgstr "2 GB"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "4 GB"
 msgstr "4 GB"
 
-#: core/ui/settings_video.cpp:301
+#: core/ui/settings_video.cpp:351
 msgid "Pixel Buffer Size"
 msgstr "像素缓冲区大小"
 
-#: core/ui/settings_video.cpp:303
+#: core/ui/settings_video.cpp:353
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
 msgstr "像素缓冲区的大小。进行大倍率放大时，可能需要调大该数值"
 
-#: core/ui/settings_video.cpp:305
+#: core/ui/settings_video.cpp:355
 msgid "Maximum Layers"
 msgstr "最大层数"
 
-#: core/ui/settings_video.cpp:306
+#: core/ui/settings_video.cpp:356
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
 msgstr "透明图层的最大数量。对于某些复杂的场景，可能需要增加此数值。降低此数值可能会提高性能。"
 
-#: core/ui/settings_video.cpp:309
+#: core/ui/settings_video.cpp:359
 msgid "Performance"
 msgstr "性能"
 
-#: core/ui/settings_video.cpp:311
+#: core/ui/settings_video.cpp:361
 msgid "Automatic Frame Skipping:"
 msgstr "自动跳帧："
 
-#: core/ui/settings_video.cpp:313 core/ui/settings_video.cpp:338
+#: core/ui/settings_video.cpp:363 core/ui/settings_video.cpp:388
 #: core/ui/settings_network.cpp:89
 msgid "Disabled"
 msgstr "已禁用"
 
-#: core/ui/settings_video.cpp:313
+#: core/ui/settings_video.cpp:363
 msgid "No frame skipping"
 msgstr "无跳帧"
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:365
 msgid "Normal"
 msgstr "正常"
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:365
 msgid "Skip a frame when the GPU and CPU are both running slow"
 msgstr "当 GPU 和 CPU 运行速度都较慢时，跳过一帧"
 
-#: core/ui/settings_video.cpp:317
+#: core/ui/settings_video.cpp:367
 msgid "Maximum"
 msgstr "最大跳帧数"
 
-#: core/ui/settings_video.cpp:317
+#: core/ui/settings_video.cpp:367
 msgid "Skip a frame when the GPU is running slow"
 msgstr "当 GPU 运行缓慢时跳过一帧"
 
-#: core/ui/settings_video.cpp:320
+#: core/ui/settings_video.cpp:370
 msgid "Frame Skipping"
 msgstr "跳帧"
 
-#: core/ui/settings_video.cpp:321
+#: core/ui/settings_video.cpp:371
 msgid "Number of frames to skip between two actually rendered frames"
 msgstr "两个实际渲染帧之间跳过的帧数"
 
-#: core/ui/settings_video.cpp:322
+#: core/ui/settings_video.cpp:372
 msgid "Shadows"
 msgstr "阴影"
 
-#: core/ui/settings_video.cpp:323
+#: core/ui/settings_video.cpp:373
 msgid "Enable modifier volumes, usually used for shadows"
 msgstr "启用修改器体积，通常用于阴影"
 
-#: core/ui/settings_video.cpp:324
+#: core/ui/settings_video.cpp:374
 msgid "Fog"
 msgstr "雾效"
 
-#: core/ui/settings_video.cpp:324
+#: core/ui/settings_video.cpp:374
 msgid "Enable fog effects"
 msgstr "启用雾效"
 
-#: core/ui/settings_video.cpp:327 core/ui/settings.cpp:311
+#: core/ui/settings_video.cpp:377 core/ui/settings.cpp:311
 msgid "Advanced"
 msgstr "高级"
 
-#: core/ui/settings_video.cpp:329
+#: core/ui/settings_video.cpp:379
 msgid "Delay Frame Swapping"
 msgstr "延迟帧交换"
 
-#: core/ui/settings_video.cpp:330
+#: core/ui/settings_video.cpp:380
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
 msgstr "有助于避免屏幕闪烁或视频卡顿。不建议在运行缓慢的设备上使用"
 
-#: core/ui/settings_video.cpp:331
+#: core/ui/settings_video.cpp:381
 msgid "Fix Upscale Bleeding Edge"
 msgstr "修复Upscale Bleeding Edge"
 
-#: core/ui/settings_video.cpp:332
+#: core/ui/settings_video.cpp:382
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
 msgstr "有助于解决放大时纹理溢出问题。如果在2D游戏（如《MVC2》、《CVS》、《KOF》等）中放大时出现像素变形，禁用此选项可能会有所帮助"
 
-#: core/ui/settings_video.cpp:333
+#: core/ui/settings_video.cpp:383
 msgid "Native Depth Interpolation"
 msgstr "原生深度插值"
 
-#: core/ui/settings_video.cpp:334
+#: core/ui/settings_video.cpp:384
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
 msgstr "解决 AMD GPU 的纹理损坏和位深问题. 某些情况下也适用于 Intel GPU"
 
-#: core/ui/settings_video.cpp:335
+#: core/ui/settings_video.cpp:385
 msgid "Copy Rendered Textures to VRAM"
 msgstr "将渲染后的纹理复制到VRAM中"
 
-#: core/ui/settings_video.cpp:336
+#: core/ui/settings_video.cpp:386
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
 msgstr "将渲染后的纹理复制回显存。虽然速度较慢，但更准确"
 
-#: core/ui/settings_video.cpp:375
+#: core/ui/settings_video.cpp:425
 msgid "Anisotropic Filtering"
 msgstr "各向异性过滤"
 
-#: core/ui/settings_video.cpp:377
+#: core/ui/settings_video.cpp:427
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
 msgstr "数值越高，从倾斜角度观察时纹理看起来越清晰，但对 GPU 的要求也越高。此选项仅对采用 MIP 映射的纹理有明显影响"
 
-#: core/ui/settings_video.cpp:379
+#: core/ui/settings_video.cpp:429
 msgid "Texture Filtering:"
 msgstr "纹理过滤："
 
-#: core/ui/settings_video.cpp:381 core/ui/settings_general.cpp:231
-#: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
+#: core/ui/settings_video.cpp:431 core/ui/settings_general.cpp:237
+#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:246
 msgid "Default"
 msgstr "默认"
 
-#: core/ui/settings_video.cpp:381
+#: core/ui/settings_video.cpp:431
 msgid "Use the game's default texture filtering"
 msgstr "使用游戏的默认纹理过滤"
 
-#: core/ui/settings_video.cpp:383
+#: core/ui/settings_video.cpp:433
 msgid "Force Nearest-Neighbor"
 msgstr "强制使用最近邻采样"
 
-#: core/ui/settings_video.cpp:383
+#: core/ui/settings_video.cpp:433
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
 msgstr "对所有纹理强制使用最近邻过滤。画面观感会更锐利，但可能引发各类渲染异常。该选项通常不会影响性能"
 
-#: core/ui/settings_video.cpp:385
+#: core/ui/settings_video.cpp:435
 msgid "Force Linear"
 msgstr "强制线性"
 
-#: core/ui/settings_video.cpp:385
+#: core/ui/settings_video.cpp:435
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
 msgstr "强制对所有纹理进行线性滤波。外观更平滑，但可能会导致各种渲染问题。此选项通常不会影响性能"
 
-#: core/ui/settings_video.cpp:388
+#: core/ui/settings_video.cpp:438
 msgid "Show FPS Counter"
 msgstr "显示帧率"
 
-#: core/ui/settings_video.cpp:388
+#: core/ui/settings_video.cpp:438
 msgid "Show on-screen frame/sec counter"
 msgstr "在屏幕上显示你的帧率"
 
-#: core/ui/settings_video.cpp:393
+#: core/ui/settings_video.cpp:443
 msgid "Video Routing (Syphon)"
 msgstr "使用 Syphon 进行视频路由"
 
-#: core/ui/settings_video.cpp:396
+#: core/ui/settings_video.cpp:446
 msgid "Video Routing (Spout)"
 msgstr "使用 Spout 进行视频路由"
 
-#: core/ui/settings_video.cpp:398
+#: core/ui/settings_video.cpp:448
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
 msgstr "视频路由（仅支持 OpenGL 或 DirectX 11）"
 
-#: core/ui/settings_video.cpp:404
+#: core/ui/settings_video.cpp:454
 msgid "Send video content to another program"
 msgstr "将视频内容发送至另一个程序"
 
-#: core/ui/settings_video.cpp:405
+#: core/ui/settings_video.cpp:455
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
 msgstr "例如：将 GPU 纹理直接传输到 OBS Studio，而不是使用会占用大量 CPU 资源的显示/窗口捕获功能"
 
-#: core/ui/settings_video.cpp:409
+#: core/ui/settings_video.cpp:459
 msgid "Scale down before sending"
 msgstr "发送前压缩尺寸"
 
-#: core/ui/settings_video.cpp:409
+#: core/ui/settings_video.cpp:459
 msgid "Could increase performance when sharing a smaller texture, YMMV"
 msgstr "在共享较小纹理时可能会提高性能，具体效果因人而异"
 
-#: core/ui/settings_video.cpp:413
+#: core/ui/settings_video.cpp:463
 msgid "Output vertical resolution"
 msgstr "输出垂直分辨率"
 
-#: core/ui/settings_video.cpp:418
+#: core/ui/settings_video.cpp:468
 #, c-format
 msgid "Output texture size: %d x %d"
 msgstr " 输出纹理尺寸：%d × %d"
@@ -982,12 +1057,12 @@ msgstr " 输出纹理尺寸：%d × %d"
 msgid "Set"
 msgstr "设置"
 
-#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
+#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:299
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
 msgstr "添加"
 
-#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:745
+#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:769
 msgid "Select a Content Folder"
 msgstr "选择数据文件夹"
 
@@ -995,406 +1070,414 @@ msgstr "选择数据文件夹"
 msgid "System Default"
 msgstr "默认"
 
-#: core/ui/settings_general.cpp:211
+#: core/ui/settings_general.cpp:217
 msgid "UI Language"
 msgstr "软件语言"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "Japanese"
 msgstr "日语"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "English"
 msgstr "英语"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "German"
 msgstr "德语"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "French"
 msgstr "法语"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "Spanish"
 msgstr "西班牙语"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "Italian"
 msgstr "意大利语"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:238
 msgid "Dreamcast Language"
 msgstr "Dreamcast 语言"
 
-#: core/ui/settings_general.cpp:233
+#: core/ui/settings_general.cpp:239
 msgid "The language as configured in the Dreamcast BIOS"
 msgstr "Dreamcast BIOS 中配置的语言"
 
-#: core/ui/settings_general.cpp:236
+#: core/ui/settings_general.cpp:242
 msgid "Broadcast"
 msgstr "Broadcast"
 
-#: core/ui/settings_general.cpp:237
+#: core/ui/settings_general.cpp:243
 msgid "TV broadcasting standard for non-VGA modes"
 msgstr "非VGA模式的电视广播标准"
 
-#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:246 core/ui/settings_general.cpp:247
 msgid "Japan"
 msgstr "日本"
 
-#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:246 core/ui/settings_general.cpp:247
 msgid "USA"
 msgstr "美国"
 
-#: core/ui/settings_general.cpp:240
+#: core/ui/settings_general.cpp:246
 msgid "Europe"
 msgstr "欧洲"
 
-#: core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:247
 msgctxt "region"
 msgid "Export"
 msgstr "出口"
 
-#: core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:247
 msgid "Korea"
 msgstr "韩国"
 
-#: core/ui/settings_general.cpp:243
+#: core/ui/settings_general.cpp:249
 msgid "Region"
 msgstr "地区"
 
-#: core/ui/settings_general.cpp:244
+#: core/ui/settings_general.cpp:250
 msgid "BIOS region"
 msgstr "BIOS 地区"
 
-#: core/ui/settings_general.cpp:246
+#: core/ui/settings_general.cpp:252
 msgid "VGA"
 msgstr "VGA"
 
-#: core/ui/settings_general.cpp:246
+#: core/ui/settings_general.cpp:252
 msgid "RGB Component"
 msgstr "RGB色差线"
 
-#: core/ui/settings_general.cpp:246
+#: core/ui/settings_general.cpp:252
 msgid "TV Composite"
 msgstr "复合AV线"
 
-#: core/ui/settings_general.cpp:253
+#: core/ui/settings_general.cpp:259
 msgid "Cable"
 msgstr "视频线类型"
 
-#: core/ui/settings_general.cpp:266
+#: core/ui/settings_general.cpp:272
 msgid "Video connection type"
 msgstr "视频连接类型"
 
-#: core/ui/settings_general.cpp:276
+#: core/ui/settings_general.cpp:282
 msgid "Content Location"
 msgstr "内容文件夹位置"
 
-#: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
+#: core/ui/settings_general.cpp:303 core/ui/settings_general.cpp:367
 msgid "Rescan Content"
 msgstr "重新扫描内容"
 
-#: core/ui/settings_general.cpp:309
+#: core/ui/settings_general.cpp:315
 msgid "The folders where your games are stored"
 msgstr "存储游戏的文件夹"
 
-#: core/ui/settings_general.cpp:315
+#: core/ui/settings_general.cpp:321
 msgid "Data Folder"
 msgstr "数据文件夹"
 
-#: core/ui/settings_general.cpp:323
+#: core/ui/settings_general.cpp:329
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
 msgstr "包含BIOS文件以及已保存的VMU和状态的文件夹"
 
-#: core/ui/settings_general.cpp:328
+#: core/ui/settings_general.cpp:334
 msgid "Home Folder"
 msgstr "主文件夹"
 
-#: core/ui/settings_general.cpp:337
+#: core/ui/settings_general.cpp:343
 msgctxt "action"
 msgid "Import"
 msgstr "导入"
 
-#: core/ui/settings_general.cpp:340
+#: core/ui/settings_general.cpp:346
 msgctxt "action"
 msgid "Export"
 msgstr "导出"
 
-#: core/ui/settings_general.cpp:345
+#: core/ui/settings_general.cpp:351
 msgid "Reveal in Finder"
 msgstr "在访达中显示"
 
-#: core/ui/settings_general.cpp:355
+#: core/ui/settings_general.cpp:361
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
 msgstr "Flycast 用于保存配置文件和 VMU 的文件夹。BIOS 文件应位于名为“data”的子文件夹中"
 
-#: core/ui/settings_general.cpp:366
+#: core/ui/settings_general.cpp:372
 msgid "Box Art Game List"
 msgstr "游戏封面列表"
 
-#: core/ui/settings_general.cpp:367
+#: core/ui/settings_general.cpp:373
 msgid "Display game cover art in the game list."
 msgstr "在游戏列表中显示游戏封面图"
 
-#: core/ui/settings_general.cpp:368
+#: core/ui/settings_general.cpp:374
 msgid "Fetch Box Art"
 msgstr "获取游戏封面"
 
-#: core/ui/settings_general.cpp:369
+#: core/ui/settings_general.cpp:375
 msgid "Fetch cover images from TheGamesDB.net."
 msgstr "从 TheGamesDB.net 获取封面图片"
 
-#: core/ui/settings_general.cpp:370
+#: core/ui/settings_general.cpp:376
 msgid "UI Scaling"
 msgstr "UI 缩放"
 
-#: core/ui/settings_general.cpp:370
+#: core/ui/settings_general.cpp:376
 msgid "Adjust the size of UI elements and fonts."
 msgstr "调整 UI 元素和字体的尺寸"
 
-#: core/ui/settings_general.cpp:375
+#: core/ui/settings_general.cpp:381
 msgid "Apply"
 msgstr "应用"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Dark"
 msgstr "深色模式"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Light"
 msgstr "浅色模式"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Dreamcast"
 msgstr "Dreamcast"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "High Contrast"
 msgstr "高对比度"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Nintendo"
 msgstr "任天堂"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Aqua Chill"
 msgstr "Aqua Chill"
 
-#: core/ui/settings_general.cpp:383
+#: core/ui/settings_general.cpp:389
 msgid "UI Theme"
 msgstr "界面主题"
 
-#: core/ui/settings_general.cpp:384
+#: core/ui/settings_general.cpp:390
 msgid "Select the UI color theme."
 msgstr "选择界面颜色主题。"
 
-#: core/ui/settings_general.cpp:390
+#: core/ui/settings_general.cpp:396
 msgid "Hide Legacy Naomi Roms"
 msgstr "隐藏旧版 Naomi rom"
 
-#: core/ui/settings_general.cpp:391
+#: core/ui/settings_general.cpp:397
 msgid "Hide .bin and .dat files from the content browser"
 msgstr ""
 
-#: core/ui/settings_general.cpp:394
+#: core/ui/settings_general.cpp:400
 msgid "Use SAF File Picker"
 msgstr "使用 SAF 文件选择器"
 
-#: core/ui/settings_general.cpp:395
+#: core/ui/settings_general.cpp:401
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
 msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和文件。在 Android 10 及以上版本中该设置无效"
 
-#: core/ui/settings_general.cpp:398
+#: core/ui/settings_general.cpp:404
 msgid "Automatic State:"
 msgstr "自动即时存档:"
 
-#: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
+#: core/ui/settings_general.cpp:405 core/ui/gui_cheats.cpp:104
 msgid "Load"
 msgstr "加载"
 
-#: core/ui/settings_general.cpp:400
+#: core/ui/settings_general.cpp:406
 msgid "Load the last saved state of the game when starting"
 msgstr "启动时自动加载上次的即时存档"
 
-#: core/ui/settings_general.cpp:402 core/ui/vgamepad.cpp:73
+#: core/ui/settings_general.cpp:408 core/ui/vgamepad.cpp:73
 msgid "Save"
 msgstr "保存"
 
-#: core/ui/settings_general.cpp:403
+#: core/ui/settings_general.cpp:409
 msgid "Save the state of the game when stopping"
 msgstr "关闭游戏时自动保存一个即时存档"
 
-#: core/ui/settings_general.cpp:404
+#: core/ui/settings_general.cpp:410
 msgid "Naomi Free Play"
 msgstr "Naomi不投币"
 
-#: core/ui/settings_general.cpp:404
+#: core/ui/settings_general.cpp:410
 msgid "Configure Naomi games in Free Play mode."
 msgstr "将Naomi游戏设置为不投币游玩模式"
 
-#: core/ui/settings_general.cpp:406
+#: core/ui/settings_general.cpp:412
 msgid "Discord Presence"
 msgstr "Discord 在线状态"
 
-#: core/ui/settings_general.cpp:406
+#: core/ui/settings_general.cpp:412
 msgid "Show which game you are playing on Discord"
 msgstr "在 Discord 上显示你正在玩的游戏"
 
-#: core/ui/settings_general.cpp:409
+#: core/ui/settings_general.cpp:415
 msgid "Enable RetroAchievements"
 msgstr "启用 RetroAchievements"
 
-#: core/ui/settings_general.cpp:409
+#: core/ui/settings_general.cpp:415
 msgid "Track your game achievements using RetroAchievements.org"
 msgstr "使用 RetroAchievements.org 追踪你的游戏成就"
 
-#: core/ui/settings_general.cpp:414
+#: core/ui/settings_general.cpp:419
+msgid "Show Achievement Popups"
+msgstr ""
+
+#: core/ui/settings_general.cpp:420
+msgid "Shows achievement popups in game."
+msgstr ""
+
+#: core/ui/settings_general.cpp:422
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
 msgstr "启用 RetroAchievements 硬核模式。在此模式下，禁止使用金手指和即时存档"
 
-#: core/ui/settings_general.cpp:415
+#: core/ui/settings_general.cpp:423
 msgid "Username"
 msgstr "用户名"
 
-#: core/ui/settings_general.cpp:423
+#: core/ui/settings_general.cpp:431
 msgid "Authentication successful"
 msgstr "登录成功"
 
-#: core/ui/settings_general.cpp:426
+#: core/ui/settings_general.cpp:434
 msgid "Logout"
 msgstr "注销"
 
-#: core/ui/settings_general.cpp:432
+#: core/ui/settings_general.cpp:440
 msgid "Password"
 msgstr "密码"
 
-#: core/ui/settings_general.cpp:436
+#: core/ui/settings_general.cpp:444
 msgid "Authenticating..."
 msgstr "正在验证..."
 
-#: core/ui/settings_general.cpp:449
+#: core/ui/settings_general.cpp:457
 msgid "Login"
 msgstr "登录"
 
-#: core/ui/settings_general.cpp:464
+#: core/ui/settings_general.cpp:472
 msgid "Custom Paths"
 msgstr "自定义路径"
 
-#: core/ui/settings_general.cpp:466
+#: core/ui/settings_general.cpp:474
 msgid "BIOS Folders"
 msgstr "BIOS 文件夹"
 
-#: core/ui/settings_general.cpp:466
+#: core/ui/settings_general.cpp:474
 msgid "Select a BIOS folder"
 msgstr "选择一个 BIOS 文件夹"
 
-#: core/ui/settings_general.cpp:467
+#: core/ui/settings_general.cpp:475
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
 msgstr "包含BIOS文件（例如dc_boot.bin或dc_bios.bin）和街机BIOS的文件夹"
 
-#: core/ui/settings_general.cpp:471
+#: core/ui/settings_general.cpp:479
 msgid "VMU Folder"
 msgstr "VMU 文件夹"
 
-#: core/ui/settings_general.cpp:471
+#: core/ui/settings_general.cpp:479
 msgid "Select the VMU folder"
 msgstr "选择 VMU 文件夹"
 
-#: core/ui/settings_general.cpp:472
+#: core/ui/settings_general.cpp:480
 msgid "Folder where VMU (.bin) saves are stored"
 msgstr "存储 VMU (.bin) 存档文件的文件夹"
 
-#: core/ui/settings_general.cpp:475
+#: core/ui/settings_general.cpp:483
 msgid "Savestate Folders"
 msgstr "Savestate 文件夹"
 
-#: core/ui/settings_general.cpp:475
+#: core/ui/settings_general.cpp:483
 msgid "Select a savestate folder"
 msgstr "选择一个存档文件夹"
 
-#: core/ui/settings_general.cpp:476
+#: core/ui/settings_general.cpp:484
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
 msgstr "用于保存状态的文件夹。第一个路径用于新状态；加载时会搜索所有路径"
 
-#: core/ui/settings_general.cpp:479
+#: core/ui/settings_general.cpp:487
 msgid "Game Save Folder"
 msgstr "游戏存档文件夹"
 
-#: core/ui/settings_general.cpp:479
+#: core/ui/settings_general.cpp:487
 msgid "Select the game save folder"
 msgstr "选择游戏存档文件夹"
 
-#: core/ui/settings_general.cpp:480
+#: core/ui/settings_general.cpp:488
 msgid "Folder for game save data (e.g. arcade NVRAM)"
 msgstr "游戏存档数据文件夹（例如街机 NVRAM）"
 
-#: core/ui/settings_general.cpp:484
+#: core/ui/settings_general.cpp:492
 msgid "Texture Pack Folders"
 msgstr "纹理包文件夹"
 
-#: core/ui/settings_general.cpp:484
+#: core/ui/settings_general.cpp:492
 msgid "Select a texture pack folder"
 msgstr "选择一个纹理包文件夹"
 
-#: core/ui/settings_general.cpp:485
+#: core/ui/settings_general.cpp:493
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
 msgstr "包含 textures/<gameId> 的文件夹，或位于 textures 子文件夹下的 <gameId> 文件夹"
 
-#: core/ui/settings_general.cpp:489
+#: core/ui/settings_general.cpp:497
 msgid "Texture Dump Folder"
 msgstr "导出纹理文件夹"
 
-#: core/ui/settings_general.cpp:489
+#: core/ui/settings_general.cpp:497
 msgid "Select the texture dump folder"
 msgstr "选择导出纹理文件夹"
 
-#: core/ui/settings_general.cpp:490
+#: core/ui/settings_general.cpp:498
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
 msgstr "保存纹理文件的文件夹。系统将自动创建针对各游戏的子文件夹"
 
-#: core/ui/settings_general.cpp:493
+#: core/ui/settings_general.cpp:501
 msgid "Box Art Folder"
 msgstr "游戏封面文件夹"
 
-#: core/ui/settings_general.cpp:493
+#: core/ui/settings_general.cpp:501
 msgid "Select the box art folder"
 msgstr "选择存放游戏封面的文件夹"
 
-#: core/ui/settings_general.cpp:494
+#: core/ui/settings_general.cpp:502
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
 msgstr "包含盒装封面图片（png/jpg）的文件夹。如果该文件夹为空，Flycast 将使用默认的“主文件夹/boxart”中的图片作为下载和生成的封面图"
 
-#: core/ui/settings_general.cpp:497
+#: core/ui/settings_general.cpp:505
 msgid "Controller Mapping Folders"
 msgstr "控制器映射文件夹"
 
-#: core/ui/settings_general.cpp:497
+#: core/ui/settings_general.cpp:505
 msgid "Select a controller mapping folder"
 msgstr "选择一个控制器映射文件夹"
 
-#: core/ui/settings_general.cpp:498
+#: core/ui/settings_general.cpp:506
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
 msgstr "包含控制器映射文件（.cfg）的文件夹。模拟器还会检查“主文件夹/mappings”目录。各游戏的映射文件后缀为 _<gameId>.cfg"
 
-#: core/ui/settings_general.cpp:501
+#: core/ui/settings_general.cpp:509
 msgid "Cheat Folders"
 msgstr "金手指文件夹"
 
-#: core/ui/settings_general.cpp:501
+#: core/ui/settings_general.cpp:509
 msgid "Select a cheat folder"
 msgstr "选择一个金手指文件夹"
 
-#: core/ui/settings_general.cpp:502
+#: core/ui/settings_general.cpp:510
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
 msgstr "包含以游戏ID命名的金手指文件（.cht/.txt）的文件夹。如果存在匹配的文件，Flycast将自动加载这些文件"
 
-#: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
+#: core/ui/gui_chat.h:49 core/ui/gui_chat.h:51
 msgid "P2"
 msgstr "P2"
 
-#: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
+#: core/ui/gui_chat.h:49 core/ui/gui_chat.h:51
 msgid "P1"
 msgstr "P1"
 
@@ -1587,7 +1670,7 @@ msgid "Menu"
 msgstr "菜单"
 
 #: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:283
-#: core/ui/gui.cpp:625 core/ui/gui.cpp:894
+#: core/ui/gui.cpp:649 core/ui/gui.cpp:911
 msgid "Exit"
 msgstr "退出"
 
@@ -1600,12 +1683,12 @@ msgid "Fast-forward"
 msgstr "快进"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
-#: core/ui/gui.cpp:637
+#: core/ui/gui.cpp:661
 msgid "Load State"
 msgstr "读档"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
-#: core/ui/gui.cpp:645
+#: core/ui/gui.cpp:669
 msgid "Save State"
 msgstr "存档"
 
@@ -1875,7 +1958,7 @@ msgstr "对战线缆：%s"
 msgid "Edit Layout"
 msgstr "编辑按键布局"
 
-#: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:621 core/ui/gui.cpp:879
+#: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:645 core/ui/gui.cpp:903
 #: core/ui/settings.cpp:213
 msgid "Settings"
 msgstr "设置"
@@ -1929,187 +2012,192 @@ msgstr "通过DreamPicoPort或DreamPotato启用对实体VMU记忆卡的读写访
 msgid "Crosshair Size"
 msgstr "准星大小"
 
-#: core/ui/gui_achievements.cpp:286 core/ui/gui_cheats.cpp:103
+#: core/ui/gui_achievements.cpp:293 core/ui/gui_cheats.cpp:103
 msgid "Close"
 msgstr "关闭"
 
-#: core/ui/gui_achievements.cpp:297
+#: core/ui/gui_achievements.cpp:304
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
 msgstr "你已解锁 %d 个（共 %d 个）成就，并获得 %d 分（共 %d 分）"
 
-#: core/ui/gui_achievements.cpp:325
+#: core/ui/gui_achievements.cpp:332
 msgid "Locked"
 msgstr "已锁定"
 
-#: core/ui/gui_achievements.cpp:325
+#: core/ui/gui_achievements.cpp:332
 msgid "Active Challenges"
 msgstr "当前挑战"
 
-#: core/ui/gui_achievements.cpp:325
+#: core/ui/gui_achievements.cpp:332
 msgid "Almost There"
 msgstr "就快好了"
 
-#: core/ui/gui_achievements.cpp:327
+#: core/ui/gui_achievements.cpp:334
 msgid "Unlocked"
 msgstr "已解锁"
 
-#: core/ui/gui_achievements.cpp:327
+#: core/ui/gui_achievements.cpp:334
 msgid "Recently Unlocked"
 msgstr "最近解锁"
 
-#: core/ui/mainui.cpp:66
+#: core/ui/mainui.cpp:67
 msgid "Renderer error:"
 msgstr "渲染器错误："
 
-#: core/ui/mainui.cpp:67
+#: core/ui/mainui.cpp:68
 msgid "The game has been paused but it is recommended to restart Flycast"
 msgstr "游戏已暂停，但建议重新启动 Flycast"
 
-#: core/ui/mainui.cpp:87
+#: core/ui/mainui.cpp:88
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
 msgstr "渲染器初始化失败。\n"
 "请选择其他图形 API"
 
-#: core/ui/gui.cpp:469
+#: core/ui/gui.cpp:491
 msgid "Flycast has stopped."
 msgstr "Flycast 已停止运行"
 
-#: core/ui/gui.cpp:576
+#: core/ui/gui.cpp:578
+#, c-format
+msgid "UID: %s"
+msgstr ""
+
+#: core/ui/gui.cpp:600
 msgid "Resume"
 msgstr "继续游戏"
 
-#: core/ui/gui.cpp:585
+#: core/ui/gui.cpp:609
 msgid "Cheats"
 msgstr "金手指"
 
-#: core/ui/gui.cpp:592
+#: core/ui/gui.cpp:616
 msgid "Achievements"
 msgstr "成就"
 
-#: core/ui/gui.cpp:598
+#: core/ui/gui.cpp:622
 msgid "Barcode Card"
 msgstr "条码卡"
 
-#: core/ui/gui.cpp:609
+#: core/ui/gui.cpp:633
 msgid "Insert Disk"
 msgstr "插入光盘"
 
-#: core/ui/gui.cpp:609
+#: core/ui/gui.cpp:633
 msgid "Eject Disk"
 msgstr "弹出光盘"
 
-#: core/ui/gui.cpp:625
+#: core/ui/gui.cpp:649
 msgid "Close Game"
 msgstr "关闭游戏"
 
-#: core/ui/gui.cpp:654
+#: core/ui/gui.cpp:678
 #, c-format
 msgid "Slot %d"
 msgstr "插槽 %d"
 
-#: core/ui/gui.cpp:664
+#: core/ui/gui.cpp:688
 msgid "Empty"
 msgstr "空"
 
-#: core/ui/gui.cpp:692 core/ui/gui_cheats.cpp:48
+#: core/ui/gui.cpp:716 core/ui/gui_cheats.cpp:48
 msgid "OK"
 msgstr "确定"
 
-#: core/ui/gui.cpp:712 core/ui/gui.cpp:713
+#: core/ui/gui.cpp:736 core/ui/gui.cpp:737
 msgid "Incorrect Content Location?"
 msgstr "找不到这个游戏，你是不是放错文件夹了？"
 
-#: core/ui/gui.cpp:716
+#: core/ui/gui.cpp:740
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
 msgstr "已扫描 %d 个文件夹，但未找到任何游戏！"
 
-#: core/ui/gui.cpp:721
+#: core/ui/gui.cpp:745
 msgid "Reselect"
 msgstr "重新选择"
 
-#: core/ui/gui.cpp:730 core/ui/gui.cpp:908 core/ui/gui.cpp:1145
-#: core/ui/gui.cpp:1158 core/ui/gui.cpp:1301 core/ui/gui_cheats.cpp:47
-#: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
+#: core/ui/gui.cpp:754 core/ui/gui.cpp:935 core/ui/gui.cpp:1166
+#: core/ui/gui.cpp:1179 core/ui/gui.cpp:1331 core/ui/gui_cheats.cpp:47
+#: core/ui/gui_util.cpp:182 core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr "取消"
 
-#: core/ui/gui.cpp:875
+#: core/ui/gui.cpp:899
 msgid "GAMES"
 msgstr "游戏"
 
-#: core/ui/gui.cpp:882 core/ui/gui.cpp:883
+#: core/ui/gui.cpp:906 core/ui/gui.cpp:914
 msgid "Filter"
 msgstr "筛选"
 
-#: core/ui/gui.cpp:889 core/ui/gui.cpp:890
+#: core/ui/gui.cpp:908 core/ui/gui.cpp:919
 msgid "Load..."
 msgstr "正在加载..."
 
-#: core/ui/gui.cpp:1011
+#: core/ui/gui.cpp:1032
 msgid "Your game list is empty"
 msgstr "你一个游戏都还没添加，快去添加吧"
 
-#: core/ui/gui.cpp:1021
+#: core/ui/gui.cpp:1042
 msgid "Add Game Folder"
 msgstr "添加游戏文件夹"
 
-#: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
+#: core/ui/gui.cpp:1074 core/ui/gui.cpp:1085
 msgid "Invalid selection:"
 msgstr "选择无效："
 
-#: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
+#: core/ui/gui.cpp:1074 core/ui/gui.cpp:1085
 msgid "Flycast cannot write to this folder."
 msgstr "Flycast 无法向此文件夹写入数据"
 
-#: core/ui/gui.cpp:1092
+#: core/ui/gui.cpp:1113
 msgid "Select Flycast Home Folder"
 msgstr "选择 Flycast 主文件夹"
 
-#: core/ui/gui.cpp:1126 core/ui/gui.cpp:1247 core/emulator.cpp:690
+#: core/ui/gui.cpp:1147 core/ui/gui.cpp:1278 core/emulator.cpp:723
 msgid "Starting..."
 msgstr "开始……"
 
-#: core/ui/gui.cpp:1138
+#: core/ui/gui.cpp:1159
 msgid "Starting Network..."
 msgstr "正在启动网络..."
 
-#: core/ui/gui.cpp:1140
+#: core/ui/gui.cpp:1161
 msgid "Press Start to start the game now."
 msgstr "按下“开始”按钮，立即开始游戏"
 
-#: core/ui/gui.cpp:1148 core/ui/gui.cpp:1151
+#: core/ui/gui.cpp:1169 core/ui/gui.cpp:1172
 msgid "Start Now"
 msgstr "立即开始"
 
-#: core/ui/gui.cpp:1249
+#: core/ui/gui.cpp:1280
 msgid "Loading..."
 msgstr "正在加载..."
 
-#: core/ui/gui.cpp:1285
+#: core/ui/gui.cpp:1315
 msgid "Preloading custom textures"
 msgstr "预加载自定义纹理"
 
-#: core/ui/gui.cpp:1288
+#: core/ui/gui.cpp:1318
 msgid "Preparing..."
 msgstr "正在准备..."
 
-#: core/ui/gui.cpp:1610
+#: core/ui/gui.cpp:1641
 #, c-format
 msgid "Save state slot %d"
 msgstr "即时存档槽 %d"
 
-#: core/ui/gui.cpp:1678
+#: core/ui/gui.cpp:1709
 msgid "No screenshot available"
 msgstr "无可用截图"
 
-#: core/ui/gui.cpp:1684
+#: core/ui/gui.cpp:1715
 msgid "Screenshot saved"
 msgstr "截图已保存"
 
-#: core/ui/gui.cpp:1686
+#: core/ui/gui.cpp:1717
 msgid "Error saving screenshot"
 msgstr "保存截图时出错"
 
@@ -2325,19 +2413,19 @@ msgstr "网络"
 msgid "About"
 msgstr "关于"
 
-#: core/ui/gui_util.cpp:120
+#: core/ui/gui_util.cpp:122
 msgid "Storage"
 msgstr "存储"
 
-#: core/ui/gui_util.cpp:132
+#: core/ui/gui_util.cpp:134
 msgid ".. Up to Parent Folder"
 msgstr "返回上层目录"
 
-#: core/ui/gui_util.cpp:170
+#: core/ui/gui_util.cpp:172
 msgid "Select Current Folder"
 msgstr "选择当前文件夹"
 
-#: core/ui/gui_util.cpp:229
+#: core/ui/gui_util.cpp:231
 msgid "(?)"
 msgstr "（？）"
 
@@ -2682,115 +2770,133 @@ msgstr "上传自定义驱动程序"
 msgid "Do you want to reset Vulkan to use new driver?"
 msgstr "你是否要重置 Vulkan 以使用新驱动程序？"
 
-#: core/nullDC.cpp:195
+#: core/nullDC.cpp:194
 msgid "Save state failed - memory full"
 msgstr "即时存档失败——内存已满"
 
-#: core/nullDC.cpp:222
+#: core/nullDC.cpp:221
 msgid "Cannot open save file"
 msgstr "无法打开存档文件"
 
-#: core/nullDC.cpp:250
+#: core/nullDC.cpp:249
 msgid "State saved"
 msgstr "即时存档已保存"
 
-#: core/nullDC.cpp:255
+#: core/nullDC.cpp:254
 msgid "Error saving state"
 msgstr "保存即时存档出错"
 
-#: core/nullDC.cpp:290
+#: core/nullDC.cpp:289
 msgid "Save state not found"
 msgstr "未找到即时存档"
 
-#: core/nullDC.cpp:330 core/nullDC.cpp:352 core/nullDC.cpp:366
+#: core/nullDC.cpp:329 core/nullDC.cpp:351 core/nullDC.cpp:365
 msgid "Failed to load state"
 msgstr "加载即时存档失败"
 
-#: core/nullDC.cpp:330
+#: core/nullDC.cpp:329
 msgid "Not enough memory"
 msgstr "内存不足"
 
-#: core/nullDC.cpp:352
+#: core/nullDC.cpp:351
 msgid "I/O error"
 msgstr "I/O 错误"
 
-#: core/network/dcnet.cpp:70
+#: core/network/dcnet.cpp:71
 msgid "Connected to DCNet with modem"
 msgstr "通过调制解调器连接到 DCNet"
 
-#: core/network/dcnet.cpp:246
+#: core/network/dcnet.cpp:247
 msgid "Connected to DCNet with Ethernet"
 msgstr "通过以太网连接到 DCNet"
 
-#: core/network/dcnet.cpp:628
+#: core/network/dcnet.cpp:640
 msgid "DCNet disconnected"
 msgstr "DCNet 已断开连接"
 
-#: core/network/dcnet.cpp:754
+#: core/network/dcnet.cpp:782 core/network/rawmodem.cpp:186
+#: core/network/capcom.cpp:433
 msgid "Host not found"
 msgstr "未找到主机"
 
-#: core/network/dcnet.cpp:798
+#: core/network/dcnet.cpp:827
 msgid "Can't connect to DCNet"
 msgstr "无法连接到 DCNet"
 
-#: core/network/ggpo.cpp:221
+#: core/network/ggpo.cpp:222 core/network/capcom.cpp:344
 msgid "Connected to peer"
 msgstr "已连接到对等节点"
 
-#: core/network/ggpo.cpp:225
+#: core/network/ggpo.cpp:226
 msgid "Synchronizing with peer"
 msgstr "尝试与对等节点同步"
 
-#: core/network/ggpo.cpp:229
+#: core/network/ggpo.cpp:230
 msgid "Synchronized with peer"
 msgstr "已与对等方同步"
 
-#: core/network/ggpo.cpp:233
+#: core/network/ggpo.cpp:234
 msgid "Running"
 msgstr "正在运行"
 
-#: core/network/ggpo.cpp:238
+#: core/network/ggpo.cpp:239
 msgid "Disconnected from peer"
 msgstr "与对等节点断开连接"
 
-#: core/network/ggpo.cpp:247
+#: core/network/ggpo.cpp:248
 msgid "Connection interrupted"
 msgstr "连接中断"
 
-#: core/network/ggpo.cpp:251
+#: core/network/ggpo.cpp:252
 msgid "Connection resumed"
 msgstr "已恢复连接"
+
+#: core/network/ggpo.cpp:610
+#, c-format
+msgid "GGPO: unknown peer address %s"
+msgstr ""
 
 #: core/network/null_modem.h:173
 msgid "Network connected"
 msgstr "已连接网络"
 
-#: core/network/ice.cpp:121
+#: core/network/rawmodem.cpp:46
+msgid "Connected to game server"
+msgstr ""
+
+#: core/network/rawmodem.cpp:134
+msgid "Network disconnected"
+msgstr ""
+
+#: core/network/rawmodem.cpp:172
+msgid "Can't connect to game server"
+msgstr ""
+
+#: core/network/ice.cpp:169
 msgid "Game not supported"
 msgstr "不支持该游戏"
 
-#: core/network/ice.cpp:237
+#: core/network/ice.cpp:288
 msgid "Connection to lobby failed:"
 msgstr "连接大厅失败："
 
-#: core/network/ice.cpp:444
+#: core/network/ice.cpp:497
 msgid "Connection failed"
 msgstr "连接失败"
 
-#: core/network/ice.cpp:475
+#: core/network/ice.cpp:528 core/network/capcom.cpp:337
 msgid "Direct peer to peer"
 msgstr "直接点对点连接"
 
-#: core/network/ice.cpp:477
+#: core/network/ice.cpp:530 core/network/capcom.cpp:339
 msgid "Using relay"
 msgstr "正在使用中继服务器"
 
-#: core/network/ice.cpp:481
+#: core/network/ice.cpp:534 core/network/capcom.cpp:343
 msgid "NAT"
 msgstr "NAT"
 
-#: core/network/ice.cpp:490 core/network/ice.cpp:508
+#: core/network/ice.cpp:543 core/network/ice.cpp:561
 msgid "Connection lost"
 msgstr "连接已断开"
 
@@ -2816,12 +2922,20 @@ msgstr "没有玩家在线"
 msgid "Connecting to server"
 msgstr "连接到服务器"
 
-#: core/network/naomi_network.cpp:254
+#: core/network/naomi_network.cpp:269
 #, c-format
 msgid "Connected as slot %d"
 msgstr "已连接为插槽 %d"
 
-#: core/rend/dx9/d3d_renderer.cpp:320
+#: core/network/capcom.cpp:440
+msgid "Connected to battle server"
+msgstr ""
+
+#: core/network/capcom.cpp:447
+msgid "Can't connect to battle server"
+msgstr ""
+
+#: core/rend/dx9/d3d_renderer.cpp:328
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
 msgstr "DirectX 9 不支持 Naomi 2 游戏。请选择其他图形 API"
 
@@ -2841,24 +2955,53 @@ msgstr "无法保存文件"
 msgid "Can't read zip"
 msgstr "无法读取zip文件"
 
-#: core/rend/gles/gles.cpp:700
+#: core/rend/gles/gles.cpp:826
 msgid "OpenGL shader compilation failed"
 msgstr "OpenGL 着色器编译失败"
 
-#: core/rend/gles/gles.cpp:1065
+#: core/rend/gles/gles.cpp:1201
 msgid "OpenGL ES 3.0+ required for Naomi 2"
 msgstr "Naomi 2 需要 OpenGL ES 3.0 或更高版本"
 
-#: core/emulator.cpp:599
+#: core/rend/CustomTexture.cpp:1027
+msgid "Custom texture file could not be read"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1030
+msgid "PNG/JPEG custom texture could not be decoded"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1033
+msgid "Compressed custom texture could not be loaded.\n"
+"Supported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1036
+msgid "Custom texture exceeds the renderer's maximum texture dimensions"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1039
+msgid "Custom texture could not be uploaded to the GPU"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1042
+msgid "Custom texture memory allocation failed"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1045
+msgid "DirectX 9 supports PNG/JPEG custom textures only"
+msgstr ""
+
+#: core/emulator.cpp:632
 #, c-format
 msgid "No BIOS file found in %s"
 msgstr "在 %s 中未找到 BIOS 文件"
 
-#: core/emulator.cpp:615
+#: core/emulator.cpp:648
 msgid "This game requires a real BIOS"
 msgstr "这款游戏需要真正的 BIOS"
 
-#: core/emulator.cpp:665
+#: core/emulator.cpp:698
 msgid "Widescreen cheat activated"
 msgstr "已启用宽屏补丁"
 
@@ -2886,7 +3029,7 @@ msgstr "触控鼠标"
 msgid "Cannot initialize the graphics API"
 msgstr "无法初始化图形 API"
 
-#: shell/libretro/libretro.cpp:2157
+#: shell/libretro/libretro.cpp:2237
 msgid "Cannot run without JIT"
 msgstr "如果没有 JIT 则无法运行"
 
@@ -2930,7 +3073,7 @@ msgstr "Wheel"
 msgid "Throttle"
 msgstr "Throttle"
 
-#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:173
+#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:182
 msgid "Memory initialization failed"
 msgstr "内存初始化失败"
 
@@ -2955,7 +3098,7 @@ msgstr "首页"
 msgid "Share"
 msgstr "分享"
 
-#: shell/switch/switch_main.cpp:86
+#: shell/switch/switch_main.cpp:93
 msgid "Not supported on Switch"
 msgstr "Switch 不支持此功能"
 
