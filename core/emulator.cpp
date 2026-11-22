@@ -154,7 +154,11 @@ static void loadSpecialSettings()
 				// Pro Pinball - Trilogy (EU)
 				|| prod_id == "T30701D 50"
 				// Jikkyo Powerful Pro Yakyu
-				|| prod_id == "T9507M")
+				|| prod_id == "T9507M"
+				// Pia Carrott 2
+				|| prod_id == "T20109M"
+				// Shinki Sekai Evolution
+				|| prod_id == "T38701M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
