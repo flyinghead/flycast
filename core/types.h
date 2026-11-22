@@ -178,6 +178,8 @@ struct settings_t
 		std::string fileName;
 		std::string title;
 		bool windowsCE;
+		// Enable the full MMU as soon as the game enables address translation
+		bool fullMmu;
 
 		void reset()
 		{
@@ -186,6 +188,7 @@ struct settings_t
 			fileName.clear();
 			title.clear();
 			windowsCE = false;
+			fullMmu = false;
 		}
 	} content;
 

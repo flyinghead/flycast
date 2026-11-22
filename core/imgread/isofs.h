@@ -75,8 +75,11 @@ public:
 
 	IsoFs(Disc *disc);
 	Directory *getRoot();
+	std::string getVolumeId();
 
 private:
+	bool readPvd(u8 *buf);
+
 	Disc *disc;
 	u32 baseFad;
 };
