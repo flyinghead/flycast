@@ -186,14 +186,17 @@ static void maple_DoDma()
 		{
 #ifdef STRICT_MODE
 			if (!check_mdapro(header_2) || !check_mdapro(addr + (2 + plen) * sizeof(u32) - 1))
-			{
+				header_2 = 0;
 #else
 			if (GetMemPtr(header_2, 1) == nullptr)
 			{
+				// Stop here instead of walking through memory. Some Datel cheat discs
+				// send a command list without the end bit and rely on this.
 				INFO_LOG(MAPLE, "DMA Error: destination not in system ram: %x", header_2);
-#endif
-				header_2 = 0;
+				last = true;
+				break;
 			}
+#endif
 
 			u32* p_data = (u32 *)GetMemPtr(addr + 8, plen * sizeof(u32));
 			if (p_data == nullptr)
