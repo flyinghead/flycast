@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-22 11:57+0100\n"
-"PO-Revision-Date: 2026-11-22 15:42\n"
+"PO-Revision-Date: 2026-11-22 18:31\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -322,7 +322,7 @@ msgstr "Archivo CUE: no se puede abrir la pista %s"
 
 #: core/imgread/cue.cpp:209
 msgid "Invalid PREGAP in CUE file"
-msgstr ""
+msgstr "PREGAP inválido en el archivo CUE"
 
 #: core/imgread/cue.cpp:226
 #, c-format
@@ -363,7 +363,7 @@ msgstr "Número de pista inesperado"
 
 #: core/imgread/chd.cpp:203
 msgid "Invalid CHD: pregap is longer than the track"
-msgstr ""
+msgstr "CHD inválido PREGAB es más largo que la pista"
 
 #: core/imgread/chd.cpp:230
 msgid "Invalid CHD: less than 3 tracks"
@@ -706,39 +706,39 @@ msgstr "Mostrar las pantallas LCD de VMU durante el juego"
 
 #: core/ui/settings_video.cpp:223
 msgid "Show VMU on Secondary Display"
-msgstr ""
+msgstr "Mostrar VMU en pantalla secundaria"
 
 #: core/ui/settings_video.cpp:224
 msgid "Show the VMU LCD screen of controller A on the secondary display, if any"
-msgstr ""
+msgstr "Muestra la pantalla LCD del VMU del control A si es que hay pantalla secundaria"
 
 #: core/ui/settings_video.cpp:228
 msgid "Secondary Display Scaling:"
-msgstr ""
+msgstr "Escala de pantalla secundaria:"
 
 #: core/ui/settings_video.cpp:230
 msgid "Fit"
-msgstr ""
+msgstr "Ajustar"
 
 #: core/ui/settings_video.cpp:230
 msgid "Scale the VMU screen to fill as much of the display as possible while keeping its aspect ratio"
-msgstr ""
+msgstr "Escala la pantalla VMU para rellenar la mayor parte de la pantalla posible manteniendo su relación de aspecto"
 
 #: core/ui/settings_video.cpp:232
 msgid "Integer"
-msgstr ""
+msgstr "Integer"
 
 #: core/ui/settings_video.cpp:232
 msgid "Scale the VMU screen by the largest whole number that fits, for evenly sized pixels"
-msgstr ""
+msgstr "Escala la pantalla VMU por el número entero más grande que encaja, para píxeles de tamaño uniforme"
 
 #: core/ui/settings_video.cpp:234
 msgid "Stretch"
-msgstr ""
+msgstr "Estrechar"
 
 #: core/ui/settings_video.cpp:234
 msgid "Stretch the VMU screen to fill the whole display, ignoring its aspect ratio"
-msgstr ""
+msgstr "Escribir la pantalla VMU para llenar toda la pantalla, ignorando su relación de aspecto"
 
 #: core/ui/settings_video.cpp:239
 msgid "Full Framebuffer Emulation"
@@ -754,39 +754,39 @@ msgstr "Cargar texturas personalizadas"
 
 #: core/ui/settings_video.cpp:243
 msgid "Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."
-msgstr ""
+msgstr "Carga texturas personalizadas/de alta resolución desde data/textures/<game id>. Soporta KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, y JPEG."
 
 #: core/ui/settings_video.cpp:252
 msgid "Custom Texture Preloading"
-msgstr ""
+msgstr "Precarga de textura personalizada"
 
 #: core/ui/settings_video.cpp:254
 msgid "Off"
-msgstr ""
+msgstr "Apagar"
 
 #: core/ui/settings_video.cpp:257
 msgid "Load custom textures as needed."
-msgstr ""
+msgstr "Cargar texturas personalizadas según sea necesario."
 
 #: core/ui/settings_video.cpp:259
 msgid "System Memory"
-msgstr ""
+msgstr "Memoria del sistema"
 
 #: core/ui/settings_video.cpp:262
 msgid "Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."
-msgstr ""
+msgstr "Precargar texturas personalizadas en el juego para prevenir la aparición de texturas. Consume memoria del sistema para todo el paquete de texturas."
 
 #: core/ui/settings_video.cpp:266
 msgid "Video Memory"
-msgstr ""
+msgstr "Memoria de video"
 
 #: core/ui/settings_video.cpp:271
 msgid "Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack."
-msgstr ""
+msgstr "Precargar texturas personalizadas en el juego para prevenir la aparición de texturas. Consume memoria de vídeo para todo el paquete de texturas."
 
 #: core/ui/settings_video.cpp:272
 msgid "Video-memory custom texture preloading is not supported by the current renderer."
-msgstr ""
+msgstr "La precarga de textura personalizada de memoria de vídeo no está soportada por el renderizador actual."
 
 #: core/ui/settings_video.cpp:281
 msgid "Aspect Ratio"
@@ -822,11 +822,11 @@ msgstr "Modifica el juego para que se muestre en formato anamórfico 16:9 y util
 
 #: core/ui/settings_video.cpp:297
 msgid "Stretch to Fill"
-msgstr ""
+msgstr "Estrechar hasta llenar"
 
 #: core/ui/settings_video.cpp:298
 msgid "Stretch the screen to fill the entire screen or window."
-msgstr ""
+msgstr "Escribir la pantalla para llenar toda la pantalla o ventana."
 
 #: core/ui/settings_video.cpp:302
 msgid "Horizontal Stretching"
@@ -1329,11 +1329,11 @@ msgstr "Sigue los logros de tu juego usando RetroAchievements.org"
 
 #: core/ui/settings_general.cpp:419
 msgid "Show Achievement Popups"
-msgstr ""
+msgstr "Mostrar notificaciones de logros"
 
 #: core/ui/settings_general.cpp:420
 msgid "Shows achievement popups in game."
-msgstr ""
+msgstr "Muestra las notificaciones de logro en el juego"
 
 #: core/ui/settings_general.cpp:422
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
@@ -2064,7 +2064,7 @@ msgstr "Flycast se ha detenido."
 #: core/ui/gui.cpp:578
 #, c-format
 msgid "UID: %s"
-msgstr ""
+msgstr "UID: %s"
 
 #: core/ui/gui.cpp:600
 msgid "Resume"
@@ -2856,7 +2856,7 @@ msgstr "Se reanudó la conexión"
 #: core/network/ggpo.cpp:610
 #, c-format
 msgid "GGPO: unknown peer address %s"
-msgstr ""
+msgstr "GGPO: dirección de peer desconocida %s"
 
 #: core/network/null_modem.h:173
 msgid "Network connected"
@@ -2864,15 +2864,15 @@ msgstr "Red conectada"
 
 #: core/network/rawmodem.cpp:46
 msgid "Connected to game server"
-msgstr ""
+msgstr "Conectar al servidor del juego"
 
 #: core/network/rawmodem.cpp:134
 msgid "Network disconnected"
-msgstr ""
+msgstr "Red desconectada"
 
 #: core/network/rawmodem.cpp:172
 msgid "Can't connect to game server"
-msgstr ""
+msgstr "No se puede conectar con el servidor del juego."
 
 #: core/network/ice.cpp:169
 msgid "Game not supported"
@@ -2932,11 +2932,11 @@ msgstr "Conectado como slot %d"
 
 #: core/network/capcom.cpp:440
 msgid "Connected to battle server"
-msgstr ""
+msgstr "Conectado al servidor de batalla"
 
 #: core/network/capcom.cpp:447
 msgid "Can't connect to battle server"
-msgstr ""
+msgstr "No se pudo conectar al servidor de batalla"
 
 #: core/rend/dx9/d3d_renderer.cpp:328
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
@@ -2968,32 +2968,33 @@ msgstr "Se requiere OpenGL ES 3.0+ para Naomi 2"
 
 #: core/rend/CustomTexture.cpp:1027
 msgid "Custom texture file could not be read"
-msgstr ""
+msgstr "No se pudo leer el archivo de textura personalizado"
 
 #: core/rend/CustomTexture.cpp:1030
 msgid "PNG/JPEG custom texture could not be decoded"
-msgstr ""
+msgstr "No se pudo decodificar la textura personalizada PNG/JPEG"
 
 #: core/rend/CustomTexture.cpp:1033
 msgid "Compressed custom texture could not be loaded.\n"
 "Supported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7"
-msgstr ""
+msgstr "No se pudo cargar la textura personalizada comprimida.\n"
+"formatos soportados: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, y DDS/BC7"
 
 #: core/rend/CustomTexture.cpp:1036
 msgid "Custom texture exceeds the renderer's maximum texture dimensions"
-msgstr ""
+msgstr "La textura personalizada excede las dimensiones máximas de textura del renderizado"
 
 #: core/rend/CustomTexture.cpp:1039
 msgid "Custom texture could not be uploaded to the GPU"
-msgstr ""
+msgstr "La textura personalizada no se pudo cargar al GPU"
 
 #: core/rend/CustomTexture.cpp:1042
 msgid "Custom texture memory allocation failed"
-msgstr ""
+msgstr "Falló la asignación de memoria de textura personalizada"
 
 #: core/rend/CustomTexture.cpp:1045
 msgid "DirectX 9 supports PNG/JPEG custom textures only"
-msgstr ""
+msgstr "DirectX 9 solo soporta texturas personalizadas PNG/JPEG"
 
 #: core/emulator.cpp:632
 #, c-format
