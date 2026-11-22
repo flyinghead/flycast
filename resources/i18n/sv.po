@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-22 11:57+0100\n"
-"PO-Revision-Date: 2026-11-22 15:42\n"
+"PO-Revision-Date: 2026-11-22 19:36\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -761,7 +761,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:254
 msgid "Off"
-msgstr ""
+msgstr "Av"
 
 #: core/ui/settings_video.cpp:257
 msgid "Load custom textures as needed."
@@ -769,7 +769,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:259
 msgid "System Memory"
-msgstr ""
+msgstr "Systemminne"
 
 #: core/ui/settings_video.cpp:262
 msgid "Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."
@@ -777,7 +777,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:266
 msgid "Video Memory"
-msgstr ""
+msgstr "Videominne"
 
 #: core/ui/settings_video.cpp:271
 msgid "Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack."
@@ -2063,7 +2063,7 @@ msgstr "Flycast har stoppat."
 #: core/ui/gui.cpp:578
 #, c-format
 msgid "UID: %s"
-msgstr ""
+msgstr "UID: %s"
 
 #: core/ui/gui.cpp:600
 msgid "Resume"
@@ -2863,15 +2863,15 @@ msgstr "Nätverk anslutet"
 
 #: core/network/rawmodem.cpp:46
 msgid "Connected to game server"
-msgstr ""
+msgstr "Ansluten till spelserver"
 
 #: core/network/rawmodem.cpp:134
 msgid "Network disconnected"
-msgstr ""
+msgstr "Nätverket frånkopplades"
 
 #: core/network/rawmodem.cpp:172
 msgid "Can't connect to game server"
-msgstr ""
+msgstr "Kan inte ansluta till spelserver"
 
 #: core/network/ice.cpp:169
 msgid "Game not supported"
