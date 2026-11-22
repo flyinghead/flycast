@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-10-29 10:17\n"
+"POT-Creation-Date: 2026-11-22 11:57+0100\n"
+"PO-Revision-Date: 2026-11-22 15:42\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,85 +17,85 @@ msgstr ""
 "X-Crowdin-File-ID: 13\n"
 "Language-Team: Portuguese, Brazilian\n"
 
-#: core/achievements/achievements.cpp:379
+#: core/achievements/achievements.cpp:389
 #, c-format
 msgid "User %s authenticated"
 msgstr "Usuário %s autenticado"
 
-#: core/achievements/achievements.cpp:395
+#: core/achievements/achievements.cpp:405
 msgid "RetroAchievements authentication failed"
 msgstr "A autenticação de RetroConquistas falhou"
 
-#: core/achievements/achievements.cpp:430
+#: core/achievements/achievements.cpp:440
 msgid "No user token returned"
 msgstr "Nenhum token de usuário retornou"
 
-#: core/achievements/achievements.cpp:582
+#: core/achievements/achievements.cpp:595
 msgid "RetroAchievements disconnected"
 msgstr "RetroConquistas desconectada"
 
-#: core/achievements/achievements.cpp:586
+#: core/achievements/achievements.cpp:599
 msgid "RetroAchievements reconnected"
 msgstr "RetroConquistas reconectada"
 
-#: core/achievements/achievements.cpp:616
+#: core/achievements/achievements.cpp:629
 #, c-format
 msgid "Achievement %s unlocked!"
 msgstr "Conquista %s desbloqueada!"
 
-#: core/achievements/achievements.cpp:656
+#: core/achievements/achievements.cpp:669
 #, c-format
 msgid "Leaderboard %s started"
 msgstr "Classificação %s começou"
 
-#: core/achievements/achievements.cpp:663
+#: core/achievements/achievements.cpp:676
 #, c-format
 msgid "Leaderboard %s failed"
 msgstr "Classificação %s falhou"
 
-#: core/achievements/achievements.cpp:670
+#: core/achievements/achievements.cpp:683
 #, c-format
 msgid "Leaderboard %s submitted"
 msgstr "Classificação %s enviada"
 
-#: core/achievements/achievements.cpp:695
+#: core/achievements/achievements.cpp:708
 #, c-format
 msgid "Mastered %s"
 msgstr "Dominado %s"
 
-#: core/achievements/achievements.cpp:695
+#: core/achievements/achievements.cpp:708
 #, c-format
 msgid "Completed %s"
 msgstr "Completado %s"
 
-#: core/achievements/achievements.cpp:698
+#: core/achievements/achievements.cpp:711
 #, c-format
 msgid "%d achievements, %d points"
 msgstr "%d conquistas, %d pontos"
 
-#: core/achievements/achievements.cpp:946
+#: core/achievements/achievements.cpp:959
 #, c-format
 msgid "You have %d of %d achievements unlocked."
 msgstr "Você tem %d de %d conquistas desbloqueadas."
 
-#: core/achievements/achievements.cpp:948
+#: core/achievements/achievements.cpp:961
 msgid "This game has no achievements."
 msgstr "Esse jogo não tem conquistas."
 
-#: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
-#: core/ui/gui_achievements.cpp:304
+#: core/achievements/achievements.cpp:966 core/ui/settings_general.cpp:421
+#: core/ui/gui_achievements.cpp:311
 msgid "Hardcore Mode"
 msgstr "Modo Hardcore"
 
-#: core/achievements/achievements.cpp:984
+#: core/achievements/achievements.cpp:997
 msgid "Hardcore mode disabled"
 msgstr "Modo Hardcore desativado"
 
-#: core/achievements/achievements.cpp:984
+#: core/achievements/achievements.cpp:997
 msgid "Unrecognized media inserted"
 msgstr "Mídia desconhecida inserida"
 
-#: core/achievements/achievements.cpp:991
+#: core/achievements/achievements.cpp:1004
 msgid "Media change failed"
 msgstr "Mudança de mídia falhou"
 
@@ -104,152 +104,152 @@ msgstr "Mudança de mídia falhou"
 msgid "WARNING: DreamConn disconnected from port %c"
 msgstr "AVISO: DreamConn desconectado da porta %c"
 
-#: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
+#: core/sdl/dreampicoport.cpp:1607 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
 msgstr "Dpad2 Cima"
 
-#: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
+#: core/sdl/dreampicoport.cpp:1608 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
 msgstr "Dpad2 Baixo"
 
-#: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
+#: core/sdl/dreampicoport.cpp:1609 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
 msgstr "Dpad2 Esquerda"
 
-#: core/sdl/dreampicoport.cpp:1616 core/ui/settings_controls.cpp:200
+#: core/sdl/dreampicoport.cpp:1610 core/ui/settings_controls.cpp:200
 msgid "DPad2 Right"
 msgstr "Dpad2 Direita"
 
-#: core/sdl/dreampicoport.cpp:1619
+#: core/sdl/dreampicoport.cpp:1613
 msgid "VMU1 A"
 msgstr "VMU1 A"
 
-#: core/sdl/dreampicoport.cpp:1620
+#: core/sdl/dreampicoport.cpp:1614
 msgid "VMU1 B"
 msgstr "VMU1 B"
 
-#: core/sdl/dreampicoport.cpp:1621
+#: core/sdl/dreampicoport.cpp:1615
 msgid "VMU1 Up"
 msgstr "VMU1 Cima"
 
-#: core/sdl/dreampicoport.cpp:1622
+#: core/sdl/dreampicoport.cpp:1616
 msgid "VMU1 Down"
 msgstr "VMU1 Baixo"
 
-#: core/sdl/dreampicoport.cpp:1623
+#: core/sdl/dreampicoport.cpp:1617
 msgid "VMU1 Left"
 msgstr "VMU1 Esquerda"
 
-#: core/sdl/dreampicoport.cpp:1624
+#: core/sdl/dreampicoport.cpp:1618
 msgid "VMU1 Right"
 msgstr "VMU1 Direita"
 
-#: core/sdl/dreamlink.cpp:87
+#: core/sdl/dreamlink.cpp:78
 msgid "Connected"
 msgstr "Conectado"
 
-#: core/sdl/dreamlink.cpp:87
+#: core/sdl/dreamlink.cpp:78
 msgid "Disconnected"
 msgstr "Desconectado"
 
-#: core/sdl/sdl_gamepad.cpp:549
+#: core/sdl/sdl_gamepad.cpp:547
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:95
 msgid "Back"
 msgstr "Voltar"
 
-#: core/sdl/sdl_gamepad.cpp:550
+#: core/sdl/sdl_gamepad.cpp:548
 msgid "Guide"
 msgstr "Guia"
 
-#: core/sdl/sdl_gamepad.cpp:551 core/ui/settings_controls.cpp:218
+#: core/sdl/sdl_gamepad.cpp:549 core/ui/settings_controls.cpp:218
 #: core/ui/settings_controls.cpp:274
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:131
 msgid "Start"
 msgstr "Iniciar"
 
-#: core/sdl/sdl_gamepad.cpp:556 core/sdl/sdl_gamepad.cpp:589
+#: core/sdl/sdl_gamepad.cpp:554 core/sdl/sdl_gamepad.cpp:587
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:97
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
 msgstr "Dpad Cima"
 
-#: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:593
+#: core/sdl/sdl_gamepad.cpp:555 core/sdl/sdl_gamepad.cpp:591
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:99
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
 msgstr "Dpad Baixo"
 
-#: core/sdl/sdl_gamepad.cpp:558 core/sdl/sdl_gamepad.cpp:597
+#: core/sdl/sdl_gamepad.cpp:556 core/sdl/sdl_gamepad.cpp:595
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:101
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
 msgid "DPad Left"
 msgstr "Dpad Esquerda"
 
-#: core/sdl/sdl_gamepad.cpp:559 core/sdl/sdl_gamepad.cpp:601
+#: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:599
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:103
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
 msgstr "Dpad Direita"
 
-#: core/sdl/sdl_gamepad.cpp:560
+#: core/sdl/sdl_gamepad.cpp:558
 msgid "Misc"
 msgstr "Diversos"
 
-#: core/sdl/sdl_gamepad.cpp:561
+#: core/sdl/sdl_gamepad.cpp:559
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
 msgstr "Paddle 1"
 
-#: core/sdl/sdl_gamepad.cpp:562
+#: core/sdl/sdl_gamepad.cpp:560
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
 msgstr "Pandale 2"
 
-#: core/sdl/sdl_gamepad.cpp:563
+#: core/sdl/sdl_gamepad.cpp:561
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
 msgstr "Paddle 3"
 
-#: core/sdl/sdl_gamepad.cpp:564
+#: core/sdl/sdl_gamepad.cpp:562
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
 msgstr "Paddle 4"
 
-#: core/sdl/sdl_gamepad.cpp:565
+#: core/sdl/sdl_gamepad.cpp:563
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
 msgstr "Touchpad"
 
-#: core/sdl/sdl_gamepad.cpp:624
+#: core/sdl/sdl_gamepad.cpp:622
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
 msgstr "Analógico Esquerdo X"
 
-#: core/sdl/sdl_gamepad.cpp:625
+#: core/sdl/sdl_gamepad.cpp:623
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
 msgstr "Analógico Esquerdo Y"
 
-#: core/sdl/sdl_gamepad.cpp:626
+#: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
 msgstr "Analógico direito X"
 
-#: core/sdl/sdl_gamepad.cpp:627
+#: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
 msgstr "Analógico direito Y"
 
-#: core/sdl/sdl_gamepad.cpp:706
+#: core/sdl/sdl_gamepad.cpp:704
 msgid "Default Mouse"
 msgstr "Mouse padrão"
 
-#: core/sdl/sdl_gamepad.cpp:708
+#: core/sdl/sdl_gamepad.cpp:706
 #, c-format
 msgid "Mouse %d"
 msgstr "Mouse %d"
 
-#: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
+#: core/sdl/sdl.cpp:1011 core/windows/winmain.cpp:376
 msgid "Flycast Error"
 msgstr "Erro no Flycast"
 
@@ -261,7 +261,7 @@ msgstr "Sem áudio"
 msgid "Automatic AAudio / OpenSL selection"
 msgstr "Seleção automática de AAudio / OpenSL"
 
-#: core/oslib/oslib.cpp:354
+#: core/oslib/oslib.cpp:355
 msgid "Can't find Pictures library"
 msgstr "Não foi possível localizar a pasta Imagens"
 
@@ -290,11 +290,11 @@ msgstr "Não foi possível ler os atributos %s"
 msgid "Invalid file name %s"
 msgstr "Nome do arquivo inválido %s"
 
-#: core/imgread/common.cpp:97
+#: core/imgread/common.cpp:111
 msgid "Unknown disk format"
 msgstr "Formato de disco desconhecido"
 
-#: core/imgread/common.cpp:372 core/emulator.cpp:623
+#: core/imgread/common.cpp:390 core/emulator.cpp:656
 msgid "This media cannot be loaded"
 msgstr "Essa mídia não pode ser carregada"
 
@@ -307,27 +307,32 @@ msgstr "Não foi possível abrir o arquivo CUE %s"
 msgid "CUE parse error: CUE file too big"
 msgstr "Erro ao processar o CUE: Arquivo CUE muito grande"
 
-#: core/imgread/cue.cpp:179 core/imgread/cue.cpp:202 core/imgread/cue.cpp:206
-#: core/imgread/cue.cpp:247 core/imgread/cue.cpp:263 core/imgread/cue.cpp:275
-#: core/imgread/cue.cpp:279 core/imgread/cue.cpp:283 core/imgread/cue.cpp:287
+#: core/imgread/cue.cpp:162 core/imgread/cue.cpp:170 core/imgread/cue.cpp:185
+#: core/imgread/cue.cpp:217 core/imgread/cue.cpp:221 core/imgread/cue.cpp:280
+#: core/imgread/cue.cpp:296 core/imgread/cue.cpp:308 core/imgread/cue.cpp:312
+#: core/imgread/cue.cpp:316 core/imgread/cue.cpp:320
 msgid "Invalid CUE file"
 msgstr "Arquivo CUE inválido"
 
-#: core/imgread/cue.cpp:184
+#: core/imgread/cue.cpp:190 core/imgread/cue.cpp:270
 #, c-format
 msgid "CUE file: cannot open track %s"
 msgstr "Arquivo CUE: Não foi possível abrir a faixa %s"
 
-#: core/imgread/cue.cpp:211
+#: core/imgread/cue.cpp:209
+msgid "Invalid PREGAP in CUE file"
+msgstr ""
+
+#: core/imgread/cue.cpp:226
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
 msgstr "Arquivo CUE: Faixa possui um tipo de setor desconhecido %s"
 
-#: core/imgread/cue.cpp:260
+#: core/imgread/cue.cpp:293
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
 msgstr "Erro ao processar o CUE: Falha ao processar ou arquivo inválido com 0 faixas"
 
-#: core/imgread/cue.cpp:272
+#: core/imgread/cue.cpp:305
 msgid "CUE parse error: less than 3 tracks"
 msgstr "Erro ao processar o CUE: menos que 3 faixas"
 
@@ -351,19 +356,19 @@ msgstr "Arquivo CHD inválido %s"
 msgid "Invalid hunkbytes for CHD file %s"
 msgstr "Tamanho de blocos inválidos para arquivo CHD %s"
 
-#: core/imgread/chd.cpp:181
+#: core/imgread/chd.cpp:189
 msgid "Unexpected track number"
 msgstr "Número de faixa inesperada"
 
-#: core/imgread/chd.cpp:184
-msgid "Unsupported subtype or pre/postgap"
-msgstr "Subtipo ou pré/pós-intervalo não suportado"
+#: core/imgread/chd.cpp:203
+msgid "Invalid CHD: pregap is longer than the track"
+msgstr ""
 
-#: core/imgread/chd.cpp:210
+#: core/imgread/chd.cpp:230
 msgid "Invalid CHD: less than 3 tracks"
 msgstr "CHD Inválido: Menos que 3 faixas"
 
-#: core/imgread/chd.cpp:216
+#: core/imgread/chd.cpp:236
 msgid "Invalid CHD: no track found"
 msgstr "CHD inválido: Faixa não encontrada"
 
@@ -376,13 +381,14 @@ msgstr "Não foi possível abrir o arquivo GDI %s"
 msgid "GDI file too big"
 msgstr "Arquivo GDI muito grande"
 
-#: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
-#: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
-#: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
+#: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:63 core/imgread/gdi.cpp:71
+#: core/imgread/gdi.cpp:87 core/imgread/gdi.cpp:91 core/imgread/gdi.cpp:98
+#: core/imgread/gdi.cpp:104 core/imgread/gdi.cpp:110 core/imgread/gdi.cpp:114
+#: core/imgread/gdi.cpp:122 core/imgread/gdi.cpp:147
 msgid "Invalid GDI file"
 msgstr "Arquivo GDI inválido"
 
-#: core/imgread/gdi.cpp:132
+#: core/imgread/gdi.cpp:134
 #, c-format
 msgid "GDI file: Cannot open track %s"
 msgstr "Arquivo GDI: Não foi possível abrir a faixa %s"
@@ -410,12 +416,12 @@ msgstr "Tamanho setor do CDI inválido"
 msgid "Cannot re-open CDI file"
 msgstr "Não foi possível reabrir o arquivo CDI"
 
-#: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
-#: core/hw/maple/maple_jvs.cpp:2661
+#: core/hw/naomi/card_reader.cpp:288 core/hw/naomi/card_reader.cpp:582
+#: core/hw/naomi/card_reader.cpp:880 core/hw/maple/maple_jvs.cpp:2712
 msgid "Card ejected"
 msgstr "Cartão ejetado"
 
-#: core/hw/naomi/naomi.cpp:359
+#: core/hw/naomi/naomi.cpp:344
 #, c-format
 msgid "Speed: %3d"
 msgstr "Velocidade: %3d"
@@ -424,7 +430,7 @@ msgstr "Velocidade: %3d"
 msgid "Print out saved"
 msgstr "Impressão salva"
 
-#: core/hw/naomi/systemsp.cpp:2187
+#: core/hw/naomi/systemsp.cpp:2174
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
 msgstr "SystemSP: Não foi possível abrir o arquivo CompactFlash %s"
@@ -433,9 +439,9 @@ msgstr "SystemSP: Não foi possível abrir o arquivo CompactFlash %s"
 msgid "Network started"
 msgstr "Rede iniciada"
 
-#: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:367
-#: core/hw/naomi/naomi_cart.cpp:387 core/hw/naomi/naomi_cart.cpp:413
-#: core/hw/naomi/naomi_cart.cpp:837 core/hw/naomi/gdcartridge.cpp:599
+#: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:368
+#: core/hw/naomi/naomi_cart.cpp:388 core/hw/naomi/naomi_cart.cpp:414
+#: core/hw/naomi/naomi_cart.cpp:794 core/hw/naomi/gdcartridge.cpp:602
 msgid "Memory allocation failed"
 msgstr "Falha na alocação de memória"
 
@@ -458,50 +464,51 @@ msgstr "Não foi possível abrir %s ou %s"
 msgid "Cannot open %s"
 msgstr "Não foi possível abrir %s"
 
-#: core/hw/naomi/naomi_cart.cpp:324
+#: core/hw/naomi/naomi_cart.cpp:325
 msgid "Invalid ROM"
 msgstr "ROM inválida"
 
-#: core/hw/naomi/naomi_cart.cpp:345
+#: core/hw/naomi/naomi_cart.cpp:346
 #, c-format
 msgid "Cannot find %s"
 msgstr "Não foi possível encontrar %s"
 
-#: core/hw/naomi/naomi_cart.cpp:355 core/hw/naomi/naomi_cart.cpp:372
+#: core/hw/naomi/naomi_cart.cpp:356 core/hw/naomi/naomi_cart.cpp:373
 #, c-format
 msgid "Invalid ROM: truncated %s"
 msgstr "ROM inválida: Corrompida %s"
 
-#: core/hw/naomi/naomi_cart.cpp:465
+#: core/hw/naomi/naomi_cart.cpp:466
 msgid "Error: cannot load BIOS from naomi.zip"
 msgstr "Erro: Não foi possível carregar a Bios da naomi.zip"
 
-#: core/hw/naomi/naomi_cart.cpp:481 core/hw/naomi/naomi_cart.cpp:531
+#: core/hw/naomi/naomi_cart.cpp:473
 #, c-format
 msgid "Error: can't open %s"
 msgstr "Erro: não foi possível abrir %s"
 
-#: core/hw/naomi/naomi_cart.cpp:544
+#: core/hw/naomi/naomi_cart.cpp:482
 msgid "Invalid empty ROM"
 msgstr "ROM vazia inválida"
 
-#: core/hw/naomi/naomi_cart.cpp:551
+#: core/hw/naomi/naomi_cart.cpp:489
 msgid "Out of memory"
 msgstr "Memoria insuficiente"
 
-#: core/hw/naomi/naomi_cart.cpp:602
+#: core/hw/naomi/naomi_cart.cpp:515
 msgid "Error: Failed to load BIN/DAT file"
 msgstr "Erro: Falha ao carregar o arquivo BIN/DAT"
 
-#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:462
+#: core/hw/naomi/naomi_cart.cpp:665 core/hw/naomi/multiboard.cpp:462
 #: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
 #: core/ui/settings_controls.cpp:243
 msgid "Left"
 msgstr "Esquerda"
 
-#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:456
-#: core/hw/naomi/multiboard.cpp:466 core/hw/naomi/multiboard.cpp:483
-#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
+#: core/hw/naomi/naomi_cart.cpp:665 core/hw/naomi/naomi_cart.cpp:691
+#: core/hw/naomi/multiboard.cpp:456 core/hw/naomi/multiboard.cpp:466
+#: core/hw/naomi/multiboard.cpp:483 core/ui/settings_controls.cpp:180
+#: core/ui/settings_controls.cpp:244
 msgid "Right"
 msgstr "Direita"
 
@@ -513,12 +520,12 @@ msgstr "Calibração finalizada"
 msgid "Calibrating the wheel. Keep it centered."
 msgstr "Calibrando o volante. Mantenha-o centralizado."
 
-#: core/hw/naomi/gdcartridge.cpp:526
+#: core/hw/naomi/gdcartridge.cpp:527
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
 msgstr "GDROM Naomi: Não foi possível abrir %s.chd"
 
-#: core/hw/naomi/gdcartridge.cpp:611
+#: core/hw/naomi/gdcartridge.cpp:628
 msgid "Naomi GDROM: Could not find the file to decrypt."
 msgstr "GDROM Naomi: Não foi possível encontrar o arquivo para descriptografar."
 
@@ -526,69 +533,69 @@ msgstr "GDROM Naomi: Não foi possível encontrar o arquivo para descriptografar
 msgid "Center"
 msgstr ""
 
-#: core/reios/reios.cpp:366 core/reios/reios.cpp:369
+#: core/reios/reios.cpp:367 core/reios/reios.cpp:370
 msgid "Reboot to BIOS"
 msgstr "Reiniciar para BIOS"
 
-#: core/reios/reios.cpp:662
+#: core/reios/reios.cpp:663
 #, c-format
 msgid "Failed to open ELF %s"
 msgstr "Falhou em abrir o ELF %s"
 
-#: core/reios/reios.cpp:671
+#: core/reios/reios.cpp:672
 #, c-format
 msgid "Failed to locate bootfile %s"
 msgstr "Falhou em localizar o arquivo de inicialização %s"
 
-#: core/reios/reios.cpp:684
+#: core/reios/reios.cpp:685
 msgid "Naomi boot failure"
 msgstr "Naomi falha de inicialização"
 
-#: core/reios/reios.cpp:690
+#: core/reios/reios.cpp:691
 msgid "Invalid cart size"
 msgstr "Tamanho do cartucho inválido"
 
-#: core/cheats.cpp:776 core/cheats.cpp:781
+#: core/cheats.cpp:780 core/cheats.cpp:785
 msgid "Invalid cheat code"
 msgstr "Código de trapaça inválido"
 
-#: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
+#: core/cheats.cpp:867 core/cheats.cpp:906 core/cheats.cpp:919
 msgid "Missing value"
 msgstr "Valor faltando"
 
-#: core/cheats.cpp:881
+#: core/cheats.cpp:885
 msgid "Missing values"
 msgstr "Valores faltando"
 
-#: core/cheats.cpp:928
+#: core/cheats.cpp:932
 msgid "Missing address or value"
 msgstr "Valor ou endereço faltando"
 
-#: core/cheats.cpp:937 core/cheats.cpp:1041
+#: core/cheats.cpp:941 core/cheats.cpp:1045
 msgid "Unsupported cheat type"
 msgstr "Código de trapaça não suportado"
 
-#: core/cheats.cpp:945
+#: core/cheats.cpp:949
 msgid "Missing count or value"
 msgstr "Contador ou valor faltando"
 
-#: core/cheats.cpp:959 core/cheats.cpp:983
+#: core/cheats.cpp:963 core/cheats.cpp:987
 msgid "Missing count or destination address"
 msgstr "Contador ou endereço de destino faltando"
 
-#: core/cheats.cpp:971
+#: core/cheats.cpp:975
 msgid "Master codes aren't supported"
 msgstr "Código mestre não suportado"
 
-#: core/cheats.cpp:1001 core/cheats.cpp:1030
+#: core/cheats.cpp:1005 core/cheats.cpp:1034
 msgid "Unsupported conditional code"
 msgstr "Código condicional não suportado"
 
-#: core/cheats.cpp:1011
+#: core/cheats.cpp:1015
 msgid "Missing test address"
 msgstr "Endereço de teste faltando"
 
-#: core/cheats.cpp:1112
+#: core/cheats.cpp:1116
 msgid "Can't save cheat file"
 msgstr "Não foi possível salvar o arquivo de trapaça"
 
@@ -696,284 +703,352 @@ msgstr "Mostrar VMU durante o jogo"
 msgid "Show the VMU LCD screens while in-game"
 msgstr "Mostrar a tela LCD do VMU enquanto joga"
 
-#: core/ui/settings_video.cpp:222
+#: core/ui/settings_video.cpp:223
+msgid "Show VMU on Secondary Display"
+msgstr ""
+
+#: core/ui/settings_video.cpp:224
+msgid "Show the VMU LCD screen of controller A on the secondary display, if any"
+msgstr ""
+
+#: core/ui/settings_video.cpp:228
+msgid "Secondary Display Scaling:"
+msgstr ""
+
+#: core/ui/settings_video.cpp:230
+msgid "Fit"
+msgstr ""
+
+#: core/ui/settings_video.cpp:230
+msgid "Scale the VMU screen to fill as much of the display as possible while keeping its aspect ratio"
+msgstr ""
+
+#: core/ui/settings_video.cpp:232
+msgid "Integer"
+msgstr ""
+
+#: core/ui/settings_video.cpp:232
+msgid "Scale the VMU screen by the largest whole number that fits, for evenly sized pixels"
+msgstr ""
+
+#: core/ui/settings_video.cpp:234
+msgid "Stretch"
+msgstr ""
+
+#: core/ui/settings_video.cpp:234
+msgid "Stretch the VMU screen to fill the whole display, ignoring its aspect ratio"
+msgstr ""
+
+#: core/ui/settings_video.cpp:239
 msgid "Full Framebuffer Emulation"
 msgstr "Emulação completa do Framebuffer"
 
-#: core/ui/settings_video.cpp:223
+#: core/ui/settings_video.cpp:240
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
 msgstr "Emulação totalmente precisa do framebuffer da VRAM. Útil em jogos que acessam diretamente o framebuffer para efeitos especiais. Muito lento e incompatível com upscaling e tela cheia."
 
-#: core/ui/settings_video.cpp:227
+#: core/ui/settings_video.cpp:242
 msgid "Load Custom Textures"
 msgstr "Carregar Texturas Customizadas"
 
-#: core/ui/settings_video.cpp:228
-msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr "Carregar texturas /alta-resolução customizadas de /data/texture<game id>"
+#: core/ui/settings_video.cpp:243
+msgid "Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."
+msgstr ""
 
-#: core/ui/settings_video.cpp:232
-msgid "Preload Custom Textures"
-msgstr "Pré-carregar texturas customizadas"
+#: core/ui/settings_video.cpp:252
+msgid "Custom Texture Preloading"
+msgstr ""
 
-#: core/ui/settings_video.cpp:233
-msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr "Pré-carregar texturas customizadas no início do jogo. Pode melhorar o desempenho, mas aumenta o uso de memória"
+#: core/ui/settings_video.cpp:254
+msgid "Off"
+msgstr ""
 
-#: core/ui/settings_video.cpp:239
+#: core/ui/settings_video.cpp:257
+msgid "Load custom textures as needed."
+msgstr ""
+
+#: core/ui/settings_video.cpp:259
+msgid "System Memory"
+msgstr ""
+
+#: core/ui/settings_video.cpp:262
+msgid "Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."
+msgstr ""
+
+#: core/ui/settings_video.cpp:266
+msgid "Video Memory"
+msgstr ""
+
+#: core/ui/settings_video.cpp:271
+msgid "Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack."
+msgstr ""
+
+#: core/ui/settings_video.cpp:272
+msgid "Video-memory custom texture preloading is not supported by the current renderer."
+msgstr ""
+
+#: core/ui/settings_video.cpp:281
 msgid "Aspect Ratio"
 msgstr "Proporção da imagem"
 
-#: core/ui/settings_video.cpp:241
+#: core/ui/settings_video.cpp:283
 msgid "Widescreen"
 msgstr "Tela Cheia"
 
-#: core/ui/settings_video.cpp:242
+#: core/ui/settings_video.cpp:284
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
 msgstr "Desenha a geometria fora da relação de 4:3 normal. Pode produzir falhas gráficas nas áreas exibidas.\n"
 "Ajusta a imagem e mostra todo o conteúdo em 16:9."
 
-#: core/ui/settings_video.cpp:247
+#: core/ui/settings_video.cpp:289
 msgid "Super Widescreen"
 msgstr "Super Tela Cheia"
 
-#: core/ui/settings_video.cpp:248
+#: core/ui/settings_video.cpp:290
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
 msgstr "Usa toda a largura da tela ou janela quando a proporção for maior que 16:9. Preenchimento do aspecto remove as barras pretas. Não compatível com escala inteira."
 
-#: core/ui/settings_video.cpp:251
+#: core/ui/settings_video.cpp:293
 msgid "Widescreen Game Cheats"
 msgstr "Trapaças em Jogos com Tela Cheia"
 
-#: core/ui/settings_video.cpp:252
+#: core/ui/settings_video.cpp:294
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
 msgstr "Modifica o jogo para ser exibido em formato anamórfico 16:9 e usa o alongamento de tela horizontal. Apenas alguns jogos são suportados."
 
-#: core/ui/settings_video.cpp:253
+#: core/ui/settings_video.cpp:297
+msgid "Stretch to Fill"
+msgstr ""
+
+#: core/ui/settings_video.cpp:298
+msgid "Stretch the screen to fill the entire screen or window."
+msgstr ""
+
+#: core/ui/settings_video.cpp:302
 msgid "Horizontal Stretching"
 msgstr "Alongamento Horizontal"
 
-#: core/ui/settings_video.cpp:254
+#: core/ui/settings_video.cpp:303
 msgid "Stretch the screen horizontally"
 msgstr "Esticar a tela horizontalmente"
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:305
 msgid "Rotate Screen 90°"
 msgstr "Girar a tela 90°"
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:305
 msgid "Rotate the screen 90° counterclockwise"
 msgstr "Girar a tela 90° no sentido anti-horário"
 
-#: core/ui/settings_video.cpp:260
+#: core/ui/settings_video.cpp:310
 msgid "Per Pixel Settings"
 msgstr "Configurações por Pixel"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "512 MB"
 msgstr "512 MB"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "1 GB"
 msgstr "1 GB"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "2 GB"
 msgstr "2 GB"
 
-#: core/ui/settings_video.cpp:263
+#: core/ui/settings_video.cpp:313
 msgid "4 GB"
 msgstr "4 GB"
 
-#: core/ui/settings_video.cpp:301
+#: core/ui/settings_video.cpp:351
 msgid "Pixel Buffer Size"
 msgstr "Tamanho do Buffer de Pixel"
 
-#: core/ui/settings_video.cpp:303
+#: core/ui/settings_video.cpp:353
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
 msgstr "Tamanho do buffer de píxeis"
 
-#: core/ui/settings_video.cpp:305
+#: core/ui/settings_video.cpp:355
 msgid "Maximum Layers"
 msgstr "Máximo de camadas"
 
-#: core/ui/settings_video.cpp:306
+#: core/ui/settings_video.cpp:356
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
 msgstr "Máximo de camadas transparentes. Aumente para cenas complexas; diminuir melhora desempenho."
 
-#: core/ui/settings_video.cpp:309
+#: core/ui/settings_video.cpp:359
 msgid "Performance"
 msgstr "Desempenho"
 
-#: core/ui/settings_video.cpp:311
+#: core/ui/settings_video.cpp:361
 msgid "Automatic Frame Skipping:"
 msgstr "Pular Quadros Automaticamente:"
 
-#: core/ui/settings_video.cpp:313 core/ui/settings_video.cpp:338
+#: core/ui/settings_video.cpp:363 core/ui/settings_video.cpp:388
 #: core/ui/settings_network.cpp:89
 msgid "Disabled"
 msgstr "Desabilitado"
 
-#: core/ui/settings_video.cpp:313
+#: core/ui/settings_video.cpp:363
 msgid "No frame skipping"
 msgstr "Não Pular Quadros"
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:365
 msgid "Normal"
 msgstr "Normal"
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:365
 msgid "Skip a frame when the GPU and CPU are both running slow"
 msgstr "Pular um quadro quando a GPU e a CPU estiverem lentas"
 
-#: core/ui/settings_video.cpp:317
+#: core/ui/settings_video.cpp:367
 msgid "Maximum"
 msgstr "Máximo"
 
-#: core/ui/settings_video.cpp:317
+#: core/ui/settings_video.cpp:367
 msgid "Skip a frame when the GPU is running slow"
 msgstr "Pular um quadro quando a GPU estiver lenta"
 
-#: core/ui/settings_video.cpp:320
+#: core/ui/settings_video.cpp:370
 msgid "Frame Skipping"
 msgstr "Pular Quadros"
 
-#: core/ui/settings_video.cpp:321
+#: core/ui/settings_video.cpp:371
 msgid "Number of frames to skip between two actually rendered frames"
 msgstr "Número de quadros para pular entre dois quadros renderizados"
 
-#: core/ui/settings_video.cpp:322
+#: core/ui/settings_video.cpp:372
 msgid "Shadows"
 msgstr "Sombras"
 
-#: core/ui/settings_video.cpp:323
+#: core/ui/settings_video.cpp:373
 msgid "Enable modifier volumes, usually used for shadows"
 msgstr "Ativar modificadores de volumes, geralmente usados para sombras"
 
-#: core/ui/settings_video.cpp:324
+#: core/ui/settings_video.cpp:374
 msgid "Fog"
 msgstr "Névoa"
 
-#: core/ui/settings_video.cpp:324
+#: core/ui/settings_video.cpp:374
 msgid "Enable fog effects"
 msgstr "Ativar efeito de Névoa"
 
-#: core/ui/settings_video.cpp:327 core/ui/settings.cpp:311
+#: core/ui/settings_video.cpp:377 core/ui/settings.cpp:311
 msgid "Advanced"
 msgstr "Avançado"
 
-#: core/ui/settings_video.cpp:329
+#: core/ui/settings_video.cpp:379
 msgid "Delay Frame Swapping"
 msgstr "Atrasar troca de quadro"
 
-#: core/ui/settings_video.cpp:330
+#: core/ui/settings_video.cpp:380
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
 msgstr "Útil para evitar telas intermitentes ou defeitos de vídeo. Não recomendado em plataformas lentas"
 
-#: core/ui/settings_video.cpp:331
+#: core/ui/settings_video.cpp:381
 msgid "Fix Upscale Bleeding Edge"
 msgstr "Corrigir vazamento nas bordas do upscaling"
 
-#: core/ui/settings_video.cpp:332
+#: core/ui/settings_video.cpp:382
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
 msgstr "Ajuda com vazamento de textura ao mudar escala. Desativar pode ajudar se os píxeis estão deformados pela mudança de escala em jogos 2D (MVC2, CVS, KOF etc.)"
 
-#: core/ui/settings_video.cpp:333
+#: core/ui/settings_video.cpp:383
 msgid "Native Depth Interpolation"
 msgstr "Interpolação de Profundidade Nativa"
 
-#: core/ui/settings_video.cpp:334
+#: core/ui/settings_video.cpp:384
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
 msgstr "Ajuda com corrupção de textura e problemas de profundidade em GPU da AMD. Pode ajudar em GPU da Intel em alguns casos."
 
-#: core/ui/settings_video.cpp:335
+#: core/ui/settings_video.cpp:385
 msgid "Copy Rendered Textures to VRAM"
 msgstr "Copiar Texturas Renderizadas para VRAM"
 
-#: core/ui/settings_video.cpp:336
+#: core/ui/settings_video.cpp:386
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
 msgstr "Copiar texturas renderizadas de volta para VRAM. Mais lento porém preciso"
 
-#: core/ui/settings_video.cpp:375
+#: core/ui/settings_video.cpp:425
 msgid "Anisotropic Filtering"
 msgstr "Filtragem anisotrópica"
 
-#: core/ui/settings_video.cpp:377
+#: core/ui/settings_video.cpp:427
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
 msgstr "Valores maiores fazem com que as texturas vistas em ângulos ofuscados pareçam mais nítidos, mas são mais exigentes com a GPU. Esta opção só tem um impacto visível em texturas mipmapeadas."
 
-#: core/ui/settings_video.cpp:379
+#: core/ui/settings_video.cpp:429
 msgid "Texture Filtering:"
 msgstr "Filtragem de Texturas:"
 
-#: core/ui/settings_video.cpp:381 core/ui/settings_general.cpp:231
-#: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
+#: core/ui/settings_video.cpp:431 core/ui/settings_general.cpp:237
+#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:246
 msgid "Default"
 msgstr "Padrão"
 
-#: core/ui/settings_video.cpp:381
+#: core/ui/settings_video.cpp:431
 msgid "Use the game's default texture filtering"
 msgstr "Usar filtragem de texturas padrão do jogo"
 
-#: core/ui/settings_video.cpp:383
+#: core/ui/settings_video.cpp:433
 msgid "Force Nearest-Neighbor"
 msgstr "Forçar Mais Próximo"
 
-#: core/ui/settings_video.cpp:383
+#: core/ui/settings_video.cpp:433
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
 msgstr "Forçar filtragem mais próxima para todas as texturas. Aparência mais nítida, mas pode causar vários problemas de renderização. Esta opção geralmente não afeta o desempenho."
 
-#: core/ui/settings_video.cpp:385
+#: core/ui/settings_video.cpp:435
 msgid "Force Linear"
 msgstr "Força Linear"
 
-#: core/ui/settings_video.cpp:385
+#: core/ui/settings_video.cpp:435
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
 msgstr "Forçar filtragem linear para todas as texturas. Aparência suave, mas pode causar vários problemas de renderização. Esta opção geralmente não afeta o desempenho."
 
-#: core/ui/settings_video.cpp:388
+#: core/ui/settings_video.cpp:438
 msgid "Show FPS Counter"
 msgstr "Mostrar contador de FPS"
 
-#: core/ui/settings_video.cpp:388
+#: core/ui/settings_video.cpp:438
 msgid "Show on-screen frame/sec counter"
 msgstr "Mostrar contador de quadros/segundos na tela"
 
-#: core/ui/settings_video.cpp:393
+#: core/ui/settings_video.cpp:443
 msgid "Video Routing (Syphon)"
 msgstr "Roteamento de Vídeo (Syphon)"
 
-#: core/ui/settings_video.cpp:396
+#: core/ui/settings_video.cpp:446
 msgid "Video Routing (Spout)"
 msgstr "Roteamento de Vídeo (Spout)"
 
-#: core/ui/settings_video.cpp:398
+#: core/ui/settings_video.cpp:448
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
 msgstr "Roteamento de Vídeo (Somente disponível com OpenGL ou DirectX 11)"
 
-#: core/ui/settings_video.cpp:404
+#: core/ui/settings_video.cpp:454
 msgid "Send video content to another program"
 msgstr "Enviar conteúdo de vídeo para outro programa"
 
-#: core/ui/settings_video.cpp:405
+#: core/ui/settings_video.cpp:455
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
 msgstr "ex.: encaminhar a textura da GPU diretamente para o OBS Estúdio em vez de usar a captura de Tela/Janela, que consome muita CPU"
 
-#: core/ui/settings_video.cpp:409
+#: core/ui/settings_video.cpp:459
 msgid "Scale down before sending"
 msgstr "Diminuir escala antes de enviar"
 
-#: core/ui/settings_video.cpp:409
+#: core/ui/settings_video.cpp:459
 msgid "Could increase performance when sharing a smaller texture, YMMV"
 msgstr "Pode aumentar o desempenho ao compartilhar uma textura menor, YMMV"
 
-#: core/ui/settings_video.cpp:413
+#: core/ui/settings_video.cpp:463
 msgid "Output vertical resolution"
 msgstr "Resolução vertical de saída"
 
-#: core/ui/settings_video.cpp:418
+#: core/ui/settings_video.cpp:468
 #, c-format
 msgid "Output texture size: %d x %d"
 msgstr "Tamanho da textura de saída: %d x %d"
@@ -982,12 +1057,12 @@ msgstr "Tamanho da textura de saída: %d x %d"
 msgid "Set"
 msgstr "Definir"
 
-#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
+#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:299
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
 msgstr "Adicionar"
 
-#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:745
+#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:769
 msgid "Select a Content Folder"
 msgstr "Selecionar uma pasta de conteúdo"
 
@@ -995,406 +1070,414 @@ msgstr "Selecionar uma pasta de conteúdo"
 msgid "System Default"
 msgstr "Padrão do sistema"
 
-#: core/ui/settings_general.cpp:211
+#: core/ui/settings_general.cpp:217
 msgid "UI Language"
 msgstr "Idioma da “interface”"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "Japanese"
 msgstr "Japonês"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "English"
 msgstr "Inglês"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "German"
 msgstr "Alemão"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "French"
 msgstr "Francês"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "Spanish"
 msgstr "Espanhol"
 
-#: core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:237
 msgid "Italian"
 msgstr "Italiano"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:238
 msgid "Dreamcast Language"
 msgstr "Linguagem Dreamcast"
 
-#: core/ui/settings_general.cpp:233
+#: core/ui/settings_general.cpp:239
 msgid "The language as configured in the Dreamcast BIOS"
 msgstr "O idioma conforme configurado na Bios do Dreamcast"
 
-#: core/ui/settings_general.cpp:236
+#: core/ui/settings_general.cpp:242
 msgid "Broadcast"
 msgstr "Transmitir"
 
-#: core/ui/settings_general.cpp:237
+#: core/ui/settings_general.cpp:243
 msgid "TV broadcasting standard for non-VGA modes"
 msgstr "Padrão de transmissão de TV para modos não-VGA"
 
-#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:246 core/ui/settings_general.cpp:247
 msgid "Japan"
 msgstr "Japão"
 
-#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:246 core/ui/settings_general.cpp:247
 msgid "USA"
 msgstr "EUA"
 
-#: core/ui/settings_general.cpp:240
+#: core/ui/settings_general.cpp:246
 msgid "Europe"
 msgstr "Europa"
 
-#: core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:247
 msgctxt "region"
 msgid "Export"
 msgstr "Exportar"
 
-#: core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:247
 msgid "Korea"
 msgstr "Coreia"
 
-#: core/ui/settings_general.cpp:243
+#: core/ui/settings_general.cpp:249
 msgid "Region"
 msgstr "Região"
 
-#: core/ui/settings_general.cpp:244
+#: core/ui/settings_general.cpp:250
 msgid "BIOS region"
 msgstr "Região da BIOS"
 
-#: core/ui/settings_general.cpp:246
+#: core/ui/settings_general.cpp:252
 msgid "VGA"
 msgstr "VGA"
 
-#: core/ui/settings_general.cpp:246
+#: core/ui/settings_general.cpp:252
 msgid "RGB Component"
 msgstr "RGB Componente"
 
-#: core/ui/settings_general.cpp:246
+#: core/ui/settings_general.cpp:252
 msgid "TV Composite"
 msgstr "Cabo Composto"
 
-#: core/ui/settings_general.cpp:253
+#: core/ui/settings_general.cpp:259
 msgid "Cable"
 msgstr "Cabo"
 
-#: core/ui/settings_general.cpp:266
+#: core/ui/settings_general.cpp:272
 msgid "Video connection type"
 msgstr "Tipo de conexão vídeo"
 
-#: core/ui/settings_general.cpp:276
+#: core/ui/settings_general.cpp:282
 msgid "Content Location"
 msgstr "Localização do conteúdo"
 
-#: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
+#: core/ui/settings_general.cpp:303 core/ui/settings_general.cpp:367
 msgid "Rescan Content"
 msgstr "Escanear conteúdo novamente"
 
-#: core/ui/settings_general.cpp:309
+#: core/ui/settings_general.cpp:315
 msgid "The folders where your games are stored"
 msgstr "As pastas onde seus jogos estão armazenados"
 
-#: core/ui/settings_general.cpp:315
+#: core/ui/settings_general.cpp:321
 msgid "Data Folder"
 msgstr "Pasta de Dados"
 
-#: core/ui/settings_general.cpp:323
+#: core/ui/settings_general.cpp:329
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
 msgstr "A pasta que contém arquivos BIOS, assim como estados salvos e VMUs salvos"
 
-#: core/ui/settings_general.cpp:328
+#: core/ui/settings_general.cpp:334
 msgid "Home Folder"
 msgstr "Pasta principal"
 
-#: core/ui/settings_general.cpp:337
+#: core/ui/settings_general.cpp:343
 msgctxt "action"
 msgid "Import"
 msgstr "Importar"
 
-#: core/ui/settings_general.cpp:340
+#: core/ui/settings_general.cpp:346
 msgctxt "action"
 msgid "Export"
 msgstr "Exportar"
 
-#: core/ui/settings_general.cpp:345
+#: core/ui/settings_general.cpp:351
 msgid "Reveal in Finder"
 msgstr "Mostrar no Finder"
 
-#: core/ui/settings_general.cpp:355
+#: core/ui/settings_general.cpp:361
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
 msgstr "A pasta onde o Flycast salva os arquivos de configuração e VMUs. Os arquivos de BIOS devem estar em uma subpasta chamada \"data\""
 
-#: core/ui/settings_general.cpp:366
+#: core/ui/settings_general.cpp:372
 msgid "Box Art Game List"
 msgstr "Lista de Jogos de Arte de Caixa"
 
-#: core/ui/settings_general.cpp:367
+#: core/ui/settings_general.cpp:373
 msgid "Display game cover art in the game list."
 msgstr "Exibir capa do jogo na lista de jogos."
 
-#: core/ui/settings_general.cpp:368
+#: core/ui/settings_general.cpp:374
 msgid "Fetch Box Art"
 msgstr "Buscar Arte da Caixa"
 
-#: core/ui/settings_general.cpp:369
+#: core/ui/settings_general.cpp:375
 msgid "Fetch cover images from TheGamesDB.net."
 msgstr "Buscar imagens no TheGamesDB.net."
 
-#: core/ui/settings_general.cpp:370
+#: core/ui/settings_general.cpp:376
 msgid "UI Scaling"
 msgstr "Dimensionamento da Interface"
 
-#: core/ui/settings_general.cpp:370
+#: core/ui/settings_general.cpp:376
 msgid "Adjust the size of UI elements and fonts."
 msgstr "Ajuste o tamanho dos elementos e fontes da ‘interface’."
 
-#: core/ui/settings_general.cpp:375
+#: core/ui/settings_general.cpp:381
 msgid "Apply"
 msgstr "Aplicar"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Dark"
 msgstr "Escuro"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Light"
 msgstr "Claro"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Dreamcast"
 msgstr "Dreamcast"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "High Contrast"
 msgstr "Alto Contraste"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Nintendo"
 msgstr "Nintendo"
 
-#: core/ui/settings_general.cpp:381
+#: core/ui/settings_general.cpp:387
 msgid "Aqua Chill"
 msgstr "Aqua Chill"
 
-#: core/ui/settings_general.cpp:383
+#: core/ui/settings_general.cpp:389
 msgid "UI Theme"
 msgstr "Tema da Interface"
 
-#: core/ui/settings_general.cpp:384
+#: core/ui/settings_general.cpp:390
 msgid "Select the UI color theme."
 msgstr "Selecione a cor da Interface do usuário."
 
-#: core/ui/settings_general.cpp:390
+#: core/ui/settings_general.cpp:396
 msgid "Hide Legacy Naomi Roms"
 msgstr "Esconder Roms Legadas da Naomi"
 
-#: core/ui/settings_general.cpp:391
+#: core/ui/settings_general.cpp:397
 msgid "Hide .bin and .dat files from the content browser"
 msgstr "Ocultar arquivos .bin e .dat do navegador de conteúdo"
 
-#: core/ui/settings_general.cpp:394
+#: core/ui/settings_general.cpp:400
 msgid "Use SAF File Picker"
 msgstr "Usar Seletor de Arquivos SAF"
 
-#: core/ui/settings_general.cpp:395
+#: core/ui/settings_general.cpp:401
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
 msgstr "Usar o seletor de arquivos de acesso ao armazenamento do Android para selecionar pastas e arquivos. Ignorado no Android 10 ou posterior."
 
-#: core/ui/settings_general.cpp:398
+#: core/ui/settings_general.cpp:404
 msgid "Automatic State:"
 msgstr "Estado Automático:"
 
-#: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
+#: core/ui/settings_general.cpp:405 core/ui/gui_cheats.cpp:104
 msgid "Load"
 msgstr "Carregar"
 
-#: core/ui/settings_general.cpp:400
+#: core/ui/settings_general.cpp:406
 msgid "Load the last saved state of the game when starting"
 msgstr "Carregar o último estado salvo do jogo quando iniciar"
 
-#: core/ui/settings_general.cpp:402 core/ui/vgamepad.cpp:73
+#: core/ui/settings_general.cpp:408 core/ui/vgamepad.cpp:73
 msgid "Save"
 msgstr "Salvar"
 
-#: core/ui/settings_general.cpp:403
+#: core/ui/settings_general.cpp:409
 msgid "Save the state of the game when stopping"
 msgstr "Salvar o estado do jogo quando parar"
 
-#: core/ui/settings_general.cpp:404
+#: core/ui/settings_general.cpp:410
 msgid "Naomi Free Play"
 msgstr "Jogar Naomi no modo sem fichas"
 
-#: core/ui/settings_general.cpp:404
+#: core/ui/settings_general.cpp:410
 msgid "Configure Naomi games in Free Play mode."
 msgstr "Configure os jogos Naomi no modo sem fichas."
 
-#: core/ui/settings_general.cpp:406
+#: core/ui/settings_general.cpp:412
 msgid "Discord Presence"
 msgstr "Presença no Discord"
 
-#: core/ui/settings_general.cpp:406
+#: core/ui/settings_general.cpp:412
 msgid "Show which game you are playing on Discord"
 msgstr "Mostra qual jogo você está jogando no Discord"
 
-#: core/ui/settings_general.cpp:409
+#: core/ui/settings_general.cpp:415
 msgid "Enable RetroAchievements"
 msgstr "Habilitar Retro-Conquistas"
 
-#: core/ui/settings_general.cpp:409
+#: core/ui/settings_general.cpp:415
 msgid "Track your game achievements using RetroAchievements.org"
 msgstr "Acompanhe as conquistas do seu jogo usando RetroAchievements.org"
 
-#: core/ui/settings_general.cpp:414
+#: core/ui/settings_general.cpp:419
+msgid "Show Achievement Popups"
+msgstr ""
+
+#: core/ui/settings_general.cpp:420
+msgid "Shows achievement popups in game."
+msgstr ""
+
+#: core/ui/settings_general.cpp:422
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
 msgstr "Ativar modo hardcore de Retro-Conquistas. Neste modo, não é permitido usar trapaças nem carregar estado salvo."
 
-#: core/ui/settings_general.cpp:415
+#: core/ui/settings_general.cpp:423
 msgid "Username"
 msgstr "Nome de usuário"
 
-#: core/ui/settings_general.cpp:423
+#: core/ui/settings_general.cpp:431
 msgid "Authentication successful"
 msgstr "Autenticação bem-sucedida"
 
-#: core/ui/settings_general.cpp:426
+#: core/ui/settings_general.cpp:434
 msgid "Logout"
 msgstr "Sair"
 
-#: core/ui/settings_general.cpp:432
+#: core/ui/settings_general.cpp:440
 msgid "Password"
 msgstr "Senha"
 
-#: core/ui/settings_general.cpp:436
+#: core/ui/settings_general.cpp:444
 msgid "Authenticating..."
 msgstr "Autenticando..."
 
-#: core/ui/settings_general.cpp:449
+#: core/ui/settings_general.cpp:457
 msgid "Login"
 msgstr "Entrar"
 
-#: core/ui/settings_general.cpp:464
+#: core/ui/settings_general.cpp:472
 msgid "Custom Paths"
 msgstr "Paths Personalizados"
 
-#: core/ui/settings_general.cpp:466
+#: core/ui/settings_general.cpp:474
 msgid "BIOS Folders"
 msgstr "Pastas da BIOS"
 
-#: core/ui/settings_general.cpp:466
+#: core/ui/settings_general.cpp:474
 msgid "Select a BIOS folder"
 msgstr "Selecione uma pasta BIOS"
 
-#: core/ui/settings_general.cpp:467
+#: core/ui/settings_general.cpp:475
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
 msgstr "Pastas que contêm arquivos BIOS (por exemplo, dc_boot.bin ou dc_bios.bin) e BIOS de arcade"
 
-#: core/ui/settings_general.cpp:471
+#: core/ui/settings_general.cpp:479
 msgid "VMU Folder"
 msgstr "Pasta do VMU"
 
-#: core/ui/settings_general.cpp:471
+#: core/ui/settings_general.cpp:479
 msgid "Select the VMU folder"
 msgstr "Selecionar pasta do VMU"
 
-#: core/ui/settings_general.cpp:472
+#: core/ui/settings_general.cpp:480
 msgid "Folder where VMU (.bin) saves are stored"
 msgstr "Pasta onde os saves do VMU (.bin) são armazenados"
 
-#: core/ui/settings_general.cpp:475
+#: core/ui/settings_general.cpp:483
 msgid "Savestate Folders"
 msgstr "Pastas de Save State"
 
-#: core/ui/settings_general.cpp:475
+#: core/ui/settings_general.cpp:483
 msgid "Select a savestate folder"
 msgstr "Selecionar uma pasta de save state"
 
-#: core/ui/settings_general.cpp:476
+#: core/ui/settings_general.cpp:484
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
 msgstr "Pastas para estados salvos. O primeiro caminho é usado para novos estados; todas são pesquisadas ao carregar"
 
-#: core/ui/settings_general.cpp:479
+#: core/ui/settings_general.cpp:487
 msgid "Game Save Folder"
 msgstr "Pasta de Save do Jogo"
 
-#: core/ui/settings_general.cpp:479
+#: core/ui/settings_general.cpp:487
 msgid "Select the game save folder"
 msgstr "Selecionar a pasta para salvar o jogo"
 
-#: core/ui/settings_general.cpp:480
+#: core/ui/settings_general.cpp:488
 msgid "Folder for game save data (e.g. arcade NVRAM)"
 msgstr "Pasta para dados de jogo salvo (ex. arcade NVRAM)"
 
-#: core/ui/settings_general.cpp:484
+#: core/ui/settings_general.cpp:492
 msgid "Texture Pack Folders"
 msgstr "Pastas de Pacotes de Texturas"
 
-#: core/ui/settings_general.cpp:484
+#: core/ui/settings_general.cpp:492
 msgid "Select a texture pack folder"
 msgstr "Selecionar uma pasta de pacote de textura"
 
-#: core/ui/settings_general.cpp:485
+#: core/ui/settings_general.cpp:493
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
 msgstr "Pastas contendo texturas/<gameId> ou <gameId> sob uma subpasta de texturas"
 
-#: core/ui/settings_general.cpp:489
+#: core/ui/settings_general.cpp:497
 msgid "Texture Dump Folder"
 msgstr "Pasta de Descarga de Textura"
 
-#: core/ui/settings_general.cpp:489
+#: core/ui/settings_general.cpp:497
 msgid "Select the texture dump folder"
 msgstr "Selecionar pasta de despejo de texturas"
 
-#: core/ui/settings_general.cpp:490
+#: core/ui/settings_general.cpp:498
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
 msgstr "Pasta onde os despejos de texturas são salvos. As subpastas específicas dos jogos serão criadas automaticamente"
 
-#: core/ui/settings_general.cpp:493
+#: core/ui/settings_general.cpp:501
 msgid "Box Art Folder"
 msgstr "Pasta de Capas"
 
-#: core/ui/settings_general.cpp:493
+#: core/ui/settings_general.cpp:501
 msgid "Select the box art folder"
 msgstr "Selecionar pasta de Capas"
 
-#: core/ui/settings_general.cpp:494
+#: core/ui/settings_general.cpp:502
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
 msgstr "Pasta que contém imagens de capa (png/jpg). Se estiver vazia, o Flycast usará a pasta padrão Home Folder/boxart para transferências"
 
-#: core/ui/settings_general.cpp:497
+#: core/ui/settings_general.cpp:505
 msgid "Controller Mapping Folders"
 msgstr "Pasta de Mapeamento de Controles"
 
-#: core/ui/settings_general.cpp:497
+#: core/ui/settings_general.cpp:505
 msgid "Select a controller mapping folder"
 msgstr "Selecionar Pasta de Mapeamento de Controles"
 
-#: core/ui/settings_general.cpp:498
+#: core/ui/settings_general.cpp:506
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
 msgstr "Pastas contendo arquivos de mapeamento do controlador (.cfg). O emulador também procura em home folder/mappings. Mapeamentos por jogo usam sufixos com _<gameId>.cfg"
 
-#: core/ui/settings_general.cpp:501
+#: core/ui/settings_general.cpp:509
 msgid "Cheat Folders"
 msgstr "Pastas de trapaças"
 
-#: core/ui/settings_general.cpp:501
+#: core/ui/settings_general.cpp:509
 msgid "Select a cheat folder"
 msgstr "Selecionar uma pasta trapaça"
 
-#: core/ui/settings_general.cpp:502
+#: core/ui/settings_general.cpp:510
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
 msgstr "Pastas que contêm arquivos de trapaça (.cht/.txt) nomeadas com o ID do jogo. Flycast carregará automaticamente arquivos correspondentes se estiver presente"
 
-#: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
+#: core/ui/gui_chat.h:49 core/ui/gui_chat.h:51
 msgid "P2"
 msgstr "P2"
 
-#: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
+#: core/ui/gui_chat.h:49 core/ui/gui_chat.h:51
 msgid "P1"
 msgstr "P1"
 
@@ -1587,7 +1670,7 @@ msgid "Menu"
 msgstr "Menu"
 
 #: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:283
-#: core/ui/gui.cpp:625 core/ui/gui.cpp:894
+#: core/ui/gui.cpp:649 core/ui/gui.cpp:911
 msgid "Exit"
 msgstr "Sair"
 
@@ -1600,12 +1683,12 @@ msgid "Fast-forward"
 msgstr "Adiantar"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
-#: core/ui/gui.cpp:637
+#: core/ui/gui.cpp:661
 msgid "Load State"
 msgstr "Carregador Estado"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
-#: core/ui/gui.cpp:645
+#: core/ui/gui.cpp:669
 msgid "Save State"
 msgstr "Salvar Estado"
 
@@ -1875,7 +1958,7 @@ msgstr "DreamLink: %s"
 msgid "Edit Layout"
 msgstr "Editar Layout"
 
-#: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:621 core/ui/gui.cpp:879
+#: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:645 core/ui/gui.cpp:903
 #: core/ui/settings.cpp:213
 msgid "Settings"
 msgstr "Configurações"
@@ -1929,187 +2012,192 @@ msgstr "Permitir o acesso de leitura e gravação ao armazenamento físico VMU v
 msgid "Crosshair Size"
 msgstr "Tamanho da Mira"
 
-#: core/ui/gui_achievements.cpp:286 core/ui/gui_cheats.cpp:103
+#: core/ui/gui_achievements.cpp:293 core/ui/gui_cheats.cpp:103
 msgid "Close"
 msgstr "Fechar"
 
-#: core/ui/gui_achievements.cpp:297
+#: core/ui/gui_achievements.cpp:304
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
 msgstr "Você desbloqueou %d conquistas das %d e %d pontos dos %d."
 
-#: core/ui/gui_achievements.cpp:325
+#: core/ui/gui_achievements.cpp:332
 msgid "Locked"
 msgstr "Bloqueado"
 
-#: core/ui/gui_achievements.cpp:325
+#: core/ui/gui_achievements.cpp:332
 msgid "Active Challenges"
 msgstr "Desafios Ativos"
 
-#: core/ui/gui_achievements.cpp:325
+#: core/ui/gui_achievements.cpp:332
 msgid "Almost There"
 msgstr "Quase lá"
 
-#: core/ui/gui_achievements.cpp:327
+#: core/ui/gui_achievements.cpp:334
 msgid "Unlocked"
 msgstr "Desbloqueado"
 
-#: core/ui/gui_achievements.cpp:327
+#: core/ui/gui_achievements.cpp:334
 msgid "Recently Unlocked"
 msgstr "Desbloqueado recentemente"
 
-#: core/ui/mainui.cpp:66
+#: core/ui/mainui.cpp:67
 msgid "Renderer error:"
 msgstr "Erro na renderização"
 
-#: core/ui/mainui.cpp:67
+#: core/ui/mainui.cpp:68
 msgid "The game has been paused but it is recommended to restart Flycast"
 msgstr "O jogo foi pausado, mas é recomendado reiniciar o Flycast"
 
-#: core/ui/mainui.cpp:87
+#: core/ui/mainui.cpp:88
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
 msgstr "Inicialização de renderização falhou.\n"
 "Por favor, selecione uma API gráfica diferente"
 
-#: core/ui/gui.cpp:469
+#: core/ui/gui.cpp:491
 msgid "Flycast has stopped."
 msgstr "Flycast parou."
 
-#: core/ui/gui.cpp:576
+#: core/ui/gui.cpp:578
+#, c-format
+msgid "UID: %s"
+msgstr ""
+
+#: core/ui/gui.cpp:600
 msgid "Resume"
 msgstr "Continuar"
 
-#: core/ui/gui.cpp:585
+#: core/ui/gui.cpp:609
 msgid "Cheats"
 msgstr "Trapaças"
 
-#: core/ui/gui.cpp:592
+#: core/ui/gui.cpp:616
 msgid "Achievements"
 msgstr "Conquistas"
 
-#: core/ui/gui.cpp:598
+#: core/ui/gui.cpp:622
 msgid "Barcode Card"
 msgstr "Cartão de código de barras"
 
-#: core/ui/gui.cpp:609
+#: core/ui/gui.cpp:633
 msgid "Insert Disk"
 msgstr "Inserir Disco"
 
-#: core/ui/gui.cpp:609
+#: core/ui/gui.cpp:633
 msgid "Eject Disk"
 msgstr "Ejetar Disco"
 
-#: core/ui/gui.cpp:625
+#: core/ui/gui.cpp:649
 msgid "Close Game"
 msgstr "Fechar Jogo"
 
-#: core/ui/gui.cpp:654
+#: core/ui/gui.cpp:678
 #, c-format
 msgid "Slot %d"
 msgstr "Slot %d"
 
-#: core/ui/gui.cpp:664
+#: core/ui/gui.cpp:688
 msgid "Empty"
 msgstr "Vazio"
 
-#: core/ui/gui.cpp:692 core/ui/gui_cheats.cpp:48
+#: core/ui/gui.cpp:716 core/ui/gui_cheats.cpp:48
 msgid "OK"
 msgstr "OK"
 
-#: core/ui/gui.cpp:712 core/ui/gui.cpp:713
+#: core/ui/gui.cpp:736 core/ui/gui.cpp:737
 msgid "Incorrect Content Location?"
 msgstr "Localização de conteúdo incorreta?"
 
-#: core/ui/gui.cpp:716
+#: core/ui/gui.cpp:740
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
 msgstr "Foram escaneadas %d pastas, mas nenhum jogo foi encontrado!"
 
-#: core/ui/gui.cpp:721
+#: core/ui/gui.cpp:745
 msgid "Reselect"
 msgstr "Selecionar novamente"
 
-#: core/ui/gui.cpp:730 core/ui/gui.cpp:908 core/ui/gui.cpp:1145
-#: core/ui/gui.cpp:1158 core/ui/gui.cpp:1301 core/ui/gui_cheats.cpp:47
-#: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
+#: core/ui/gui.cpp:754 core/ui/gui.cpp:935 core/ui/gui.cpp:1166
+#: core/ui/gui.cpp:1179 core/ui/gui.cpp:1331 core/ui/gui_cheats.cpp:47
+#: core/ui/gui_util.cpp:182 core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: core/ui/gui.cpp:875
+#: core/ui/gui.cpp:899
 msgid "GAMES"
 msgstr "JOGOS"
 
-#: core/ui/gui.cpp:882 core/ui/gui.cpp:883
+#: core/ui/gui.cpp:906 core/ui/gui.cpp:914
 msgid "Filter"
 msgstr "Filtrar"
 
-#: core/ui/gui.cpp:889 core/ui/gui.cpp:890
+#: core/ui/gui.cpp:908 core/ui/gui.cpp:919
 msgid "Load..."
 msgstr "Carregar..."
 
-#: core/ui/gui.cpp:1011
+#: core/ui/gui.cpp:1032
 msgid "Your game list is empty"
 msgstr "Sua lista de jogos está vazia"
 
-#: core/ui/gui.cpp:1021
+#: core/ui/gui.cpp:1042
 msgid "Add Game Folder"
 msgstr "Adicionar Pasta de Jogos"
 
-#: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
+#: core/ui/gui.cpp:1074 core/ui/gui.cpp:1085
 msgid "Invalid selection:"
 msgstr "Seleção inválida:"
 
-#: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
+#: core/ui/gui.cpp:1074 core/ui/gui.cpp:1085
 msgid "Flycast cannot write to this folder."
 msgstr "O Flycast não pode escrever nesta pasta."
 
-#: core/ui/gui.cpp:1092
+#: core/ui/gui.cpp:1113
 msgid "Select Flycast Home Folder"
 msgstr "Selecione a pasta inicial do Flycast"
 
-#: core/ui/gui.cpp:1126 core/ui/gui.cpp:1247 core/emulator.cpp:690
+#: core/ui/gui.cpp:1147 core/ui/gui.cpp:1278 core/emulator.cpp:723
 msgid "Starting..."
 msgstr "Iniciando..."
 
-#: core/ui/gui.cpp:1138
+#: core/ui/gui.cpp:1159
 msgid "Starting Network..."
 msgstr "Iniciando Rede..."
 
-#: core/ui/gui.cpp:1140
+#: core/ui/gui.cpp:1161
 msgid "Press Start to start the game now."
 msgstr "Pressione Start para iniciar o jogo agora."
 
-#: core/ui/gui.cpp:1148 core/ui/gui.cpp:1151
+#: core/ui/gui.cpp:1169 core/ui/gui.cpp:1172
 msgid "Start Now"
 msgstr ""
 
-#: core/ui/gui.cpp:1249
+#: core/ui/gui.cpp:1280
 msgid "Loading..."
 msgstr "Carregando..."
 
-#: core/ui/gui.cpp:1285
+#: core/ui/gui.cpp:1315
 msgid "Preloading custom textures"
 msgstr "Pré-carregar texturas customizadas"
 
-#: core/ui/gui.cpp:1288
+#: core/ui/gui.cpp:1318
 msgid "Preparing..."
 msgstr "Preparando..."
 
-#: core/ui/gui.cpp:1610
+#: core/ui/gui.cpp:1641
 #, c-format
 msgid "Save state slot %d"
 msgstr "Salvar Slot de estado"
 
-#: core/ui/gui.cpp:1678
+#: core/ui/gui.cpp:1709
 msgid "No screenshot available"
 msgstr "Nenhuma captura de tela disponível"
 
-#: core/ui/gui.cpp:1684
+#: core/ui/gui.cpp:1715
 msgid "Screenshot saved"
 msgstr "Captura de tela salva"
 
-#: core/ui/gui.cpp:1686
+#: core/ui/gui.cpp:1717
 msgid "Error saving screenshot"
 msgstr "Erro ao salvar captura de tela"
 
@@ -2325,19 +2413,19 @@ msgstr "Rede"
 msgid "About"
 msgstr "Sobre"
 
-#: core/ui/gui_util.cpp:120
+#: core/ui/gui_util.cpp:122
 msgid "Storage"
 msgstr "Armazenamento"
 
-#: core/ui/gui_util.cpp:132
+#: core/ui/gui_util.cpp:134
 msgid ".. Up to Parent Folder"
 msgstr ".. Até a Pasta Pai"
 
-#: core/ui/gui_util.cpp:170
+#: core/ui/gui_util.cpp:172
 msgid "Select Current Folder"
 msgstr "Selecionar Pasta Atual"
 
-#: core/ui/gui_util.cpp:229
+#: core/ui/gui_util.cpp:231
 msgid "(?)"
 msgstr "(?)"
 
@@ -2682,115 +2770,133 @@ msgstr "Carregar Controlador Personalizado"
 msgid "Do you want to reset Vulkan to use new driver?"
 msgstr "Deseja reiniciar o Vulkan para usar um novo controlador?"
 
-#: core/nullDC.cpp:195
+#: core/nullDC.cpp:194
 msgid "Save state failed - memory full"
 msgstr "Falha ao salvar estado - memória cheia"
 
-#: core/nullDC.cpp:222
+#: core/nullDC.cpp:221
 msgid "Cannot open save file"
 msgstr "Impossível abrir o arquivo de salvamento"
 
-#: core/nullDC.cpp:250
+#: core/nullDC.cpp:249
 msgid "State saved"
 msgstr "Estado salvo"
 
-#: core/nullDC.cpp:255
+#: core/nullDC.cpp:254
 msgid "Error saving state"
 msgstr "Erro ao salvar estado"
 
-#: core/nullDC.cpp:290
+#: core/nullDC.cpp:289
 msgid "Save state not found"
 msgstr "Estado salvo não encontrado"
 
-#: core/nullDC.cpp:330 core/nullDC.cpp:352 core/nullDC.cpp:366
+#: core/nullDC.cpp:329 core/nullDC.cpp:351 core/nullDC.cpp:365
 msgid "Failed to load state"
 msgstr "Falha no carregamento do estado"
 
-#: core/nullDC.cpp:330
+#: core/nullDC.cpp:329
 msgid "Not enough memory"
 msgstr "Memória insuficiente"
 
-#: core/nullDC.cpp:352
+#: core/nullDC.cpp:351
 msgid "I/O error"
 msgstr "Erro de entrada ou saída"
 
-#: core/network/dcnet.cpp:70
+#: core/network/dcnet.cpp:71
 msgid "Connected to DCNet with modem"
 msgstr "Conectado à DCNet com o modem"
 
-#: core/network/dcnet.cpp:246
+#: core/network/dcnet.cpp:247
 msgid "Connected to DCNet with Ethernet"
 msgstr "Conectado à DCNet com Ethernet"
 
-#: core/network/dcnet.cpp:628
+#: core/network/dcnet.cpp:640
 msgid "DCNet disconnected"
 msgstr "DCNet desconectada"
 
-#: core/network/dcnet.cpp:754
+#: core/network/dcnet.cpp:782 core/network/rawmodem.cpp:186
+#: core/network/capcom.cpp:433
 msgid "Host not found"
 msgstr "Servidor não encontrado"
 
-#: core/network/dcnet.cpp:798
+#: core/network/dcnet.cpp:827
 msgid "Can't connect to DCNet"
 msgstr "Não é possível conectar-se a DCNet"
 
-#: core/network/ggpo.cpp:221
+#: core/network/ggpo.cpp:222 core/network/capcom.cpp:344
 msgid "Connected to peer"
 msgstr "Conectado ao par"
 
-#: core/network/ggpo.cpp:225
+#: core/network/ggpo.cpp:226
 msgid "Synchronizing with peer"
 msgstr "Sincronizando com o par"
 
-#: core/network/ggpo.cpp:229
+#: core/network/ggpo.cpp:230
 msgid "Synchronized with peer"
 msgstr "Sincronizado com o par"
 
-#: core/network/ggpo.cpp:233
+#: core/network/ggpo.cpp:234
 msgid "Running"
 msgstr "Executando"
 
-#: core/network/ggpo.cpp:238
+#: core/network/ggpo.cpp:239
 msgid "Disconnected from peer"
 msgstr "Desconectado do par"
 
-#: core/network/ggpo.cpp:247
+#: core/network/ggpo.cpp:248
 msgid "Connection interrupted"
 msgstr "Conexão interrompida"
 
-#: core/network/ggpo.cpp:251
+#: core/network/ggpo.cpp:252
 msgid "Connection resumed"
 msgstr "Conexão retomada"
+
+#: core/network/ggpo.cpp:610
+#, c-format
+msgid "GGPO: unknown peer address %s"
+msgstr ""
 
 #: core/network/null_modem.h:173
 msgid "Network connected"
 msgstr "Rede conectada"
 
-#: core/network/ice.cpp:121
+#: core/network/rawmodem.cpp:46
+msgid "Connected to game server"
+msgstr ""
+
+#: core/network/rawmodem.cpp:134
+msgid "Network disconnected"
+msgstr ""
+
+#: core/network/rawmodem.cpp:172
+msgid "Can't connect to game server"
+msgstr ""
+
+#: core/network/ice.cpp:169
 msgid "Game not supported"
 msgstr "Jogo não suportado"
 
-#: core/network/ice.cpp:237
+#: core/network/ice.cpp:288
 msgid "Connection to lobby failed:"
 msgstr "Falha na conexão com a sala:"
 
-#: core/network/ice.cpp:444
+#: core/network/ice.cpp:497
 msgid "Connection failed"
 msgstr "Conexão falhou"
 
-#: core/network/ice.cpp:475
+#: core/network/ice.cpp:528 core/network/capcom.cpp:337
 msgid "Direct peer to peer"
 msgstr "Direcionar ponto a ponto"
 
-#: core/network/ice.cpp:477
+#: core/network/ice.cpp:530 core/network/capcom.cpp:339
 msgid "Using relay"
 msgstr "Usando retransmissão"
 
-#: core/network/ice.cpp:481
+#: core/network/ice.cpp:534 core/network/capcom.cpp:343
 msgid "NAT"
 msgstr "NAT"
 
-#: core/network/ice.cpp:490 core/network/ice.cpp:508
+#: core/network/ice.cpp:543 core/network/ice.cpp:561
 msgid "Connection lost"
 msgstr "Conexão perdida"
 
@@ -2817,12 +2923,20 @@ msgstr "Nenhum jogador conectado"
 msgid "Connecting to server"
 msgstr "Conectando ao servidor"
 
-#: core/network/naomi_network.cpp:254
+#: core/network/naomi_network.cpp:269
 #, c-format
 msgid "Connected as slot %d"
 msgstr "Conectado como slot %d"
 
-#: core/rend/dx9/d3d_renderer.cpp:320
+#: core/network/capcom.cpp:440
+msgid "Connected to battle server"
+msgstr ""
+
+#: core/network/capcom.cpp:447
+msgid "Can't connect to battle server"
+msgstr ""
+
+#: core/rend/dx9/d3d_renderer.cpp:328
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
 msgstr "DirectX 9 não suporta jogos Naomi 2. Selecione uma API gráfica diferente"
 
@@ -2842,24 +2956,53 @@ msgstr "Não foi possível salvar arquivos"
 msgid "Can't read zip"
 msgstr "Não foi possível ler zip"
 
-#: core/rend/gles/gles.cpp:700
+#: core/rend/gles/gles.cpp:826
 msgid "OpenGL shader compilation failed"
 msgstr "A compilação de aderar"
 
-#: core/rend/gles/gles.cpp:1065
+#: core/rend/gles/gles.cpp:1201
 msgid "OpenGL ES 3.0+ required for Naomi 2"
 msgstr "OpenGL ES 3.0+ necessário para Naomi 2"
 
-#: core/emulator.cpp:599
+#: core/rend/CustomTexture.cpp:1027
+msgid "Custom texture file could not be read"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1030
+msgid "PNG/JPEG custom texture could not be decoded"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1033
+msgid "Compressed custom texture could not be loaded.\n"
+"Supported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1036
+msgid "Custom texture exceeds the renderer's maximum texture dimensions"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1039
+msgid "Custom texture could not be uploaded to the GPU"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1042
+msgid "Custom texture memory allocation failed"
+msgstr ""
+
+#: core/rend/CustomTexture.cpp:1045
+msgid "DirectX 9 supports PNG/JPEG custom textures only"
+msgstr ""
+
+#: core/emulator.cpp:632
 #, c-format
 msgid "No BIOS file found in %s"
 msgstr "Nenhum arquivo BIOS encontrado no %s"
 
-#: core/emulator.cpp:615
+#: core/emulator.cpp:648
 msgid "This game requires a real BIOS"
 msgstr "Este jogo requer uma Bios verdadeira"
 
-#: core/emulator.cpp:665
+#: core/emulator.cpp:698
 msgid "Widescreen cheat activated"
 msgstr "Trapaça de Tela Cheia ativada"
 
@@ -2887,7 +3030,7 @@ msgstr "Toque do Mouse"
 msgid "Cannot initialize the graphics API"
 msgstr "Não é possível inicializar a API gráfica"
 
-#: shell/libretro/libretro.cpp:2157
+#: shell/libretro/libretro.cpp:2237
 msgid "Cannot run without JIT"
 msgstr "Não é possível executar sem JIT"
 
@@ -2931,7 +3074,7 @@ msgstr "Roda"
 msgid "Throttle"
 msgstr "Acelerador"
 
-#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:173
+#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:182
 msgid "Memory initialization failed"
 msgstr "Falha na alocação de memória"
 
@@ -2956,7 +3099,7 @@ msgstr "Início"
 msgid "Share"
 msgstr "Compartilhar"
 
-#: shell/switch/switch_main.cpp:86
+#: shell/switch/switch_main.cpp:93
 msgid "Not supported on Switch"
 msgstr "Não suportado no Switch"
 
