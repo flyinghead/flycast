@@ -178,6 +178,8 @@ int main(int argc, char *argv[])
 
 bool fullMmuNeeded(int index)
 {
+	if (settings.content.fullMmu)
+		return true;
 	const unsigned start = index < 0 ? 0 : index;
 	const unsigned end = index < 0 ? std::size(UTLB) : index + 1;
 	for (unsigned i = start; i < end; i++)

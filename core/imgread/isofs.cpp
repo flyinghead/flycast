@@ -18,6 +18,7 @@
  */
 #include "isofs.h"
 #include "iso9660.h"
+#include "stdclass.h"
 
 #include <cstring>
 
@@ -34,15 +35,21 @@ IsoFs::IsoFs(Disc *disc) : disc(disc)
 	baseFad = disc->GetBaseFAD();
 }
 
+// Read the Primary Volume Descriptor. Returns false if it isn't valid.
+bool IsoFs::readPvd(u8 *buf)
+{
+	disc->ReadSectors(baseFad + 16, 1, buf, 2048);
+	const iso9660_pvd_t *pvd = (const iso9660_pvd_t *)buf;
+	return pvd->type == 1 && !memcmp(pvd->id, ISO_STANDARD_ID, strlen(ISO_STANDARD_ID)) && pvd->version == 1;
+}
+
 IsoFs::Directory *IsoFs::getRoot()
 {
 	u8 temp[2048];
-	disc->ReadSectors(baseFad + 16, 1, temp, 2048);
-	// Primary Volume Descriptor
 	const iso9660_pvd_t *pvd = (const iso9660_pvd_t *)temp;
 
 	Directory *root = new Directory(this);
-	if (pvd->type == 1 && !memcmp(pvd->id, ISO_STANDARD_ID, strlen(ISO_STANDARD_ID)) && pvd->version == 1)
+	if (readPvd(temp))
 	{
 		u32 lba = decode_iso733(pvd->root_directory_record.extent);
 		u32 len = decode_iso733(pvd->root_directory_record.size);
@@ -59,6 +66,17 @@ IsoFs::Directory *IsoFs::getRoot()
 		root->data[0] = 0;
 	}
 	return root;
+}
+
+std::string IsoFs::getVolumeId()
+{
+	u8 temp[2048];
+	if (!readPvd(temp))
+		return {};
+	const iso9660_pvd_t *pvd = (const iso9660_pvd_t *)temp;
+	std::string volumeId(pvd->volume_id, sizeof(pvd->volume_id));
+	// padded with spaces, but stop at a null character just in case
+	return trim_trailing_ws(volumeId.c_str());
 }
 
 void IsoFs::Directory::reset()

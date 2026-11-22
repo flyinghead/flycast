@@ -22,6 +22,7 @@
 #include "cfg/option.h"
 #include "hw/aica/aica_if.h"
 #include "imgread/common.h"
+#include "imgread/isofs.h"
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/modules/mmu.h"
@@ -58,6 +59,17 @@
 
 settings_t settings;
 constexpr char const *BIOS_TITLE = "Dreamcast BIOS";
+
+extern Disc *disc;
+
+// ISO9660 volume ID of the current disc
+static std::string getVolumeId()
+{
+	if (disc == nullptr)
+		return {};
+	IsoFs isofs(disc);
+	return isofs.getVolumeId();
+}
 
 static void loadSpecialSettings()
 {
@@ -364,6 +376,12 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Disabling Native Depth Interpolation");
 			config::NativeDepthInterpolation.override(false);
 		}
+		// The copy protection of these games relies on TLB misses raised by store queue writes.
+		// Ganryu uses a generic product number so it's identified by its volume ID as well.
+		settings.content.fullMmu = prod_id == "T65181N"		// Ghost Blade, Pier Solar and the Great Architects
+				|| (prod_id == "T0000" && getVolumeId() == "GANRYU");
+		if (settings.content.fullMmu)
+			NOTICE_LOG(BOOT, "Enabling full MMU");
 		// Per-pixel transparent layers
 		int layers = 0;
 		if (prod_id == "MK-51011"			// Time Stalkers (US)
