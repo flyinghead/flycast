@@ -584,6 +584,19 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0d5fbc, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth",  true, 32, 0x0d5fbc, 0xe000000b, true);
 		}
+		else if (gameId == "DR001") {		// Sturmwind
+			// The loader at 8cf40000 and the menu program at 8c010000 check each other with MD5,
+			// and both copy the digest over the start of the program they're about to jump to.
+			// This only works on hardware because the digest stays in the operand cache, which
+			// is invalidated before it reaches memory. Write the digest to the MD5 context instead.
+			// Each program must be running before it's patched, or the other one's check fails.
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "loader running",       true, 32, 0x00f400a8, 0x40000001, true); // saved SR
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "loader md5 ifeq",      true, 32, 0x00f4091c, 0xd42d6583, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "loader md5 digest",    true, 16, 0x00f4091e, 0x6483, true);     // mov r8,r4
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "menu running",         true, 32, 0x000100a8, 0x40000001, true); // saved SR
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "menu md5 ifeq",        true, 32, 0x000107a4, 0x410bd439, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "menu md5 digest",      true, 16, 0x000107a4, 0x6483, true);     // mov r8,r4
+		}
 		else if (gameId == "SEGA STRIKE FIGHTER IN JPN-SLAVE")
 		{
 			// hack the slave sync procedure
@@ -693,7 +706,9 @@ void CheatManager::apply()
 			if (!cheat.builtIn && settings.network.online)
 				continue;
 			if (skipCheat) {
-				skipCheat = false;
+				// For built-in cheats, consecutive conditions must all be true
+				if (!cheat.builtIn || !cheat.isCondition())
+					skipCheat = false;
 				continue;
 			}
 			if (!cheat.enabled)

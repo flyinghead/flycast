@@ -308,3 +308,37 @@ cheats = "2"
 	ASSERT_EQ(2, ReadMem8_nommu(0x8c010001));
 
 }
+
+TEST_F(CheatManagerTest, TestBuiltInConditions)
+{
+	// Sturmwind built-in cheats: each patch has two conditions that must both be true
+	CheatManager mgr;
+	mgr.reset("DR001");
+
+	// loader code present but not running yet
+	WriteMem32_nommu(0x8cf4091c, 0xd42d6583);
+	WriteMem32_nommu(0x8cf400a8, 0);
+	mgr.apply();
+	ASSERT_EQ(0xd42d6583u, ReadMem32_nommu(0x8cf4091c));
+
+	// loader running
+	WriteMem32_nommu(0x8cf400a8, 0x40000001);
+	mgr.apply();
+	ASSERT_EQ(0x64836583u, ReadMem32_nommu(0x8cf4091c));
+
+	// something else running at 8cf40000
+	WriteMem32_nommu(0x8cf4091c, 0x12345678);
+	mgr.apply();
+	ASSERT_EQ(0x12345678u, ReadMem32_nommu(0x8cf4091c));
+
+	// menu program loaded but not running yet
+	WriteMem32_nommu(0x8c0107a4, 0x410bd439);
+	WriteMem32_nommu(0x8c0100a8, 0);
+	mgr.apply();
+	ASSERT_EQ(0x410bd439u, ReadMem32_nommu(0x8c0107a4));
+
+	// menu program running
+	WriteMem32_nommu(0x8c0100a8, 0x40000001);
+	mgr.apply();
+	ASSERT_EQ(0x410b6483u, ReadMem32_nommu(0x8c0107a4));
+}

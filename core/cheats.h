@@ -64,6 +64,11 @@ struct Cheat
 		  size(size), address(address), value(value), builtIn(builtIn)
 	{
 	}
+
+	bool isCondition() const {
+		return type == Type::runNextIfEq || type == Type::runNextIfNeq
+				|| type == Type::runNextIfGt || type == Type::runNextIfLt;
+	}
 };
 
 class CheatManager
