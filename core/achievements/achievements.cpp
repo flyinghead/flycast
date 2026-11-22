@@ -59,6 +59,7 @@ public:
 	Game getCurrentGame();
 	std::vector<Achievement> getAchievementList();
 	bool canPause();
+	const std::string& getRichPresence() const { return lastRichPresence; }
 	void serialize(Serializer& ser);
 	void deserialize(Deserializer& deser);
 
@@ -111,6 +112,7 @@ private:
 	bool active = false;
 	bool paused = false;
 	std::string lastError;
+	std::string lastRichPresence;
 	std::string cachePath;
 	std::unordered_map<u64, std::string> cacheMap;
 	std::mutex cacheMutex;
@@ -617,7 +619,7 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 	const rc_client_achievement_t* cheevo = event->achievement;
 	assert(cheevo != nullptr);
 
-	INFO_LOG(COMMON, "RA: Achievement %s (%u) for game %s unlocked", cheevo->title, cheevo->id, settings.content.title.c_str());
+	NOTICE_LOG(COMMON, "RA: Achievement %s (%u) for game %s unlocked", cheevo->title, cheevo->id, settings.content.title.c_str());
 	std::string title(cheevo->title);
 	std::string description(cheevo->description);
 	std::string url(512, '\0');
@@ -705,6 +707,7 @@ void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t *event
 void Achievements::handleGameCompleted(const rc_client_event_t *event)
 {
 	const rc_client_game_t* game = rc_client_get_game_info(rc_client);
+	NOTICE_LOG(COMMON, "RA: Game %s (%u) %s", game->title, game->id, rc_client_get_hardcore_enabled(rc_client) ? "mastered" : "completed");
 	std::string text1 = strprintf(rc_client_get_hardcore_enabled(rc_client) ? i18n::T("Mastered %s") : i18n::T("Completed %s"), game->title);
 	rc_client_user_game_summary_t summary;
 	rc_client_get_user_game_summary(rc_client, &summary);
@@ -867,6 +870,17 @@ void Achievements::emuEventCallback(Event event, void *arg)
 		break;
 	case Event::VBlank:
 		rc_client_do_frame(instance->rc_client);
+		if (rc_client_has_rich_presence(instance->rc_client))
+		{
+			char rp[512];
+			rc_client_get_rich_presence_message(instance->rc_client, rp, sizeof(rp));
+			if (instance->lastRichPresence != rp)
+			{
+				instance->lastRichPresence = rp;
+				NOTICE_LOG(COMMON, "Rich presence updated: %s", instance->lastRichPresence.c_str());
+				EventManager::event(Event::RichPresence);
+			}
+		}
 		break;
 	case Event::Pause:
 		instance->pauseGame();
@@ -974,10 +988,12 @@ void Achievements::unloadGame()
 		return;
 	active = false;
 	paused = false;
+	lastRichPresence.clear();
 	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
 	// wait for all async tasks before unloading the game
 	stopThreads();
 	rc_client_unload_game(rc_client);
+    NOTICE_LOG(COMMON, "RA: game unloaded");
 	settings.raHardcoreMode = false;
 }
 
@@ -1115,7 +1131,10 @@ void Achievements::deserialize(Deserializer& deser)
 		}
 	}
 }
-
+std::string getRichPresence()
+{
+    return Achievements::Instance().getRichPresence();
+}
 }	// namespace achievements
 
 #else	// !USE_RACHIEVEMENTS

@@ -55,6 +55,7 @@ Game getCurrentGame();
 std::vector<Achievement> getAchievementList();
 bool canPause();
 void setHostOverride(const std::string& host);
+std::string getRichPresence();
 
 #else
 
@@ -63,6 +64,9 @@ static inline bool isActive() {
 }
 static inline bool canPause() {
 	return true;
+}
+static inline std::string getRichPresence() {
+    return {};
 }
 
 #endif
