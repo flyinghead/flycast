@@ -377,9 +377,8 @@ static void loadSpecialSettings()
 			config::NativeDepthInterpolation.override(false);
 		}
 		// The copy protection of these games relies on TLB misses raised by store queue writes.
-		// Ganryu uses a generic product number so it's identified by its volume ID as well.
 		settings.content.fullMmu = prod_id == "T65181N"		// Ghost Blade, Pier Solar and the Great Architects
-				|| (prod_id == "T0000" && getVolumeId() == "GANRYU");
+				|| prod_id == "GANRYU";
 		if (settings.content.fullMmu)
 			NOTICE_LOG(BOOT, "Enabling full MMU");
 		// Per-pixel transparent layers
@@ -901,6 +900,14 @@ void loadGameSpecificSettings()
 		settings.content.gameId = trim_trailing_ws(std::string(ip_meta.product_number, sizeof(ip_meta.product_number)));
 		// in case there is a null character followed by garbage, which happens
 		settings.content.gameId = settings.content.gameId.c_str();
+		// generic UID so use the ISO volume id instead
+		if (settings.content.gameId == "T0000"
+				|| (settings.content.gameId == "T0000M" && strncmp(ip_meta.software_name, "TNN MOTORSPORTS HARDCORE HEAT", 29) != 0))
+		{
+			std::string volumeId = getVolumeId();
+			if (volumeId != "CDROM" && volumeId != "ISO")
+				settings.content.gameId = volumeId;
+		}
 
 		if (settings.content.gameId.empty())
 			return;
