@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-22 11:57+0100\n"
-"PO-Revision-Date: 2026-11-22 23:13\n"
+"PO-Revision-Date: 2026-11-23 00:25\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -2855,7 +2855,7 @@ msgstr "接続を再開しました"
 #: core/network/ggpo.cpp:610
 #, c-format
 msgid "GGPO: unknown peer address %s"
-msgstr ""
+msgstr "GGPO: 不明なピアアドレス %s"
 
 #: core/network/null_modem.h:173
 msgid "Network connected"
@@ -2863,15 +2863,15 @@ msgstr "ネットワークに接続しました"
 
 #: core/network/rawmodem.cpp:46
 msgid "Connected to game server"
-msgstr ""
+msgstr "ゲームサーバーに接続しました"
 
 #: core/network/rawmodem.cpp:134
 msgid "Network disconnected"
-msgstr ""
+msgstr "ネットワークが切断されました"
 
 #: core/network/rawmodem.cpp:172
 msgid "Can't connect to game server"
-msgstr ""
+msgstr "ゲームサーバーに接続できません"
 
 #: core/network/ice.cpp:169
 msgid "Game not supported"
@@ -2930,11 +2930,11 @@ msgstr "スロット %dとして接続しました"
 
 #: core/network/capcom.cpp:440
 msgid "Connected to battle server"
-msgstr ""
+msgstr "バトルサーバーに接続しました"
 
 #: core/network/capcom.cpp:447
 msgid "Can't connect to battle server"
-msgstr ""
+msgstr "バトルサーバーに接続できません"
 
 #: core/rend/dx9/d3d_renderer.cpp:328
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
@@ -2966,32 +2966,33 @@ msgstr "Naomi2にはOpenGL ES 3.0+ が必要です"
 
 #: core/rend/CustomTexture.cpp:1027
 msgid "Custom texture file could not be read"
-msgstr ""
+msgstr "カスタムテクスチャファイルを読み取ることができません"
 
 #: core/rend/CustomTexture.cpp:1030
 msgid "PNG/JPEG custom texture could not be decoded"
-msgstr ""
+msgstr "PNG/JPEG カスタムテクスチャをデコードできません"
 
 #: core/rend/CustomTexture.cpp:1033
 msgid "Compressed custom texture could not be loaded.\n"
 "Supported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7"
-msgstr ""
+msgstr "圧縮されたカスタムテクスチャを読み込めませんでした。\n"
+"サポート形式: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7"
 
 #: core/rend/CustomTexture.cpp:1036
 msgid "Custom texture exceeds the renderer's maximum texture dimensions"
-msgstr ""
+msgstr "カスタムテクスチャがレンダラーの最大テクスチャ寸法を超えています"
 
 #: core/rend/CustomTexture.cpp:1039
 msgid "Custom texture could not be uploaded to the GPU"
-msgstr ""
+msgstr "カスタムテクスチャを GPU にアップロードできませんでした"
 
 #: core/rend/CustomTexture.cpp:1042
 msgid "Custom texture memory allocation failed"
-msgstr ""
+msgstr "カスタムテクスチャメモリの割り当てに失敗しました"
 
 #: core/rend/CustomTexture.cpp:1045
 msgid "DirectX 9 supports PNG/JPEG custom textures only"
-msgstr ""
+msgstr "DirectX 9 は PNG/JPEG カスタムテクスチャのみをサポートしています"
 
 #: core/emulator.cpp:632
 #, c-format
