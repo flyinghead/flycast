@@ -88,16 +88,22 @@ jobs:
 
       - name: Compile universal dependencies (macOS)
         run: |
-          for formula in ./shell/apple/libomp.rb ./shell/apple/libpng-flycast.rb; do
+          # Homebrew no longer installs a formula from a file path: the formulae go into a local tap.
+          brew tap-new --no-git local/flycast
+          tap_formula_dir="$(brew --repo local/flycast)/Formula"
+          for formula in ./shell/apple/libpng-flycast.rb; do
             libname=$(basename "$formula" .rb)
-            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" || \
-            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula"
-          
-            prefix=$(brew --prefix $libname)
+            cp "$formula" "$tap_formula_dir/"
+            # A homebrew/core keg of the same name would block the tap's one.
+            brew uninstall --ignore-dependencies --formula "$libname" 2>/dev/null || true
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "local/flycast/$libname" || \
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "local/flycast/$libname"
+
+            prefix=$(brew --prefix "local/flycast/$libname")
             # Find and verify the static library
             libfile=$(find "$prefix/lib" -name "*.a" | head -n1)
             lipo -info "$libfile"
-          
+
             # Export prefix for subsequent CMake steps
             if [ -z "$CMAKE_PREFIX_PATH" ]; then
               CMAKE_PREFIX_PATH="$prefix"
