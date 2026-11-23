@@ -18,6 +18,7 @@
 #include "serialize.h"
 #include "oslib/i18n.h"
 #include "input/maplelink.h"
+#include "achievements/achievements.h"
 #ifdef TARGET_UWP
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.Foundation.h>
@@ -164,6 +165,7 @@ void SaveSettings()
 
 void flycast_term()
 {
+	achievements::term();
 	gui_cancel_load();
 	lua::term();
 	emu.unloadGame();

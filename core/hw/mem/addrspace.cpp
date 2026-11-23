@@ -338,6 +338,7 @@ void init()
 
 void term()
 {
+	init();
 }
 
 u8* ram_base;

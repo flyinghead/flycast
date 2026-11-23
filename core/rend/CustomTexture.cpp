@@ -458,6 +458,7 @@ void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
 		if (!loaderThread && ptr->shouldReplace())
 		{
 			loaderThread = std::make_unique<WorkerThread>("CustomTexLoader");
+			loaderThread->start();
 		}
 		if (loaderThread)
 		{

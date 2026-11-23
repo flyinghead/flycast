@@ -16,12 +16,14 @@ TEST_F(WorkerThreadTest, Basic)
 	const auto& task = [&]() {
 		done = true;
 	};
+	worker.start();
 	worker.run(task);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	ASSERT_TRUE(done);
 
 	// test restart
 	worker.stop();
+	worker.start();
 	done = false;
 	worker.run(task);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -39,6 +41,7 @@ TEST_F(WorkerThreadTest, MultiThread)
 		for (int i = 0; i < 100; i++)
 			worker.run(task);
 	};
+	worker.start();
 	std::future<void> futures[4];
 	for (auto& f : futures)
 		f = std::async(std::launch::async, consumer);
@@ -61,6 +64,7 @@ TEST_F(WorkerThreadTest, StartStop)
 		for (int i = 0; i < 100; i++)
 			worker.run(task);
 	};
+	worker.start();
 	std::future<void> future = std::async(std::launch::async, consumer);
 	std::future<void> future2 = std::async(std::launch::async, [&]() {
 		for (int i = 0; i < 100; i++)
@@ -78,6 +82,7 @@ TEST_F(WorkerThreadTest, Future)
 	const auto& task = [](u32 v) -> u32 {
 		return v;
 	};
+	worker.start();
 	std::future<u32> f = worker.runFuture(task, 42);
 	ASSERT_EQ(42, f.get());
 }

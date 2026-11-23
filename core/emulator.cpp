@@ -801,6 +801,7 @@ void Emulator::unloadGame()
 #endif
 		NetworkHandshake::term();
 
+		EventManager::event(Event::Terminate);
 		// Flush the VMU files to disk
 		mcfg_DestroyDevices(true);
 		config::Settings::instance().reset();
@@ -809,7 +810,6 @@ void Emulator::unloadGame()
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		custom_texture.terminate();
 		state = Init;
-		EventManager::event(Event::Terminate);
 	}
 	term();
 }

@@ -111,6 +111,7 @@ private:
 	std::atomic_bool loadingGame {};
 	bool active = false;
 	bool paused = false;
+	bool gameStarted = false; // track emu start/terminate events
 	std::string lastError;
 	std::string lastRichPresence;
 	std::string cachePath;
@@ -236,6 +237,7 @@ bool Achievements::init()
 bool Achievements::createClient()
 {
 	http::init();
+	taskThread.start();
 	rc_client = rc_client_create(clientReadMemory, clientServerCall);
 	if (rc_client == nullptr)
 	{
@@ -373,9 +375,9 @@ void Achievements::term()
 	if (rc_client == nullptr)
 		return;
 	unloadGame();
-	stopThreads();
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
+	stopThreads();
 }
 
 void Achievements::authenticationSuccess(const rc_client_user_t *user)
@@ -474,7 +476,7 @@ void Achievements::clientMessageCallback(const char* message, const rc_client_t*
 u32 Achievements::clientReadMemory(u32 address, u8* buffer, u32 num_bytes, rc_client_t* client)
 {
 	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
-	if (!achievements->isActive())
+	if (!achievements->gameStarted)
 		return 0;
 	if (address + num_bytes > RAM_SIZE)
 		return 0;
@@ -841,6 +843,7 @@ void Achievements::pauseGame()
 
 void Achievements::resumeGame()
 {
+	gameStarted = true;
 	paused = false;
 	if (config::EnableAchievements && !settings.naomi.slave)
 	{
@@ -904,6 +907,7 @@ void Achievements::loadGame()
 		loadingGame = false;
 		return;
 	}
+	taskThread.start();
 	if (!init() || !isLoggedOn()) {
 		if (!isLoggedOn())
 			INFO_LOG(COMMON, "Not logged on. Not loading game yet");
@@ -984,6 +988,8 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 
 void Achievements::unloadGame()
 {
+	// A game might be started then stopped before RA is active (slow network, error, ...)
+	gameStarted = false;
 	if (!active)
 		return;
 	active = false;

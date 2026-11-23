@@ -48,7 +48,6 @@ public:
 	}
 
 	void run(Function&& task) {
-		start();
 		queue.push(std::move(task));
 	}
 
@@ -65,7 +64,6 @@ public:
 		return task->get_future();
 	}
 
-private:
 	void start()
 	{
 		std::lock_guard<std::mutex> _(mutex);
@@ -86,6 +84,7 @@ private:
 		});
 	}
 
+private:
 	const char * const name;
 	using Exit = std::monostate;
 	using Task = std::variant<Exit, Function>;

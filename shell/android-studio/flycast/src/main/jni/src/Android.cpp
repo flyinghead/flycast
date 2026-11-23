@@ -595,6 +595,7 @@ std::string getFilesPath()
 
 void dc_exit()
 {
+	achievements::term();
 	gui_cancel_load();
 	settings.content.path.clear();
 	if (g_activity != nullptr)
