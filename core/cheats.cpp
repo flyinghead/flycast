@@ -597,6 +597,15 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "menu md5 ifeq",        true, 32, 0x000107a4, 0x410bd439, true);
 			cheats.emplace_back(Cheat::Type::setValue,    "menu md5 digest",      true, 16, 0x000107a4, 0x6483, true);     // mov r8,r4
 		}
+		else if (gameId == "T0042") {		// Orion's Puzzle Collection
+			// The menu runs a game with arch_exec() on its mmapped file, but arch_shutdown()
+			// frees that buffer after it was flushed from the cache. On hardware the free list
+			// pointers stay in the operand cache, which is invalidated before the copy. Here they
+			// overwrite the start of Yopaz 3D. Skip the call that frees it.
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "menu exec ifeq",       true, 32, 0x0002f8e8, 0xd0150009, true);
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "menu exec ifeq2",      true, 32, 0x0002f8ec, 0x0009400b, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "menu exec no free",    true, 16, 0x0002f8ec, 0x0009, true);     // nop
+		}
 		else if (gameId == "SEGA STRIKE FIGHTER IN JPN-SLAVE")
 		{
 			// hack the slave sync procedure
