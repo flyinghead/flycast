@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#if !defined(LIBRETRO) || !defined(__ANDROID__)
+#if !defined(__vita__) && (!defined(LIBRETRO) || !defined(__ANDROID__))
 #include "ice.h"
 #include "types.h"
 #include "oslib/http_client.h"
@@ -61,7 +61,7 @@ STUNConfig STUNConfig::get()
 	return cfg;
 }
 }
-#endif // !LIBRETRO || !__ANDROID__
+#endif // !__vita__ && (!LIBRETRO || !__ANDROID__)
 
 #if defined(USE_ICE) && defined(USE_WEBSOCKET)
 #include "hw/sh4/modules/modules.h"
