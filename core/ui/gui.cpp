@@ -784,7 +784,7 @@ static void contentpath_warning_popup()
 
 void os_notify(const char *msg, int durationMs, const char *details)
 {
-	if (gui_state != GuiState::Closed && gui_state != GuiState::Pause)
+	if (gui_state != GuiState::Closed && gui_state != GuiState::Pause && gui_state != GuiState::Loading)
 	{
 		std::lock_guard<std::mutex> _{osd_message_mutex};
 		osd_message = msg;

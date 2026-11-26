@@ -262,7 +262,7 @@ fail:
 	// delete failed savestate?
 }
 
-void dc_loadstate(int index)
+void dc_loadstate(int index, bool quiet)
 {
 	if (!dc_savestateAllowed() || settings.raHardcoreMode)
 		return;
@@ -288,7 +288,8 @@ void dc_loadstate(int index)
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
-		os_notify(i18n::T("Save state not found"), 2000);
+		if (!quiet)
+			os_notify(i18n::T("Save state not found"), 2000);
 		return;
 	}
 	SavestateHeader header;
