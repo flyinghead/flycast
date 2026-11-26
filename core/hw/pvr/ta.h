@@ -15,6 +15,9 @@ void DYNACALL ta_vtx_data32(const SQBuffer *data);
 void ta_vtx_data(const SQBuffer *data, u32 size);
 
 void ta_parse(TA_context *ctx, bool primRestart);
+// Clips modifier volume triangles with a vertex far outside the screen to a band around it (exact in z, keeps
+// each volume's parity); ta_parse does it for the Dreamcast and Naomi.
+void ta_clip_modvols(rend_context& rc);
 
 class TaTypeLut
 {

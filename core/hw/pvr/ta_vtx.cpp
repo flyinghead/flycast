@@ -11,6 +11,7 @@
 #include "cfg/option.h"
 
 #include <algorithm>
+#include <cmath>
 #include <utility>
 
 #define TACALL DYNACALL
@@ -1354,12 +1355,114 @@ static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 	}
 }
 
+// Modifier volume triangles far outside the screen.
+// Games clamp the 1/w of a volume vertex that reaches the camera (Jet Set Radio: 100000) and send the
+// projected position as is, so a volume around the camera has vertices at x, y ~ 1e10. The PVR
+// rasterizes that exactly; a GPU interpolates the depth of such a triangle across the screen with
+// float error far above the gap to the geometry behind it, the volume's parity flips on part of the
+// screen and the shadow becomes a black wedge. Each triangle is clipped to a band around the screen
+// (Sutherland-Hodgman, then a fan in the same winding). 1/w is affine in screen space, so the z of the
+// new vertices is exact, and no pixel inside the band changes its count of volume faces in front of it.
+void ta_clip_modvols(rend_context& rc)
+{
+	constexpr float Band = 4096.f;
+	auto outside = [](float v) { return !(v >= -Band && v <= Band); };	// NaN counts as outside
+	bool any = false;
+	for (const ModTriangle& t : rc.modtrig)
+		if (outside(t.x0) || outside(t.y0) || outside(t.x1) || outside(t.y1) || outside(t.x2) || outside(t.y2))
+		{
+			any = true;
+			break;
+		}
+	if (!any)
+		return;
+
+	// double between the planes: a vertex cut by one plane can still be ~1e9 px away, where a float is
+	// off by tens of pixels, and the next cut would move the edge on screen by as much
+	struct V { double x, y, z; };
+	// params of both lists, in the order of their triangles (a volume's params are contiguous)
+	std::vector<ModifierVolumeParam *> params;
+	for (ModifierVolumeParam& p : rc.global_param_mvo)
+		params.push_back(&p);
+	for (ModifierVolumeParam& p : rc.global_param_mvo_tr)
+		params.push_back(&p);
+	std::stable_sort(params.begin(), params.end(),
+			[](const ModifierVolumeParam *a, const ModifierVolumeParam *b) { return a->first < b->first; });
+
+	std::vector<ModTriangle> out;
+	out.reserve(rc.modtrig.size() + rc.modtrig.size() / 4);
+	V poly[16], tmp[16];
+	for (ModifierVolumeParam *p : params)
+	{
+		const u32 first = (u32)out.size();
+		const u32 end = std::min<u32>(p->first + p->count, (u32)rc.modtrig.size());
+		for (u32 i = p->first; i < end; i++)
+		{
+			const ModTriangle& t = rc.modtrig[i];
+			if (!outside(t.x0) && !outside(t.y0) && !outside(t.x1) && !outside(t.y1) && !outside(t.x2) && !outside(t.y2))
+			{
+				out.push_back(t);
+				continue;
+			}
+			if (!std::isfinite(t.x0) || !std::isfinite(t.y0) || !std::isfinite(t.z0)
+					|| !std::isfinite(t.x1) || !std::isfinite(t.y1) || !std::isfinite(t.z1)
+					|| !std::isfinite(t.x2) || !std::isfinite(t.y2) || !std::isfinite(t.z2))
+				continue;
+			int n = 3;
+			poly[0] = { t.x0, t.y0, t.z0 };
+			poly[1] = { t.x1, t.y1, t.z1 };
+			poly[2] = { t.x2, t.y2, t.z2 };
+			// clip against x >= -Band, x <= Band, y >= -Band, y <= Band
+			for (int plane = 0; plane < 4 && n > 0; plane++)
+			{
+				auto dist = [plane](const V& v) {
+					switch (plane) {
+					case 0: return v.x + Band;
+					case 1: return Band - v.x;
+					case 2: return v.y + Band;
+					default: return Band - v.y;
+					}
+				};
+				int m = 0;
+				for (int k = 0; k < n; k++)
+				{
+					const V& a = poly[k];
+					const V& b = poly[(k + 1) % n];
+					const double da = dist(a), db = dist(b);
+					if (da >= 0)
+						tmp[m++] = a;
+					if ((da >= 0) != (db >= 0))
+					{
+						const double s = da / (da - db);
+						tmp[m++] = { a.x + (b.x - a.x) * s, a.y + (b.y - a.y) * s, a.z + (b.z - a.z) * s };
+					}
+				}
+				n = m;
+				std::copy(tmp, tmp + n, poly);
+			}
+			for (int k = 1; k + 1 < n; k++)
+				out.push_back({ (float)poly[0].x, (float)poly[0].y, (float)poly[0].z, (float)poly[k].x, (float)poly[k].y,
+						(float)poly[k].z, (float)poly[k + 1].x, (float)poly[k + 1].y, (float)poly[k + 1].z });
+		}
+		// The renderers skip a param with no triangles, and with it the summing of its volume: one with all
+		// its triangles clipped away keeps a triangle of no area, which covers no pixel.
+		if (out.size() == first && p->count > 0)
+			out.push_back({ -Band, -Band, 1e-6f, -Band, -Band, 1e-6f, -Band, -Band, 1e-6f });
+		p->first = first;
+		p->count = (u32)out.size() - first;
+	}
+	rc.modtrig = std::move(out);
+}
+
 void ta_parse(TA_context *ctx, bool primRestart)
 {
 	if (settings.platform.isNaomi2())
 		ta_parse_naomi2(ctx, primRestart);
 	else
+	{
 		ta_parse_vdrc(ctx, primRestart);
+		ta_clip_modvols(ctx->rend);
+	}
 }
 
 //
