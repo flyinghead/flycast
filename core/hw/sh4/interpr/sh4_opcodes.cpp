@@ -814,12 +814,11 @@ sh4op(i0000_nnnn_0010_0011)
 sh4op(i0000_nnnn_0000_0011)
 {
 	u32 n = GetN(op);
-	u32 newpc = ctx->r[n] + ctx->pc +2;
-	u32 newpr = ctx->pc + 2;
+	u32 newpc = ctx->r[n] + ctx->pc + 2;
+	ctx->pr = ctx->pc + 2;
 	
-	executeDelaySlot(); //WARN : pr and r[n] can change here
+	executeDelaySlot(); // r[n] can change here
 	
-	ctx->pr = newpr;
 	ctx->pc = newpc;
 	debugger::subroutineCall();
 }
@@ -914,11 +913,10 @@ sh4op(i1010_iiii_iiii_iiii)
 // bsr <bdisp12>
 sh4op(i1011_iiii_iiii_iiii)
 {
-	u32 newpr = ctx->pc + 2; //return after delayslot
+	ctx->pr = ctx->pc + 2; //return after delayslot
 	u32 newpc = branch_target_s12(ctx, op);
 	executeDelaySlot();
 
-	ctx->pr = newpr;
 	ctx->pc = newpc;
 	debugger::subroutineCall();
 }
@@ -947,11 +945,10 @@ sh4op(i0100_nnnn_0000_1011)
 {
 	u32 n = GetN(op);
 
-	u32 newpr = ctx->pc + 2;   //return after delayslot
+	ctx->pr = ctx->pc + 2;   //return after delayslot
 	u32 newpc = ctx->r[n];
-	executeDelaySlot(); //r[n]/pr can change here
+	executeDelaySlot(); // r[n] can change here
 
-	ctx->pr = newpr;
 	ctx->pc = newpc;
 	debugger::subroutineCall();
 }
