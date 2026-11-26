@@ -285,10 +285,6 @@ private:
 	using Lock = std::lock_guard<std::mutex>;
 };
 
-#ifdef TEST_AUTOMATION
-void replay_input();
-#endif
-
 extern u32 kcode[4];
 extern u16 rt[4], lt[4], rt2[4], lt2[4];
 extern s16 joyx[4], joyy[4];

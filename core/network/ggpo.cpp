@@ -26,12 +26,120 @@
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
 #include "net_platform.h"
+#include "hw/sh4/sh4_sched.h"
 #include <algorithm>
+
+#ifdef TEST_AUTOMATION
+bool do_screenshot;
+#endif
 
 namespace ggpo
 {
 
 bool inRollback;
+
+#ifdef TEST_AUTOMATION
+static bool automationInited;
+static bool automationRecord;
+static FILE *recordInput;
+static MapleInputState prevInputState[4];
+static u64 nextEvent;
+static char nextAction[32];
+static u32 nextValue;
+
+static void initRecordInput()
+{
+	if (automationInited)
+		return;
+	automationInited = true;
+	automationRecord = config::loadBool("record", "record_input", false);
+	if (!automationRecord && !config::loadBool("record", "replay_input", false))
+		return;
+	std::string game_dir = settings.content.path;
+	size_t slash = game_dir.find_last_of("/");
+	size_t dot = game_dir.find_last_of(".");
+	std::string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
+	recordInput = nowide::fopen(input_file.c_str(), automationRecord ? "w" : "r");
+	if (recordInput == nullptr)
+	{
+		if (automationRecord)
+			ERROR_LOG(COMMON, "Can't open script file %s", input_file.c_str());
+	}
+	else
+	{
+		setbuf(recordInput, nullptr);
+	}
+}
+
+static void testAutomation(MapleInputState inputState[4])
+{
+	initRecordInput();
+	if (recordInput == nullptr)
+		return;
+	u64 now = sh4_sched_now64();
+	if (automationRecord)
+	{
+		for (int port = 0; port < 4; port++)
+		{
+			MapleInputState& state = inputState[port];
+			MapleInputState& prevState = prevInputState[port];
+			if (state.kcode != prevState.kcode)
+				fprintf(recordInput, "%ld button %x %04x\n", now, port, state.kcode & 0xffff);
+			for (int axis = 0; axis < PJTI_Count; axis++)
+				if (state.halfAxes[axis] != prevState.halfAxes[axis])
+					fprintf(recordInput, "%ld trigger%c %x %04x\n", now, axis + '0', port, state.halfAxes[axis]);
+			for (int axis = 0; axis < PJAI_Count; axis++)
+				if (state.fullAxes[axis] != prevState.fullAxes[axis])
+					fprintf(recordInput, "%ld axis%c %x %04x\n", now, axis + '0', port, state.fullAxes[axis] & 0xffff);
+			// TODO mouse, keyboard?
+			//if (state.mouseButtons != prevState.mouseButtons)
+			//	fprintf(recordInput, "%ld mousebtn %x %02x\n", now, i, state.mouseButtons);
+			//if (state.absPos.x != prevState.absPos.x)
+			//	fprintf(recordInput, "%ld mouse.x %x %d\n", now, i, state.absPos.x);
+			//if (state.absPos.y != prevState.absPos.y)
+			//	fprintf(recordInput, "%ld mouse.y %x %d\n", now, i, state.absPos.y);
+			prevState = state;
+		}
+	}
+	else
+	{
+		if (config::UseReios)
+		{
+			// Account for the swirl time
+			if (config::Broadcast == 0)
+				now = std::max((int64_t)now - 2152626532L, 0L);
+			else
+				now = std::max((int64_t)now - 2191059108L, 0L);
+		}
+		if (prevInputState[0].kcode == 0)
+			prevInputState[0] = inputState[0];
+		while (nextEvent <= now)
+		{
+			if (nextEvent != 0)
+			{
+				MapleInputState& state = prevInputState[0];
+				if (!strcmp("button", nextAction))
+					state.kcode = nextValue;
+				else if (!strncmp("trigger", nextAction, 7))
+					state.halfAxes[nextAction[7] - '0'] = nextValue;
+				else if (!strncmp("axis", nextAction, 4))
+					state.fullAxes[nextAction[4] - '0'] = nextValue;
+			}
+			int port;
+			if (fscanf(recordInput, "%ld %s %x %x\n", &nextEvent, nextAction, &port, &nextValue) != 4)
+			{
+				fclose(recordInput);
+				recordInput = nullptr;
+				NOTICE_LOG(INPUT, "Input replay terminated");
+				do_screenshot = true;
+				return;
+			}
+		}
+		inputState[0] = prevInputState[0];
+	}
+}
+
+#endif
 
 static void getLocalInput(MapleInputState inputState[4])
 {
@@ -67,6 +175,9 @@ static void getLocalInput(MapleInputState inputState[4])
 		mo_y_delta[player] -= relY;
 		mo_wheel_delta[player] -= wheel;
 	}
+#ifdef TEST_AUTOMATION
+	testAutomation(inputState);
+#endif
 }
 
 }

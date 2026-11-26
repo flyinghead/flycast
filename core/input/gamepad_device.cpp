@@ -50,12 +50,6 @@ u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
 
-#ifdef TEST_AUTOMATION
-#include "hw/sh4/sh4_sched.h"
-#include <cstdio>
-static FILE *record_input;
-#endif
-
 GamepadDevice::GamepadDevice(int maple_port, const char *api_name, bool remappable)
 	: _api_name(api_name), _maple_port(maple_port), _remappable(remappable),
 	  digitalToAnalogState{}
@@ -90,10 +84,6 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			kcode[port] &= ~key;
 		else
 			kcode[port] |= key;
-#ifdef TEST_AUTOMATION
-		if (record_input != NULL)
-			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
-#endif
 	}
 	else
 	{
@@ -772,35 +762,12 @@ void GamepadDevice::detectInput(bool combo, input_detected_cb input_changed)
 	detectingAxes.clear();
 }
 
-#ifdef TEST_AUTOMATION
-static FILE *get_record_input(bool write)
-{
-	if (write && !config::loadBool("record", "record_input", false))
-		return NULL;
-	if (!write && !config::loadBool("record", "replay_input", false))
-		return NULL;
-	std::string game_dir = settings.content.path;
-	size_t slash = game_dir.find_last_of("/");
-	size_t dot = game_dir.find_last_of(".");
-	std::string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
-	return nowide::fopen(input_file.c_str(), write ? "w" : "r");
-}
-#endif
-
 void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	int maple_port = config::loadInt("input",
 			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), 12345);
 	if (maple_port != 12345)
 		gamepad->set_maple_port(maple_port);
-#ifdef TEST_AUTOMATION
-	if (record_input == NULL)
-	{
-		record_input = get_record_input(true);
-		if (record_input != NULL)
-			setbuf(record_input, NULL);
-	}
-#endif
 	Lock _(_gamepads_mutex);
 	_gamepads.push_back(gamepad);
 	MapleConfigMap::UpdateVibration = updateVibration;
@@ -811,6 +778,8 @@ void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 
 void GamepadDevice::Unregister(const std::shared_ptr<GamepadDevice>& gamepad)
 {
+	if (gamepad == nullptr)
+		return;
 	Lock _(_gamepads_mutex);
 	for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
 		if (*it == gamepad) {
@@ -836,7 +805,7 @@ s16 (&GamepadDevice::getTargetArray(DigAnalog axis))[4]
 	case DIGANA_LEFT:
 	case DIGANA_RIGHT:
 		return joyx;
-	case DIGANA_UP:;
+	case DIGANA_UP:
 	case DIGANA_DOWN:
 		return joyy;
 	case DIGANA2_LEFT:
@@ -905,52 +874,3 @@ void GamepadDevice::RampAnalog()
 	for (auto& gamepad : _gamepads)
 		gamepad->rampAnalog();
 }
-
-#ifdef TEST_AUTOMATION
-#include "cfg/option.h"
-static bool replay_inited;
-FILE *replay_file;
-u64 next_event;
-u32 next_port;
-u32 next_kcode;
-bool do_screenshot;
-
-void replay_input()
-{
-	if (!replay_inited)
-	{
-		replay_file = get_record_input(false);
-		replay_inited = true;
-	}
-	u64 now = sh4_sched_now64();
-	if (config::UseReios)
-	{
-		// Account for the swirl time
-		if (config::Broadcast == 0)
-			now = std::max((int64_t)now - 2152626532L, 0L);
-		else
-			now = std::max((int64_t)now - 2191059108L, 0L);
-	}
-	if (replay_file == NULL)
-	{
-		if (next_event > 0 && now - next_event > SH4_MAIN_CLOCK * 5)
-			die("Automation time-out after 5 s\n");
-		return;
-	}
-	while (next_event <= now)
-	{
-		if (next_event > 0)
-			kcode[next_port] = next_kcode;
-
-		char action[32];
-		if (fscanf(replay_file, "%ld %s %x %x\n", &next_event, action, &next_port, &next_kcode) != 4)
-		{
-			fclose(replay_file);
-			replay_file = NULL;
-			NOTICE_LOG(INPUT, "Input replay terminated");
-			do_screenshot = true;
-			break;
-		}
-	}
-}
-#endif

@@ -9,10 +9,6 @@
 #include "stdclass.h"
 #include <array>
 
-#ifdef TEST_AUTOMATION
-#include "input/gamepad_device.h"
-#endif
-
 //SPG emulation; Scanline/Raster beam registers & interrupts
 
 static u32 clc_pvr_scanline;
@@ -178,10 +174,6 @@ static int spg_line_sched(int tag, int cycles, int jitter, void *arg)
 			}
 			cpu_cycles[cpu_time_idx] = sh4_sched_now64();
 			real_times[cpu_time_idx] = now;
-
-#ifdef TEST_AUTOMATION
-			replay_input();
-#endif
 
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 			vblk_cnt++;
