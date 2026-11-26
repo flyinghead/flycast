@@ -256,7 +256,7 @@ void X86Compiler::genMemHandlers()
 
 void X86Compiler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write)
 {
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 #ifdef FAST_MMU
 		Xbyak::Label inCache;
@@ -264,13 +264,13 @@ void X86Compiler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u
 
 		mov(eax, ecx);
 		shr(eax, 12);
-		mov(eax, dword[(uintptr_t)mmuAddressLUT + eax * 4]);
+		mov(eax, dword[(uintptr_t)mmu::addressLUT + eax * 4]);
 		test(eax, eax);
 		jne(inCache);
 #endif
-		mov(edx, write);
-		push(block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
-		call((void*)mmuDynarecLookup);
+		mov(edx, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		mmu::dynlookup_t dynLookup = mmu::getDynarecLookupFunc(write);
+		call((void*)dynLookup);
 		mov(ecx, eax);
 #ifdef FAST_MMU
 		jmp(done);
@@ -321,7 +321,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 	switch (op.op)
 	{
 	case shop_ifb:
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			push(reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
 			push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
@@ -330,7 +330,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			mov(dword[&sh4ctx.pc], op.rs2.imm_value());
         mov(ecx, (uintptr_t)&sh4ctx);
 		mov(edx, op.rs3.imm_value());
-		if (!mmu_enabled())
+		if (!mmu::enabled())
 			genCall(OpDesc[op.rs3.imm_value()]->oph);
 		else
 			genCall(interpreter_fallback);
@@ -383,13 +383,13 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				break;
 			}
 
-			if (mmu_enabled())
+			if (mmu::enabled())
 				freezeXMM();
 			genMmuLookup(block, op, 0);
 			const u8 *start = getCurr();
 			call(MemHandlers[optimise ? MemType::Fast : MemType::Slow][memOpSize][MemOp::R]);
 			verify(getCurr() - start == 5);
-			if (mmu_enabled())
+			if (mmu::enabled())
 				thawXMM();
 
 			if (memOpSize <= MemSize::S32)
@@ -448,7 +448,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				break;
 			}
 
-			if (mmu_enabled())
+			if (mmu::enabled())
 				freezeXMM();
 			genMmuLookup(block, op, 1);
 
@@ -471,7 +471,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			const u8 *start = getCurr();
 			call(MemHandlers[optimise ? MemType::Fast : MemType::Slow][memOpSize][MemOp::W]);
 			verify(getCurr() - start == 5);
-			if (mmu_enabled())
+			if (mmu::enabled())
 				thawXMM();
 		}
 		break;
@@ -522,7 +522,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				mov(ecx, rn);
 			}
 			mov(edx, (uintptr_t)&sh4ctx);
-			if (mmu_enabled())
+			if (mmu::enabled())
 			{
 				push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 				genCall(do_sqw_mmu_no_ex);

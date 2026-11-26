@@ -21,14 +21,14 @@
 
 static u32 CCN_QACR_TR[2];
 
-template<bool mmu_on>
+template<bool mmuOn, bool winceMmu = false>
 static void DYNACALL sqWrite(u32 dest, Sh4Context *ctx)
 {
 	u32 address;
 	//Translate the SQ addresses as needed
-	if (mmu_on)
+	if constexpr (mmuOn)
 	{
-		mmu_TranslateSQW(dest, &address);
+		mmu::translateSQW<winceMmu>(dest, &address);
 	}
 	else
 	{
@@ -76,7 +76,10 @@ void setSqwHandler()
 	Sh4Context& ctx = p_sh4rcb->cntx;
 	if (CCN_MMUCR.AT == 1)
 	{
-		ctx.doSqWrite = &sqWrite<true>;
+		if (settings.content.windowsCE)
+			ctx.doSqWrite = &sqWrite<true, true>;
+		else
+			ctx.doSqWrite = &sqWrite<true, false>;
 	}
 	else
 	{

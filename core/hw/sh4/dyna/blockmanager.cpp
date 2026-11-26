@@ -56,7 +56,7 @@ static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 // This returns an executable address
 DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 {
-	if (!mmu_enabled())
+	if (!mmu::enabled())
 		return bm_GetCode(addr);
 
 	if (addr & 1)
@@ -105,7 +105,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 						u32 pa = 0;
 						for (unsigned i = 0; ; i++)
 						{
-							if (pa == 0 && mmu_full_lookup(vaddr, nullptr, pa) != MmuError::NONE)
+							if (pa == 0 && mmu::fullLookup(vaddr, nullptr, pa) != MmuError::NONE)
 								break;
 							u16 c = ReadMem16_nommu(pa);
 							if (c != Function[i])
@@ -148,11 +148,11 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 	}
 
 	u32 paddr;
-	MmuError rv = mmu_instruction_translation(addr, paddr);
+	MmuError rv = mmu::translateInstruction(addr, paddr);
 	if (rv != MmuError::NONE)
 	{
-		DoMMUException(addr, rv, MMU_TT_IREAD);
-		mmu_instruction_translation(Sh4cntx.pc, paddr);
+		mmu::doException(addr, rv, MMU_TT_IREAD);
+		mmu::translateInstruction(Sh4cntx.pc, paddr);
 	}
 
 	return bm_GetCode(paddr);

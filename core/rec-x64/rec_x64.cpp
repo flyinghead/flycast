@@ -133,7 +133,7 @@ public:
 
 		sub(rsp, STACK_ALIGN);
 
-		if (mmu_enabled() && block->has_fpu_op)
+		if (mmu::enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
 			mov(rax, (uintptr_t)&sh4ctx.sr.status);
@@ -159,7 +159,7 @@ public:
 			switch (op.op)
 			{
 			case shop_ifb:
-				if (mmu_enabled())
+				if (mmu::enabled())
 				{
 					mov(call_regs64[2], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
 					mov(call_regs[3], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
@@ -174,7 +174,7 @@ public:
 				mov(call_regs[1], op.rs3._imm);
 				mov(call_regs64[0], (uintptr_t)&sh4ctx);
 
-				if (!mmu_enabled())
+				if (!mmu::enabled())
 					GenCall(OpDesc[op.rs3._imm]->oph);
 				else
 					GenCall(interpreter_fallback);
@@ -233,7 +233,7 @@ public:
 					genMmuLookup(block, op, 0);
 
 					int size = op.size == 1 ? MemSize::S8 : op.size == 2 ? MemSize::S16 : op.size == 4 ? MemSize::S32 : MemSize::S64;
-					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
+					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu::enabled());
 
 #if ALLOC_F64 == false
 					if (size == MemSize::S64)
@@ -280,7 +280,7 @@ public:
 						shil_param_to_host_reg(op.rs2, call_regs64[1]);
 
 					int size = op.size == 1 ? MemSize::S8 : op.size == 2 ? MemSize::S16 : op.size == 4 ? MemSize::S32 : MemSize::S64;
-					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
+					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu::enabled());
 				}
 			}
 			break;
@@ -373,7 +373,7 @@ public:
 						mov(call_regs[0], rn);
 					}
 					mov(call_regs64[1], (uintptr_t)&sh4ctx);
-					if (mmu_enabled())
+					if (mmu::enabled())
 					{
 						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 						GenCall(do_sqw_mmu_no_ex);
@@ -812,7 +812,7 @@ public:
 private:
 	void genMmuLookup(const RuntimeBlockInfo* block, const shil_opcode& op, u32 write)
 	{
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 #ifdef FAST_MMU
 			Xbyak::Label inCache;
@@ -820,21 +820,21 @@ private:
 
 			mov(eax, call_regs[0]);
 			shr(eax, 12);
-			if ((uintptr_t)mmuAddressLUT >> 32 != 0)
+			if ((uintptr_t)mmu::addressLUT >> 32 != 0)
 			{
-				mov(r9, (uintptr_t)mmuAddressLUT);
+				mov(r9, (uintptr_t)mmu::addressLUT);
 				mov(eax, dword[r9 + rax * 4]);
 			}
 			else
 			{
-				mov(eax, dword[(uintptr_t)mmuAddressLUT + rax * 4]);
+				mov(eax, dword[(uintptr_t)mmu::addressLUT + rax * 4]);
 			}
 			test(eax, eax);
 			jne(inCache);
 #endif
-			mov(call_regs[1], write);
-			mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
-			GenCall(mmuDynarecLookup);
+			mmu::dynlookup_t dynLookup = mmu::getDynarecLookupFunc(write);
+			mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			GenCall(dynLookup);
 			mov(call_regs[0], eax);
 #ifdef FAST_MMU
 			jmp(done);
@@ -1054,14 +1054,14 @@ private:
 
 	void CheckBlock(bool force_checks, RuntimeBlockInfo* block)
 	{
-		if (mmu_enabled() || force_checks)
+		if (mmu::enabled() || force_checks)
 			mov(call_regs[0], block->addr);
 
 		// FIXME This test shouldn't be necessary
 		// However the decoder makes various assumptions about the current PC value, which are simply not
 		// true in a virtualized memory model. So this can only work if virtual and phy addresses are the
 		// same at compile and run times.
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			mov(rax, (uintptr_t)&sh4ctx.pc);
 			cmp(dword[rax], block->vaddr);

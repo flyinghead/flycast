@@ -3,18 +3,12 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_mem.h"
 #include "debug/gdb_server.h"
 #include "serialize.h"
 
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
-static u32 ITLB_LRU_USE[64];
-bool mmuOn;
-
-//SQ fast remap , mainly hackish , assumes 1MB pages
-//max 64MB can be remapped on SQ
-// Used when FullMMU is off
-u32 sq_remap[64];
 
 /*
 MMU support code
@@ -23,10 +17,6 @@ This is mostly hacked-on as the core was never meant to have mmu support
 There are two modes, one with 'full' mmu emulation (for wince/bleem/wtfever)
 and a fast-hack mode for 1mb sqremaps (for katana)
 */
-#ifndef FAST_MMU
-#include "ccn.h"
-#endif
-#include "hw/sh4/sh4_mem.h"
 
 //#define TRACE_WINCE_SYSCALLS
 
@@ -37,6 +27,16 @@ u32 unresolved_unicode_string;
 #endif
 
 #define printf_mmu(...) DEBUG_LOG(SH4, __VA_ARGS__)
+
+namespace mmu
+{
+
+static u32 ITLB_LRU_USE[64];
+
+//SQ fast remap , mainly hackish , assumes 1MB pages
+//max 64MB can be remapped on SQ
+// Used when FullMMU is off
+u32 sq_remap[64];
 
 constexpr u32 ITLB_LRU_OR[4] =
 {
@@ -53,9 +53,12 @@ constexpr u32 ITLB_LRU_AND[4] =
 	0x3F,//xx1x11
 };
 
-#ifndef FAST_MMU
-//sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
-void UTLB_Sync(u32 entry)
+bool mmuOn;
+
+static bool fullMmuNeeded(int index = -1);
+
+//sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry #
+void MMU::UTLBSync(u32 entry)
 {
 	printf_mmu("UTLB MEM remap %d : 0x%X to 0x%X : %d asid %d size %d", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10, UTLB[entry].Data.V,
 			UTLB[entry].Address.ASID, UTLB[entry].Data.SZ0 + UTLB[entry].Data.SZ1 * 2);
@@ -68,16 +71,22 @@ void UTLB_Sync(u32 entry)
 		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
 	}
+	else if (!mmuOn && CCN_MMUCR.AT == 1 && fullMmuNeeded(entry))
+	{
+		mmuOn = true;
+		NOTICE_LOG(SH4, "Enabling on-demand Full MMU support");
+		setState();
+	}
 }
-//sync mem mapping to mmu , suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
-void ITLB_Sync(u32 entry)
+
+//sync mem mapping to mmu , suspend compiled blocks if needed.entry is a ITLB entry #
+void MMU::ITLBSync(u32 entry)
 {
 	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
 }
-#endif
 
 template<typename F>
-static void mmuException(MmuError mmu_error, u32 address, u32 am, F raise)
+static void makeException(MmuError mmu_error, u32 address, u32 am, F raise)
 {
 	printf_mmu("MMU exception -> pc = 0x%X : ", Sh4cntx.pc);
 	CCN_TEA = address;
@@ -145,9 +154,9 @@ static void mmuException(MmuError mmu_error, u32 address, u32 am, F raise)
 	}
 }
 
-[[noreturn]] void mmu_raise_exception(MmuError mmu_error, u32 address, u32 am)
+[[noreturn]] void raiseException(MmuError mmu_error, u32 address, u32 am)
 {
-	mmuException(mmu_error, address, am, [](Sh4ExceptionCode event) {
+	makeException(mmu_error, address, am, [](Sh4ExceptionCode event) {
 		debugger::debugTrap(event);	// FIXME CCN_TEA and CCN_PTEH have been updated already
 
 		throw SH4ThrownException(Sh4cntx.pc - 2, event);
@@ -155,15 +164,14 @@ static void mmuException(MmuError mmu_error, u32 address, u32 am, F raise)
 	die("Unknown mmu_error");
 }
 
-
-void DoMMUException(u32 address, MmuError mmu_error, u32 access_type)
+void doException(u32 address, MmuError mmu_error, u32 access_type)
 {
-	mmuException(mmu_error, address, access_type, [](Sh4ExceptionCode event) {
+	makeException(mmu_error, address, access_type, [](Sh4ExceptionCode event) {
 		Do_Exception(Sh4cntx.pc, event);
 	});
 }
 
-bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
+bool match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 {
 	if (Data.V == 0)
 		return false;
@@ -182,9 +190,8 @@ bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 	return false;
 }
 
-#ifndef FAST_MMU
 //Do a full lookup on the UTLB entry's
-MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
+MmuError MMU::fullLookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
 	CCN_MMUCR.URC++;
 	if (CCN_MMUCR.URB == CCN_MMUCR.URC)
@@ -193,7 +200,7 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 	*tlb_entry_ret = nullptr;
 	for (const TLB_Entry& tlb_entry : UTLB)
 	{
-		if (mmu_match(va, tlb_entry.Address, tlb_entry.Data))
+		if (match(va, tlb_entry.Address, tlb_entry.Data))
 		{
 			if (*tlb_entry_ret != nullptr)
 				return MmuError::TLB_MHIT;
@@ -222,7 +229,7 @@ static u32 mmu_QACR_SQ(u32 va)
 }
 
 template<u32 translation_type>
-MmuError mmu_full_SQ(u32 va, u32& rv)
+MmuError MMU::fullSQ(u32 va, u32& rv)
 {
 
 	if ((va & 3) || (CCN_MMUCR.SQMD == 1 && Sh4cntx.sr.MD == 0))
@@ -234,7 +241,7 @@ MmuError mmu_full_SQ(u32 va, u32& rv)
 		//Address=Dest&0xFFFFFFE0;
 
 		const TLB_Entry *entry;
-		MmuError lookup = mmu_full_lookup(va, &entry, rv);
+		MmuError lookup = fullLookup(va, &entry, rv);
 
 		rv &= ~31;//lower 5 bits are forced to 0
 
@@ -262,17 +269,17 @@ MmuError mmu_full_SQ(u32 va, u32& rv)
 	}
 	return MmuError::NONE;
 }
-template MmuError mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
-template MmuError mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
+template MmuError MMU::fullSQ<MMU_TT_DREAD>(u32 va, u32& rv);
+template MmuError MMU::fullSQ<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 template<u32 translation_type>
-MmuError mmu_data_translation(u32 va, u32& rv)
+MmuError MMU::translateData(u32 va, u32& rv)
 {
 	if (translation_type == MMU_TT_DWRITE)
 	{
 		if ((va & 0xFC000000) == 0xE0000000)
 		{
-			MmuError lookup = mmu_full_SQ<MMU_TT_DWRITE>(va, rv);
+			MmuError lookup = fullSQ<MMU_TT_DWRITE>(va, rv);
 			if (lookup != MmuError::NONE)
 				return lookup;
 
@@ -300,7 +307,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 	}
 
 	const TLB_Entry *entry;
-	MmuError lookup = mmu_full_lookup(va, &entry, rv);
+	MmuError lookup = fullLookup(va, &entry, rv);
 
 	if (lookup != MmuError::NONE)
 		return lookup;
@@ -340,10 +347,10 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 
 	return MmuError::NONE;
 }
-template MmuError mmu_data_translation<MMU_TT_DREAD>(u32 va, u32& rv);
-template MmuError mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
+template MmuError MMU::translateData<MMU_TT_DREAD>(u32 va, u32& rv);
+template MmuError MMU::translateData<MMU_TT_DWRITE>(u32 va, u32& rv);
 
-MmuError mmu_instruction_translation(u32 va, u32& rv)
+MmuError MMU::translateInstruction(u32 va, u32& rv)
 {
 	if (Sh4cntx.sr.MD == 0 && (va & 0x80000000) != 0)
 		// User mode on kernel address
@@ -361,7 +368,7 @@ MmuError mmu_instruction_translation(u32 va, u32& rv)
 	}
 
 	const TLB_Entry *entry;
-	MmuError lookup = mmu_instruction_lookup(va, &entry, rv);
+	MmuError lookup = instructionLookup(va, &entry, rv);
 	if (lookup != MmuError::NONE)
 		return lookup;
 
@@ -374,9 +381,8 @@ MmuError mmu_instruction_translation(u32 va, u32& rv)
 
 	return MmuError::NONE;
 }
-#endif
 
-MmuError mmu_instruction_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
+MmuError MMU::instructionLookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
 	bool mmach = false;
 retry_ITLB_Match:
@@ -405,22 +411,16 @@ retry_ITLB_Match:
 
 	if (*tlb_entry_ret == nullptr)
 	{
-#ifndef FAST_MMU
 		verify(!mmach);
-#else
-		// the matching may be approximative
-		if (mmach)
-			return MmuError::TLB_MISS;
-#endif
 		const TLB_Entry *tlb_entry;
-		MmuError lookup = mmu_full_lookup(va, &tlb_entry, rv);
+		MmuError lookup = fullLookup(va, &tlb_entry, rv);
 		if (lookup != MmuError::NONE)
 			return lookup;
 
 		u32 replace_index = ITLB_LRU_USE[CCN_MMUCR.LRUI];
 		verify(replace_index != 0xFFFFFFFF);
 		ITLB[replace_index] = *tlb_entry;
-		ITLB_Sync(replace_index);
+		ITLBSync(replace_index);
 		mmach = true;
 		goto retry_ITLB_Match;
 	}
@@ -431,7 +431,7 @@ retry_ITLB_Match:
 	return MmuError::NONE;
 }
 
-void mmu_set_state()
+void setState()
 {
 	if (CCN_MMUCR.AT == 1)
 	{
@@ -463,10 +463,10 @@ void mmu_set_state()
 }
 
 #ifdef FAST_MMU
-u32 mmuAddressLUT[0x100000];
+u32 addressLUT[0x100000];
 #endif
 
-void MMU_init()
+void init()
 {
 	memset(ITLB_LRU_USE, 0xFF, sizeof(ITLB_LRU_USE));
 	for (u32 e = 0; e<4; e++)
@@ -482,85 +482,116 @@ void MMU_init()
 			}
 		}
 	}
-	mmu_set_state();
+	reset();
 #ifdef FAST_MMU
 	// pre-fill kernel memory
-	for (u32 vpn = std::size(mmuAddressLUT) / 2; vpn < std::size(mmuAddressLUT); vpn++)
-		mmuAddressLUT[vpn] = vpn << 12;
+	for (u32 vpn = std::size(addressLUT) / 2; vpn < std::size(addressLUT); vpn++)
+		addressLUT[vpn] = vpn << 12;
 #endif
 }
 
 
-void MMU_reset()
+void reset()
 {
 	memset(UTLB, 0, sizeof(UTLB));
 	memset(ITLB, 0, sizeof(ITLB));
-	mmu_set_state();
-	mmu_flush_table();
+	setState();
+	WinCEMMU::flushTable();
 	memset(sq_remap, 0, sizeof(sq_remap));
 }
 
-void MMU_term()
+void term()
 {
 }
 
-#ifndef FAST_MMU
-void mmu_flush_table()
+void MMU::flushTable()
 {
 	for (TLB_Entry& entry : ITLB)
 		entry.Data.V = 0;
 	for (TLB_Entry& entry : UTLB)
 		entry.Data.V = 0;
-}
+#ifdef FAST_MMU
+	addressLUTFlush(true);
 #endif
+}
 
-template<typename T>
-T DYNACALL mmu_ReadMem(u32 adr)
+template<typename MMU_T, typename T>
+static T DYNACALL readMem(u32 adr)
 {
 	if (adr & (std::min((int)sizeof(T), 4) - 1))
 		// Unaligned
-		mmu_raise_exception(MmuError::BADADDR, adr, MMU_TT_DREAD);
+		raiseException(MmuError::BADADDR, adr, MMU_TT_DREAD);
 	u32 addr;
-	MmuError rv = mmu_data_translation<MMU_TT_DREAD>(adr, addr);
+	MmuError rv = MMU_T::template translateData<MMU_TT_DREAD>(adr, addr);
 	if (rv != MmuError::NONE)
-		mmu_raise_exception(rv, adr, MMU_TT_DREAD);
+		raiseException(rv, adr, MMU_TT_DREAD);
 	return addrspace::readt<T>(addr);
 }
-template u8 mmu_ReadMem(u32 adr);
-template u16 mmu_ReadMem(u32 adr);
-template u32 mmu_ReadMem(u32 adr);
-template u64 mmu_ReadMem(u32 adr);
 
-u16 DYNACALL mmu_IReadMem16(u32 vaddr)
+template<typename MMU_T>
+static u16 DYNACALL ireadMem(u32 vaddr)
 {
 	if (vaddr & (sizeof(u16) - 1))
 		// Unaligned
-		mmu_raise_exception(MmuError::BADADDR, vaddr, MMU_TT_IREAD);
+		raiseException(MmuError::BADADDR, vaddr, MMU_TT_IREAD);
 	u32 addr;
-	MmuError rv = mmu_instruction_translation(vaddr, addr);
+	MmuError rv = MMU_T::translateInstruction(vaddr, addr);
 	if (rv != MmuError::NONE)
-		mmu_raise_exception(rv, vaddr, MMU_TT_IREAD);
+		raiseException(rv, vaddr, MMU_TT_IREAD);
 	return addrspace::read16(addr);
 }
 
-template<typename T>
-void DYNACALL mmu_WriteMem(u32 adr, T data)
+template<typename MMU_T, typename T>
+static void DYNACALL writeMem(u32 adr, T data)
 {
 	if (adr & (std::min((int)sizeof(T), 4) - 1))
 		// Unaligned
-		mmu_raise_exception(MmuError::BADADDR, adr, MMU_TT_DWRITE);
+		raiseException(MmuError::BADADDR, adr, MMU_TT_DWRITE);
 	u32 addr;
-	MmuError rv = mmu_data_translation<MMU_TT_DWRITE>(adr, addr);
+	MmuError rv = MMU_T::template translateData<MMU_TT_DWRITE>(adr, addr);
 	if (rv != MmuError::NONE)
-		mmu_raise_exception(rv, adr, MMU_TT_DWRITE);
+		raiseException(rv, adr, MMU_TT_DWRITE);
 	addrspace::writet<T>(addr, data);
 }
-template void mmu_WriteMem(u32 adr, u8 data);
-template void mmu_WriteMem(u32 adr, u16 data);
-template void mmu_WriteMem(u32 adr, u32 data);
-template void mmu_WriteMem(u32 adr, u64 data);
 
-void mmu_TranslateSQW(u32 adr, u32 *out)
+void MMU::setMemoryHandlers()
+{
+	IReadMem16 = &ireadMem<MMU>;
+	ReadMem8 = readMem<MMU, u8>;
+	ReadMem16 = &readMem<MMU, u16>;
+	ReadMem32 = &readMem<MMU, u32>;
+	ReadMem64 = &readMem<MMU, u64>;
+
+	WriteMem8 = &writeMem<MMU, u8>;
+	WriteMem16 = &writeMem<MMU, u16>;
+	WriteMem32 = &writeMem<MMU, u32>;
+	WriteMem64 = &writeMem<MMU, u64>;
+}
+
+void WinCEMMU::setMemoryHandlers()
+{
+	IReadMem16 = &ireadMem<WinCEMMU>;
+	ReadMem8 = &readMem<WinCEMMU, u8>;
+	ReadMem16 = &readMem<WinCEMMU, u16>;
+	ReadMem32 = &readMem<WinCEMMU, u32>;
+	ReadMem64 = &readMem<WinCEMMU, u64>;
+
+	WriteMem8 = &writeMem<WinCEMMU, u8>;
+	WriteMem16 = &writeMem<WinCEMMU, u16>;
+	WriteMem32 = &writeMem<WinCEMMU, u32>;
+	WriteMem64 = &writeMem<WinCEMMU, u64>;
+}
+
+void setMemoryHandlers()
+{
+	if (settings.content.windowsCE)
+		WinCEMMU::setMemoryHandlers();
+	else
+		MMU::setMemoryHandlers();
+}
+
+template<bool WinCE>
+void translateSQW(u32 adr, u32 *out)
 {
 	if (!mmuOn)
 	{
@@ -572,22 +603,28 @@ void mmu_TranslateSQW(u32 adr, u32 *out)
 	else
 	{
 		u32 addr;
-		MmuError tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
+		MmuError tv;
+		if constexpr (WinCE)
+			tv = WinCEMMU::fullSQ<MMU_TT_DREAD>(adr, addr);
+		else
+			tv = MMU::fullSQ<MMU_TT_DREAD>(adr, addr);
 		if (tv != MmuError::NONE)
-			mmu_raise_exception(tv, adr, MMU_TT_DREAD);
+			raiseException(tv, adr, MMU_TT_DREAD);
 
 		*out = addr;
 	}
 }
+template void translateSQW<true>(u32 adr, u32 *out);
+template void translateSQW<false>(u32 adr, u32 *out);
 
-void mmu_serialize(Serializer& ser)
+void serialize(Serializer& ser)
 {
 	ser << UTLB;
 	ser << ITLB;
 	ser << sq_remap;
 }
 
-void mmu_deserialize(Deserializer& deser)
+void deserialize(Deserializer& deser)
 {
 	deser >> UTLB;
 	deser >> ITLB;
@@ -597,8 +634,83 @@ void mmu_deserialize(Deserializer& deser)
 	if (!settings.content.windowsCE)
 	{
 		for (unsigned i = 0; i < std::size(UTLB); i++)
-			UTLB_Sync(i);
+			UTLBSync(i);
 		for (unsigned i = 0; i < std::size(ITLB); i++)
-			ITLB_Sync(i);
+			ITLBSync(i);
 	}
+}
+
+bool fullMmuNeeded(int index)
+{
+	if (settings.content.fullMmu)
+		return true;
+	const unsigned start = index < 0 ? 0 : index;
+	const unsigned end = index < 0 ? std::size(UTLB) : index + 1;
+	for (unsigned i = start; i < end; i++)
+	{
+		const TLB_Entry& entry = UTLB[i];
+		if (entry.Data.V == 1
+				// ignore many arcade and Visual Concepts games presumably bogus mappings
+				&& entry.Address.VPN != 0x30040 && entry.Address.VPN != 0x30000
+				// ignore identity mapping
+				&& entry.Address.VPN != entry.Data.PPN
+				// ignore store queue mapping
+				&& (entry.Address.VPN & (0xFC000000 >> 10)) != (0xE0000000 >> 10))
+		{
+			INFO_LOG(SH4, "fullMmuNeeded[%d]: VPN %x PPN %x ASID %d sz %d", i,
+					entry.Address.VPN << 10, entry.Data.PPN << 10,
+					entry.Address.ASID, entry.Data.SZ1 * 2 + entry.Data.SZ0);
+			settings.content.fullMmu = true;
+			return true;
+		}
+	}
+	return false;
+}
+
+#if FEAT_SHREC != DYNAREC_NONE
+
+template<bool WinCE, u32 Direction>
+static u32 DYNACALL dynarecLookup(u32 vaddr, u32 pc)
+{
+	u32 paddr;
+	MmuError rv;
+	// TODO pass access size so that alignment errors are raised
+	if constexpr (WinCE)
+		rv = WinCEMMU::translateData<Direction>(vaddr, paddr);
+	else
+		rv = MMU::translateData<Direction>(vaddr, paddr);
+	if (unlikely(rv != MmuError::NONE))
+	{
+		Sh4cntx.pc = pc;
+		doException(vaddr, rv, Direction);
+		host_context_t ctx;
+		sh4Dynarec->handleException(ctx);
+		((void (*)())ctx.pc)();
+		// not reached
+		return 0;
+	}
+#ifdef FAST_MMU
+	if (vaddr >> 31 == 0)
+		addressLUT[vaddr >> 12] = paddr & ~0xfff;
+#endif
+
+	return paddr;
+}
+
+dynlookup_t getDynarecLookupFunc(bool write)
+{
+	if (settings.content.windowsCE)
+	{
+		return write ? dynarecLookup<true, MMU_TT_DWRITE>
+				: dynarecLookup<true, MMU_TT_DREAD>;
+	}
+	else
+	{
+		return write ? dynarecLookup<false, MMU_TT_DWRITE>
+				: dynarecLookup<false, MMU_TT_DREAD>;
+	}
+}
+
+#endif
+
 }

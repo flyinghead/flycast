@@ -121,12 +121,12 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 		Do_Exception(vaddr, Sh4Ex_AddressErrorRead);
 		return false;
 	}
-	else if (mmu_enabled())
+	else if (mmu::enabled())
 	{
-		MmuError rv = mmu_instruction_translation(vaddr, addr);
+		MmuError rv = mmu::translateInstruction(vaddr, addr);
 		if (rv != MmuError::NONE)
 		{
-			DoMMUException(vaddr, rv, MMU_TT_IREAD);
+			mmu::doException(vaddr, rv, MMU_TT_IREAD);
 			return false;
 		}
 	}
@@ -218,7 +218,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {
 	DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail @ %08x", addr);
 	u32 blockcheck_failures = 0;
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		RuntimeBlockInfoPtr block = bm_GetBlock(addr);
 		if (block)
@@ -288,7 +288,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv = findOrCompile();  // Returns rx ptr
 
-	if (mmu_enabled())
+	if (mmu::enabled())
 		return (void *)rv;
 	if (!stale_block)
 	{
@@ -388,7 +388,7 @@ Sh4Executor *Get_Sh4Recompiler()
 
 static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, RuntimeBlockInfo* block)
 {
-	if (mmu_enabled() && mmu_is_translated(addr, size))
+	if (mmu::enabled() && mmu::isTranslated(addr, size))
 	{
 		if (addr & (size - 1))
 			// Unaligned
@@ -401,8 +401,8 @@ static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, Runti
 
 		u32 paddr;
 		MmuError rv = access == MMU_TT_DREAD ?
-				mmu_data_translation<MMU_TT_DREAD>(addr, paddr)
-				: mmu_data_translation<MMU_TT_DWRITE>(addr, paddr);
+				mmu::translateData<MMU_TT_DREAD>(addr, paddr)
+				: mmu::translateData<MMU_TT_DWRITE>(addr, paddr);
 		if (rv != MmuError::NONE)
 			return false;
 

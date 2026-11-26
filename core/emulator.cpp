@@ -956,7 +956,7 @@ void Emulator::loadstate(Deserializer& deser)
 #if FEAT_AREC == DYNAREC_JIT
 	aica::arm::recompiler::flush();
 #endif
-	mmu_flush_table();
+	mmu::flushTable();
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Reset();
 #endif
@@ -965,7 +965,7 @@ void Emulator::loadstate(Deserializer& deser)
 
 	dc_deserialize(deser);
 
-	mmu_set_state();
+	mmu::setState();
 	getSh4Executor()->ResetCache();
 	EventManager::event(Event::LoadState);
 }

@@ -290,7 +290,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			u32 entry = (addr >> 8) & 3;
 			ITLB[entry].Address.reg_data = data & 0xFFFFFCFF;
 			ITLB[entry].Data.V = (data >> 8) & 1;
-			ITLB_Sync(entry);
+			mmu::ITLBSync(entry);
 		}
 		return;
 
@@ -301,7 +301,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 				ITLB[entry].Assistance.reg_data = data & 0xf;
 			else
 				ITLB[entry].Data.reg_data=data;
-			ITLB_Sync(entry);
+			mmu::ITLBSync(entry);
 		}
 		return;
 
@@ -327,21 +327,21 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 			for (std::size_t i = 0; i < std::size(UTLB); i++)
 			{
-				if (mmu_match(va, UTLB[i].Address, UTLB[i].Data))
+				if (mmu::match(va, UTLB[i].Address, UTLB[i].Data))
 				{
 					UTLB[i].Data.V = ((u32)data >> 8) & 1;
 					UTLB[i].Data.D = ((u32)data >> 9) & 1;
-					UTLB_Sync(i);
+					mmu::UTLBSync(i);
 				}
 			}
 
 			for (std::size_t i = 0; i < std::size(ITLB); i++)
 			{
-				if (mmu_match(va, ITLB[i].Address, ITLB[i].Data))
+				if (mmu::match(va, ITLB[i].Address, ITLB[i].Data))
 				{
 					ITLB[i].Data.V = ((u32)data >> 8) & 1;
 					ITLB[i].Data.D = ((u32)data >> 9) & 1;
-					ITLB_Sync(i);
+					mmu::ITLBSync(i);
 				}
 			}
 		}
@@ -351,7 +351,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			UTLB[entry].Address.reg_data = data & 0xFFFFFCFF;
 			UTLB[entry].Data.D = (data >> 9) & 1;
 			UTLB[entry].Data.V = (data >> 8) & 1;
-			UTLB_Sync(entry);
+			mmu::UTLBSync(entry);
 		}
 		return;
 
@@ -362,7 +362,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 				UTLB[entry].Assistance.reg_data = data & 0xf;
 			else
 				UTLB[entry].Data.reg_data = data;
-			UTLB_Sync(entry);
+			mmu::UTLBSync(entry);
 		}
 		return;
 
@@ -595,7 +595,7 @@ void sh4_mmr_init()
 	tmu.init();
 	ubc.init();
 
-	MMU_init();
+	mmu::init();
 }
 
 void sh4_mmr_reset()
@@ -613,13 +613,13 @@ void sh4_mmr_reset()
 	tmu.reset();
 	ubc.reset();
 
-	MMU_reset();
+	mmu::reset();
 	memset(p_sh4rcb->cntx.sq_buffer, 0, sizeof(p_sh4rcb->cntx.sq_buffer));
 }
 
 void sh4_mmr_term()
 {
-	MMU_term();
+	mmu::term();
 
 	ubc.term();
 	tmu.term();
@@ -726,13 +726,13 @@ void deserialize(Deserializer& deser)
 void serialize2(Serializer& ser)
 {
 	tmu.serialize(ser);
-	mmu_serialize(ser);
+	mmu::serialize(ser);
 }
 
 void deserialize2(Deserializer& deser)
 {
 	tmu.deserialize(deser);
-	mmu_deserialize(deser);
+	mmu::deserialize(deser);
 }
 
 } //namespace sh4

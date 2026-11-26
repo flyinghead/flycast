@@ -316,18 +316,9 @@ void SetMemoryHandlers()
 	}
 	interpreterRunning = false;
 #endif
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
-		IReadMem16 = &mmu_IReadMem16;
-		ReadMem8 = &mmu_ReadMem<u8>;
-		ReadMem16 = &mmu_ReadMem<u16>;
-		ReadMem32 = &mmu_ReadMem<u32>;
-		ReadMem64 = &mmu_ReadMem<u64>;
-
-		WriteMem8 = &mmu_WriteMem<u8>;
-		WriteMem16 = &mmu_WriteMem<u16>;
-		WriteMem32 = &mmu_WriteMem<u32>;
-		WriteMem64 = &mmu_WriteMem<u64>;
+		mmu::setMemoryHandlers();
 	}
 	else
 	{

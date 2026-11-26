@@ -27,6 +27,9 @@
 #define SH_CURTHREAD            1
 #define SH_CURPROC              2
 
+namespace mmu
+{
+
 static bool read_mem32(u32 addr, u32& data)
 {
 	u32 pa;
@@ -349,9 +352,14 @@ static bool print_wince_syscall(u32 address)
 		return false;
 
 }
+
+} // namespace mmu
 #endif
 
-#if defined(FAST_MMU) && defined(USE_WINCE_HACK)
+#ifdef USE_WINCE_HACK
+namespace mmu
+{
+
 static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 {
 	// WinCE hack
@@ -406,4 +414,6 @@ static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 
 	return false;
 }
+
+} // namespace mmu
 #endif

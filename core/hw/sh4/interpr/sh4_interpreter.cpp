@@ -29,7 +29,7 @@ void Sh4Interpreter::ExecuteOpcode(u16 op)
 u16 Sh4Interpreter::ReadNexOp()
 {
 	u32 addr = ctx->pc;
-	if (!mmu_enabled() && (addr & 1))
+	if (!mmu::enabled() && (addr & 1))
 		// address error
 		throw SH4ThrownException(addr, Sh4Ex_AddressErrorRead);
 

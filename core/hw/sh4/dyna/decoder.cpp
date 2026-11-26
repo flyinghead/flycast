@@ -752,7 +752,7 @@ static bool dec_generic(u32 op)
 			bool update_after=false;
 			if ((s32)e<0)
 			{
-				if (rs1._reg!=rs2._reg && !mmu_enabled()) //reg shouldn't be updated if its written
+				if (rs1._reg!=rs2._reg && !mmu::enabled()) //reg shouldn't be updated if its written
 				{
 					Emit(shop_sub,rs1,rs1,mk_imm(-e));
 				}
@@ -959,7 +959,7 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 	blk->guest_opcodes = 0;
 	cycleCounter.reset();
 	// If full MMU, don't allow the block to extend past the end of the current 4K page
-	u32 max_pc = mmu_enabled() ? ((state.cpu.rpc >> 12) + 1) << 12 : 0xFFFFFFFF;
+	u32 max_pc = mmu::enabled() ? ((state.cpu.rpc >> 12) + 1) << 12 : 0xFFFFFFFF;
 	
 	for(;;)
 	{

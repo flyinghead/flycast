@@ -29,7 +29,7 @@ static void CCN_PTEH_write(u32 addr, u32 value)
 	temp.reg_data = value & 0xfffffcff;
 #ifdef FAST_MMU
 	if (temp.ASID != CCN_PTEH.ASID)
-		mmuAddressLUTFlush(false);
+		mmu::addressLUTFlush(false);
 #endif
 
 	CCN_PTEH = temp;
@@ -45,7 +45,7 @@ static void CCN_MMUCR_write(u32 addr, u32 value)
 	if (temp.TI != 0)
 	{
 		DEBUG_LOG(SH4, "Full MMU flush");
-		mmu_flush_table();
+		mmu::flushTable();
 
 		temp.TI = 0;
 	}
@@ -54,7 +54,7 @@ static void CCN_MMUCR_write(u32 addr, u32 value)
 	if (mmu_changed_state)
 	{
 		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-		mmu_set_state();
+		mmu::setState();
 		emu.getSh4Executor()->ResetCache();
 	}
 }

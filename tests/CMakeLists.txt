@@ -25,6 +25,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/Sh4InterpreterTest.cpp
         src/SorterTest.cpp
         src/MmuTest.cpp
+        src/WinCEMmuTest.cpp
         src/HttpTest.cpp
         src/IniFileTest.cpp
         src/hw/modem/v42Test.cpp

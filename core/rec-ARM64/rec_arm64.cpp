@@ -293,7 +293,7 @@ public:
 
 				Mov(x0, x28);
 				Mov(w1, op.rs3._imm);
-				if (!mmu_enabled())
+				if (!mmu::enabled())
 				{
 					GenCallRuntime(OpDesc[op.rs3._imm]->oph);
 				}
@@ -792,7 +792,7 @@ public:
 					}
 
 					Mov(x1, x28);
-					if (mmu_enabled())
+					if (mmu::enabled())
 					{
 						Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 						GenCallRuntime(do_sqw_mmu_no_ex);
@@ -1183,7 +1183,7 @@ public:
 			}
 			else
 			{
-				if (!mmu_enabled() && sh4ctx.CpuRunning)
+				if (!mmu::enabled() && sh4ctx.CpuRunning)
 				{
 					GenCall(linkBlockGenericStub);
 					Nop();
@@ -1229,7 +1229,7 @@ public:
 				}
 				else
 				{
-					if (!mmu_enabled() && sh4ctx.CpuRunning)
+					if (!mmu::enabled() && sh4ctx.CpuRunning)
 					{
 						GenCall(linkBlockBranchStub);
 						Nop();
@@ -1259,7 +1259,7 @@ public:
 				}
 				else
 				{
-					if (!mmu_enabled() && sh4ctx.CpuRunning)
+					if (!mmu::enabled() && sh4ctx.CpuRunning)
 					{
 						GenCall(linkBlockNextStub);
 						Nop();
@@ -1285,7 +1285,7 @@ public:
 			// next_pc = *jdyn;
 
 			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
-			if (!mmu_enabled() && sh4ctx.CpuRunning)
+			if (!mmu::enabled() && sh4ctx.CpuRunning)
 			{
 				ptrdiff_t start = GetBuffer()->GetCursorOffset();
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
@@ -1386,7 +1386,7 @@ public:
 		// Not yet compiled block stub
 		// WARNING: this function must be at a fixed address, or transitioning to mmu will fail (switch)
 		rdv_SetFailedToFindBlockHandler((void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>()));
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			GenCallRuntime(rdv_FailedToFindBlock_pc);
 		}
@@ -1441,7 +1441,7 @@ public:
 
 		Sub(x0, x0, sizeof(Sh4Context));
 		Label reenterLabel;
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			// Push context
 			Stp(x0, x1, MemOperand(sp, -16, PreIndex));
@@ -1453,7 +1453,7 @@ public:
 
 			Bind(&reenterLabel);
 			Ldr(x28, MemOperand(sp));	// Set context
-			Mov(x27, reinterpret_cast<uintptr_t>(mmuAddressLUT));
+			Mov(x27, reinterpret_cast<uintptr_t>(mmu::addressLUT));
 		}
 		else
 		{
@@ -1472,7 +1472,7 @@ public:
 
 		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
 		Cbz(w0, &end_mainloop);
-		if (!mmu_enabled())
+		if (!mmu::enabled())
 		{
 			Sub(x2, x28, offsetof(Sh4RCB, cntx));
 			if (RAM_SIZE == 32_MB)
@@ -1491,7 +1491,7 @@ public:
 		Br(x0);
 
 		Bind(&end_mainloop);
-		if (mmu_enabled())
+		if (mmu::enabled())
 			// Pop context
 			Add(sp, sp, 16);
 		// Restore registers
@@ -1534,7 +1534,7 @@ public:
 		//
 		Label handleExceptionLabel;
 		Bind(&handleExceptionLabel);
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			Ldr(x0, reinterpret_cast<uintptr_t>(&jmp_stack));
 			Ldr(x1, MemOperand(x0));
@@ -1570,7 +1570,7 @@ public:
 		// w0: addr
 		Bind(&blockCheckFailLabel);
 		GenCallRuntime(rdv_BlockCheckFail);
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			Label jumpblockLabel;
 			Cbnz(x0, &jumpblockLabel);
@@ -1727,7 +1727,7 @@ private:
 
 	void genMmuLookup(const shil_opcode& op, u32 write)
 	{
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			Label inCache;
 			Label done;
@@ -1735,9 +1735,9 @@ private:
 			Lsr(w1, w0, 12);
 			Ldr(w1, MemOperand(x27, x1, LSL, 2));
 			Cbnz(w1, &inCache);
-			Mov(w1, write);
-			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
-			GenCallRuntime(mmuDynarecLookup);
+			Mov(w1, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			mmu::dynlookup_t dynLookup = mmu::getDynarecLookupFunc(write);
+			GenCallRuntime(dynLookup);
 			B(&done);
 			Bind(&inCache);
 			And(w0, w0, 0xFFF);
@@ -2079,7 +2079,7 @@ private:
 
 	void CheckBlock(bool force_checks, RuntimeBlockInfo* block)
 	{
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			// Verify that pc == block->vaddr
 			Mov(w0, block->vaddr);
@@ -2136,7 +2136,7 @@ private:
 			Bind(&blockcheck_success);
 		}
 
-		if (mmu_enabled() && block->has_fpu_op)
+		if (mmu::enabled() && block->has_fpu_op)
 		{
 			// Verify that the FPU is enabled
 			Mov(w0, block->vaddr);

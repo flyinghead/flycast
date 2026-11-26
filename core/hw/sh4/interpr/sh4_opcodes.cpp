@@ -1112,7 +1112,7 @@ sh4op(i0000_0000_0011_1000)
 	UTLB[CCN_MMUCR.URC].Address = CCN_PTEH;
 	UTLB[CCN_MMUCR.URC].Assistance = CCN_PTEA;
 
-	UTLB_Sync(CCN_MMUCR.URC);
+	mmu::UTLBSync(CCN_MMUCR.URC);
 }
 
 //ocbi @<REG_N>

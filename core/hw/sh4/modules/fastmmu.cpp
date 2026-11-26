@@ -21,18 +21,15 @@
 #include "hw/sh4/sh4_core.h"
 #include "types.h"
 #include "stdclass.h"
-
-#ifdef FAST_MMU
-
 #include "hw/sh4/sh4_mem.h"
 
-extern TLB_Entry UTLB[64];
-// Used when FullMMU is off
-extern u32 sq_remap[64];
-
 //#define TRACE_WINCE_SYSCALLS
-
 #include "wince.h"
+
+extern TLB_Entry UTLB[64];
+
+namespace mmu
+{
 
 static TLB_Entry const *lru_entry;
 static u32 lru_mask;
@@ -112,97 +109,7 @@ static bool find_entry(u32 address, const TLB_Entry **ret_entry)
 	return false;
 }
 
-#if 0
-static void dump_table()
-{
-	static int iter = 1;
-	char filename[128];
-	snprintf(filename, sizeof(filename), "mmutable%03d", iter++);
-	FILE *f = fopen(filename, "wb");
-	if (f == NULL)
-		return;
-	fwrite(full_table, sizeof(full_table[0]), full_table_size, f);
-	fclose(f);
-}
-
-int main(int argc, char *argv[])
-{
-	FILE *f = fopen(argv[1], "rb");
-	if (f == NULL)
-	{
-		perror(argv[1]);
-		return 1;
-	}
-	full_table_size = fread(full_table, sizeof(full_table[0]), std::size(full_table), f);
-	fclose(f);
-	printf("Loaded %d entries\n", full_table_size);
-	std::vector<u32> addrs;
-	std::vector<u32> asids;
-	for (int i = 0; i < full_table_size; i++)
-	{
-		u32 sz = full_table[i].entry.Data.SZ1 * 2 + full_table[i].entry.Data.SZ0;
-		u32 mask = sz == 3 ? 1_MB : sz == 2 ? 64_KB : sz == 1 ? 4_KB : 1_KB;
-		mask--;
-		addrs.push_back(((full_table[i].entry.Address.VPN << 10) & mmu_mask[sz]) | (random() * mask / RAND_MAX));
-		asids.push_back(full_table[i].entry.Address.ASID);
-//		printf("%08x -> %08x sz %d ASID %d SH %d\n", full_table[i].entry.Address.VPN << 10, full_table[i].entry.Data.PPN << 10,
-//				full_table[i].entry.Data.SZ1 * 2 + full_table[i].entry.Data.SZ0,
-//				full_table[i].entry.Address.ASID, full_table[i].entry.Data.SH);
-		u16 bucket = bucket_index(full_table[i].entry.Address.VPN << 10, full_table[i].entry.Data.SZ1 * 2 + full_table[i].entry.Data.SZ0);
-		full_table[i].next_entry = entry_buckets[bucket];
-		entry_buckets[bucket] = &full_table[i];
-	}
-	for (int i = 0; i < full_table_size / 10; i++)
-	{
-		addrs.push_back(random());
-		asids.push_back(666);
-	}
-	u64 start = getTimeMs();
-	int success = 0;
-	const int loops = 100000;
-	for (int i = 0; i < loops; i++)
-	{
-		for (int j = 0; j < addrs.size(); j++)
-		{
-			u32 addr = addrs[j];
-			CCN_PTEH.ASID = asids[j];
-			const TLB_Entry *p;
-			if (find_entry(addr, &p))
-				success++;
-		}
-	}
-	u64 end = getTimeMs();
-	printf("Lookup time: %f ms. Success rate %f max_len %d\n", ((double)end - start) / addrs.size(), (double)success / addrs.size() / loops, 0/*max_length*/);
-}
-#endif
-
-bool fullMmuNeeded(int index)
-{
-	if (settings.content.fullMmu)
-		return true;
-	const unsigned start = index < 0 ? 0 : index;
-	const unsigned end = index < 0 ? std::size(UTLB) : index + 1;
-	for (unsigned i = start; i < end; i++)
-	{
-		const TLB_Entry& entry = UTLB[i];
-		if (entry.Data.V == 1
-				// ignore many arcade and Visual Concepts games presumably bogus mappings
-				&& entry.Address.VPN != 0x30040 && entry.Address.VPN != 0x30000
-				// ignore identity mapping
-				&& entry.Address.VPN != entry.Data.PPN
-				// ignore store queue mapping
-				&& (entry.Address.VPN & (0xFC000000 >> 10)) != (0xE0000000 >> 10))
-		{
-			INFO_LOG(SH4, "fullMmuNeeded[%d]: VPN %x PPN %x ASID %d sz %d", i,
-					entry.Address.VPN << 10, entry.Data.PPN << 10,
-					entry.Address.ASID, entry.Data.SZ1 * 2 + entry.Data.SZ0);
-			return true;
-		}
-	}
-	return false;
-}
-
-void UTLB_Sync(u32 entry)
+void WinCEMMU::UTLBSync(u32 entry)
 {
 	TLB_Entry& tlb_entry = UTLB[entry];
 	if (tlb_entry.Data.V == 0)
@@ -218,32 +125,16 @@ void UTLB_Sync(u32 entry)
 
 	cache_entry(tlb_entry);
 
-	DEBUG_LOG(SH4, "UTLB_Sync[%d]: VPN %x PPN %x ASID %d sz %d", entry, tlb_entry.Address.VPN << 10, tlb_entry.Data.PPN << 10,
-			tlb_entry.Address.ASID, sz);
-	if (!mmu_enabled())
-	{
-		if ((tlb_entry.Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
-		{
-			// Used when FullMMU is off
-			u32 vpn_sq = ((tlb_entry.Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
-			sq_remap[vpn_sq] = tlb_entry.Data.PPN << 10;
-		}
-		else if (CCN_MMUCR.AT == 1 && fullMmuNeeded(entry))
-		{
-			mmuOn = true;
-			NOTICE_LOG(SH4, "Enabling on-demand Full MMU support");
-			mmu_set_state();
-		}
-	}
+	MMU::UTLBSync(entry);
 }
 
-void ITLB_Sync(u32 entry)
+void WinCEMMU::ITLBSync(u32 entry)
 {
-	DEBUG_LOG(SH4, "ITLB_Sync[%d]", entry);
+	MMU::ITLBSync(entry);
 }
 
 //Do a full lookup on the UTLB entry's
-MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
+MmuError WinCEMMU::fullLookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
 	if (lru_entry != NULL)
 	{
@@ -309,9 +200,9 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 }
 
 template<u32 translation_type>
-MmuError mmu_full_SQ(u32 va, u32& rv)
+MmuError WinCEMMU::fullSQ(u32 va, u32& rv)
 {
-	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
+	MmuError lookup = fullLookup(va, nullptr, rv);
 
 	if (lookup != MmuError::NONE)
 		return lookup;
@@ -320,11 +211,11 @@ MmuError mmu_full_SQ(u32 va, u32& rv)
 
 	return MmuError::NONE;
 }
-template MmuError mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
-template MmuError mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
+template MmuError WinCEMMU::fullSQ<MMU_TT_DREAD>(u32 va, u32& rv);
+template MmuError WinCEMMU::fullSQ<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 template<u32 translation_type>
-MmuError mmu_data_translation(u32 va, u32& rv)
+MmuError WinCEMMU::translateData(u32 va, u32& rv)
 {
 	if (fast_reg_lut[va >> 29] != 0)
 	{
@@ -339,7 +230,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 		return MmuError::NONE;
 	}
 
-	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
+	MmuError lookup = fullLookup(va, nullptr, rv);
 	if (lookup == MmuError::NONE && (rv & 0x1C000000) == 0x1C000000)
 		// map 1C000000-1FFFFFFF to P4 memory-mapped registers
 		rv |= 0xF0000000;
@@ -356,18 +247,25 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 
 	return lookup;
 }
-template MmuError mmu_data_translation<MMU_TT_DREAD>(u32 va, u32& rv);
-template MmuError mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
+template MmuError WinCEMMU::translateData<MMU_TT_DREAD>(u32 va, u32& rv);
+template MmuError WinCEMMU::translateData<MMU_TT_DWRITE>(u32 va, u32& rv);
 
-void mmu_flush_table()
+MmuError WinCEMMU::translateInstruction(u32 va, u32& rv)
+{
+	if (fast_reg_lut[va >> 29] != 0)
+	{
+		rv = va;
+		return MmuError::NONE;
+	}
+
+	return fullLookup(va, nullptr, rv);
+}
+
+void WinCEMMU::flushTable()
 {
 	lru_entry = nullptr;
 	flush_cache();
-	mmuAddressLUTFlush(true);
-
-	for (TLB_Entry& entry : ITLB)
-		entry.Data.V = 0;
-	for (TLB_Entry& entry : UTLB)
-		entry.Data.V = 0;
+	MMU::flushTable();
 }
-#endif 	// FAST_MMU
+
+}

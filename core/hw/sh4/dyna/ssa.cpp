@@ -595,7 +595,7 @@ void SSAOptimizer::DeadCodeRemovalPass()
 		shil_opcode& op = block->oplist[opnum];
 		bool dead_code = false;
 
-		if (op.op == shop_ifb || (mmu_enabled() && (op.op == shop_readm || op.op == shop_writem)))
+		if (op.op == shop_ifb || (mmu::enabled() && (op.op == shop_readm || op.op == shop_writem)))
 		{
 			// if mmu enabled, mem accesses can throw an exception
 			// so last_versions must be reset so the regs are correctly saved beforehand
@@ -606,7 +606,7 @@ void SSAOptimizer::DeadCodeRemovalPass()
 		{
 			if (op.rs1.is_imm() && (op.rs1.imm_value() & 0xFC000000) != 0xE0000000)
 				dead_code = true;
-			else if (mmu_enabled())
+			else if (mmu::enabled())
 			{
 				memset(last_versions, -1, sizeof(last_versions));
 				continue;

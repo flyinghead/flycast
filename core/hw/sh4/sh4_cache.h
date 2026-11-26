@@ -66,7 +66,7 @@ public:
 		u32 physAddr;
 		MmuError err = translateAddress(address, physAddr, cacheOn);
 		if (err != MmuError::NONE)
-			mmu_raise_exception(err, address, MMU_TT_IREAD);
+			mmu::raiseException(err, address, MMU_TT_IREAD);
 		if (!cacheOn) {
 			sh4cycles.addReadAccessCycles(physAddr, 2);
 			return addrspace::readt<u16>(physAddr);
@@ -141,7 +141,7 @@ public:
 				// Ignore the write
 				return;
 			if (err != MmuError::NONE)
-				mmu_raise_exception(err, vaddr, MMU_TT_IREAD);
+				mmu::raiseException(err, vaddr, MMU_TT_IREAD);
 
 			u32 tag = (physAddr >> 10) & 0x7ffff;
 
@@ -205,7 +205,7 @@ private:
 		else
 		{
 			const TLB_Entry *entry;
-			MmuError err = mmu_instruction_lookup(address, &entry, physAddr);
+			MmuError err = mmu::MMU::instructionLookup(address, &entry, physAddr);
 
 			if (err != MmuError::NONE)
 				return err;
@@ -249,7 +249,7 @@ public:
 		bool copyBack;
 		MmuError err = translateAddress<T, MMU_TT_DREAD>(address, physAddr, cacheOn, copyBack);
 		if (err != MmuError::NONE)
-			mmu_raise_exception(err, address, MMU_TT_DREAD);
+			mmu::raiseException(err, address, MMU_TT_DREAD);
 
 		if (!cacheOn) {
 			sh4cycles.addReadAccessCycles(physAddr, sizeof(T));
@@ -280,7 +280,7 @@ public:
 		bool copyBack = false;
 		MmuError err = translateAddress<T, MMU_TT_DWRITE>(address, physAddr, cacheOn, copyBack);
 		if (err != MmuError::NONE)
-			mmu_raise_exception(err, address, MMU_TT_DWRITE);
+			mmu::raiseException(err, address, MMU_TT_DWRITE);
 
 		if (!cacheOn)
 		{
@@ -330,7 +330,7 @@ public:
 		bool copyBack;
 		MmuError err = translateAddress<u8, MMU_TT_DWRITE>(address, physAddr, cached, copyBack);
 		if (err != MmuError::NONE)
-			mmu_raise_exception(err, address, MMU_TT_DWRITE);
+			mmu::raiseException(err, address, MMU_TT_DWRITE);
 
 		if (!cached)
 			return;
@@ -423,7 +423,7 @@ public:
 				// Ignore the write
 				return;
 			if (err != MmuError::NONE)
-				mmu_raise_exception(err, data & ~0x3ff, MMU_TT_DREAD);
+				mmu::raiseException(err, data & ~0x3ff, MMU_TT_DREAD);
 
 			u32 tag = (physAddr >> 10) & 0x7ffff;
 
@@ -524,7 +524,7 @@ private:
 		{
 			// Store queues
 			u32 rv;
-			MmuError lookup = mmu_full_SQ<MMU_TT_DWRITE>(address, rv);
+			MmuError lookup = mmu::MMU::fullSQ<MMU_TT_DWRITE>(address, rv);
 
 			physAddr = address;
 			return lookup;
@@ -550,7 +550,7 @@ private:
 		else
 		{
 			const TLB_Entry *entry;
-			MmuError lookup = mmu_full_lookup(address, &entry, physAddr);
+			MmuError lookup = mmu::MMU::fullLookup(address, &entry, physAddr);
 
 			if (lookup != MmuError::NONE)
 				return lookup;

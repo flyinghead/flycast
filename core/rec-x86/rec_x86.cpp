@@ -107,7 +107,7 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	unwinder.endProlog(0);
 
 	checkBlock(force_checks, block);
-	if (mmu_enabled() && block->has_fpu_op)
+	if (mmu::enabled() && block->has_fpu_op)
 	{
 		Xbyak::Label fpu_enabled;
 		mov(eax, dword[&sh4ctx.sr.status]);
@@ -229,7 +229,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	case BET_Cond_1:
 		cmp(dword[block->has_jcond ? &sh4ctx.jdyn : &sh4ctx.sr.T], (u32)block->BlockType & 1);
 
-		if (mmu_enabled())
+		if (mmu::enabled())
 		{
 			mov(ecx, block->BranchBlock);
 			mov(eax, block->NextBlock);
@@ -276,7 +276,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 
 	case BET_StaticCall:
 	case BET_StaticJump:
-		if (!mmu_enabled())
+		if (!mmu::enabled())
 		{
 			if (block->pBranchBlock)
 				jmp((const void *)block->pBranchBlock->code, T_NEAR);
@@ -449,7 +449,7 @@ void X86Compiler::genMainloop()
 	mov(edx, dword[&sh4ctx.CpuRunning]);
 	cmp(edx, 0);
 	jz(cleanup);
-	if (!mmu_enabled())
+	if (!mmu::enabled())
 	{
 		mov(esi, ecx);	// save sh4 pc in ESI, used below if FPCB is still empty for this address
 		mov(eax, (uintptr_t)&sh4ctx + sizeof(Sh4Context) - sizeof(Sh4RCB) + offsetof(Sh4RCB, fpcb));	// address of fpcb[0]
@@ -550,7 +550,7 @@ void X86Compiler::genMainloop()
 //ngen_FailedToFindBlock_:
 	Xbyak::Label failedToFindBlock;
 	L(failedToFindBlock);
-	if (mmu_enabled())
+	if (mmu::enabled())
 		call((void *)rdv_FailedToFindBlock_pc);
 	else
 	{
@@ -563,7 +563,7 @@ void X86Compiler::genMainloop()
 	Xbyak::Label ngen_blockcheckfailLabel;
 	L(ngen_blockcheckfailLabel);
 	call((void *)rdv_BlockCheckFail);
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		Xbyak::Label jumpblockLabel;
 		cmp(eax, 0);
@@ -804,10 +804,10 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 
 void X86Compiler::checkBlock(bool smc_checks, RuntimeBlockInfo* block)
 {
-	if (mmu_enabled() || smc_checks)
+	if (mmu::enabled() || smc_checks)
 		mov(ecx, block->addr);
 
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		mov(eax, dword[&sh4ctx.pc]);
 		cmp(eax, block->vaddr);

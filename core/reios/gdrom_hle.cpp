@@ -168,7 +168,7 @@ static void GDROM_HLE_ReadTOC()
 	for (std::size_t i = 0; i < std::size(toc); i++) {
 		toc[i] = SWAP32(toc[i]);
 	}
-	if (!mmu_enabled())
+	if (!mmu::enabled())
 	{
 		u32* pDst = (u32*)GetMemPtr(dest, sizeof(toc));
 		if (pDst != NULL)
@@ -184,7 +184,7 @@ static void GDROM_HLE_ReadTOC()
 static void readSectors(u32 addr, u32 sector, u32 count, bool virtualAddr)
 {
 	gd_hle_state.cur_sector = sector + count - 1;
-	if (!virtualAddr || !mmu_enabled())
+	if (!virtualAddr || !mmu::enabled())
 	{
 		u8 * pDst = GetMemPtr(addr, count * 2048);
 
@@ -290,7 +290,7 @@ static void GDCC_HLE_GETSCD()
 	gd_get_subcode(format, gd_hle_state.cur_sector, scd);
 	verify(scd[3] == size);
 
-	if (!mmu_enabled() && GetMemPtr(dest, size) != NULL)
+	if (!mmu::enabled() && GetMemPtr(dest, size) != NULL)
 		memcpy(GetMemPtr(dest, size), scd, size);
 	else
 	{

@@ -59,7 +59,7 @@ public:
 		{
 			FlushAllRegs(true);
 		}
-		else if (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref))
+		else if (mmu::enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref))
 		{
 			FlushAllRegs(false);
 		}
@@ -416,7 +416,7 @@ private:
 			shil_opcode* op = &block->oplist[i];
 			// if a subsequent op needs all or some regs flushed to mem
 			// TODO we could look at the ifb op to optimize what to flush
-			if (op->op == shop_ifb || (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref)))
+			if (op->op == shop_ifb || (mmu::enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref)))
 				return true;
 			if (op->op == shop_sync_sr && (/*reg == reg_sr_T ||*/ reg == reg_sr_status || (reg >= reg_r0 && reg <= reg_r7)
 					|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank)))

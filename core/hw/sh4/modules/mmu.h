@@ -36,6 +36,10 @@ struct TLB_Entry
 
 extern TLB_Entry UTLB[64];
 extern TLB_Entry ITLB[4];
+
+namespace mmu
+{
+
 extern bool mmuOn;
 
 constexpr u32 fast_reg_lut[8] =
@@ -55,50 +59,106 @@ constexpr u32 mmu_mask[4] =
 	((0xFFFFFFFF) >> 20) << 20	//1 MB page
 };
 
-void UTLB_Sync(u32 entry);
-void ITLB_Sync(u32 entry);
+class MMU
+{
+public:
+	static MmuError fullLookup(u32 va, const TLB_Entry **entry, u32& rv);
+	static MmuError instructionLookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv);
+	template<u32 translation_type>
+	static MmuError translateData(u32 va, u32& rv);
+	static MmuError translateInstruction(u32 va, u32& rv);
+	template<u32 translation_type>
+	static MmuError fullSQ(u32 va, u32& rv);
+	static void UTLBSync(u32 entry);
+	static void ITLBSync(u32 entry);
+	static void flushTable();
+	static void setMemoryHandlers();
+};
 
-bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
-void mmu_set_state();
-void mmu_flush_table();
-[[noreturn]] void mmu_raise_exception(MmuError mmu_error, u32 address, u32 am);
-bool fullMmuNeeded(int index = -1);
+class WinCEMMU
+{
+public:
+	static MmuError fullLookup(u32 va, const TLB_Entry **entry, u32& rv);
+	static MmuError instructionLookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv);
+	template<u32 translation_type>
+	static MmuError translateData(u32 va, u32& rv);
+	static MmuError translateInstruction(u32 va, u32& rv);
+	template<u32 translation_type>
+	static MmuError fullSQ(u32 va, u32& rv);
+	static void UTLBSync(u32 entry);
+	static void ITLBSync(u32 entry);
+	static void flushTable();
+	static void setMemoryHandlers();
+};
 
-static inline bool mmu_enabled()
+static inline MmuError fullLookup(u32 va, const TLB_Entry **entry, u32& rv)
+{
+	if (settings.content.windowsCE)
+		return WinCEMMU::fullLookup(va, entry, rv);
+	else
+		return MMU::fullLookup(va, entry, rv);
+}
+
+template<u32 translation_type>
+static MmuError translateData(u32 va, u32& rv)
+{
+	if (settings.content.windowsCE)
+		return WinCEMMU::translateData<translation_type>(va, rv);
+	else
+		return MMU::translateData<translation_type>(va, rv);
+}
+
+static inline MmuError translateInstruction(u32 va, u32& rv)
+{
+	if (settings.content.windowsCE)
+		return WinCEMMU::translateInstruction(va, rv);
+	else
+		return MMU::translateInstruction(va, rv);
+}
+
+void setMemoryHandlers();
+
+static inline void UTLBSync(u32 entry)
+{
+	if (settings.content.windowsCE)
+		WinCEMMU::UTLBSync(entry);
+	else
+		MMU::UTLBSync(entry);
+}
+static inline void ITLBSync(u32 entry)
+{
+	if (settings.content.windowsCE)
+		WinCEMMU::ITLBSync(entry);
+	else
+		MMU::ITLBSync(entry);
+}
+
+bool match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
+
+void setState();
+
+static inline void flushTable()
+{
+	using namespace mmu;
+	if (settings.content.windowsCE)
+		WinCEMMU::flushTable();
+	else
+		MMU::flushTable();
+}
+
+[[noreturn]] void raiseException(MmuError mmu_error, u32 address, u32 am);
+
+static inline bool enabled()
 {
 	return mmuOn;
 }
 
-MmuError mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);
-MmuError mmu_instruction_lookup(u32 va, const TLB_Entry **entry, u32& rv);
-template<u32 translation_type>
-MmuError mmu_full_SQ(u32 va, u32& rv);
+void doException(u32 addr, MmuError mmu_error, u32 access_type);
 
-#ifdef FAST_MMU
-static inline MmuError mmu_instruction_translation(u32 va, u32& rv)
+inline static bool isTranslated(u32 va, u32 size)
 {
-	if (fast_reg_lut[va >> 29] != 0)
-	{
-		rv = va;
-		return MmuError::NONE;
-	}
-
-	return mmu_full_lookup(va, nullptr, rv);
-}
-#else
-MmuError mmu_instruction_translation(u32 va, u32& rv);
-#endif
-
-template<u32 translation_type>
-MmuError mmu_data_translation(u32 va, u32& rv);
-void DoMMUException(u32 addr, MmuError mmu_error, u32 access_type);
-
-inline static bool mmu_is_translated(u32 va, u32 size)
-{
-#ifndef FAST_MMU
 	if (va & (std::min(size, 4u) - 1))
 		return true;
-#endif
 
 	if (fast_reg_lut[va >> 29] != 0)
 		return false;
@@ -110,62 +170,42 @@ inline static bool mmu_is_translated(u32 va, u32 size)
 	return true;
 }
 
-template<typename T> T DYNACALL mmu_ReadMem(u32 adr);
-u16 DYNACALL mmu_IReadMem16(u32 addr);
-
-template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
-
-void mmu_TranslateSQW(u32 adr, u32* out);
+template<bool wince>
+void translateSQW(u32 adr, u32* out);
 
 #ifdef FAST_MMU
 // maps 4K virtual page number to physical address
-extern u32 mmuAddressLUT[0x100000];
+extern u32 addressLUT[0x100000];
 
-static inline void mmuAddressLUTFlush(bool full)
+static inline void addressLUTFlush(bool full)
 {
 	if (full || !settings.content.windowsCE) {
-		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT) / 2);	// flush user memory (P0)
+		memset(addressLUT, 0, sizeof(addressLUT) / 2);	// flush user memory (P0)
 	}
 	else
 	{
 		constexpr u32 slotPages = (32 * 1024 * 1024) >> 12;
-		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));		// flush slot 0 (windows CE)
+		memset(addressLUT, 0, slotPages * sizeof(u32));		// flush slot 0 (windows CE)
 	}
 }
 #endif
 
-#if FEAT_SHREC == DYNAREC_JIT
-static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
-{
-	u32 paddr;
-	MmuError rv;
-	// TODO pass access size so that alignment errors are raised
-	if (write)
-		rv = mmu_data_translation<MMU_TT_DWRITE>(vaddr, paddr);
-	else
-		rv = mmu_data_translation<MMU_TT_DREAD>(vaddr, paddr);
-	if (unlikely(rv != MmuError::NONE))
-	{
-		Sh4cntx.pc = pc;
-		DoMMUException(vaddr, rv, write ? MMU_TT_DWRITE : MMU_TT_DREAD);
-		host_context_t ctx;
-		sh4Dynarec->handleException(ctx);
-		((void (*)())ctx.pc)();
-		// not reached
-		return 0;
-	}
-#ifdef FAST_MMU
-	if (vaddr >> 31 == 0)
-		mmuAddressLUT[vaddr >> 12] = paddr & ~0xfff;
+#if FEAT_SHREC != DYNAREC_NONE
+
+#ifdef _MSC_VER
+using dynlookup_t = u32 (DYNACALL *)(u32, u32);
+#else
+using dynlookup_t = u32 DYNACALL (*)(u32, u32);
+#endif
+dynlookup_t getDynarecLookupFunc(bool write);
+
 #endif
 
-	return paddr;
+void init();
+void reset();
+void term();
+
+void serialize(Serializer& ser);
+void deserialize(Deserializer& deser);
+
 }
-#endif
-
-void MMU_init();
-void MMU_reset();
-void MMU_term();
-
-void mmu_serialize(Serializer& ser);
-void mmu_deserialize(Deserializer& deser);

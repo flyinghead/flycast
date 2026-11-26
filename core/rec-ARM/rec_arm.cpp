@@ -276,7 +276,7 @@ public:
 				cmp(r4, block->BlockType & 1);
 			}
 			// The CpuRunning tests are needed when transitioning to disabled mmu
-			if (!mmu_enabled() && sh4ctx.CpuRunning)
+			if (!mmu::enabled() && sh4ctx.CpuRunning)
 			{
 				if (block->pBranchBlock)
 					jump((void *)block->pBranchBlock->code, CC);
@@ -310,7 +310,7 @@ public:
 		case BET_DynamicRet:
 		case BET_DynamicCall:
 		case BET_DynamicJump:
-			if (!mmu_enabled() && sh4ctx.CpuRunning)
+			if (!mmu::enabled() && sh4ctx.CpuRunning)
 			{
 				sub(r2, r8, -rcbOffset(fpcb));
 				ubfx(r1, r4, 1, 24);
@@ -326,7 +326,7 @@ public:
 
 		case BET_StaticCall:
 		case BET_StaticJump:
-			if (!mmu_enabled() && sh4ctx.CpuRunning)
+			if (!mmu::enabled() && sh4ctx.CpuRunning)
 			{
 				if (block->pBranchBlock == nullptr)
 					call(ngen_LinkBlock_Generic_stub);
@@ -1183,7 +1183,7 @@ bool Arm32Assembler::writeMemImmediate(RuntimeBlockInfo* block, shil_opcode* op,
 
 void Arm32Assembler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write, Register& raddr)
 {
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		Label inCache;
 		Label done;
@@ -1194,9 +1194,9 @@ void Arm32Assembler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op
 		B(ne, &inCache);
 		if (!raddr.Is(r0))
 			Mov(r0, raddr);
-		Mov(r1, write);
-		Mov(r2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
-		call((void *)mmuDynarecLookup);
+		Mov(r1, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		mmu::dynlookup_t dynLookup = mmu::getDynarecLookupFunc(write);
+		call((void *)dynLookup);
 		B(&done);
 		Bind(&inCache);
 		And(r0, raddr, 0xFFF);
@@ -1547,7 +1547,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 
 			Sub(r0, r8, sizeof(Sh4Context));
 			Mov(r1, op->rs3._imm);
-			if (!mmu_enabled())
+			if (!mmu::enabled())
 			{
 				call((void *)OpPtr[op->rs3._imm]);
 			}
@@ -1835,7 +1835,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				}
 
 				Sub(r1, r8, sizeof(Sh4Context));
-				if (mmu_enabled())
+				if (mmu::enabled())
 				{
 					Mov(r2, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
 					call((void *)do_sqw_mmu_no_ex, cc);
@@ -2166,7 +2166,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	static constexpr std::array<int, 5> alloc_regs_mmu = { 5, 6, 7, 10, 11 };
 	static constexpr std::array<int, 16> alloc_fpu = { 16, 17, 18, 19, 20, 21, 22, 23,
 					24, 25, 26, 27, 28, 29, 30, 31 };
-	if (mmu_enabled())
+	if (mmu::enabled())
 		reg.DoAlloc(block, alloc_regs_mmu, alloc_fpu);
 	else
 		reg.DoAlloc(block, alloc_regs, alloc_fpu);
@@ -2178,7 +2178,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 		reg.OpBegin(&block->oplist[0], 0);
 
 	// block checks
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		Mov(r0, block->vaddr);
 		Mov(r1, block->addr);
@@ -2224,7 +2224,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 			}
 		}
 	}
-	if (mmu_enabled() && block->has_fpu_op)
+	if (mmu::enabled() && block->has_fpu_op)
 	{
 		Mov(r0, block->vaddr);
 		call((void *)checkBlockFpu);
@@ -2347,7 +2347,7 @@ void Arm32Assembler::genMainLoop()
 	Bx(r0);
 // ngen_FailedToFindBlock_
 	ngen_FailedToFindBlock_ = GetCursorAddress<void (*)()>();
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		call((void *)rdv_FailedToFindBlock_pc);
 	}
@@ -2360,7 +2360,7 @@ void Arm32Assembler::genMainLoop()
 // ngen_blockcheckfail
 	ngen_blockcheckfail = GetCursorAddress<const void *>();
 	call((void *)rdv_BlockCheckFail);
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		Label jumpblockLabel;
 		Cmp(r0, 0);
@@ -2396,7 +2396,7 @@ void Arm32Assembler::genMainLoop()
 	unwinder.saveReg(0, r12, 8);
 	unwinder.saveReg(0, lr, 4);
 	Label longjumpLabel;
-	if (!mmu_enabled())
+	if (!mmu::enabled())
 	{
 		// r8: context
 		Mov(r8, r0);
@@ -2415,7 +2415,7 @@ void Arm32Assembler::genMainLoop()
 		Bind(&longjumpLabel);
 
 		Ldr(r8, MemOperand(sp));					// r8: context
-		Mov(r9, (uintptr_t)mmuAddressLUT);			// r9: mmu LUT
+		Mov(r9, (uintptr_t)mmu::addressLUT);		// r9: mmu LUT
 	}
 	Ldr(r4, MemOperand(r8, ctxOffset(pc)));			// r4: pc
 	B(&no_updateLabel);								// Go to mainloop !
@@ -2449,7 +2449,7 @@ void Arm32Assembler::genMainLoop()
 	Cmp(r0, 0);
 	B(eq, &cleanup);
 
-	if (!mmu_enabled())
+	if (!mmu::enabled())
 	{
 		Sub(r2, r8, -rcbOffset(fpcb));
 		Ubfx(r1, r4, 1, 24);	// 24+1 bits: 32 MB
@@ -2465,7 +2465,7 @@ void Arm32Assembler::genMainLoop()
 
 // cleanup:
 	Bind(&cleanup);
-	if (mmu_enabled())
+	if (mmu::enabled())
 		Add(sp, sp, 8);	// pop context & alignment
 	{
 		UseScratchRegisterScope scope(this);
@@ -2476,7 +2476,7 @@ void Arm32Assembler::genMainLoop()
 
 	// Exception handler
 	handleException = GetCursorAddress<void (*)()>();
-	if (mmu_enabled())
+	if (mmu::enabled())
 	{
 		Mov(r0, reinterpret_cast<uintptr_t>(&jmp_stack));
 		Ldr(r1, MemOperand(r0));
