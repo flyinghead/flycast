@@ -758,7 +758,8 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 {
 	const bool powerSmash = settings.content.gameId == "HDR-0113"	// Power Smash
 			|| settings.content.gameId == "HDR-0091"				// Pro Yakyuu Team de Asobou Net!
-			|| settings.content.gameId == "HDR-0040";				// Virtual-On Oratorio Tangram
+			|| settings.content.gameId == "HDR-0040"				// Virtual-On Oratorio Tangram
+			|| settings.content.gameId == "T34201M";				// Frame Gride
 	asio::ip::tcp::endpoint endpoint;
 	if (address.is_unspecified())
 	{

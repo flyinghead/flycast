@@ -56,6 +56,15 @@ void D3DTexture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, b
 		}
 	}
 
+	// Recreate the texture if its dimensions, format or mipmap levels have changed
+	// (GetLevelCount() is 1 for auto-generated mipmaps)
+	if (texture != nullptr)
+	{
+		D3DSURFACE_DESC desc;
+		if (FAILED(texture->GetLevelDesc(0, &desc)) || desc.Width != (UINT)width || desc.Height != (UINT)height
+				|| desc.Format != d3dFormat || texture->GetLevelCount() != (DWORD)mipmapLevels)
+			texture.reset();
+	}
 	D3DLOCKED_RECT rect;
 	while (true)
 	{

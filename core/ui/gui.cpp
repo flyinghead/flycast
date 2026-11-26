@@ -844,7 +844,7 @@ static void gameTooltip(const std::string& tip)
 static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
 {
 	bool pressed = texture.button("##imagebutton", size, gameName);
-	if (ImGui::IsRectVisible(size))
+	if (ImGui::IsItemVisible())
 		gameTooltip(tooltip);
 
     return pressed;
@@ -1446,12 +1446,8 @@ static std::string getFPSNotification()
 			LastFPSTime = now;
 			lastFrameCount = MainFrameCount;
 		}
-		if (fps >= 0.f && fps < 9999.f) {
-			char text[32];
-			snprintf(text, sizeof(text), "F:%4.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
-
-			return std::string(text);
-		}
+		if (fps >= 0.f && fps < 9999.f)
+			return strprintf("F:%4.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
 	}
 	return std::string(settings.input.fastForwardMode ? ">>" : "");
 }

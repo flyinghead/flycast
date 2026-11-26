@@ -552,12 +552,22 @@ struct DX11OITRenderer : public DX11Renderer
 		buffers.bind();
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 		deviceContext->ClearDepthStencilView(depthStencilView2, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
-		if (rendContext->clearFramebuffer && !rendContext->isRTT)
+		if (!rendContext->isRTT)
 		{
-			float colors[4];
-			VO_BORDER_COL.getRGBColor(colors);
-			colors[3] = 1.f;
-			deviceContext->ClearRenderTargetView(opaqueRenderTarget, colors);
+			if (rendContext->clearFramebuffer)
+			{
+				float colors[4];
+				VO_BORDER_COL.getRGBColor(colors);
+				colors[3] = 1.f;
+				deviceContext->ClearRenderTargetView(opaqueRenderTarget, colors);
+			}
+			else
+			{
+				// Draw on the last rendered frame
+				std::swap(opaqueTex, fbTex);
+				std::swap(opaqueRenderTarget, fbRenderTarget);
+				std::swap(opaqueTextureView, fbTextureView);
+			}
 		}
 
 		RenderPass previous_pass {};

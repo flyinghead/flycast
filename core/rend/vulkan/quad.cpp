@@ -86,7 +86,7 @@ void QuadPipeline::CreatePipeline()
 		vk::BlendFactor::eSrcAlpha,			// srcColorBlendFactor
 		vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
 		vk::BlendOp::eAdd,					// colorBlendOp
-		vk::BlendFactor::eSrcAlpha,			// srcAlphaBlendFactor
+		vk::BlendFactor::eOne,				// srcAlphaBlendFactor: keeps an opaque target opaque, for video routing
 		vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
 		vk::BlendOp::eAdd,					// alphaBlendOp
 		vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG

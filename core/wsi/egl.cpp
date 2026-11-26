@@ -168,8 +168,8 @@ bool EGLGraphicsContext::init()
 	eglQuerySurface(display, surface, EGL_HEIGHT, &h);
 	NOTICE_LOG(RENDERER, "eglQuerySurface: %d - %d", w, h);
 
-	settings.display.width = w;
-	settings.display.height = h;
+	settings.display.width = std::max(w, 1);
+	settings.display.height = std::max(h, 1);
 
 	changeSwapInterval();
 

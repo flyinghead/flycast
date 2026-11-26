@@ -191,8 +191,12 @@ void DXContext::resize()
 	d3dpp.BackBufferWidth = settings.display.width = rect.right;
 	d3dpp.BackBufferHeight = settings.display.height = rect.bottom;
 	if (settings.display.width == 0 || settings.display.height == 0)
+	{
 		// window minimized
+		settings.display.width = std::max(settings.display.width, 1);
+		settings.display.height = std::max(settings.display.height, 1);
 		return;
+	}
 	resetDevice();
 }
 
