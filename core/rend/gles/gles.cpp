@@ -557,10 +557,6 @@ void do_swap_automation()
 		dump_screenshot(img, framebuffer->getWidth(), framebuffer->getHeight());
 		delete[] img;
 		dc_exit();
-		void sdl_window_destroy();
-		sdl_window_destroy(); // avoid crash
-		flycast_term();
-		exit(0);
 	}
 }
 

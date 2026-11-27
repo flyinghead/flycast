@@ -1412,10 +1412,7 @@ void VulkanContext::DoSwapAutomation()
 
 			device->unmapMemory(*deviceMemory);
 		}
-		rend_term_renderer();
 		dc_exit();
-		flycast_term();
-		exit(0);
 	}
 #endif
 }
