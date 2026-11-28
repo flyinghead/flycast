@@ -51,20 +51,27 @@ std::string getVmuPath(const std::string& port, bool save)
 {
 	std::string vmuName;
 	
-	if (port == "A1" && config::PerGameVmu)
+	if ((port == "A1" && config::PerGameVmu == 1) || config::PerGameVmu == 2)
 	{
 		if (settings.platform.isConsole() && !settings.content.gameId.empty())
 		{
 			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>\"" };
 			vmuName = settings.content.gameId;
+			for (const auto& entry : config::PerGameVmuPrefix.get()) {
+				size_t colonPos = entry.find(':');
+				if (colonPos != std::string::npos && vmuName == entry.substr(0, colonPos)) {
+					vmuName = entry.substr(colonPos + 1);
+					break;
+				}
+			}
 			for (char &c: vmuName)
 				if (INVALID_CHARS.find(c) != INVALID_CHARS.npos)
 					c = '_';
-			vmuName += "_vmu_save_A1.bin";
+			vmuName += "_vmu_save_" + port + ".bin";
 		}
 		else if (!settings.content.path.empty())
 		{
-			return get_game_save_prefix() + "_vmu_save_A1.bin";
+			return get_game_save_prefix() + "_vmu_save_" + port + ".bin";
 		}
 	}
 	
@@ -90,10 +97,10 @@ std::string getVmuPath(const std::string& port, bool save)
 	if (hostfs::storage().exists(rpath))
 		return rpath;
 		
-	if (port == "A1" && config::PerGameVmu && !settings.content.path.empty())
+	if (((port == "A1" && config::PerGameVmu == 1) || config::PerGameVmu == 2) && !settings.content.path.empty())
 	{
 		// Legacy path using the rom file name
-		rpath = get_game_save_prefix() + "_vmu_save_A1.bin";
+		rpath = get_game_save_prefix() + "_vmu_save_" + port + ".bin";
 		if (file_exists(rpath))
 			return rpath;
 	}
