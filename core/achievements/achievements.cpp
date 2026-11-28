@@ -744,17 +744,33 @@ void Achievements::handleUpdateAchievementProgress(const rc_client_event_t *even
 static Disc *hashDisk;
 static bool add150;
 
+// The data track holding IP.BIN: the one containing the disc base FAD (what
+// reios and IsoFs use), else the first data track.
+static const Track *cdreader_base_track()
+{
+	if (hashDisk == nullptr)
+		return nullptr;
+	const u32 base = hashDisk->GetBaseFAD();
+	for (const Track& track : hashDisk->tracks)
+		if (track.isDataTrack() && track.StartFAD <= base && base <= track.EndFAD)
+			return &track;
+	// No data track spans the base FAD — fall back to the first data track.
+	for (const Track& track : hashDisk->tracks)
+		if (track.isDataTrack())
+			return &track;
+	return nullptr;
+}
+
 static void *cdreader_open_track(const char* path, u32 track)
 {
 	DEBUG_LOG(COMMON, "RA: cdreader_open_track %s track %d", path, track);
-	if (track == RC_HASH_CDTRACK_FIRST_DATA)
-	{
-		for (const Track& track : hashDisk->tracks)
-			if (track.isDataTrack())
-				return const_cast<Track *>(&track);
+	if (hashDisk == nullptr)
 		return nullptr;
-	}
-	if (track <= hashDisk->tracks.size())
+	// rcheevos asks for track 3, then for the first data track. Both mean the
+	// IP.BIN track, which isn't track 3 on CDI and MIL-CD images.
+	if (track == 3 || track == RC_HASH_CDTRACK_FIRST_DATA)
+		return const_cast<Track *>(cdreader_base_track());
+	if (track >= 1 && track <= hashDisk->tracks.size())
 		return const_cast<Track *>(&hashDisk->tracks[track - 1]);
 	else
 		return nullptr;
@@ -784,6 +800,17 @@ static void cdreader_close_track(void* track_handle)
 static u32 cdreader_first_track_sector(void* track_handle)
 {
 	Track& track = *static_cast<Track *>(track_handle);
+	// IP.BIN is at the disc base FAD, which on CDI images can differ from the
+	// track start
+	if (hashDisk != nullptr)
+	{
+		const u32 base = hashDisk->GetBaseFAD();
+		if (track.StartFAD <= base && base <= track.EndFAD)
+		{
+			DEBUG_LOG(COMMON, "RA: cdreader_first_track_sector track %p -> %d (base FAD)", track_handle, base);
+			return base;
+		}
+	}
 	DEBUG_LOG(COMMON, "RA: cdreader_first_track_sector track %p -> %d", track_handle, track.StartFAD);
 	return track.StartFAD;
 }
