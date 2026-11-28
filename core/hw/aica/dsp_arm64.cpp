@@ -44,6 +44,10 @@ static ptrdiff_t rx_offset;
 
 static void JITWriteProtect(bool enable)
 {
+#ifdef FEAT_NO_RWX_PAGES
+    if (rx_offset != 0)
+    	return;
+#endif
     if (enable)
     	virtmem::region_set_exec(pCodeBuffer, CodeSize);
     else
@@ -447,7 +451,9 @@ void recInit()
 	bool rc = virtmem::prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
 #endif
 	verify(rc);
-#if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
+#if defined(FEAT_NO_RWX_PAGES) && (defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC))
+	DynCode = pCodeBuffer + rx_offset;
+#elif defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 	DynCode = pCodeBuffer;
 #endif
 }
