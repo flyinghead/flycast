@@ -11,6 +11,8 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
 
+#include <algorithm>
+
 static void RegWrite_SB_C2DST(u32 addr, u32 data)
 {
 	if (data & 1)
@@ -34,14 +36,24 @@ static void do_pvr_dma()
 	}
 	DEBUG_LOG(PVR, "PVR-DMA %x %s %x len %x", src, SB_PDDIR ? "<-" : "->", dst, len);
 
-	if (SB_PDDIR)
-		//PVR -> System
-		WriteMemBlock_nommu_dma(src, dst, len);
-	else
-		//System -> PVR
-		WriteMemBlock_nommu_dma(dst,src,len);
+	// System RAM and VRAM are both mirrored, so a transfer running past the end
+	// of one mirror continues at the start of the next. Split at either boundary
+	// so no block copy runs past the RAM or VRAM buffers.
+	while (len > 0)
+	{
+		const u32 chunk = std::min(len, std::min(RAM_SIZE - (src & RAM_MASK), VRAM_SIZE - (dst & VRAM_MASK)));
+		if (SB_PDDIR)
+			//PVR -> System
+			WriteMemBlock_nommu_dma(src, dst, chunk);
+		else
+			//System -> PVR
+			WriteMemBlock_nommu_dma(dst, src, chunk);
+		len -= chunk;
+		src += chunk;
+		dst += chunk;
+	}
 
-	DMAC_SAR(0) = src + len;
+	DMAC_SAR(0) = src;
 	DMAC_CHCR(0).TE = 1;
 	DMAC_DMATCR(0) = 0;
 
