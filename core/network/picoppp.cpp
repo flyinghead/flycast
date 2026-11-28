@@ -47,6 +47,7 @@ extern "C" {
 #include "picoppp.h"
 #include "miniupnp.h"
 #include "cfg/option.h"
+#include "dcnow.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
 #include "util/tsqueue.h"
@@ -915,6 +916,8 @@ private:
 				}
 				else if (msginfo.local_port == htons(47624))
 					directPlay->processOutPacket((const u8 *)buf, r);
+				else if (msginfo.local_port == htons(53))
+					dcnow::dnsQuery(buf, r);
 				UdpSocket::Ptr sock = findSocket(htons(src_port));
 				if (sock)
 					sock->sendto(buf, r, htonl(msginfo.local_addr.ip4.addr), htons(msginfo.local_port));
@@ -1316,9 +1319,6 @@ void PicoThread::run()
     // Find DNS ip address
 	{
 		std::string dnsName = config::DNS;
-		if (dnsName == "46.101.91.123")
-			// override legacy default with current one
-			dnsName = "dns.flyca.st";
 		asio::ip::udp::resolver resolver(*io_context);
 		std::error_code ec;
 		auto it = resolver.resolve(asio::ip::udp::v4(), dnsName, "53", ec);
@@ -1479,12 +1479,14 @@ static bool start_pico()
 		return false;
 	pico_thread_running = true;
 	pico_thread.start();
+	dcnow::start();
 
     return true;
 }
 
 static void stop_pico()
 {
+	dcnow::stop();
 	emu.setNetworkState(false);
 	pico_thread_running = false;
 	pico_thread.stop();
