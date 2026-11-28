@@ -171,8 +171,12 @@ void OpenGL4Renderer::setGPState(const PolyParam *gp)
 	}
 	else
 	{
-		// Two volumes mode only supported for OP and PT
-		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
+		// For OP and PT the volumes are already in the stencil buffer, so the
+		// color pass picks the area itself. Translucent polys are shaded in the
+		// OIT pass, before the translucent volumes are known, so there the shader
+		// shades both areas and the resolve pass picks between them.
+		bool two_volumes_mode = (gp->tsp1.full != (u32)-1)
+				&& (Type != ListType_Translucent || pass == Pass::OIT);
 		bool color_clamp = gp->tsp.ColorClamp && (gl.rendContext->fog_clamp_min.full != 0 || gl.rendContext->fog_clamp_max.full != 0xffffffff);
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
