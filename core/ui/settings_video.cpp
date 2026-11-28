@@ -25,7 +25,8 @@ enum RenderAPI {
 	OpenGL,
 	Vulkan,
 	DirectX9,
-	DirectX11
+	DirectX11,
+	Metal
 };
 
 void gui_settings_video()
@@ -63,6 +64,14 @@ void gui_settings_video()
 		renderApi = DirectX11;
 		perPixel = true;
 		break;
+	case RenderType::Metal:
+		renderApi = Metal;
+		perPixel = false;
+		break;
+	case RenderType::Metal_OIT:
+		renderApi = Metal;
+		perPixel = true;
+		break;
 	}
 	constexpr int apiCount = 0
 		#ifdef USE_VULKAN
@@ -75,6 +84,9 @@ void gui_settings_video()
 			+ 1
 		#endif
 		#ifdef USE_DX11
+			+ 1
+		#endif
+		#ifdef USE_METAL
 			+ 1
 		#endif
 			;
@@ -108,6 +120,10 @@ void gui_settings_video()
 #endif
 #ifdef USE_DX11
 			ImGui::RadioButton("DirectX 11", &renderApi, DirectX11);
+			ImGui::NextColumn();
+#endif
+#ifdef USE_METAL
+			ImGui::RadioButton("Metal", &renderApi, Metal);
 			ImGui::NextColumn();
 #endif
 			ImGui::Columns(1, nullptr, false);
@@ -212,7 +228,7 @@ void gui_settings_video()
 			OptionCheckbox(T("Frame Pacing (Experimental)"), config::FramePacing,
 					T("Provide the GPU with presentation timing for each frame to replicate original frame pacing."));
 #else
-	    	if (isVulkan(config::RendererType))
+	    	if (isVulkan(config::RendererType) || isMetal(config::RendererType))
 	    		OptionCheckbox(T("Duplicate frames"), config::DupeFrames, T("Duplicate frames on high refresh rate monitors (120 Hz and higher)"));
 #endif
     	}
@@ -483,6 +499,9 @@ void gui_settings_video()
     	break;
     case DirectX11:
     	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
+    	break;
+    case Metal:
+    	config::RendererType = perPixel ? RenderType::Metal_OIT : RenderType::Metal;
     	break;
     }
 }

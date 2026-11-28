@@ -4,6 +4,7 @@
 
 void input_sdl_init();
 void input_sdl_handle();
+void sdl_start_pending_game();
 void input_sdl_quit();
 bool sdl_queue_open_file(const char *path);
 void sdl_window_create();
